@@ -151,7 +151,7 @@ function initSidebar() {
 function initSidebarToggle() {
     const sidebarToggle = document.createElement('button');
     sidebarToggle.className = 'sidebar-toggle';
-    sidebarToggle.innerHTML = '<i class="fas fa-bars"></i><i class="fas fa-times"></i>';
+    sidebarToggle.innerHTML = '<img src="assets/icons/menu.svg" alt="Menu" class="menu-icon">';
     document.body.appendChild(sidebarToggle);
 
     sidebarToggle.addEventListener('click', function(e) {
@@ -160,14 +160,7 @@ function initSidebarToggle() {
         document.getElementById('wrapper').classList.toggle('sidebar-collapsed');
         
         // Change icon between bars and X
-        const icon = this.querySelector('i');
-        if (document.body.classList.contains('sidebar-active')) {
-            icon.classList.remove('fa-bars');
-            icon.classList.add('fa-times');
-        } else {
-            icon.classList.remove('fa-times');
-            icon.classList.add('fa-bars');
-        }
+       
         
         // Create overlay if it doesn't exist
         let overlay = document.querySelector('.overlay');
@@ -177,14 +170,7 @@ function initSidebarToggle() {
             document.body.appendChild(overlay);
             
             // Add click event to close sidebar when overlay is clicked
-            overlay.addEventListener('click', function() {
-                document.body.classList.remove('sidebar-active');
-                document.getElementById('wrapper').classList.add('sidebar-collapsed');
-                // Change icon back to bars
-                const icon = sidebarToggle.querySelector('i');
-                icon.classList.remove('fa-times');
-                icon.classList.add('fa-bars');
-            });
+          
         }
     });
 }

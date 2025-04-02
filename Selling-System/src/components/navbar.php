@@ -5,9 +5,7 @@
 <nav class="navbar" style="border-radius: 50px; margin: 8px; margin-top:0px; height: 80px;">
     <div class="container-fluid">
         <!-- Sidebar Toggle Button -->
-        <button id="sidebarToggle" class="sidebar-toggle">
-            <img src="assets/icons/menu.svg" alt="">
-        </button>
+     
 
         <!-- Brand/logo -->
         <!-- <a class="navbar-brand" href="index.php">

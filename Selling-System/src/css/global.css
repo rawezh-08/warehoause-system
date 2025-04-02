@@ -868,3 +868,31 @@ img {
     }
 }
 
+/* Sidebar toggle button */
+.sidebar-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    display: block;
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    z-index: 1040;
+    transition: right 0.3s ease;
+}
+
+.sidebar-toggle .menu-icon {
+    width: 24px;
+    height: 24px;
+    transition: transform 0.3s ease;
+}
+
+body.sidebar-active .sidebar-toggle {
+    right: 275px;
+}
+
+body.sidebar-active .sidebar-toggle .menu-icon {
+    transform: rotate(180deg);
+}
+
