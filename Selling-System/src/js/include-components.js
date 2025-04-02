@@ -151,7 +151,7 @@ function initSidebar() {
 function initSidebarToggle() {
     const sidebarToggle = document.createElement('button');
     sidebarToggle.className = 'sidebar-toggle';
-    sidebarToggle.innerHTML = '<i class="fas fa-bars"></i>';
+    sidebarToggle.innerHTML = '<i class="fas fa-bars"></i><i class="fas fa-times"></i>';
     document.body.appendChild(sidebarToggle);
 
     sidebarToggle.addEventListener('click', function(e) {
