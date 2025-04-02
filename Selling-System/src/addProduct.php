@@ -20,15 +20,16 @@
     <link rel="stylesheet" href="css/global.css">
 </head>
 <div>
+<div id="navbar-container"></div>
+
+<!-- Sidebar container - will be populated by JavaScript -->
+<div id="sidebar-container"></div>
     <!-- Main Content Wrapper -->
     <div id="content">
         <!-- Navbar container - will be populated by JavaScript -->
-        <div id="navbar-container"></div>
-
-        <!-- Sidebar container - will be populated by JavaScript -->
-        <div id="sidebar-container"></div>
+       
             
-            <!-- Main content -->
+   
             <div class="main-content p-3" id="main-content">
                 <div class="container-fluid">
                     <div class="row mb-4">
@@ -42,6 +43,7 @@
                         <div class="col-lg-8 col-md-12 mb-4">
                             <div class="card shadow-sm">
                                 <div class="card-body">
+                                    
                                     <div class="tab-header d-flex flex-wrap mb-4">
                                         <div class="tab-item active me-3 mb-2" data-tab="basic-info">زانیاری بنەڕەتی</div>
                                         <div class="tab-item me-3 mb-2" data-tab="price-info">نرخ</div>

@@ -266,7 +266,10 @@
                                                             <td>مووچەی مانگی نیسان</td>
                                                             <td>
                                                                 <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle view-btn" data-id="1">
+                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="1" data-bs-toggle="modal" data-bs-target="#editEmployeePaymentModal">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="1">
                                                                         <i class="fas fa-eye"></i>
                                                                     </button>
                                                                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="1">
@@ -284,7 +287,10 @@
                                                             <td>مووچەی مانگی نیسان</td>
                                                             <td>
                                                                 <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle view-btn" data-id="2">
+                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="2" data-bs-toggle="modal" data-bs-target="#editEmployeePaymentModal">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="2">
                                                                         <i class="fas fa-eye"></i>
                                                                     </button>
                                                                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="2">
@@ -302,7 +308,10 @@
                                                             <td>پێشەکی پارە</td>
                                                             <td>
                                                                 <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle view-btn" data-id="3">
+                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="3" data-bs-toggle="modal" data-bs-target="#editEmployeePaymentModal">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="3">
                                                                         <i class="fas fa-eye"></i>
                                                                     </button>
                                                                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="3">
@@ -452,7 +461,10 @@
                                                             <td>بار لە تورکیاوە</td>
                                                             <td>
                                                                 <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle view-btn" data-id="1">
+                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="1" data-bs-toggle="modal" data-bs-target="#editShippingModal">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="1">
                                                                         <i class="fas fa-eye"></i>
                                                                     </button>
                                                                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="1">
@@ -470,7 +482,10 @@
                                                             <td>بار لە چینەوە</td>
                                                             <td>
                                                                 <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle view-btn" data-id="2">
+                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="2" data-bs-toggle="modal" data-bs-target="#editShippingModal">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="2">
                                                                         <i class="fas fa-eye"></i>
                                                                     </button>
                                                                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="2">
@@ -620,7 +635,10 @@
                                                             <td>کڕینی پێداویستی بۆ ئۆفیس</td>
                                                             <td>
                                                                 <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle view-btn" data-id="1">
+                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="1" data-bs-toggle="modal" data-bs-target="#editWithdrawalModal">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="1">
                                                                         <i class="fas fa-eye"></i>
                                                                     </button>
                                                                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="1">
@@ -638,7 +656,10 @@
                                                             <td>کرێی مانگانەی ئۆفیس</td>
                                                             <td>
                                                                 <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle view-btn" data-id="2">
+                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="2" data-bs-toggle="modal" data-bs-target="#editWithdrawalModal">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="2">
                                                                         <i class="fas fa-eye"></i>
                                                                     </button>
                                                                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="2">
@@ -656,7 +677,10 @@
                                                             <td>پارەی کارەبا</td>
                                                             <td>
                                                                 <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle view-btn" data-id="3">
+                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="3" data-bs-toggle="modal" data-bs-target="#editWithdrawalModal">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="3">
                                                                         <i class="fas fa-eye"></i>
                                                                     </button>
                                                                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="3">
@@ -713,5 +737,161 @@
     <!-- Custom JavaScript -->
     <script src="js/include-components.js"></script>
     <script src="js/expensesHistory/script.js"></script>
+
+    <!-- Employee Payment Edit Modal -->
+    <div class="modal fade" id="editEmployeePaymentModal" tabindex="-1" aria-labelledby="editEmployeePaymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editEmployeePaymentModalLabel">دەستکاری پارەدان بە کارمەند</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editEmployeePaymentForm">
+                        <input type="hidden" id="editEmployeePaymentId">
+                        <div class="mb-3">
+                            <label for="editEmployeePaymentName" class="form-label">ناوی کارمەند</label>
+                            <select id="editEmployeePaymentName" class="form-select" required>
+                                <option value="" selected disabled>کارمەند هەڵبژێرە</option>
+                                <option value="ئاری محمد">ئاری محمد</option>
+                                <option value="شیلان عمر">شیلان عمر</option>
+                                <option value="هاوڕێ ئەحمەد">هاوڕێ ئەحمەد</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editEmployeePaymentDate" class="form-label">بەروار</label>
+                            <input type="date" id="editEmployeePaymentDate" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editEmployeePaymentAmount" class="form-label">بڕی پارە</label>
+                            <div class="input-group">
+                                <input type="number" id="editEmployeePaymentAmount" class="form-control" required>
+                                <span class="input-group-text">$</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editEmployeePaymentType" class="form-label">جۆری پارەدان</label>
+                            <select id="editEmployeePaymentType" class="form-select" required>
+                                <option value="" selected disabled>جۆری پارەدان</option>
+                                <option value="salary">مووچە</option>
+                                <option value="bonus">پاداشت</option>
+                                <option value="advance">پێشەکی</option>
+                                <option value="other">جۆری تر</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editEmployeePaymentNotes" class="form-label">تێبینی</label>
+                            <textarea id="editEmployeePaymentNotes" class="form-control" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" id="saveEmployeePaymentEdit">پاشەکەوتکردن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shipping Cost Edit Modal -->
+    <div class="modal fade" id="editShippingModal" tabindex="-1" aria-labelledby="editShippingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editShippingModalLabel">دەستکاری کرێی بار</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editShippingForm">
+                        <input type="hidden" id="editShippingId">
+                        <div class="mb-3">
+                            <label for="editShippingProvider" class="form-label">دابینکەر</label>
+                            <input type="text" id="editShippingProvider" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editShippingDate" class="form-label">بەروار</label>
+                            <input type="date" id="editShippingDate" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editShippingAmount" class="form-label">بڕی پارە</label>
+                            <div class="input-group">
+                                <input type="number" id="editShippingAmount" class="form-control" required>
+                                <span class="input-group-text">$</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editShippingType" class="form-label">جۆری بار</label>
+                            <select id="editShippingType" class="form-select" required>
+                                <option value="" selected disabled>جۆری بار</option>
+                                <option value="land">وشکانی</option>
+                                <option value="sea">دەریایی</option>
+                                <option value="air">ئاسمانی</option>
+                                <option value="other">جۆری تر</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editShippingNotes" class="form-label">تێبینی</label>
+                            <textarea id="editShippingNotes" class="form-control" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" id="saveShippingEdit">پاشەکەوتکردن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Withdrawal Edit Modal -->
+    <div class="modal fade" id="editWithdrawalModal" tabindex="-1" aria-labelledby="editWithdrawalModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editWithdrawalModalLabel">دەستکاری دەرکردنی پارە</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editWithdrawalForm">
+                        <input type="hidden" id="editWithdrawalId">
+                        <div class="mb-3">
+                            <label for="editWithdrawalName" class="form-label">ناو</label>
+                            <input type="text" id="editWithdrawalName" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editWithdrawalDate" class="form-label">بەروار</label>
+                            <input type="date" id="editWithdrawalDate" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editWithdrawalAmount" class="form-label">بڕی پارە</label>
+                            <div class="input-group">
+                                <input type="number" id="editWithdrawalAmount" class="form-control" required>
+                                <span class="input-group-text">$</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editWithdrawalCategory" class="form-label">جۆری دەرکردن</label>
+                            <select id="editWithdrawalCategory" class="form-select" required>
+                                <option value="" selected disabled>جۆر هەڵبژێرە</option>
+                                <option value="expense">خەرجی ڕۆژانە</option>
+                                <option value="supplies">پێداویستی</option>
+                                <option value="rent">کرێ</option>
+                                <option value="utility">خزمەتگوزاری</option>
+                                <option value="other">جۆری تر</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editWithdrawalNotes" class="form-label">تێبینی</label>
+                            <textarea id="editWithdrawalNotes" class="form-control" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" id="saveWithdrawalEdit">پاشەکەوتکردن</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html> 

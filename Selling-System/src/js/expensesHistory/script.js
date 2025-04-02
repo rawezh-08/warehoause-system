@@ -685,4 +685,184 @@ function setupActionButtons() {
         
         showToast(message, 'info');
     });
+}
+
+// Initialize edit functionality for all tables
+document.addEventListener('DOMContentLoaded', function() {
+    // Employee Payment Edit
+    document.querySelectorAll('#employeeHistoryTable .edit-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const row = this.closest('tr');
+            
+            // Get data from the row
+            const name = row.cells[1].textContent;
+            const date = row.cells[2].textContent;
+            const amount = row.cells[3].textContent.replace('$', '');
+            const type = row.cells[4].querySelector('.badge').textContent;
+            const notes = row.cells[5].textContent;
+            
+            // Populate the modal
+            document.getElementById('editEmployeePaymentId').value = id;
+            document.getElementById('editEmployeePaymentName').value = name;
+            document.getElementById('editEmployeePaymentDate').value = formatDateForInput(date);
+            document.getElementById('editEmployeePaymentAmount').value = amount;
+            document.getElementById('editEmployeePaymentType').value = getPaymentTypeValue(type);
+            document.getElementById('editEmployeePaymentNotes').value = notes;
+        });
+    });
+
+    // Shipping Edit
+    document.querySelectorAll('#shippingHistoryTable .edit-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const row = this.closest('tr');
+            
+            // Get data from the row
+            const provider = row.cells[1].textContent;
+            const date = row.cells[2].textContent;
+            const amount = row.cells[3].textContent.replace('$', '');
+            const type = row.cells[4].querySelector('.badge').textContent;
+            const notes = row.cells[5].textContent;
+            
+            // Populate the modal
+            document.getElementById('editShippingId').value = id;
+            document.getElementById('editShippingProvider').value = provider;
+            document.getElementById('editShippingDate').value = formatDateForInput(date);
+            document.getElementById('editShippingAmount').value = amount;
+            document.getElementById('editShippingType').value = getShippingTypeValue(type);
+            document.getElementById('editShippingNotes').value = notes;
+        });
+    });
+
+    // Withdrawal Edit
+    document.querySelectorAll('#withdrawalHistoryTable .edit-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const row = this.closest('tr');
+            
+            // Get data from the row
+            const name = row.cells[1].textContent;
+            const date = row.cells[2].textContent;
+            const amount = row.cells[3].textContent.replace('$', '');
+            const category = row.cells[4].querySelector('.badge').textContent;
+            const notes = row.cells[5].textContent;
+            
+            // Populate the modal
+            document.getElementById('editWithdrawalId').value = id;
+            document.getElementById('editWithdrawalName').value = name;
+            document.getElementById('editWithdrawalDate').value = formatDateForInput(date);
+            document.getElementById('editWithdrawalAmount').value = amount;
+            document.getElementById('editWithdrawalCategory').value = getWithdrawalCategoryValue(category);
+            document.getElementById('editWithdrawalNotes').value = notes;
+        });
+    });
+
+    // Save Employee Payment Edit
+    document.getElementById('saveEmployeePaymentEdit').addEventListener('click', function() {
+        const id = document.getElementById('editEmployeePaymentId').value;
+        const name = document.getElementById('editEmployeePaymentName').value;
+        const date = document.getElementById('editEmployeePaymentDate').value;
+        const amount = document.getElementById('editEmployeePaymentAmount').value;
+        const type = document.getElementById('editEmployeePaymentType').value;
+        const notes = document.getElementById('editEmployeePaymentNotes').value;
+
+        // Here you would typically make an AJAX call to update the database
+        // For now, we'll just show a success message
+        Swal.fire({
+            title: 'سەرکەوتوو بوو!',
+            text: 'گۆڕانکاریەکان پاشەکەوت کران',
+            icon: 'success',
+            confirmButtonText: 'باشە'
+        }).then(() => {
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editEmployeePaymentModal'));
+            modal.hide();
+            
+            // Refresh the table or update the row
+            // You would typically reload the data here
+        });
+    });
+
+    // Save Shipping Edit
+    document.getElementById('saveShippingEdit').addEventListener('click', function() {
+        const id = document.getElementById('editShippingId').value;
+        const provider = document.getElementById('editShippingProvider').value;
+        const date = document.getElementById('editShippingDate').value;
+        const amount = document.getElementById('editShippingAmount').value;
+        const type = document.getElementById('editShippingType').value;
+        const notes = document.getElementById('editShippingNotes').value;
+
+        // Here you would typically make an AJAX call to update the database
+        Swal.fire({
+            title: 'سەرکەوتوو بوو!',
+            text: 'گۆڕانکاریەکان پاشەکەوت کران',
+            icon: 'success',
+            confirmButtonText: 'باشە'
+        }).then(() => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editShippingModal'));
+            modal.hide();
+        });
+    });
+
+    // Save Withdrawal Edit
+    document.getElementById('saveWithdrawalEdit').addEventListener('click', function() {
+        const id = document.getElementById('editWithdrawalId').value;
+        const name = document.getElementById('editWithdrawalName').value;
+        const date = document.getElementById('editWithdrawalDate').value;
+        const amount = document.getElementById('editWithdrawalAmount').value;
+        const category = document.getElementById('editWithdrawalCategory').value;
+        const notes = document.getElementById('editWithdrawalNotes').value;
+
+        // Here you would typically make an AJAX call to update the database
+        Swal.fire({
+            title: 'سەرکەوتوو بوو!',
+            text: 'گۆڕانکاریەکان پاشەکەوت کران',
+            icon: 'success',
+            confirmButtonText: 'باشە'
+        }).then(() => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editWithdrawalModal'));
+            modal.hide();
+        });
+    });
+});
+
+// Helper function to format date for input field
+function formatDateForInput(dateStr) {
+    const date = new Date(dateStr);
+    return date.toISOString().split('T')[0];
+}
+
+// Helper function to get payment type value
+function getPaymentTypeValue(type) {
+    const typeMap = {
+        'مووچە': 'salary',
+        'پاداشت': 'bonus',
+        'پێشەکی': 'advance',
+        'جۆری تر': 'other'
+    };
+    return typeMap[type] || 'other';
+}
+
+// Helper function to get shipping type value
+function getShippingTypeValue(type) {
+    const typeMap = {
+        'وشکانی': 'land',
+        'دەریایی': 'sea',
+        'ئاسمانی': 'air',
+        'جۆری تر': 'other'
+    };
+    return typeMap[type] || 'other';
+}
+
+// Helper function to get withdrawal category value
+function getWithdrawalCategoryValue(category) {
+    const categoryMap = {
+        'خەرجی ڕۆژانە': 'expense',
+        'پێداویستی': 'supplies',
+        'کرێ': 'rent',
+        'خزمەتگوزاری': 'utility',
+        'جۆری تر': 'other'
+    };
+    return categoryMap[category] || 'other';
 } 
