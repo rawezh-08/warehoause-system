@@ -70,9 +70,9 @@
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu" id="expensesSubmenu">
-                    <li><a href="employeePayment.php">پارەدان بە کارمەند</a></li>
-                    <li><a href="shippingCost.php">کرێی بار</a></li>
-                    <li><a href="moneyWithdrawal.php">دەرکردنی پارە</a></li>
+                    <li><a href="employeePayment.php">زیادکارنی مەسروفات</a></li>
+                    <li><a href="expensesHistory.php">پیشاندانەوەی مەسروفات</a></li>
+                   
                 </ul>
             </li>
 

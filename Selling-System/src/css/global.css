@@ -660,3 +660,52 @@ img {
     background: var(--primary-hover);
 }
 
+/* Sidebar Dropdown Styles */
+.sidebar .nav-item .collapse .nav-link,
+.sidebar .nav-item .collapsing .nav-link {
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    background: rgba(0, 0, 0, 0.03);
+    margin: 0.25rem 1rem;
+    border-radius: 0.5rem;
+}
+
+.sidebar .nav-item .collapse .nav-link:hover,
+.sidebar .nav-item .collapsing .nav-link:hover {
+    color: #0d6efd;
+    background: rgba(13, 110, 253, 0.1);
+    padding-right: 3rem;
+}
+
+.sidebar .nav-item .collapse .nav-link.active,
+.sidebar .nav-item .collapsing .nav-link.active {
+    color: #0d6efd;
+    background: rgba(13, 110, 253, 0.1);
+    font-weight: 500;
+}
+
+/* Add subtle animation for dropdown */
+.sidebar .nav-item .collapse,
+.sidebar .nav-item .collapsing {
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Improve spacing between dropdown items */
+.sidebar .nav-item .collapse .nav-item,
+.sidebar .nav-item .collapsing .nav-item {
+    margin: 0.25rem 0;
+}
+
