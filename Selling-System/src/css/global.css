@@ -143,28 +143,62 @@ a:hover {
 
 /* Navbar Styles */
 .navbar {
-    padding: 0.5rem 1rem;
+    padding: 0 1rem;
     background-color: white;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
     position: fixed;
     top: 0;
     right: 0;
     left: 0;
     height: 60px;
     z-index: 1020;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.navbar-nav {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.nav-item {
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 1rem;
+    color: var(--dark-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: var(--primary-color);
 }
 
 /* Sidebar */
 .sidebar {
     background-color: white;
     width: 260px;
-    height: 100vh;
+    height: 100%;
     position: fixed;
-    top: 60px; /* Position below navbar */
+    top: 0;
+    padding-top: 60px; /* Space for navbar */
     right: -260px; /* Start with sidebar hidden */
-    z-index: 1010;
-    box-shadow: var(--shadow);
+    z-index: 1010; /* Below navbar but above content */
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
     transition: right 0.3s ease;
+    border-left: 1px solid var(--gray-200);
 }
 
 body.sidebar-active .sidebar {
@@ -174,7 +208,33 @@ body.sidebar-active .sidebar {
 .sidebar-wrapper {
     height: 100%;
     overflow-y: auto;
-    padding: var(--spacing-base) 0;
+    padding: 0;
+    margin-top: 1rem;
+}
+
+/* Sidebar Header */
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1rem;
+    background-color: var(--light-gray);
+}
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    transition: all 0.3s ease;
+}
+
+.sidebar-logo:hover {
+    transform: scale(1.05);
 }
 
 /* Sidebar toggle button */
