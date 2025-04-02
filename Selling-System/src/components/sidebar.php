@@ -2,31 +2,31 @@
 // You can add PHP logic here if needed
 ?>
 <!-- Sidebar -->
+<link rel="stylesheet" href="css/shared/sidebar.css">
 <div class="sidebar">
     <div class="sidebar-wrapper">
         <!-- Sidebar Header -->
         <div class="sidebar-header">
-            <div class="sidebar-logo">
-                <i class="fas fa-box"></i>
-                <span>ASHKAN</span>
-            </div>
+                       
+        <a href="index.php" class="">
+                    <div class="icon-cont">
+                        <img src="assets/icons/Dashboard.svg" alt="" class="dash-icon">
+                    </div>
+                    <span>داشبۆرد</span>
+                </a>
         </div>
 
         <!-- Sidebar Menu -->
         <ul class="sidebar-menu">
             <!-- Dashboard -->
-            <li class="menu-item">
-                <a href="index.php">
-                    <i class="fas fa-home"></i>
-                    <span>داشبۆرد</span>
-                </a>
-            </li>
+           
 
             <!-- Products -->
             <li class="menu-item">
-                <a href="#productsSubmenu">
-                    <i class="fas fa-box"></i>
-                    <span>کاڵاکان</span>
+                <a href="#productsSubmenu" class="item-link">
+                <div class="icon-cont">
+                        <img src="assets/icons/product.svg" alt="">
+                    </div>                    <span>کاڵاکان</span>
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu" id="productsSubmenu">
@@ -38,9 +38,11 @@
 
             <!-- Staff -->
             <li class="menu-item">
-                <a href="#staffSubmenu">
-                    <i class="fas fa-users"></i>
-                    <span>هاوکارەکان</span>
+                <a href="#staffSubmenu" class="item-link">
+                <div class="icon-cont">
+                        <img src="assets/icons/accounts.svg" alt="">
+                    </div> 
+                    <span>هەژمارەکان</span>
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu" id="staffSubmenu">
@@ -51,9 +53,10 @@
 
             <!-- Sales -->
             <li class="menu-item">
-                <a href="#salesSubmenu">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span>فرۆشتنەکان</span>
+                <a href="#salesSubmenu" class="item-link">
+                <div class="icon-cont">
+                        <img src="assets/icons/owes.svg" alt="">
+                    </div>                    <span>فرۆشتنەکان</span>
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu" id="salesSubmenu">
@@ -78,17 +81,19 @@
 
             <!-- Reports -->
             <li class="menu-item">
-                <a href="reports.php">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>ڕاپۆرتەکان</span>
+                <a href="reports.php" class="item-link">
+                <div class="icon-cont">
+                        <img src="assets/icons/report.svg" alt="">
+                    </div>                    <span>ڕاپۆرتەکان</span>
                 </a>
             </li>
 
             <!-- Settings -->
             <li class="menu-item">
-                <a href="settings.php">
-                    <i class="fas fa-cog"></i>
-                    <span>ڕێکخستنەکان</span>
+                <a href="settings.php" class="item-link">
+                <div class="icon-cont">
+                        <img src="assets/icons/balance.svg" alt="">
+                    </div>                    <span>باڵانسەکان</span>
                 </a>
             </li>
         </ul>
