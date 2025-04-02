@@ -445,33 +445,82 @@ img {
 }
 
 .sidebar-menu .submenu {
-    list-style: none;
-    padding: 0 0 0 3rem;
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+    margin: 5px 15px;
 }
 
 .sidebar-menu .submenu.show {
-    max-height: 300px; /* Adjust as needed */
+    max-height: 500px;
+    padding: 10px 0;
 }
 
 .sidebar-menu .submenu li {
-    margin-bottom: 0.25rem;
+    margin-bottom: 5px;
+    position: relative;
 }
 
 .sidebar-menu .submenu a {
     display: block;
-    padding: 0.5rem 0;
+    padding: 8px 15px 8px 40px;
     color: var(--gray-600);
-    text-decoration: none;
-    transition: all 0.3s ease;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    border-radius: var(--border-radius-sm);
+    transition: all 0.2s ease;
+    position: relative;
 }
 
 .sidebar-menu .submenu a:hover,
 .sidebar-menu .submenu a.active {
+    background-color: rgba(115, 128, 236, 0.1);
     color: var(--primary-color);
+    padding-right: 25px;
+}
+
+/* Active submenu item */
+.sidebar-menu .submenu a.active {
+    font-weight: 500;
+}
+
+/* Add hover indicator */
+.sidebar-menu .submenu a:before {
+    content: "";
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: transparent;
+    transition: all 0.2s ease;
+}
+
+.sidebar-menu .submenu a:hover:before,
+.sidebar-menu .submenu a.active:before {
+    background-color: var(--primary-color);
+}
+
+/* Add subtle animation for submenu */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.sidebar-menu .submenu.show {
+    animation: fadeIn 0.3s ease-in-out;
 }
 
 /* Notification Panel */
@@ -707,5 +756,87 @@ img {
 .sidebar .nav-item .collapse .nav-item,
 .sidebar .nav-item .collapsing .nav-item {
     margin: 0.25rem 0;
+}
+
+/* Expense Tabs Styling */
+.expenses-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0;
+    margin-bottom: 1.5rem;
+    position: relative;
+    gap: 0.5rem;
+}
+
+.expenses-tabs .nav-item {
+    margin-bottom: 0;
+}
+
+.expenses-tabs .nav-link {
+    position: relative;
+    padding: 0.8rem 1.5rem;
+    color: var(--gray-600);
+    background: transparent;
+    border: none;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    margin-bottom: -1px;
+}
+
+.expenses-tabs .nav-link i {
+    margin-left: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.expenses-tabs .nav-link:hover {
+    color: var(--primary-color);
+    background-color: rgba(115, 128, 236, 0.05);
+}
+
+.expenses-tabs .nav-link.active {
+    color: var(--primary-color);
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-bottom-color: white;
+    box-shadow: 0 -3px 8px rgba(0, 0, 0, 0.03);
+    font-weight: 600;
+}
+
+.expenses-tabs .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 3px;
+    background-color: var(--primary-color);
+    transition: width 0.3s ease;
+}
+
+.expenses-tabs .nav-link.active::after {
+    width: 100%;
+}
+
+/* Expense Tab Content Animation */
+.tab-pane.fade {
+    transition: opacity 0.3s ease-in-out;
+}
+
+.tab-pane.fade.show {
+    animation: fadeInUp 0.4s forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
