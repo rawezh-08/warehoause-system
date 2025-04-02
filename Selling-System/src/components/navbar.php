@@ -8,13 +8,6 @@
             <i class="fas fa-bars"></i>
         </button>
 
-        <!-- Brand/logo -->
-        <a class="navbar-brand" href="index.php">
-            <span class="navbar-logo">
-                <i class="fas fa-box"></i>
-            </span>
-            <span class="navbar-title">ASHKAN</span>
-        </a>
 
         <!-- Right navbar items -->
         <div class="ms-auto d-flex align-items-center">

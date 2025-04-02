@@ -193,9 +193,8 @@ a:hover {
     height: 100%;
     position: fixed;
     top: 0;
-    padding-top: 60px; /* Space for navbar */
     right: -260px; /* Start with sidebar hidden */
-    z-index: 1010; /* Below navbar but above content */
+    z-index: 1030; /* Above navbar */
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
     transition: right 0.3s ease;
     border-left: 1px solid var(--gray-200);
@@ -209,7 +208,7 @@ body.sidebar-active .sidebar {
     height: 100%;
     overflow-y: auto;
     padding: 0;
-    margin-top: 1rem;
+    margin-top: 0; /* Remove top margin since we don't need space for navbar */
 }
 
 /* Sidebar Header */
@@ -221,6 +220,9 @@ body.sidebar-active .sidebar {
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 1rem;
     background-color: var(--light-gray);
+    position: sticky;
+    top: 0;
+    z-index: 1;
 }
 
 .sidebar-logo {
@@ -246,6 +248,23 @@ body.sidebar-active .sidebar {
     cursor: pointer;
     padding: var(--spacing-sm);
     display: block;
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    z-index: 1040; /* Above sidebar */
+    transition: right 0.3s ease;
+}
+
+.sidebar-toggle i {
+    transition: transform 0.3s ease;
+}
+
+body.sidebar-active .sidebar-toggle {
+    right: 275px; /* Move button when sidebar is open */
+}
+
+body.sidebar-active .sidebar-toggle i {
+    transform: rotate(180deg);
 }
 
 .sidebar-toggle:hover {

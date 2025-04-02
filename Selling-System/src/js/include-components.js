@@ -149,28 +149,44 @@ function initSidebar() {
  * Initialize sidebar toggle button
  */
 function initSidebarToggle() {
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            document.body.classList.toggle('sidebar-active');
-            document.getElementById('wrapper').classList.toggle('sidebar-collapsed');
+    const sidebarToggle = document.createElement('button');
+    sidebarToggle.className = 'sidebar-toggle';
+    sidebarToggle.innerHTML = '<i class="fas fa-bars"></i>';
+    document.body.appendChild(sidebarToggle);
+
+    sidebarToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.body.classList.toggle('sidebar-active');
+        document.getElementById('wrapper').classList.toggle('sidebar-collapsed');
+        
+        // Change icon between bars and X
+        const icon = this.querySelector('i');
+        if (document.body.classList.contains('sidebar-active')) {
+            icon.classList.remove('fa-bars');
+            icon.classList.add('fa-times');
+        } else {
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+        }
+        
+        // Create overlay if it doesn't exist
+        let overlay = document.querySelector('.overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'overlay';
+            document.body.appendChild(overlay);
             
-            // Create overlay if it doesn't exist
-            let overlay = document.querySelector('.overlay');
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.className = 'overlay';
-                document.body.appendChild(overlay);
-                
-                // Add click event to close sidebar when overlay is clicked
-                overlay.addEventListener('click', function() {
-                    document.body.classList.remove('sidebar-active');
-                    document.getElementById('wrapper').classList.add('sidebar-collapsed');
-                });
-            }
-        });
-    }
+            // Add click event to close sidebar when overlay is clicked
+            overlay.addEventListener('click', function() {
+                document.body.classList.remove('sidebar-active');
+                document.getElementById('wrapper').classList.add('sidebar-collapsed');
+                // Change icon back to bars
+                const icon = sidebarToggle.querySelector('i');
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            });
+        }
+    });
 }
 
 /**
