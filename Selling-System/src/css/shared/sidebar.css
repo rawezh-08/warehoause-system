@@ -1,5 +1,4 @@
 .sidebar {
-
   margin-top: 100px;
   background-color: #ffffff;
   width: 280px;
@@ -11,13 +10,12 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-
 }
 /* Sidebar */
 .sidebar {
   background-color: white;
   width: 260px;
-  height: 100%;
+  height: 100vh; /* Changed from 100% to 100vh for consistent viewport height */
   position: fixed;
   top: 0;
   right: -260px; /* Start with sidebar hidden */
@@ -25,17 +23,25 @@
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
   transition: right 0.3s ease;
   border-left: 1px solid var(--gray-200);
+  overflow-x: hidden; /* Prevent horizontal scrolling */
 }
 
 body.sidebar-active .sidebar {
   right: 0;
 }
 
+/* Fixing scrolling issues */
+body.sidebar-active {
+  overflow-x: hidden; /* Prevent horizontal scrolling of the body when sidebar is open */
+}
+
 .sidebar-wrapper {
   height: 100%;
   overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
   padding: 0;
   margin-top: 0; /* Remove top margin since we don't need space for navbar */
+  padding-bottom: 100px; /* Add bottom padding to ensure all menu items are accessible */
 }
 
 /* Sidebar Header */
