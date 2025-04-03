@@ -12,7 +12,7 @@
                     <div class="icon-cont">
                         <img src="assets/icons/Dashboard.svg" alt="" class="dash-icon">
                     </div>
-                    <span>داشبۆرد</span>
+                    <span>بەشی سەرەکی</span>
                 </a>
         </div>
 

@@ -127,7 +127,7 @@
         <div id="sidebar-container"></div>
             
         <!-- Main content -->
-        <div class="main-content p-3" id="main-content">
+        <div class="main-content p-3" id="main-content" style="margin-top: 100px;">
             <div class="container-fluid">
                 <div class="row mb-4">
                     <div class="col-12">

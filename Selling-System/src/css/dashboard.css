@@ -414,12 +414,15 @@ z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 120px;
   margin-bottom: 15px;
   font-size: 22px;
   background-color: rgba(67, 97, 238, 0.1);
   color: var(--primary-color);
+  border: 1px solid var(--primary-color);
 }
+
+
 
 .kpi-card .kpi-title {
   font-size: var(--font-size-lg);
