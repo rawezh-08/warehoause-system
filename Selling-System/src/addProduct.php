@@ -163,10 +163,10 @@
                                                         <span class="input-group-text">$</span>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6 mb-3">
+                                                <!-- <div class="col-md-6 mb-3">
                                                     <label for="minWholesaleQty" class="form-label">کەمترین بڕ بۆ کۆمەڵ</label>
                                                     <input type="number" id="minWholesaleQty" class="form-control" placeholder="کەمترین بڕ">
-                                                </div>
+                                                </div> -->
                                             </div>
                                             
                                             <div class="row mb-4">

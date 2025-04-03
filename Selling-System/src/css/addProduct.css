@@ -68,8 +68,8 @@ body {
 
 .page-title {
     font-weight: 700;
-    color: var(--primary-color);
-    margin-bottom: 20px;
+    color: var(--text-tertiary);
+    /* margin-bottom: 20px; */
 }
 
 .card {
