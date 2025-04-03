@@ -142,6 +142,23 @@ function initSidebar() {
             document.body.classList.remove('sidebar-active');
         }
     });
+    
+    // Close sidebar when clicking outside (for mobile)
+    if (window.innerWidth <= 400) {
+        document.addEventListener('click', function(e) {
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarToggle = document.querySelector('.sidebar-toggle');
+            
+            if (sidebar && sidebarToggle) {
+                const isClickInsideSidebar = sidebar.contains(e.target);
+                const isClickOnToggleBtn = sidebarToggle.contains(e.target);
+                
+                if (!isClickInsideSidebar && !isClickOnToggleBtn && document.body.classList.contains('sidebar-active')) {
+                    document.body.classList.remove('sidebar-active');
+                }
+            }
+        });
+    }
 }
 
 /**
@@ -150,7 +167,7 @@ function initSidebar() {
 function initSidebarToggle() {
     const sidebarToggle = document.createElement('button');
     sidebarToggle.className = 'sidebar-toggle';
-    sidebarToggle.innerHTML = '<img src="assets/icons/menu.svg" alt="Menu" class="menu-icon">';
+    sidebarToggle.innerHTML = '<img src="assets/icons/menu.svg" alt="Menu" class="menu-icon toggle-open">';
     document.body.appendChild(sidebarToggle);
 
     sidebarToggle.addEventListener('click', function(e) {
@@ -163,9 +180,6 @@ function initSidebarToggle() {
             wrapper.classList.toggle('sidebar-collapsed');
         }
         
-        // Change icon between bars and X
-       
-        
         // Create overlay if it doesn't exist
         let overlay = document.querySelector('.overlay');
         if (!overlay) {
@@ -174,7 +188,9 @@ function initSidebarToggle() {
             document.body.appendChild(overlay);
             
             // Add click event to close sidebar when overlay is clicked
-          
+            overlay.addEventListener('click', function() {
+                document.body.classList.remove('sidebar-active');
+            });
         }
     });
 }

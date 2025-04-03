@@ -86,30 +86,19 @@ body.sidebar-active {
   top: 15px;
   right: 15px;
   z-index: 1040;
-  transition: right 0.3s ease;
+  transition: right 0.3s ease, transform 0.3s ease;
 }
 
-.sidebar-toggle .fa-bars {
-  display: block;
+.sidebar-toggle img {
   transition: transform 0.3s ease;
 }
 
-.sidebar-toggle .fa-times {
-  display: none;
-  transition: transform 0.3s ease;
-}
-
-body.sidebar-active .sidebar-toggle .fa-bars {
-  display: none;
-}
-
-body.sidebar-active .sidebar-toggle .fa-times {
-  display: block;
+body.sidebar-active .sidebar-toggle img {
   transform: rotate(180deg);
 }
 
 body.sidebar-active .sidebar-toggle {
-  right: 5px;
+  right: 210px; /* Position toggle button relative to sidebar width */
 }
 
 .sidebar-toggle:hover {
@@ -197,14 +186,70 @@ justify-content: start;
 @media (max-width: 400px) {
   .sidebar {
     margin: 0px;
-   position: fixed;
-   display: block;
-   top: 90px;
-   left: 0;
-   right: 0;
-   width: 100%;
-   /* height: 100%; */
-   z-index: 1030;
-   box-shadow: none;
+    position: fixed;
+    display: block;
+    top: 0;
+    left: 0;
+    right: -100%; /* Hide off-screen by default */
+    width: 80%; /* Take only 80% of screen width */
+    height: 100vh;
+    z-index: 1030;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    transition: right 0.3s ease;
+  }
+  
+  body.sidebar-active .sidebar {
+    right: 0; /* Slide in from right */
+  }
+  
+  /* Create an overlay effect when sidebar is open */
+  body.sidebar-active::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1020;
+  }
+  
+  /* Make sure content doesn't shift when sidebar opens */
+  body.sidebar-active .main-content {
+    margin-right: 0 !important;
+    transform: none !important;
+  }
+  
+  #wrapper, #wrapper:not(.sidebar-collapsed) {
+    padding-right: 0 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  
+  /* Fix toggle button on small screens */
+  body.sidebar-active .sidebar-toggle {
+    right: 85%; /* Positions the toggle button at the edge of the sidebar */
+    background-color: white;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    padding: 8px;
+    transform: translateX(50%);
+  }
+  
+  /* Improve toggle button appearance */
+  .sidebar-toggle {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .sidebar-toggle img {
+    width: 20px;
+    height: 20px;
   }
 }
