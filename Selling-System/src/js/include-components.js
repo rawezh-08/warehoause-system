@@ -156,7 +156,12 @@ function initSidebarToggle() {
     sidebarToggle.addEventListener('click', function(e) {
         e.preventDefault();
         document.body.classList.toggle('sidebar-active');
-        document.getElementById('wrapper').classList.toggle('sidebar-collapsed');
+        
+        // Check if wrapper element exists before trying to access its classList
+        const wrapper = document.getElementById('wrapper');
+        if (wrapper) {
+            wrapper.classList.toggle('sidebar-collapsed');
+        }
         
         // Change icon between bars and X
        

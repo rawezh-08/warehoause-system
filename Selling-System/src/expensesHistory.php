@@ -28,61 +28,62 @@
             border: 1px solid #dee2e6;
         }
         
-        /* Word wrapping for table cells */
-        .custom-table td , th {
+        .custom-table td,
+        th {
             white-space: normal;
-            word-break: break-word;
+            word-wrap: break-word;
             vertical-align: middle;
             padding: 0.75rem;
         }
-        
-        /* Limited width for table columns */
-        .custom-table th, .custom-table td {
-            max-width: 200px;
+
+        #employeeHistoryTable td {
+
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        
-        /* Specific column widths for better data display */
-        .custom-table th:nth-child(1), 
-        .custom-table td:nth-child(1) {
-            width: 5%;
-            min-width: 40px;
+
+        #shippingHistoryTable td {
+
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        
-        .custom-table th:nth-child(2), 
-        .custom-table td:nth-child(2) {
-            width: 20%;
-            min-width: 150px;
+
+        #withdrawalHistoryTable td {
+
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        
-        .custom-table th:nth-child(3), 
-        .custom-table td:nth-child(3) {
-            width: 12%;
-            min-width: 110px;
+
+        #employeeHistoryTable th {
+
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        
-        .custom-table th:nth-child(4), 
-        .custom-table td:nth-child(4) {
-            width: 10%;
-            min-width: 100px;
+
+        #shippingHistoryTable th {
+
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        
-        .custom-table th:nth-child(5), 
-        .custom-table td:nth-child(5) {
-            width: 15%;
-            min-width: 120px;
+
+        #withdrawalHistoryTable th {
+
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        
-        .custom-table th:nth-child(6), 
-        .custom-table td:nth-child(6) {
-            width: 25%;
-            min-width: 180px;
-        }
-        
-        .custom-table th:nth-child(7), 
-        .custom-table td:nth-child(7) {
-            width: 13%;
-            min-width: 110px;
-        }
+
         
         /* Adjust pagination display for many pages */
         .pagination-numbers {
@@ -243,7 +244,7 @@
                                             
                                             <!-- Table Content -->
                                             <div class="table-responsive">
-                                                <table id="employeeHistoryTable" class="table custom-table table-hover">
+                                                <table id="employeeHistoryTable" class="table table-bordered custom-table table-hover">
                                                     <thead class="table-light">
                                                         <tr>
                                                             <th>#</th>
@@ -438,7 +439,7 @@
                                             
                                             <!-- Table Content -->
                                             <div class="table-responsive">
-                                                <table id="shippingHistoryTable" class="table custom-table table-hover">
+                                                <table id="shippingHistoryTable" class="table table-bordered custom-table table-hover">
                                                     <thead class="table-light">
                                                         <tr>
                                                             <th>#</th>
@@ -612,7 +613,7 @@
                                             
                                             <!-- Table Content -->
                                             <div class="table-responsive">
-                                                <table id="withdrawalHistoryTable" class="table custom-table table-hover">
+                                                <table id="withdrawalHistoryTable" class="table table-bordered custom-table table-hover">
                                                     <thead class="table-light">
                                                         <tr>
                                                             <th>#</th>
