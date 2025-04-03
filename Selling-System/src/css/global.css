@@ -398,6 +398,35 @@ body.sidebar-active .main-content {
     transition: opacity 0.3s ease;
 }
 
+body.sidebar-active .overlay {
+    opacity: 1;
+}
+
+/* Mobile sidebar improvements */
+@media (max-width: 992px) {
+    /* Smoother animations */
+    .sidebar {
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        will-change: transform;
+    }
+    
+    body.sidebar-active {
+        overflow: hidden; /* Prevent scrolling when sidebar is open */
+    }
+    
+    /* Touch-friendly improvements */
+    .sidebar-toggle {
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Prevent content shifting */
+    body.sidebar-active .main-content,
+    body.sidebar-active #wrapper {
+        transform: none !important;
+    }
+}
+
 /* Extra responsive settings */
 
 
@@ -874,7 +903,31 @@ img {
     }
 }
 
-/* Sidebar toggle button */
+/* Sidebar toggle button improvements */
+.sidebar-toggle {
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    z-index: 1050; /* Ensure button is above other elements */
+    transition: all 0.3s ease;
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    cursor: pointer;
+}
+
+.sidebar-toggle img {
+    width: 24px;
+    height: 24px;
+    transition: transform 0.3s ease;
+}
+
+body.sidebar-active .sidebar-toggle img {
+    transform: rotate(180deg);
+}
 
 .page-title{
     color: var(--text-primary);

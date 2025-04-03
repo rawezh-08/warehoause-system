@@ -31,7 +31,7 @@
             
    
             <div class="main-content p-3" id="main-content" style="margin-top: 100px;">
-                <div class="container-fluid">
+                <div class="container">
                     <div class="row mb-4">
                         <div class="col-12">
                             <h3 class="page-title">زیادکردنی کاڵا</h3>

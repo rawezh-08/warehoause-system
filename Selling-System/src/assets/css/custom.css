@@ -614,7 +614,7 @@ right: 10;
         height: 100vh;
         z-index: 9999;
         background-color: white;
-        transform: translateX(0);
+        transform: translateX(100%);
         transition: transform 0.3s ease;
         overflow-y: auto;
         box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
@@ -646,10 +646,26 @@ right: 10;
         background-color: rgba(0, 0, 0, 0.5);
         z-index: 9990;
         display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
     
     body.sidebar-active .overlay {
         display: block;
+        opacity: 1;
+    }
+    
+    /* Make sure content doesn't shift when sidebar opens */
+    body.sidebar-active .main-content {
+        margin-right: 0 !important; 
+        transform: none !important;
+    }
+}
+
+/* Specific styles for extra small screens */
+@media (max-width: 576px) {
+    .sidebar {
+        width: 85%; /* Take up more of the screen on very small devices */
     }
 }
 
