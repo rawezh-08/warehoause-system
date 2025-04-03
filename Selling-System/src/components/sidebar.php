@@ -6,7 +6,7 @@
 <div class="sidebar">
     <div class="sidebar-wrapper">
         <!-- Sidebar Header -->
-        <div class="sidebar-header">
+        <div class="sidebar-header" onclick="window.location.href='index.php'">
                        
         <a href="index.php" class="">
                     <div class="icon-cont">
@@ -32,7 +32,6 @@
                 <ul class="submenu" id="productsSubmenu">
                     <li><a href="addProduct.php">زیادکردنی کاڵا</a></li>
                     <li><a href="products.php">لیستی کاڵاکان</a></li>
-                    <li><a href="categories.php">جۆرەکان</a></li>
                 </ul>
             </li>
 
@@ -46,8 +45,8 @@
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu" id="staffSubmenu">
-                    <li><a href="addStaff.php">زیادکردنی هاوکار</a></li>
-                    <li><a href="staff.php">لیستی هاوکارەکان</a></li>
+                    <li><a href="addStaff.php">زیادکردنی هەژمار</a></li>
+                    <li><a href="staff.php">لیستی هەژمارەکان</a></li>
                 </ul>
             </li>
 
@@ -56,25 +55,27 @@
                 <a href="#salesSubmenu" class="item-link">
                 <div class="icon-cont">
                         <img src="assets/icons/owes.svg" alt="">
-                    </div>                    <span>فرۆشتنەکان</span>
+                    </div>                    <span>پسوڵەکان</span>
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu" id="salesSubmenu">
-                    <li><a href="addSale.php">فرۆشتنی نوێ</a></li>
-                    <li><a href="sales.php">لیستی فرۆشتنەکان</a></li>
+                    <li><a href="addSale.php"> زیادکردنی پسوڵە</a></li>
+                    <li><a href="sales.php">لیستی پسوڵەکان</a></li>
                 </ul>
             </li>
             
             <!-- Expenses -->
             <li class="menu-item">
-                <a href="#expensesSubmenu">
-                    <i class="fas fa-money-bill-wave"></i>
-                    <span>مەسروفات</span>
+                <a href="#expensesSubmenu" class="item-link">
+                <div class="icon-cont">
+                        <img src="assets/icons/spending.svg" alt="">
+                    </div> 
+                    <span>خەرجییەکان</span>
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu" id="expensesSubmenu">
-                    <li><a href="employeePayment.php">زیادکارنی مەسروفات</a></li>
-                    <li><a href="expensesHistory.php">پیشاندانەوەی مەسروفات</a></li>
+                    <li><a href="employeePayment.php"> زیادکردنی خەرجی</a></li>
+                    <li><a href="expensesHistory.php">لیستی خەرجییەکان</a></li>
                    
                 </ul>
             </li>

@@ -27,6 +27,7 @@
   border-left: 1px solid var(--gray-200);
 }
 
+
 body.sidebar-active .sidebar {
   right: 0;
 }
@@ -74,7 +75,7 @@ body.sidebar-active .sidebar {
   font-size: 1.5rem;
   cursor: pointer;
   padding: var(--spacing-sm);
-  display: block;
+  display: flex;
   position: fixed;
   top: 15px;
   right: 15px;
@@ -102,7 +103,7 @@ body.sidebar-active .sidebar-toggle .fa-times {
 }
 
 body.sidebar-active .sidebar-toggle {
-  right: 275px;
+  right: 5px;
 }
 
 .sidebar-toggle:hover {
@@ -183,4 +184,21 @@ justify-content: start;
   color: #383838;
   padding: 6px;
 
+}
+
+
+
+@media (max-width: 400px) {
+  .sidebar {
+    margin: 0px;
+   position: fixed;
+   display: block;
+   top: 90px;
+   left: 0;
+   right: 0;
+   width: 100%;
+   /* height: 100%; */
+   z-index: 1030;
+   box-shadow: none;
+  }
 }

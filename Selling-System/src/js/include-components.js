@@ -1,6 +1,5 @@
 // Component Loading and Dynamic Includes
 // For ASHKAN Warehouse Management System
-
 document.addEventListener('DOMContentLoaded', function() {
     // Load components
     loadComponent('navbar-container', 'components/navbar.php');

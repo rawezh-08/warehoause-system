@@ -6,3 +6,20 @@
     margin-top: 0px;
 }
 
+.sidebar-toggle {
+    cursor: pointer;
+    display: block;
+    margin-right: 24px;
+    
+    transition: right 0.3s ease;
+}
+
+.sidebar-toggle .menu-icon {
+    width: 32px;
+    height: 32px;
+    transition: transform 0.3s ease;
+}
+
+body.sidebar-active .sidebar-toggle .menu-icon {
+    transform: rotate(180deg);
+}
