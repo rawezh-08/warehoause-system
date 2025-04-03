@@ -15,6 +15,12 @@
     --dark-color: #363949;
     --text-color: #363949;
     --text-muted: #848bc82e;
+
+    /* Text Colors */
+    --text-primary: #363949;
+    --text-secondary: #848bc82e;
+    --text-tertiary: #6b6b6b;
+
     
     /* Grays */
     --light-gray: #f6f6f9;
@@ -951,3 +957,9 @@ body.sidebar-active .sidebar-toggle img {
     transform: rotate(180deg);
 }
 
+.page-title{
+    color: var(--text-primary);
+}
+div{
+    color: var(--text-tertiary);
+} 

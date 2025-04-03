@@ -656,8 +656,8 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
-        // Initialize Select2
         $(document).ready(function() {
+            // Initialize Select2
             $('.select2').select2({
                 theme: 'bootstrap-5',
                 width: '100%',
@@ -689,6 +689,17 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 $('#category').val('').trigger('change');
                 $('#unit').val('').trigger('change');
                 window.location.href = 'products.php';
+            });
+
+            // Initialize view notes buttons
+            $('.view-notes').on('click', function() {
+                const data = $(this).data();
+                Swal.fire({
+                    title: 'تێبینیەکانی ' + data.name,
+                    text: data.notes,
+                    icon: 'info',
+                    confirmButtonText: 'باشە'
+                });
             });
 
             // Initialize edit product buttons
@@ -787,14 +798,58 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 });
             });
 
-            // Initialize view notes buttons
-            $('.view-notes').on('click', function() {
-                const data = $(this).data();
+            // Initialize delete product buttons
+            $('.delete-product').on('click', function() {
+                const productId = $(this).data('id');
                 Swal.fire({
-                    title: 'تێبینیەکانی ' + data.name,
-                    text: data.notes,
-                    icon: 'info',
-                    confirmButtonText: 'باشە'
+                    title: 'دڵنیای لە سڕینەوەی ئەم کاڵایە؟',
+                    text: "ئەم کردارە ناگەڕێتەوە!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'بەڵێ، بسڕەوە',
+                    cancelButtonText: 'پاشگەزبوونەوە'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Send delete request
+                        fetch('process/deleteProduct.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: 'id=' + productId
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    title: 'سڕایەوە!',
+                                    text: 'کاڵاکە بە سەرکەوتوویی سڕایەوە.',
+                                    icon: 'success',
+                                    confirmButtonText: 'باشە'
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'هەڵە!',
+                                    text: data.message || 'کێشەیەک ڕوویدا لە سڕینەوەی کاڵاکە.',
+                                    icon: 'error',
+                                    confirmButtonText: 'باشە'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: 'کێشەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە.',
+                                icon: 'error',
+                                confirmButtonText: 'باشە'
+                            });
+                        });
+                    }
                 });
             });
         });
@@ -807,89 +862,64 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
         // Previous page button
-        document.getElementById('prevPageBtn').addEventListener('click', function() {
-            if (<?php echo $page; ?> > 1) {
-                changePage(<?php echo $page - 1; ?>);
-            }
-        });
-
-        // Next page button
-        document.getElementById('nextPageBtn').addEventListener('click', function() {
-            if (<?php echo $page; ?> < <?php echo $total_pages; ?>) {
-                changePage(<?php echo $page + 1; ?>);
-            }
-        });
-
-        // Load navbar and sidebar
         document.addEventListener('DOMContentLoaded', function() {
-            fetch('components/navbar.php')
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('navbar-container').innerHTML = data;
-                });
-
-            fetch('components/sidebar.php')
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('sidebar-container').innerHTML = data;
-                });
-
-            // Initialize delete product buttons
-            document.querySelectorAll('.delete-product').forEach(button => {
-                button.addEventListener('click', function() {
-                    const productId = this.dataset.id;
-                    Swal.fire({
-                        title: 'دڵنیای لە سڕینەوەی ئەم کاڵایە؟',
-                        text: "ئەم کردارە ناگەڕێتەوە!",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#d33',
-                        cancelButtonColor: '#3085d6',
-                        confirmButtonText: 'بەڵێ، بسڕەوە',
-                        cancelButtonText: 'پاشگەزبوونەوە'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            // Send delete request
-                            fetch('process/deleteProduct.php', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/x-www-form-urlencoded',
-                                },
-                                body: 'id=' + productId
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    Swal.fire({
-                                        title: 'سڕایەوە!',
-                                        text: 'کاڵاکە بە سەرکەوتوویی سڕایەوە.',
-                                        icon: 'success',
-                                        confirmButtonText: 'باشە'
-                                    }).then(() => {
-                                        window.location.reload();
-                                    });
-                                } else {
-                                    Swal.fire({
-                                        title: 'هەڵە!',
-                                        text: data.message || 'کێشەیەک ڕوویدا لە سڕینەوەی کاڵاکە.',
-                                        icon: 'error',
-                                        confirmButtonText: 'باشە'
-                                    });
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                                Swal.fire({
-                                    title: 'هەڵە!',
-                                    text: 'کێشەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە.',
-                                    icon: 'error',
-                                    confirmButtonText: 'باشە'
-                                });
-                            });
-                        }
+            // Load navbar and sidebar
+            if (document.getElementById('navbar-container')) {
+                fetch('components/navbar.php')
+                    .then(response => response.text())
+                    .then(data => {
+                        document.getElementById('navbar-container').innerHTML = data;
                     });
+            }
+
+            if (document.getElementById('sidebar-container')) {
+                fetch('components/sidebar.php')
+                    .then(response => response.text())
+                    .then(data => {
+                        document.getElementById('sidebar-container').innerHTML = data;
+                        
+                        // Initialize sidebar dropdowns after loading
+                        const dropdownItems = document.querySelectorAll('.sidebar-menu .menu-item > a');
+                        
+                        dropdownItems.forEach(item => {
+                            if (item.getAttribute('href') && item.getAttribute('href').startsWith('#')) {
+                                item.addEventListener('click', function(e) {
+                                    e.preventDefault();
+                                    
+                                    const submenuId = this.getAttribute('href');
+                                    const submenu = document.querySelector(submenuId);
+                                    
+                                    if (submenu) {
+                                        // Toggle current submenu
+                                        submenu.classList.toggle('show');
+                                        
+                                        // Toggle dropdown icon
+                                        const dropdownIcon = this.querySelector('.dropdown-icon');
+                                        if (dropdownIcon) {
+                                            dropdownIcon.classList.toggle('rotate');
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    });
+            }
+
+            if (document.getElementById('prevPageBtn')) {
+                document.getElementById('prevPageBtn').addEventListener('click', function() {
+                    if (<?php echo $page; ?> > 1) {
+                        changePage(<?php echo $page - 1; ?>);
+                    }
                 });
-            });
+            }
+
+            if (document.getElementById('nextPageBtn')) {
+                document.getElementById('nextPageBtn').addEventListener('click', function() {
+                    if (<?php echo $page; ?> < <?php echo $total_pages; ?>) {
+                        changePage(<?php echo $page + 1; ?>);
+                    }
+                });
+            }
         });
     </script>
 </body>
