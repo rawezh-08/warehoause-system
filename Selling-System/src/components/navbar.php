@@ -2,7 +2,7 @@
 // Navbar Component for ASHKAN system
 ?>
 <link rel="stylesheet" href="css/shared/navbar.css">
-<nav class="navbar" style="border-radius: 50px; margin: 8px; margin-top:0px; height: 80px;">
+<nav class="navbar" style="border-radius: 50px; margin: 8px; margin-top:10px; height: 80px;">
     <div class="container-fluid">
         <!-- Sidebar Toggle Button -->
      

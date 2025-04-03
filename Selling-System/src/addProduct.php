@@ -1,5 +1,15 @@
 <?php
-// You can add PHP logic here if needed
+require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/models/Category.php';
+require_once __DIR__ . '/models/Unit.php';
+
+// Initialize models
+$categoryModel = new Category($conn);
+$unitModel = new Unit($conn);
+
+// Get categories and units
+$categories = $categoryModel->getAll();
+$units = $unitModel->getAll();
 ?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
@@ -56,69 +66,74 @@
                                             <div class="row mb-4">
                                                 <div class="col-md-6 mb-3">
                                                     <label for="productName" class="form-label">ناوی کاڵا</label>
-                                                    <input type="text" id="productName" class="form-control" placeholder="ناوی کاڵا">
+                                                    <input type="text" id="productName" name="name" class="form-control" placeholder="ناوی کاڵا">
                                                 </div>
                                                 <div class="col-md-6 mb-3">
-                                                    <label for="productCategory" class="form-label">جۆری کاڵا</label>
-                                                    <select id="productCategory" class="form-select">
+                                                    <label for="category_id" class="form-label">جۆری کاڵا</label>
+                                                    <select id="category_id" name="category_id" class="form-select">
                                                         <option value="" selected disabled>جۆر</option>
-                                                        <option value="1">ناوماڵ</option>
-                                                        <option value="2">ئەلیکترۆنیات</option>
-                                                        <option value="3">جلوبەرگ</option>
+                                                        <?php foreach ($categories as $category): ?>
+                                                            <option value="<?php echo $category['id']; ?>"><?php echo $category['name']; ?></option>
+                                                        <?php endforeach; ?>
                                                     </select>
                                                 </div>
                                             </div>
                                             
                                             <div class="row mb-4">
-                                                <div class="col-md-6 mb-3">
+                                                <div class="col-md-4 mb-3">
                                                     <label for="productCode" class="form-label">کۆدی کاڵا</label>
-                                                    <input type="text" id="productCode" class="form-control" placeholder="کۆدی کاڵا">
+                                                    <div class="input-group">
+                                                        <input type="text" id="productCode" name="code" class="form-control" placeholder="کۆدی کاڵا">
+                                                        <button type="button" class="btn btn-outline-primary" id="generateCode">
+                                                            <i class="fas fa-plus"></i>
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="unit" class="form-label">یەکە</label>
-                                                    <select id="unit" class="form-select">
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="barCode" class="form-label">بارکۆد</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="barCode" name="barcode" class="form-control" placeholder="بارکۆد">
+                                                        <button type="button" class="btn btn-outline-primary" id="generateBarcode">
+                                                            <i class="fas fa-plus"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="unit_id" class="form-label">یەکە</label>
+                                                    <select id="unit_id" name="unit_id" class="form-select">
                                                         <option value="" selected disabled>یەکە</option>
-                                                        <option value="piece">دانە</option>
-                                                        <option value="box">سندوق</option>
-                                                        <option value="kg">کیلۆگرام</option>
+                                                        <?php foreach ($units as $unit): ?>
+                                                            <option value="<?php echo $unit['id']; ?>"><?php echo $unit['name']; ?></option>
+                                                        <?php endforeach; ?>
                                                     </select>
                                                 </div>
                                             </div>
                                             
-                                            <div class="row mb-4">
-                                                <div class="col-md-12 mb-3">
-                                                    <label for="description" class="form-label">وەسف</label>
-                                                    <textarea id="description" class="form-control" rows="3" placeholder="وەسفی کاڵا لێرە بنووسە..."></textarea>
+                                            <!-- Dynamic unit quantity inputs -->
+                                            <div class="row mb-4" id="unitQuantityContainer" style="display: none;">
+                                                <div class="col-md-4 mb-3" id="piecesPerBoxContainer" style="display: none;">
+                                                    <label for="piecesPerBox" class="form-label">ژمارەی دانە لە کارتۆن</label>
+                                                    <input type="number" id="piecesPerBox" name="pieces_per_box" class="form-control" placeholder="ژمارەی دانە لە کارتۆن">
+                                                </div>
+                                                <div class="col-md-4 mb-3" id="boxesPerSetContainer" style="display: none;">
+                                                    <label for="boxesPerSet" class="form-label">ژمارەی کارتۆن لە سێت</label>
+                                                    <input type="number" id="boxesPerSet" name="boxes_per_set" class="form-control" placeholder="ژمارەی کارتۆن لە سێت">
                                                 </div>
                                             </div>
                                             
-                                            <div class="row mb-4">
-                                                <div class="col-md-6 mb-3">
+                                            <div class="row mb-4" style="text-align: center;">
+                                                <div class="col-md-12 mb-3">
                                                     <label class="form-label">وێنەی کاڵا</label>
                                                     <div class="product-image-upload">
                                                         <div class="image-preview">
                                                             <i class="fas fa-cloud-upload-alt"></i>
                                                             <p>وێنە هەڵبژێرە</p>
                                                         </div>
-                                                        <input type="file" id="productImage" class="form-control d-none">
+                                                        <input type="file" id="productImage" name="image" class="form-control d-none">
                                                         <button type="button" id="uploadBtn" class="btn btn-light upload-btn mt-2 w-100">وێنە هەڵبژێرە</button>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label">تایبەتمەندییەکان</label>
-                                                    <div class="product-attributes">
-                                                        <div class="attribute-item d-flex align-items-center mb-2">
-                                                            <input type="text" class="form-control me-2" placeholder="ناو">
-                                                            <input type="text" class="form-control" placeholder="بەها">
-                                                            <button type="button" class="btn btn-link text-danger remove-attribute">
-                                                                <i class="fas fa-times"></i>
-                                                            </button>
-                                                        </div>
-                                                        <button type="button" id="addAttributeBtn" class="btn btn-outline-primary btn-sm mt-2">
-                                                            <i class="fas fa-plus me-1"></i> زیادکردنی تایبەتمەندی
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                         
                                             </div>
                                             
                                             <hr class="my-4">
@@ -139,52 +154,32 @@
                                         <!-- Tab Content: Price Info (Initially Hidden) -->
                                         <div class="tab-content" id="price-info-content" style="display: none;">
                                             <div class="row mb-4">
-                                                <div class="col-md-6 mb-3">
+                                                <div class="col-md-4 mb-3" style="direction: rtl;">
                                                     <label for="buyingPrice" class="form-label">نرخی کڕین</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="buyingPrice" class="form-control" placeholder="نرخی کڕین">
-                                                        <span class="input-group-text">$</span>
+                                                        <input type="number" id="buyingPrice" name="purchase_price" class="form-control" placeholder="نرخی کڕین">
+                                                        <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6 mb-3">
+                                                <div class="col-md-4 mb-3">
                                                     <label for="sellingPrice" class="form-label">نرخی فرۆشتن</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="sellingPrice" class="form-control" placeholder="نرخی فرۆشتن">
-                                                        <span class="input-group-text">$</span>
+                                                        <input type="number" id="sellingPrice" name="selling_price_single" class="form-control" placeholder="نرخی فرۆشتن">
+                                                        <span class="input-group-text">د.ع</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="selling_price_wholesale" class="form-label">نرخی فرۆشتن (کۆمەڵ)</label>
+                                                    <div class="input-group">
+                                                        <input type="number" id="selling_price_wholesale" name="selling_price_wholesale" class="form-control" placeholder="نرخی فرۆشتن (کۆمەڵ)">
+                                                        <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
                                             </div>
                                             
-                                            <div class="row mb-4">
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="wholesalePrice" class="form-label">نرخی کۆمەڵ</label>
-                                                    <div class="input-group">
-                                                        <input type="number" id="wholesalePrice" class="form-control" placeholder="نرخی کۆمەڵ">
-                                                        <span class="input-group-text">$</span>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="minWholesaleQty" class="form-label">کەمترین بڕ بۆ کۆمەڵ</label>
-                                                    <input type="number" id="minWholesaleQty" class="form-control" placeholder="کەمترین بڕ">
-                                                </div>
-                                            </div>
+
                                             
-                                            <div class="row mb-4">
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="discountPercent" class="form-label">ڕێژەی داشکاندن</label>
-                                                    <div class="input-group">
-                                                        <input type="number" id="discountPercent" class="form-control" placeholder="ڕێژەی داشکاندن">
-                                                        <span class="input-group-text">%</span>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="tax" class="form-label">باج</label>
-                                                    <div class="input-group">
-                                                        <input type="number" id="tax" class="form-control" placeholder="باج">
-                                                        <span class="input-group-text">%</span>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            
                                             
                                             <hr class="my-4">
                                             
@@ -203,29 +198,20 @@
                                         
                                         <!-- Tab Content: Location Info (Initially Hidden) -->
                                         <div class="tab-content" id="location-info-content" style="display: none;">
-                                            <div class="row mb-4">
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="warehouse" class="form-label">کۆگا</label>
-                                                    <select id="warehouse" class="form-select">
-                                                        <option value="" selected disabled>کۆگا هەڵبژێرە</option>
-                                                        <option value="1">کۆگای سەرەکی</option>
-                                                        <option value="2">کۆگای دووەم</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="shelf" class="form-label">ڕەف</label>
-                                                    <input type="text" id="shelf" class="form-control" placeholder="ڕەفی کاڵا">
-                                                </div>
-                                            </div>
+                                       
                                             
                                             <div class="row mb-4">
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="minQuantity" class="form-label">کەمترین بڕ</label>
-                                                    <input type="number" id="minQuantity" class="form-control" placeholder="کەمترین بڕ بۆ ئاگادارکردنەوە">
+                                            <div class="col-md-4 mb-3">
+                                                    <label for="shelf" class="form-label">ڕەف</label>
+                                                    <input type="text" id="shelf" name="shelf" class="form-control" placeholder="ڕەفی کاڵا">
                                                 </div>
-                                                <div class="col-md-6 mb-3">
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="min_quantity" class="form-label">کەمترین بڕ</label>
+                                                    <input type="number" id="min_quantity" name="min_quantity" class="form-control" placeholder="کەمترین بڕ">
+                                                </div>
+                                                <div class="col-md-4 mb-3">
                                                     <label for="initialQuantity" class="form-label">بڕی سەرەتایی</label>
-                                                    <input type="number" id="initialQuantity" class="form-control" placeholder="بڕی سەرەتایی">
+                                                    <input type="number" id="initialQuantity" name="current_quantity" class="form-control" placeholder="بڕی سەرەتایی">
                                                 </div>
                                             </div>
                                             

@@ -11,11 +11,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const productImageInput = document.getElementById('productImage');
     const tabItems = document.querySelectorAll('.tab-item');
     const tabContents = document.querySelectorAll('.tab-content');
-    const purchasePriceInput = document.getElementById('purchasePrice');
+    const buyingPriceInput = document.getElementById('buyingPrice');
     const sellingPriceInput = document.getElementById('sellingPrice');
     const nextTabBtn = document.getElementById('nextTabBtn');
     const prevTabBtn = document.getElementById('prevTabBtn');
     const submitBtn = document.getElementById('submitBtn');
+    const generateCodeBtn = document.getElementById('generateCode');
+    const generateBarcodeBtn = document.getElementById('generateBarcode');
+    const productCodeInput = document.getElementById('productCode');
+    const barCodeInput = document.getElementById('barCode');
+    const unitSelect = document.getElementById('unit_id');
+    const unitQuantityContainer = document.getElementById('unitQuantityContainer');
+    const piecesPerBoxContainer = document.getElementById('piecesPerBoxContainer');
+    const boxesPerSetContainer = document.getElementById('boxesPerSetContainer');
+    const imagePreview = document.querySelector('.image-preview');
+    const uploadBtn = document.getElementById('uploadBtn');
     
     // Get CSS variables for consistent styling in JS
     const style = getComputedStyle(document.documentElement);
@@ -108,20 +118,36 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Validate all tabs before submission
             if (validateAllTabs()) {
-                // Get form values
-                const productName = document.getElementById('productName').value;
-                const productCode = document.getElementById('productCode').value;
-                const purchasePrice = purchasePriceInput ? purchasePriceInput.value : '';
-                const sellingPrice = sellingPriceInput ? sellingPriceInput.value : '';
-                
-                // In a real application, you would submit the form data to a server here
-                // For this demo, we'll just show a success message
-                showSuccessMessage();
-                
-                // Reset form
-                addProductForm.reset();
-                resetImageUpload();
-                switchToTab('basic-info'); // Go back to first tab
+                // کۆکردنەوەی داتاکان
+                const formData = new FormData(this);
+
+                // ناردنی داتاکان
+                fetch('process/add_product.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // پیشاندانی پەیامی سەرکەوتن
+                        showSuccessMessage();
+                        // پاککردنەوەی فۆرمەکە
+                        addProductForm.reset();
+                        // پاککردنەوەی وێنەکە
+                        resetImageUpload();
+                        // گەڕانەوە بۆ پەڕەی لیستەکە
+                        setTimeout(() => {
+                            window.location.href = 'products.php';
+                        }, 2000);
+                    } else {
+                        // پیشاندانی پەیامی هەڵە
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('هەڵە لە ناردنی داتاکان');
+                });
             }
         });
     }
@@ -132,12 +158,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Auto-calculate profit when prices change
-    if (purchasePriceInput && sellingPriceInput) {
-        purchasePriceInput.addEventListener('input', updateProfit);
+    if (buyingPriceInput && sellingPriceInput) {
+        buyingPriceInput.addEventListener('input', updateProfit);
         sellingPriceInput.addEventListener('input', updateProfit);
         
         // Add visual feedback
-        purchasePriceInput.addEventListener('change', function() {
+        buyingPriceInput.addEventListener('change', function() {
             addHighlightEffect(this);
         });
         
@@ -145,6 +171,47 @@ document.addEventListener('DOMContentLoaded', function() {
             addHighlightEffect(this);
         });
     }
+    
+    // Generate product code
+    generateCodeBtn.addEventListener('click', function() {
+        const category = document.getElementById('category_id').value;
+        const timestamp = Date.now().toString().slice(-6);
+        const code = `PRD${category}${timestamp}`;
+        productCodeInput.value = code;
+        console.log("کۆدی کاڵا دروست کرا:", code);
+    });
+
+    // Generate barcode
+    generateBarcodeBtn.addEventListener('click', function() {
+        const timestamp = Date.now().toString();
+        const barcode = `BAR${timestamp}`;
+        barCodeInput.value = barcode;
+        console.log("بارکۆد دروست کرا:", barcode);
+    });
+    
+    // Handle unit selection changes
+    if (unitSelect) {
+        unitSelect.addEventListener('change', function() {
+            const selectedUnit = this.options[this.selectedIndex].text.toLowerCase();
+            
+            if (selectedUnit.includes('کارتۆن')) {
+                unitQuantityContainer.style.display = 'flex';
+                piecesPerBoxContainer.style.display = 'block';
+                boxesPerSetContainer.style.display = 'none';
+            } else if (selectedUnit.includes('سێت')) {
+                unitQuantityContainer.style.display = 'flex';
+                piecesPerBoxContainer.style.display = 'block';
+                boxesPerSetContainer.style.display = 'block';
+            } else {
+                unitQuantityContainer.style.display = 'none';
+            }
+        });
+    }
+    
+    // زیادکردنی event listener بۆ دوگمەی هەڵبژاردنی وێنە
+    uploadBtn.addEventListener('click', function() {
+        productImageInput.click();
+    });
     
     // Functions
     
@@ -217,6 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentTabId === 'basic-info') {
             const productName = document.getElementById('productName').value;
             const productCode = document.getElementById('productCode').value;
+            const unit = document.getElementById('unit_id').value;
             
             if (!productName) {
                 showValidationError('productName', 'تکایە ناوی کاڵا بنووسە');
@@ -231,18 +299,46 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 clearValidationError('productCode');
             }
+            
+            // Validate unit quantities based on selected unit
+            if (unit === 'box') {
+                const piecesPerBox = document.getElementById('piecesPerBox').value;
+                if (!piecesPerBox) {
+                    showValidationError('piecesPerBox', 'تکایە ژمارەی دانە لە کارتۆن بنووسە');
+                    isValid = false;
+                } else {
+                    clearValidationError('piecesPerBox');
+                }
+            } else if (unit === 'set') {
+                const piecesPerBox = document.getElementById('piecesPerBox').value;
+                const boxesPerSet = document.getElementById('boxesPerSet').value;
+                
+                if (!piecesPerBox) {
+                    showValidationError('piecesPerBox', 'تکایە ژمارەی دانە لە کارتۆن بنووسە');
+                    isValid = false;
+                } else {
+                    clearValidationError('piecesPerBox');
+                }
+                
+                if (!boxesPerSet) {
+                    showValidationError('boxesPerSet', 'تکایە ژمارەی کارتۆن لە سێت بنووسە');
+                    isValid = false;
+                } else {
+                    clearValidationError('boxesPerSet');
+                }
+            }
         }
         
         // Price info tab validation
         else if (currentTabId === 'price-info') {
-            const purchasePrice = document.getElementById('purchasePrice').value;
+            const buyingPrice = document.getElementById('buyingPrice').value;
             const sellingPrice = document.getElementById('sellingPrice').value;
             
-            if (!purchasePrice) {
-                showValidationError('purchasePrice', 'تکایە نرخی کڕین بنووسە');
+            if (!buyingPrice) {
+                showValidationError('buyingPrice', 'تکایە نرخی کڕین بنووسە');
                 isValid = false;
             } else {
-                clearValidationError('purchasePrice');
+                clearValidationError('buyingPrice');
             }
             
             if (!sellingPrice) {
@@ -255,13 +351,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Location info tab validation
         else if (currentTabId === 'location-info') {
-            const warehouseSection = document.getElementById('warehouseSection').value;
+            const shelf = document.getElementById('shelf').value;
             
-            if (!warehouseSection) {
-                showValidationError('warehouseSection', 'تکایە بەشی کۆگا دیاری بکە');
+            if (!shelf) {
+                showValidationError('shelf', 'تکایە ڕەفی کاڵا دیاری بکە');
                 isValid = false;
             } else {
-                clearValidationError('warehouseSection');
+                clearValidationError('shelf');
             }
         }
         
@@ -349,67 +445,44 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const reader = new FileReader();
         reader.onload = function(event) {
-            const imageUpload = document.querySelector('.image-upload');
-            
-            // Create image preview
-            imageUpload.innerHTML = `
-                <div style="position: relative; width: 100%; height: 200px; display: flex; align-items: center; justify-content: center;">
-                    <img src="${event.target.result}" style="max-width: 100%; max-height: 200px; object-fit: contain;">
-                    <button type="button" id="removeImage" style="position: absolute; top: 0; right: 0; background: ${lightGray}; border: none; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
+            imagePreview.innerHTML = `
+                <img src="${event.target.result}" style="max-width: 100%; max-height: 200px; object-fit: contain;">
+                <button type="button" class="btn btn-sm btn-danger mt-2" id="removeImage">
+                    <i class="fas fa-trash"></i> سڕینەوەی وێنە
+                </button>
             `;
-            
-            // Re-add the file input
-            const newInput = document.createElement('input');
-            newInput.type = 'file';
-            newInput.accept = 'image/*';
-            newInput.id = 'productImage';
-            newInput.style.display = 'none';
-            imageUpload.appendChild(newInput);
-            
-            // Add event listener to new input
-            newInput.addEventListener('change', handleImageUpload);
-            
-            // Add event listener to remove button
-            const removeBtn = document.getElementById('removeImage');
-            if (removeBtn) {
-                removeBtn.addEventListener('click', resetImageUpload);
-            }
+
+            // زیادکردنی event listener بۆ دوگمەی سڕینەوە
+            document.getElementById('removeImage').addEventListener('click', function() {
+                productImageInput.value = '';
+                imagePreview.innerHTML = `
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>وێنە هەڵبژێرە</p>
+                `;
+            });
         };
         
         reader.readAsDataURL(file);
     }
     
     function resetImageUpload() {
-        const imageUpload = document.querySelector('.image-upload');
-        if (!imageUpload) return;
-        
-        imageUpload.innerHTML = `
+        imagePreview.innerHTML = `
             <i class="fas fa-cloud-upload-alt"></i>
-            <p>دەتوانیت وێنەیەک بۆ کاڵاکە هەڵبژێریت یان ڕایبکێشیت بۆ ئێرە</p>
-            <input type="file" accept="image/*" id="productImage">
+            <p>وێنە هەڵبژێرە</p>
         `;
-        
-        // Re-add event listener
-        const newInput = document.getElementById('productImage');
-        if (newInput) {
-            newInput.addEventListener('change', handleImageUpload);
-        }
     }
     
     function updateProfit() {
-        const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
+        const buyingPrice = parseFloat(buyingPriceInput.value) || 0;
         const sellingPrice = parseFloat(sellingPriceInput.value) || 0;
         
         // Calculate profit amount
-        const profitAmount = sellingPrice - purchasePrice;
+        const profitAmount = sellingPrice - buyingPrice;
         
         // Calculate profit margin as percentage
         let profitMargin = 0;
-        if (purchasePrice > 0) {
-            profitMargin = (profitAmount / purchasePrice) * 100;
+        if (buyingPrice > 0) {
+            profitMargin = (profitAmount / buyingPrice) * 100;
         }
         
         // Update profit fields if they exist

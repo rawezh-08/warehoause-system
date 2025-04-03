@@ -286,6 +286,34 @@ body.sidebar-active .main-content {
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--border-radius);
     transition: all var(--transition-fast);
+    direction: rtl; /* Add RTL support */
+}
+
+/* Fix number input direction and remove spinners */
+input[type="number"] {
+    direction: ltr; /* Keep numbers LTR */
+    text-align: right; /* Align numbers to the right */
+    -moz-appearance: textfield; /* Firefox */
+    appearance: textfield; /* Standard */
+}
+
+/* Remove spinners for Chrome, Safari, Edge, Opera */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+}
+
+/* Fix placeholder positioning */
+.form-control::placeholder {
+    text-align: right;
+    direction: rtl;
+}
+
+input[type="number"]::placeholder {
+    text-align: right;
+    direction: rtl;
 }
 
 .form-control:focus, .form-select:focus {
