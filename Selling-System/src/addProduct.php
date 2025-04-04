@@ -117,7 +117,7 @@ try {
                                         <div class="tab-item mb-2" data-tab="location-info">شوێن لە کۆگا</div>
                                     </div>
                                     
-                                    <form id="addProductForm">
+                                    <form id="addProductForm" action="process/add_product.php" method="POST" enctype="multipart/form-data">
                                         <!-- Tab Content: Basic Info -->
                                         <div class="tab-content" id="basic-info-content">
                                             <div class="row mb-4">

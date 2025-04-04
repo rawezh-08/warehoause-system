@@ -619,6 +619,77 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize by making sure we're on the correct tab and buttons are set up
     switchToTab('basic-info');
+
+    // Add form submission handling
+    if (addProductForm) {
+        addProductForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Validate all tabs before submission
+            if (!validateAllTabs()) {
+                return;
+            }
+
+            // Clean number inputs (remove commas)
+            cleanNumberInputs();
+
+            // Create FormData object
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Show success message
+                    Swal.fire({
+                        title: 'سەرکەوتوو بوو!',
+                        text: data.message,
+                        icon: 'success',
+                        confirmButtonText: 'باشە'
+                    }).then(() => {
+                        // Reset form
+                        this.reset();
+                        
+                        // Clear image preview
+                        const imagePreview = document.querySelector('.image-preview');
+                        if (imagePreview) {
+                            imagePreview.innerHTML = `
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>وێنە هەڵبژێرە</p>
+                            `;
+                        }
+                        
+                        // Switch back to basic info tab
+                        switchToTab('basic-info');
+                        
+                        // Update latest products list
+                        updateLatestProducts();
+                    });
+                } else {
+                    // Show error message
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: data.message,
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'هەڵە!',
+                    text: 'کێشەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە',
+                    icon: 'error',
+                    confirmButtonText: 'باشە'
+                });
+            }
+        });
+    }
 });
 
 async function updateLatestProducts() {
