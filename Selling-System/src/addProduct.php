@@ -45,7 +45,7 @@ $latestProducts = $productModel->getLatest(5);
         .product-icon {
             width: 60px;
             height: 60px;
-            display: flex;
+            /* display: flex; */
             align-items: center;
             justify-content: center;
             overflow: hidden;
