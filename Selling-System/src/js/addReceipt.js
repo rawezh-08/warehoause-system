@@ -1,7 +1,7 @@
 $(document).ready(function() {
     // Set default dates
     const today = new Date().toISOString().split('T')[0];
-    $('.start-date, .end-date').val(today);
+    $('.start-date, .end-date, .purchase-date, .delivery-date, .adjustment-date').val(today);
 
     // Tab counter for each type
     let tabCounters = {
@@ -17,7 +17,12 @@ $(document).ready(function() {
     function calculateRowTotal(row) {
         const price = parseFloat($(row).find('.price').val()) || 0;
         const quantity = parseFloat($(row).find('.quantity').val()) || 0;
-        $(row).find('.total').val((price * quantity).toFixed(2));
+        const adjustedQuantity = parseFloat($(row).find('.adjusted-quantity').val()) || 0;
+        
+        // For wasting type, use adjusted quantity instead if available
+        const qtyToUse = $(row).closest('[data-receipt-type="wasting"]').length ? adjustedQuantity : quantity;
+        
+        $(row).find('.total').val((price * qtyToUse).toFixed(2));
         
         // Calculate grand total for the current tab
         const tabId = $('.tab-pane.active').attr('id');
@@ -35,7 +40,19 @@ $(document).ready(function() {
         
         const tax = parseFloat(tabPane.find('.tax').val()) || 0;
         const discount = parseFloat(tabPane.find('.discount').val()) || 0;
-        const grandTotal = subtotal + tax - discount;
+        const shippingCost = parseFloat(tabPane.find('.shipping-cost').val()) || 0;
+        
+        // Different calculation based on receipt type
+        const receiptType = tabPane.data('receipt-type');
+        let grandTotal;
+        
+        if (receiptType === 'buying') {
+            grandTotal = subtotal + tax + shippingCost;
+        } else if (receiptType === 'wasting') {
+            grandTotal = subtotal; // Just the subtotal for wasting
+        } else { // selling
+            grandTotal = subtotal + tax - discount;
+        }
         
         tabPane.find('.subtotal').val(subtotal.toFixed(2));
         tabPane.find('.grand-total').val(grandTotal.toFixed(2));
@@ -55,7 +72,7 @@ $(document).ready(function() {
     });
 
     // Calculate totals on input
-    $(document).on('input', '.price, .quantity', function() {
+    $(document).on('input', '.price, .quantity, .adjusted-quantity', function() {
         calculateRowTotal($(this).closest('tr'));
     });
 
@@ -83,8 +100,8 @@ $(document).ready(function() {
         activeReceiptType = $(this).data('type');
     });
 
-    // Tax and discount updates
-    $(document).on('input', '.tax, .discount', function() {
+    // Tax, discount, and shipping cost updates
+    $(document).on('input', '.tax, .discount, .shipping-cost', function() {
         const tabId = $(this).closest('.tab-pane').attr('id');
         calculateGrandTotal(tabId);
     });
@@ -125,11 +142,25 @@ $(document).ready(function() {
         // Insert new tab before the add tab button
         $(this).parent().before(newTab);
         
-        // Create new tab content by cloning the first tab
-        const firstTabContent = $('#selling-1').html();
+        // Get appropriate template based on receipt type
+        let templateContent;
+        if (activeReceiptType === 'buying') {
+            templateContent = $('#buying-template').html();
+        } else if (activeReceiptType === 'wasting') {
+            templateContent = $('#wasting-template').html();
+        } else { // selling
+            // Clone the selling template from the first tab if available, otherwise use a default
+            if ($('#selling-1').length) {
+                templateContent = $('#selling-1').html();
+            } else {
+                templateContent = $('#selling-template').html();
+            }
+        }
+        
+        // Create new tab content
         const newTabContent = `
-            <div class="tab-pane fade" id="${newTabId}" role="tabpanel">
-                ${firstTabContent}
+            <div class="tab-pane fade" id="${newTabId}" role="tabpanel" data-receipt-type="${activeReceiptType}">
+                ${templateContent}
             </div>
         `;
         
@@ -137,8 +168,13 @@ $(document).ready(function() {
         $('#receiptTabsContent').append(newTabContent);
         
         // Clear inputs in the new tab
-        $('#' + newTabId).find('input').val('');
-        $('#' + newTabId).find('.start-date, .end-date').val(today);
+        $('#' + newTabId).find('input:not([readonly])').val('');
+        
+        // Set default dates
+        $('#' + newTabId).find('.start-date, .end-date, .purchase-date, .delivery-date, .adjustment-date').val(today);
+        
+        // Set default values for numeric inputs
+        $('#' + newTabId).find('.tax, .discount, .shipping-cost').val('0');
         
         // Activate the new tab
         $(`#tab-${newTabId}`).tab('show');

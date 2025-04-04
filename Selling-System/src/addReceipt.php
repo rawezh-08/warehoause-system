@@ -60,7 +60,8 @@
 
         <!-- Tabs Content -->
         <div class="tab-content" id="receiptTabsContent">
-            <div class="tab-pane fade show active" id="selling-1" role="tabpanel">
+            <!-- SELLING RECEIPT TEMPLATE -->
+            <div class="tab-pane fade show active" id="selling-1" role="tabpanel" data-receipt-type="selling">
                 <div class="receipt-container">
                     <!-- Header Section -->
                     <div class="row mb-4">
@@ -73,20 +74,20 @@
                             <input type="text" class="form-control receipt-title" placeholder="ناونیشانی پسوڵە بنووسە">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">بەکارهێنەر</label>
-                            <input type="text" class="form-control receipt-customer" placeholder="ناوی بەکارهێنەر">
+                            <label class="form-label">کڕیار</label>
+                            <input type="text" class="form-control receipt-customer" placeholder="ناوی کڕیار">
                         </div>
                     </div>
 
                     <!-- Date Range -->
                     <div class="row mb-4">
                         <div class="col-md-6">
-                            <label class="form-label">بەرواری دەستپێکردن</label>
+                            <label class="form-label">بەروار</label>
                             <input type="date" class="form-control start-date">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">بەرواری تەواوبوون</label>
-                            <input type="date" class="form-control end-date">
+                            <label class="form-label">ڕەوانەکردن</label>
+                            <input type="date" class="form-control delivery-date">
                         </div>
                     </div>
 
@@ -180,14 +181,375 @@
         </div>
     </div>
 
+    <!-- Template for Buying Receipt Tab (Hidden) -->
+    <div id="buying-template" class="d-none">
+        <div class="receipt-container">
+            <!-- Header Section -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">ژمارە</label>
+                    <input type="text" class="form-control receipt-number" placeholder="ژمارەی پسوڵە">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">ناونیشانی پسوڵە</label>
+                    <input type="text" class="form-control receipt-title" placeholder="ناونیشانی پسوڵە بنووسە">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">فرۆشیار</label>
+                    <input type="text" class="form-control receipt-vendor" placeholder="ناوی فرۆشیار">
+                </div>
+            </div>
+
+            <!-- Date and Vendor Info -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">بەروار</label>
+                    <input type="date" class="form-control purchase-date">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">ڕەوانەکردن</label>
+                    <input type="date" class="form-control delivery-date">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">ژمارەی پسوڵەی فرۆشیار</label>
+                    <input type="text" class="form-control vendor-invoice" placeholder="ژمارەی پسوڵەی فرۆشیار">
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-outline-primary refresh-btn">
+                    <i class="fas fa-sync"></i>
+                    نوێکردنەوە
+                </button>
+                <button class="btn btn-outline-primary export-btn">
+                    <i class="fas fa-file-export"></i>
+                    ناردنە دەرەوە
+                </button>
+                <button class="btn btn-outline-primary print-btn">
+                    <i class="fas fa-print"></i>
+                    چاپکردن
+                </button>
+                <button class="btn btn-outline-primary add-new-btn">
+                    <i class="fas fa-plus"></i>
+                    زیادکردنی نوێ
+                </button>
+            </div>
+
+            <!-- Items Table -->
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px">#</th>
+                            <th>کاڵا</th>
+                            <th>نرخی کڕین</th>
+                            <th>بڕی یەکە</th>
+                            <th>وەسفکردن</th>
+                            <th>کۆی گشتی</th>
+                            <th style="width: 100px">کردار</th>
+                        </tr>
+                    </thead>
+                    <tbody class="items-list">
+                        <tr>
+                            <td>1</td>
+                            <td><input type="text" class="form-control" placeholder="ناوی "></td>
+                            <td><input type="number" class="form-control price" step="0.01"></td>
+                            <td><input type="number" class="form-control quantity"></td>
+                            <td><input type="text" class="form-control" placeholder="وەسفکردن"></td>
+                            <td><input type="number" class="form-control total" readonly></td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-sm remove-row">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Add Row Button -->
+            <button type="button" class="btn btn-link text-primary add-row-btn">
+                <i class="fas fa-plus"></i> زیادکردنی ڕیز
+            </button>
+
+            <!-- Totals Section -->
+            <div class="total-section">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label class="total-label">کۆ</label>
+                        <input type="number" class="form-control subtotal" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="total-label">باج</label>
+                        <input type="number" class="form-control tax" value="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="total-label">تێچووی گواستنەوە</label>
+                        <input type="number" class="form-control shipping-cost" value="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="total-label">کۆی گشتی</label>
+                        <input type="number" class="form-control grand-total" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="mt-4 text-start">
+                <button type="submit" class="btn btn-primary save-btn">
+                    <i class="fas fa-save"></i> پاشەکەوتکردن
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template for Wasting Receipt Tab (Hidden) -->
+    <div id="wasting-template" class="d-none">
+        <div class="receipt-container">
+            <!-- Header Section -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">ژمارە</label>
+                    <input type="text" class="form-control receipt-number" placeholder="ژمارەی پسوڵە">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">ناونیشانی پسوڵە</label>
+                    <input type="text" class="form-control receipt-title" placeholder="ناونیشانی پسوڵە بنووسە">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">بەرپرسیار</label>
+                    <input type="text" class="form-control responsible-person" placeholder="ناوی بەرپرسیار">
+                </div>
+            </div>
+
+            <!-- Date and Reason Info -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">بەروار</label>
+                    <input type="date" class="form-control adjustment-date">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">هۆکاری ڕێکخستنەوە</label>
+                    <select class="form-select adjustment-reason">
+                        <option value="damaged">کاڵای زیانمەند</option>
+                        <option value="expired">کاڵای بەسەرچوو</option>
+                        <option value="inventory_correction">ڕاستکردنەوەی ئینڤێنتۆری</option>
+                        <option value="other">هۆکاری تر</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Notes Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <label class="form-label">تێبینی</label>
+                    <textarea class="form-control adjustment-notes" rows="3" placeholder="تێبینی لەسەر ڕێکخستنەوە"></textarea>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-outline-primary refresh-btn">
+                    <i class="fas fa-sync"></i>
+                    نوێکردنەوە
+                </button>
+                <button class="btn btn-outline-primary export-btn">
+                    <i class="fas fa-file-export"></i>
+                    ناردنە دەرەوە
+                </button>
+                <button class="btn btn-outline-primary print-btn">
+                    <i class="fas fa-print"></i>
+                    چاپکردن
+                </button>
+                <button class="btn btn-outline-primary add-new-btn">
+                    <i class="fas fa-plus"></i>
+                    زیادکردنی نوێ
+                </button>
+            </div>
+
+            <!-- Items Table -->
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px">#</th>
+                            <th>کاڵا</th>
+                            <th>بڕی بەردەست</th>
+                            <th>بڕی ڕێکخراو</th>
+                            <th>نرخی یەکە</th>
+                            <th>وەسفکردن</th>
+                            <th>کۆی گشتی</th>
+                            <th style="width: 100px">کردار</th>
+                        </tr>
+                    </thead>
+                    <tbody class="items-list">
+                        <tr>
+                            <td>1</td>
+                            <td><input type="text" class="form-control" placeholder="ناوی کاڵا"></td>
+                            <td><input type="number" class="form-control current-quantity" readonly></td>
+                            <td><input type="number" class="form-control adjusted-quantity"></td>
+                            <td><input type="number" class="form-control price" step="0.01"></td>
+                            <td><input type="text" class="form-control" placeholder="وەسفکردن"></td>
+                            <td><input type="number" class="form-control total" readonly></td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-sm remove-row">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Add Row Button -->
+            <button type="button" class="btn btn-link text-primary add-row-btn">
+                <i class="fas fa-plus"></i> زیادکردنی ڕیز
+            </button>
+
+            <!-- Totals Section -->
+            <div class="total-section">
+                <div class="row">
+                    <div class="col-md-12">
+                        <label class="total-label">کۆی گشتی زیان</label>
+                        <input type="number" class="form-control grand-total" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="mt-4 text-start">
+                <button type="submit" class="btn btn-primary save-btn">
+                    <i class="fas fa-save"></i> پاشەکەوتکردن
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template for Selling Receipt Tab (Hidden) -->
+    <div id="selling-template" class="d-none">
+        <div class="receipt-container">
+            <!-- Header Section -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">ژمارە</label>
+                    <input type="text" class="form-control receipt-number" placeholder="ژمارەی پسوڵە">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">ناونیشانی پسوڵە</label>
+                    <input type="text" class="form-control receipt-title" placeholder="ناونیشانی پسوڵە بنووسە">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">کڕیار</label>
+                    <input type="text" class="form-control receipt-customer" placeholder="ناوی کڕیار">
+                </div>
+            </div>
+
+            <!-- Date Range -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">بەروار</label>
+                    <input type="date" class="form-control start-date">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">ڕەوانەکردن</label>
+                    <input type="date" class="form-control delivery-date">
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-outline-primary refresh-btn">
+                    <i class="fas fa-sync"></i>
+                    نوێکردنەوە
+                </button>
+                <button class="btn btn-outline-primary export-btn">
+                    <i class="fas fa-file-export"></i>
+                    ناردنە دەرەوە
+                </button>
+                <button class="btn btn-outline-primary print-btn">
+                    <i class="fas fa-print"></i>
+                    چاپکردن
+                </button>
+                <button class="btn btn-outline-primary add-new-btn">
+                    <i class="fas fa-plus"></i>
+                    زیادکردنی نوێ
+                </button>
+            </div>
+
+            <!-- Items Table -->
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px">#</th>
+                            <th>کاڵا</th>
+                            <th>نرخی یەکە</th>
+                            <th>بڕی یەکە</th>
+                            <th>وەسفکردن</th>
+                            <th>کۆی گشتی</th>
+                            <th style="width: 100px">کردار</th>
+                        </tr>
+                    </thead>
+                    <tbody class="items-list">
+                        <tr>
+                            <td>1</td>
+                            <td><input type="text" class="form-control" placeholder="ناوی کاڵا"></td>
+                            <td><input type="number" class="form-control price" step="0.01"></td>
+                            <td><input type="number" class="form-control quantity"></td>
+                            <td><input type="text" class="form-control" placeholder="وەسفکردن"></td>
+                            <td><input type="number" class="form-control total" readonly></td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-sm remove-row">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Add Row Button -->
+            <button type="button" class="btn btn-link text-primary add-row-btn">
+                <i class="fas fa-plus"></i> زیادکردنی ڕیز
+            </button>
+
+            <!-- Totals Section -->
+            <div class="total-section">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label class="total-label">کۆ</label>
+                        <input type="number" class="form-control subtotal" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="total-label">باج</label>
+                        <input type="number" class="form-control tax" value="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="total-label">داشکاندن</label>
+                        <input type="number" class="form-control discount" value="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="total-label">کۆی گشتی</label>
+                        <input type="number" class="form-control grand-total" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="mt-4 text-start">
+                <button type="submit" class="btn btn-primary save-btn">
+                    <i class="fas fa-save"></i> پاشەکەوتکردن
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/addReceipt.js"></script>
     <script src="js/include-components.js"></script>
-
-   
-    </script>
 </body>
 </html> 
