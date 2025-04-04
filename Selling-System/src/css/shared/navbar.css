@@ -10,7 +10,7 @@
     cursor: pointer;
     display: block;
     margin-right: 24px;
-    
+     margin-top: 10px;
     transition: right 0.3s ease;
 }
 
