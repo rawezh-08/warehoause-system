@@ -14,7 +14,13 @@ $categories = $categoryModel->getAll();
 $units = $unitModel->getAll();
 
 // Get latest products (last 5)
-$latestProducts = $productModel->getLatest(5);
+try {
+    $latestProducts = $productModel->getLatest(5);
+} catch (Exception $e) {
+    // If there's an error, set an empty array
+    $latestProducts = [];
+    error_log("Error loading latest products: " . $e->getMessage());
+}
 ?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
@@ -86,7 +92,7 @@ $latestProducts = $productModel->getLatest(5);
 <!-- Sidebar container - will be populated by JavaScript -->
 <div id="sidebar-container"></div>
     <!-- Main Content Wrapper -->
-    <div id="content">
+    <div id="content" class="content-wrapper">
         <!-- Navbar container - will be populated by JavaScript -->
        
             
@@ -253,17 +259,9 @@ $latestProducts = $productModel->getLatest(5);
                                        
                                             
                                             <div class="row mb-4">
-                                            <div class="col-md-4 mb-3">
-                                                    <label for="shelf" class="form-label">ڕەف</label>
-                                                    <input type="text" id="shelf" name="shelf" class="form-control" placeholder="ڕەفی کاڵا">
-                                                </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label for="min_quantity" class="form-label">کەمترین بڕ</label>
                                                     <input type="text" id="min_quantity" name="min_quantity" class="form-control" placeholder="کەمترین بڕ" oninput="formatNumber(this)">
-                                                </div>
-                                                <div class="col-md-4 mb-3">
-                                                    <label for="initialQuantity" class="form-label">بڕی سەرەتایی</label>
-                                                    <input type="text" id="initialQuantity" name="current_quantity" class="form-control" placeholder="بڕی سەرەتایی" oninput="formatNumber(this)">
                                                 </div>
                                             </div>
                                             
@@ -333,7 +331,7 @@ $latestProducts = $productModel->getLatest(5);
                                     </ul>
                                 </div>
                                 <div class="card-footer bg-transparent text-center">
-                                    <a href="product-list.php" class="btn btn-sm btn-link text-primary">بینینی هەموو کاڵاکان</a>
+                                    <a href="products.php" class="btn btn-sm btn-link text-primary">بینینی هەموو کاڵاکان</a>
                                 </div>
                             </div>
                             
