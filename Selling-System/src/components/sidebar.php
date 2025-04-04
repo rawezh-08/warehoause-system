@@ -51,7 +51,7 @@
             </li>
 
             <!-- Sales -->
-            <li class="menu-item">
+            <li class="menu-item" >
                 <a href="#salesSubmenu" class="item-link">
                 <div class="icon-cont">
                         <img src="assets/icons/owes.svg" alt="">
@@ -59,7 +59,7 @@
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu" id="salesSubmenu">
-                    <li><a href="addSale.php"> زیادکردنی پسوڵە</a></li>
+                    <li><a href="addReceipt.php" > زیادکردنی پسوڵە</a></li>
                     <li><a href="sales.php">لیستی پسوڵەکان</a></li>
                 </ul>
             </li>
