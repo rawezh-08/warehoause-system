@@ -45,35 +45,39 @@ class Product {
                 name, code, barcode, category_id, unit_id, 
                 pieces_per_box, boxes_per_set, purchase_price, 
                 selling_price_single, selling_price_wholesale, 
-                current_quantity, min_quantity, shelf, notes, image
+                min_quantity,  notes, image
             ) VALUES (
                 :name, :code, :barcode, :category_id, :unit_id, 
                 :pieces_per_box, :boxes_per_set, :purchase_price, 
                 :selling_price_single, :selling_price_wholesale, 
-                :current_quantity, :min_quantity, :shelf, :notes, :image
+                :min_quantity, :notes, :image
             )";
             
             $stmt = $this->conn->prepare($sql);
-            return $stmt->execute([
+            $result = $stmt->execute([
                 ':name' => $data['name'],
                 ':code' => $data['code'],
                 ':barcode' => $data['barcode'],
                 ':category_id' => $data['category_id'],
                 ':unit_id' => $data['unit_id'],
-                ':pieces_per_box' => $data['pieces_per_box'] ?? 1,
-                ':boxes_per_set' => $data['boxes_per_set'] ?? 1,
+                ':pieces_per_box' => $data['pieces_per_box'] ?? null,
+                ':boxes_per_set' => $data['boxes_per_set'] ?? null,
                 ':purchase_price' => $data['purchase_price'],
                 ':selling_price_single' => $data['selling_price_single'],
                 ':selling_price_wholesale' => $data['selling_price_wholesale'],
-                ':current_quantity' => $data['current_quantity'],
                 ':min_quantity' => $data['min_quantity'],
-                ':shelf' => $data['shelf'] ?? null,
+
                 ':notes' => $data['notes'] ?? null,
                 ':image' => $imagePath
             ]);
+            
+            return $result;
         } catch(PDOException $e) {
-            echo "Error: " . $e->getMessage();
+            error_log("Error in add product: " . $e->getMessage());
             return false;
+        } catch(Exception $e) {
+            error_log("Error in add product: " . $e->getMessage());
+            throw $e;
         }
     }
     
@@ -163,7 +167,7 @@ class Product {
                     selling_price_wholesale = :selling_price_wholesale,
                     current_quantity = :current_quantity,
                     min_quantity = :min_quantity,
-                    shelf = :shelf,
+            
                     notes = :notes,
                     image = COALESCE(:image, image)
                     WHERE id = :id";
@@ -183,7 +187,7 @@ class Product {
                 ':selling_price_wholesale' => $data['selling_price_wholesale'],
                 ':current_quantity' => $data['current_quantity'],
                 ':min_quantity' => $data['min_quantity'],
-                ':shelf' => $data['shelf'] ?? null,
+            
                 ':notes' => $data['notes'] ?? null,
                 ':image' => $imagePath
             ]);
@@ -222,11 +226,12 @@ class Product {
                     ORDER BY p.created_at DESC 
                     LIMIT :limit";
             $stmt = $this->conn->prepare($sql);
-            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch(PDOException $e) {
-            echo "Error: " . $e->getMessage();
+            // Log the error instead of displaying it
+            error_log("Error fetching latest products: " . $e->getMessage());
             return [];
         }
     }

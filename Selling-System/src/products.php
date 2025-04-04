@@ -494,13 +494,13 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             <th>ناو</th>
                                             <th>جۆر</th>
                                             <th>یەکە</th>
-                                            <th>شوێن</th>
+                                
                                             <th>دانە لە کارتۆن</th>
                                             <th>کارتۆن لە سێت</th>
                                             <th>نرخی کڕین</th>
                                             <th>نرخی فرۆشتن</th>
                                             <th>نرخی فرۆشتن (کۆمەڵ)</th>
-                                            <th>بڕی ئێستا</th>
+                                      
                                             <th>بڕی کەمترین</th>
                                                             <th>کردارەکان</th>
                                                         </tr>
@@ -530,13 +530,13 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             <td><?php echo htmlspecialchars($product['name']); ?></td>
                                             <td><?php echo htmlspecialchars($product['category_name']); ?></td>
                                             <td><?php echo htmlspecialchars($product['unit_name']); ?></td>
-                                            <td><?php echo htmlspecialchars($product['shelf'] ?: '-'); ?></td>
+                                        
                                             <td><?php echo $product['pieces_per_box'] ?: '-'; ?></td>
                                             <td><?php echo $product['boxes_per_set'] ?: '-'; ?></td>
                                             <td><?php echo number_format($product['purchase_price'], 0); ?> د.ع</td>
                                             <td><?php echo number_format($product['selling_price_single'], 0); ?> د.ع</td>
                                             <td><?php echo number_format($product['selling_price_wholesale'], 0); ?> د.ع</td>
-                                            <td><?php echo $product['current_quantity']; ?></td>
+                                          
                                             <td><?php echo $product['min_quantity']; ?></td>
                                             <td>
                                                 <div class="btn-group">
@@ -547,13 +547,13 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                             data-barcode="<?php echo htmlspecialchars($product['barcode']); ?>"
                                                             data-category="<?php echo $product['category_id']; ?>"
                                                             data-unit="<?php echo $product['unit_id']; ?>"
-                                                            data-shelf="<?php echo htmlspecialchars($product['shelf']); ?>"
+                                                
                                                             data-pieces-per-box="<?php echo $product['pieces_per_box']; ?>"
                                                             data-boxes-per-set="<?php echo $product['boxes_per_set']; ?>"
                                                             data-purchase="<?php echo $product['purchase_price']; ?>"
                                                             data-selling-single="<?php echo $product['selling_price_single']; ?>"
                                                             data-selling-wholesale="<?php echo $product['selling_price_wholesale']; ?>"
-                                                            data-current-qty="<?php echo $product['current_quantity']; ?>"
+                                                         
                                                             data-min-qty="<?php echo $product['min_quantity']; ?>"
                                                             data-notes="<?php echo htmlspecialchars($product['notes']); ?>">
                                                                         <i class="fas fa-edit"></i>
@@ -623,8 +623,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             </div>
                                                 <div class="row">
                                                     <div class="col-md-4 mb-3">
-                                                        <label for="edit_shelf" class="form-label">شوێن</label>
-                                                        <input type="text" class="form-control" id="edit_shelf" name="shelf">
+                                                       
                                     </div>
                                                     <div class="col-md-4 mb-3">
                                                         <label for="edit_pieces_per_box" class="form-label">دانە لە کارتۆن</label>
@@ -650,10 +649,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                             </div>
                                                         </div>
                                                 <div class="row">
-                                                    <div class="col-md-6 mb-3">
-                                                        <label for="edit_current_quantity" class="form-label">بڕی ئێستا</label>
-                                                        <input type="number" class="form-control" id="edit_current_quantity" name="current_quantity" required>
-                                                    </div>
+                                                  
                                                     <div class="col-md-6 mb-3">
                                                         <label for="edit_min_quantity" class="form-label">کەمترین بڕ</label>
                                                         <input type="number" class="form-control" id="edit_min_quantity" name="min_quantity" required>
@@ -797,13 +793,12 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 $('#edit_barcode').val(data.barcode);
                 $('#edit_category').val(data.category);
                 $('#edit_unit').val(data.unit);
-                $('#edit_shelf').val(data.shelf);
+            
                 $('#edit_pieces_per_box').val(data.piecesPerBox);
                 $('#edit_boxes_per_set').val(data.boxesPerSet);
                 $('#edit_purchase_price').val(data.purchase);
                 $('#edit_selling_price_single').val(data.sellingSingle);
                 $('#edit_selling_price_wholesale').val(data.sellingWholesale);
-                $('#edit_current_quantity').val(data.currentQty);
                 $('#edit_min_quantity').val(data.minQty);
                 $('#edit_notes').val(data.notes);
                 
@@ -847,12 +842,29 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $('#saveProductChanges').on('click', function() {
                 const formData = new FormData(document.getElementById('editProductForm'));
                 
+                // Remove commas from number fields before sending
+                const numberFields = ['purchase_price', 'selling_price_single', 'selling_price_wholesale', 'min_quantity'];
+                numberFields.forEach(field => {
+                    const value = formData.get(field);
+                    if (value) {
+                        formData.set(field, value.replace(/,/g, ''));
+                    }
+                });
+
                 fetch('process/updateProduct.php', {
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.json())
-                .then(data => {
+                .then(response => response.text())
+                .then(text => {
+                    let data;
+                    try {
+                        data = JSON.parse(text);
+                    } catch (e) {
+                        console.error('Server response:', text);
+                        throw new Error('Invalid server response');
+                    }
+                    
                     if (data.success) {
                         Swal.fire({
                             title: 'سەرکەوتوو بوو!',
@@ -863,19 +875,14 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             window.location.reload();
                         });
                     } else {
-                        Swal.fire({
-                            title: 'هەڵە!',
-                            text: data.message || 'کێشەیەک ڕوویدا لە گۆڕینی زانیاریەکان.',
-                            icon: 'error',
-                            confirmButtonText: 'باشە'
-                        });
+                        throw new Error(data.message || 'کێشەیەک ڕوویدا لە گۆڕینی زانیاریەکان.');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     Swal.fire({
                         title: 'هەڵە!',
-                        text: 'کێشەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە.',
+                        text: error.message || 'کێشەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە.',
                         icon: 'error',
                         confirmButtonText: 'باشە'
                     });
@@ -945,7 +952,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
             window.location.href = '?' + params.toString();
         }
 
-        // Previous page button
+        // Document ready event for navigation elements
         document.addEventListener('DOMContentLoaded', function() {
             // Load navbar and sidebar
             if (document.getElementById('navbar-container')) {
@@ -989,26 +996,30 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     });
             }
 
-            if (document.getElementById('prevPageBtn')) {
-                document.getElementById('prevPageBtn').addEventListener('click', function() {
+            // Initialize pagination buttons if they exist
+            const prevPageBtn = document.getElementById('prevPageBtn');
+            const nextPageBtn = document.getElementById('nextPageBtn');
+            
+            if (prevPageBtn) {
+                prevPageBtn.addEventListener('click', function() {
                     if (<?php echo $page; ?> > 1) {
                         changePage(<?php echo $page - 1; ?>);
                     }
                 });
             }
 
-            if (document.getElementById('nextPageBtn')) {
-                document.getElementById('nextPageBtn').addEventListener('click', function() {
+            if (nextPageBtn) {
+                nextPageBtn.addEventListener('click', function() {
                     if (<?php echo $page; ?> < <?php echo $total_pages; ?>) {
                         changePage(<?php echo $page + 1; ?>);
                     }
                 });
             }
 
-            // Initialize image tooltips
+            // Initialize tooltips
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
+            tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+                new bootstrap.Tooltip(tooltipTriggerEl);
             });
 
             // Add click event to product images
@@ -1019,15 +1030,15 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         const modal = document.createElement('div');
                         modal.className = 'modal fade image-modal';
                         modal.innerHTML = `
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
                                         <img src="${img.src}" alt="${img.alt}">
-                        </div>
-                        </div>
+                                    </div>
+                                </div>
                             </div>
                         `;
                         document.body.appendChild(modal);

@@ -4,7 +4,7 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // DOM Elements
+    // DOM Elements - Add null checks
     const sidebar = document.getElementById('sidebar-container');
     const toggleSidebarBtn = document.querySelector('.sidebar-toggle');
     const addProductForm = document.getElementById('addProductForm');
@@ -39,20 +39,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabIds = ['basic-info', 'price-info', 'location-info'];
     
     // Toggle sidebar on mobile
-    if (toggleSidebarBtn) {
+    if (toggleSidebarBtn && sidebar) {
         toggleSidebarBtn.addEventListener('click', function(e) {
             e.preventDefault();
             document.getElementById('wrapper').classList.toggle('sidebar-collapsed');
             document.body.classList.toggle('sidebar-active');
             
-            // Create overlay if it doesn't exist
             let overlay = document.querySelector('.overlay');
             if (!overlay) {
                 overlay = document.createElement('div');
                 overlay.className = 'overlay';
                 document.body.appendChild(overlay);
                 
-                // Add click event to close sidebar when overlay is clicked
                 overlay.addEventListener('click', function() {
                     document.body.classList.remove('sidebar-active');
                     document.getElementById('wrapper').classList.add('sidebar-collapsed');
@@ -90,84 +88,49 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Next tab button
-    if (nextTabBtn) {
-        nextTabBtn.addEventListener('click', function() {
-            if (currentTabIndex < tabIds.length - 1) {
-                // Validate current tab before proceeding
-                if (validateCurrentTab()) {
-                    goToNextTab();
-                }
-            }
-        });
-    }
-    
-    // Previous tab button
-    if (prevTabBtn) {
-        prevTabBtn.addEventListener('click', function() {
-            if (currentTabIndex > 0) {
-                goToPrevTab();
-            }
-        });
-    }
-    
-    // Form validation and submission
-    if (addProductForm) {
-        addProductForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Validate all tabs before submission
-            if (validateAllTabs()) {
-                // پاککردنەوەی کۆماکان لە ژمارەکان پێش ناردن
-                cleanNumberInputs();
-                
-                // کۆکردنەوەی داتاکان
-                const formData = new FormData(this);
+    // Navigation buttons event listeners
+    const allPrevButtons = ['prevTabBtn', 'prevTabBtn2', 'prevTabBtn3'];
+    const allNextButtons = ['nextTabBtn', 'nextTabBtn2'];
+    const allSubmitButtons = ['submitBtn', 'submitBtn2', 'submitBtn3'];
 
-                // ناردنی داتاکان
-                fetch('process/add_product.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // پیشاندانی پەیامی سەرکەوتن
-                        Swal.fire({
-                            title: 'سەرکەوتوو بوو!',
-                            text: 'کاڵاکە بە سەرکەوتوویی زیاد کرا',
-                            icon: 'success',
-                            confirmButtonText: 'باشە'
-                        }).then(() => {
-                            // پاککردنەوەی فۆرمەکە
-                            addProductForm.reset();
-                            // پاککردنەوەی وێنەکە
-                            resetImageUpload();
-                            // گەڕانەوە بۆ پەڕەی لیستەکە
-                            window.location.href = 'products.php';
-                        });
-                    } else {
-                        // پیشاندانی پەیامی هەڵە
-                        Swal.fire({
-                            title: 'هەڵە!',
-                            text: data.message,
-                            icon: 'error',
-                            confirmButtonText: 'باشە'
-                        });
+    // Add event listeners for all previous buttons
+    allPrevButtons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.addEventListener('click', function() {
+                if (currentTabIndex > 0) {
+                    goToPrevTab();
+                }
+            });
+        }
+    });
+
+    // Add event listeners for all next buttons
+    allNextButtons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.addEventListener('click', function() {
+                if (currentTabIndex < tabIds.length - 1) {
+                    if (validateCurrentTab()) {
+                        goToNextTab();
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    Swal.fire({
-                        title: 'هەڵە!',
-                        text: 'هەڵە لە ناردنی داتاکان',
-                        icon: 'error',
-                        confirmButtonText: 'باشە'
-                    });
-                });
-            }
-        });
-    }
+                }
+            });
+        }
+    });
+
+    // Add event listeners for all submit buttons
+    allSubmitButtons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (validateAllTabs()) {
+                    document.getElementById('addProductForm').dispatchEvent(new Event('submit'));
+                }
+            });
+        }
+    });
     
     // Image upload functionality
     if (productImageInput) {
@@ -190,37 +153,63 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Generate product code
-    generateCodeBtn.addEventListener('click', function() {
-        const category = document.getElementById('category_id').value;
-        const timestamp = Date.now().toString().slice(-6);
-        const code = `${category}${timestamp}`;
-        productCodeInput.value = code;
-        console.log("کۆدی کاڵا دروست کرا:", code);
-    });
+    if (generateCodeBtn) {
+        generateCodeBtn.addEventListener('click', function() {
+            if (document.getElementById('category_id')) {
+                const category = document.getElementById('category_id').value;
+                const timestamp = Date.now().toString().slice(-6);
+                const code = `${category}${timestamp}`;
+                if (productCodeInput) {
+                    productCodeInput.value = code;
+                }
+            }
+        });
+    }
 
     // Generate barcode
-    generateBarcodeBtn.addEventListener('click', function() {
-        const timestamp = Date.now().toString();
-        const barcode = `${timestamp}`;
-        barCodeInput.value = barcode;
-        console.log("بارکۆد دروست کرا:", barcode);
-    });
+    if (generateBarcodeBtn && barCodeInput) {
+        generateBarcodeBtn.addEventListener('click', function() {
+            const timestamp = Date.now().toString();
+            barCodeInput.value = timestamp;
+        });
+    }
     
-    // Handle unit selection changes
+    // Unit selection handling
     if (unitSelect) {
         unitSelect.addEventListener('change', function() {
-            const selectedUnit = this.options[this.selectedIndex].text.toLowerCase();
-            
-            if (selectedUnit.includes('کارتۆن')) {
-                unitQuantityContainer.style.display = 'flex';
-                piecesPerBoxContainer.style.display = 'block';
-                boxesPerSetContainer.style.display = 'none';
-            } else if (selectedUnit.includes('سێت')) {
-                unitQuantityContainer.style.display = 'flex';
-                piecesPerBoxContainer.style.display = 'block';
-                boxesPerSetContainer.style.display = 'block';
-            } else {
+            const selectedUnit = this.value;
+            const unitQuantityContainer = document.getElementById('unitQuantityContainer');
+            const piecesPerBoxContainer = document.getElementById('piecesPerBoxContainer');
+            const boxesPerSetContainer = document.getElementById('boxesPerSetContainer');
+
+            if (unitQuantityContainer && piecesPerBoxContainer && boxesPerSetContainer) {
+                // First hide all containers
                 unitQuantityContainer.style.display = 'none';
+                piecesPerBoxContainer.style.display = 'none';
+                boxesPerSetContainer.style.display = 'none';
+
+                // Show relevant containers based on unit selection
+                switch (selectedUnit) {
+                    case '1': // دانە
+                        break;
+                    case '2': // دانە و کارتۆن
+                        unitQuantityContainer.style.display = 'flex';
+                        piecesPerBoxContainer.style.display = 'block';
+                        break;
+                    case '3': // دانە و کارتۆن و سێت
+                        unitQuantityContainer.style.display = 'flex';
+                        piecesPerBoxContainer.style.display = 'block';
+                        boxesPerSetContainer.style.display = 'block';
+                        break;
+                }
+
+                // Clear values when hiding
+                if (selectedUnit === '1') {
+                    document.getElementById('piecesPerBox').value = '';
+                    document.getElementById('boxesPerSet').value = '';
+                } else if (selectedUnit === '2') {
+                    document.getElementById('boxesPerSet').value = '';
+                }
             }
         });
     }
@@ -234,28 +223,28 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Switch to a specific tab
     function switchToTab(tabId) {
-        // Update currentTabIndex
-        currentTabIndex = tabIds.indexOf(tabId);
-        
-        // Update tab headers
-        tabItems.forEach(tab => {
-            if (tab.getAttribute('data-tab') === tabId) {
-                tab.classList.add('active');
+        // Update tab items
+        tabItems.forEach(item => {
+            if (item.getAttribute('data-tab') === tabId) {
+                item.classList.add('active');
             } else {
-                tab.classList.remove('active');
+                item.classList.remove('active');
             }
         });
-        
+
         // Update tab contents
         tabContents.forEach(content => {
-            if (content.id === tabId + '-content') {
+            if (content.id === `${tabId}-content`) {
                 content.style.display = 'block';
             } else {
                 content.style.display = 'none';
             }
         });
-        
-        // Update buttons
+
+        // Update current tab index
+        currentTabIndex = tabIds.indexOf(tabId);
+
+        // Update navigation buttons
         updateNavigationButtons();
     }
     
@@ -273,23 +262,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Update navigation buttons based on current tab
+    // Update navigation buttons
     function updateNavigationButtons() {
-        // Update previous button
-        if (currentTabIndex > 0) {
-            prevTabBtn.style.display = 'block';
-        } else {
-            prevTabBtn.style.display = 'none';
-        }
-        
-        // Update next/submit buttons
-        if (currentTabIndex === tabIds.length - 1) {
-            nextTabBtn.style.display = 'none';
-            submitBtn.style.display = 'block';
-        } else {
-            nextTabBtn.style.display = 'block';
-            submitBtn.style.display = 'none';
-        }
+        const isLastTab = currentTabIndex === tabIds.length - 1;
+        const isFirstTab = currentTabIndex === 0;
+
+        // Update previous buttons
+        allPrevButtons.forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.style.display = isFirstTab ? 'none' : 'block';
+            }
+        });
+
+        // Update next buttons
+        allNextButtons.forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.style.display = isLastTab ? 'none' : 'block';
+            }
+        });
+
+        // Update submit buttons
+        allSubmitButtons.forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.style.display = isLastTab ? 'block' : 'none';
+            }
+        });
     }
     
     // Validate current tab
@@ -368,14 +368,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Location info tab validation
         else if (currentTabId === 'location-info') {
-            const shelf = document.getElementById('shelf').value;
-            
-            if (!shelf) {
-                showValidationError('shelf', 'تکایە ڕەفی کاڵا دیاری بکە');
-                isValid = false;
-            } else {
-                clearValidationError('shelf');
-            }
+            // No validation needed for location tab
+            isValid = true;
         }
         
         return isValid;
@@ -618,8 +612,59 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log(`Cleaned ${field}: ${input.value}`);
             }
         });
+        
+        // زیادکردنی پشتڕاستکردنەوە بۆ لەبار هەموو بەهاکان
+        return true;
     }
     
     // Initialize by making sure we're on the correct tab and buttons are set up
     switchToTab('basic-info');
-}); 
+});
+
+async function updateLatestProducts() {
+    try {
+        const response = await fetch('process/get_latest_products.php');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
+        const data = await response.json();
+        const productsList = document.querySelector('.list-group');
+        
+        if (productsList) {
+            if (data.length > 0) {
+                let html = '';
+                data.forEach(product => {
+                    html += `
+                        <li class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="product-icon me-3">
+                                    ${product.image 
+                                        ? `<img src="${product.image}" alt="${product.name}" class="product-thumbnail">` 
+                                        : '<i class="fas fa-box"></i>'}
+                                </div>
+                                <div class="product-info flex-grow-1">
+                                    <h6 class="mb-0">${product.name}</h6>
+                                    <small class="text-muted">
+                                        کۆد: ${product.code} | 
+                                        زیادکرا: ${new Date(product.created_at).toLocaleString('ku-IQ')}
+                                    </small>
+                                </div>
+                                <span class="badge bg-success">نوێ</span>
+                            </div>
+                        </li>
+                    `;
+                });
+                productsList.innerHTML = html;
+            } else {
+                productsList.innerHTML = `
+                    <li class="list-group-item text-center text-muted">
+                        هیچ کاڵایەک نەدۆزرایەوە
+                    </li>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error updating latest products:', error);
+    }
+} 
