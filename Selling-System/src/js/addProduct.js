@@ -118,6 +118,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Validate all tabs before submission
             if (validateAllTabs()) {
+                // پاککردنەوەی کۆماکان لە ژمارەکان پێش ناردن
+                cleanNumberInputs();
+                
                 // کۆکردنەوەی داتاکان
                 const formData = new FormData(this);
 
@@ -130,23 +133,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     if (data.success) {
                         // پیشاندانی پەیامی سەرکەوتن
-                        showSuccessMessage();
-                        // پاککردنەوەی فۆرمەکە
-                        addProductForm.reset();
-                        // پاککردنەوەی وێنەکە
-                        resetImageUpload();
-                        // گەڕانەوە بۆ پەڕەی لیستەکە
-                        setTimeout(() => {
+                        Swal.fire({
+                            title: 'سەرکەوتوو بوو!',
+                            text: 'کاڵاکە بە سەرکەوتوویی زیاد کرا',
+                            icon: 'success',
+                            confirmButtonText: 'باشە'
+                        }).then(() => {
+                            // پاککردنەوەی فۆرمەکە
+                            addProductForm.reset();
+                            // پاککردنەوەی وێنەکە
+                            resetImageUpload();
+                            // گەڕانەوە بۆ پەڕەی لیستەکە
                             window.location.href = 'products.php';
-                        }, 2000);
+                        });
                     } else {
                         // پیشاندانی پەیامی هەڵە
-                        alert(data.message);
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: data.message,
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('هەڵە لە ناردنی داتاکان');
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'هەڵە لە ناردنی داتاکان',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
                 });
             }
         });
@@ -176,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
     generateCodeBtn.addEventListener('click', function() {
         const category = document.getElementById('category_id').value;
         const timestamp = Date.now().toString().slice(-6);
-        const code = `PRD${category}${timestamp}`;
+        const code = `${category}${timestamp}`;
         productCodeInput.value = code;
         console.log("کۆدی کاڵا دروست کرا:", code);
     });
@@ -184,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Generate barcode
     generateBarcodeBtn.addEventListener('click', function() {
         const timestamp = Date.now().toString();
-        const barcode = `BAR${timestamp}`;
+        const barcode = `${timestamp}`;
         barCodeInput.value = barcode;
         console.log("بارکۆد دروست کرا:", barcode);
     });
@@ -579,6 +596,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 fileInput.dispatchEvent(event);
             }
         }
+    }
+    
+    // زیادکردنی فانکشن بۆ پاککردنەوەی کۆماکان لە ژمارەکان
+    function cleanNumberInputs() {
+        const numberFields = [
+            'buyingPrice',
+            'sellingPrice',
+            'selling_price_wholesale',
+            'piecesPerBox',
+            'boxesPerSet',
+            'min_quantity',
+            'initialQuantity'
+        ];
+        
+        numberFields.forEach(field => {
+            const input = document.getElementById(field);
+            if (input && input.value) {
+                // لابردنی کۆماکان
+                input.value = input.value.replace(/,/g, '');
+                console.log(`Cleaned ${field}: ${input.value}`);
+            }
+        });
     }
     
     // Initialize by making sure we're on the correct tab and buttons are set up

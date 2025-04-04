@@ -314,6 +314,81 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         .btn-group .btn:active {
             transform: translateY(0);
         }
+
+        /* Product Image Styles */
+        .product-image-container {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .product-image-container:hover {
+            transform: scale(1.05);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .no-image-placeholder {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto;
+            background: #f8f9fa;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+        }
+
+        .no-image-placeholder i {
+            font-size: 20px;
+        }
+
+        /* Image Modal Styles */
+        .image-modal .modal-dialog {
+            max-width: 90%;
+            margin: 1.75rem auto;
+        }
+
+        .image-modal .modal-content {
+            background: transparent;
+            border: none;
+        }
+
+        .image-modal .modal-body {
+            padding: 0;
+            text-align: center;
+        }
+
+        .image-modal img {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .image-modal .modal-header {
+            border: none;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1;
+        }
+
+        .image-modal .btn-close {
+            background-color: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            padding: 8px;
+        }
     </style>
 </head>
 <body>
@@ -348,7 +423,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <?php endforeach; ?>
                                                 </select>
                                             </div>
-                        <div class="col-md-3">
+                                            <div class="col-md-3">
                             <label for="category" class="form-label">جۆری کاڵا</label>
                             <select class="form-select select2" id="category" name="category">
                                 <option value="">هەموو جۆرەکان</option>
@@ -358,7 +433,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     </option>
                                 <?php endforeach; ?>
                                                                 </select>
-                                                            </div>
+                                            </div>
                                             <div class="col-md-3">
                             <label for="unit" class="form-label">یەکە</label>
                             <select class="form-select select2" id="unit" name="unit">
@@ -436,9 +511,18 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             <td><?php echo ($page - 1) * $records_per_page + $index + 1; ?></td>
                                             <td>
                                                 <?php if (!empty($product['image'])): ?>
-                                                    <img style="border-radius: 5px;" src="<?php echo htmlspecialchars($product['image']); ?>" alt="Product Image" class="product-image">
+                                                    <div class="product-image-container">
+                                                        <img src="<?php echo htmlspecialchars($product['image']); ?>" 
+                                                             alt="<?php echo htmlspecialchars($product['name']); ?>" 
+                                                             class="product-image"
+                                                             data-bs-toggle="tooltip"
+                                                             data-bs-placement="top"
+                                                             title="<?php echo htmlspecialchars($product['name']); ?>">
+                                                                </div>
                                                 <?php else: ?>
-                                                    <i class="fas fa-image text-muted"></i>
+                                                    <div class="no-image-placeholder">
+                                                        <i class="fas fa-image"></i>
+                                                                </div>
                                                 <?php endif; ?>
                                                             </td>
                                             <td><?php echo htmlspecialchars($product['code']); ?></td>
@@ -515,7 +599,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                         <input type="text" class="form-control" id="edit_barcode" name="barcode">
                                                         </div>
                                                     </div>
-                                                <div class="row">
+                        <div class="row">
                                                     <div class="col-md-6 mb-3">
                                                         <label for="edit_category" class="form-label">جۆری کاڵا</label>
                                                         <select class="form-select" id="edit_category" name="category_id" required>
@@ -524,8 +608,8 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                                     <?php echo htmlspecialchars($category['name']); ?>
                                                                 </option>
                                                             <?php endforeach; ?>
-                                                        </select>
-                                                </div>
+                                                                </select>
+                                                            </div>
                                                     <div class="col-md-6 mb-3">
                                                         <label for="edit_unit" class="form-label">یەکەی کاڵا</label>
                                                         <select class="form-select" id="edit_unit" name="unit_id" required>
@@ -920,6 +1004,42 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     }
                 });
             }
+
+            // Initialize image tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Add click event to product images
+            document.querySelectorAll('.product-image-container').forEach(container => {
+                container.addEventListener('click', function() {
+                    const img = this.querySelector('img');
+                    if (img) {
+                        const modal = document.createElement('div');
+                        modal.className = 'modal fade image-modal';
+                        modal.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                                        <img src="${img.src}" alt="${img.alt}">
+                        </div>
+                        </div>
+                            </div>
+                        `;
+                        document.body.appendChild(modal);
+                        const modalInstance = new bootstrap.Modal(modal);
+                        modalInstance.show();
+                        
+                        modal.addEventListener('hidden.bs.modal', function () {
+                            modal.remove();
+                        });
+                    }
+                });
+            });
         });
     </script>
 </body>

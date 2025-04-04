@@ -13,8 +13,28 @@ class Product {
         }
     }
     
+    private function checkDuplicateCodeOrBarcode($code, $barcode) {
+        try {
+            $sql = "SELECT COUNT(*) as count FROM products WHERE code = :code OR barcode = :barcode";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->execute([
+                ':code' => $code,
+                ':barcode' => $barcode
+            ]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result['count'] > 0;
+        } catch(PDOException $e) {
+            throw new Exception('هەڵە لە پشتڕاستکردنەوەی کۆد و بارکۆد');
+        }
+    }
+    
     public function add($data) {
         try {
+            // پشتڕاستکردنەوەی کۆد و بارکۆدی دووبارە
+            if ($this->checkDuplicateCodeOrBarcode($data['code'], $data['barcode'])) {
+                throw new Exception('کۆد یان بارکۆد پێشتر تۆمار کراوە');
+            }
+
             // هەڵبژاردنی وێنە
             $imagePath = null;
             if (isset($data['image']) && $data['image']['error'] === UPLOAD_ERR_OK) {
@@ -190,6 +210,24 @@ class Product {
         } catch(PDOException $e) {
             echo "Error: " . $e->getMessage();
             return false;
+        }
+    }
+
+    public function getLatest($limit = 5) {
+        try {
+            $sql = "SELECT p.*, c.name as category_name, u.name as unit_name 
+                    FROM products p 
+                    LEFT JOIN categories c ON p.category_id = c.id 
+                    LEFT JOIN units u ON p.unit_id = u.id 
+                    ORDER BY p.created_at DESC 
+                    LIMIT :limit";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch(PDOException $e) {
+            echo "Error: " . $e->getMessage();
+            return [];
         }
     }
 } 

@@ -2,14 +2,19 @@
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/models/Category.php';
 require_once __DIR__ . '/models/Unit.php';
+require_once __DIR__ . '/models/Product.php';
 
 // Initialize models
 $categoryModel = new Category($conn);
 $unitModel = new Unit($conn);
+$productModel = new Product($conn);
 
 // Get categories and units
 $categories = $categoryModel->getAll();
 $units = $unitModel->getAll();
+
+// Get latest products (last 5)
+$latestProducts = $productModel->getLatest(5);
 ?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
@@ -21,6 +26,8 @@ $units = $unitModel->getAll();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
 
     <!-- Global CSS -->
     <link rel="stylesheet" href="assets/css/custom.css">
@@ -28,7 +35,51 @@ $units = $unitModel->getAll();
     <link rel="stylesheet" href="css/addProduct.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/global.css">
+    <style>
+        .product-thumbnail {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .product-icon {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .product-icon i {
+            font-size: 1.5rem;
+            color: #0d6efd;
+        }
+        .list-group-item {
+            transition: all 0.3s ease;
+            padding: 1rem;
+            border-left: none;
+            border-right: none;
+        }
+        .list-group-item:hover {
+            background-color: #f8f9fa;
+        }
+        .badge.bg-success {
+            padding: 0.5rem 0.75rem;
+            font-weight: 500;
+        }
+        .product-info h6 {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .product-info small {
+            font-size: 0.8rem;
+        }
+    </style>
 </head>
+<body>
 <div>
 <div id="navbar-container"></div>
 
@@ -84,7 +135,7 @@ $units = $unitModel->getAll();
                                                     <label for="productCode" class="form-label">کۆدی کاڵا</label>
                                                     <div class="input-group">
                                                         <input type="text" id="productCode" name="code" class="form-control" placeholder="کۆدی کاڵا">
-                                                        <button type="button" class="btn btn-outline-primary" id="generateCode">
+                                                        <button type="button" class="btn btn-primary" id="generateCode">
                                                             <i class="fas fa-plus"></i>
                                                         </button>
                                                     </div>
@@ -93,7 +144,7 @@ $units = $unitModel->getAll();
                                                     <label for="barCode" class="form-label">بارکۆد</label>
                                                     <div class="input-group">
                                                         <input type="text" id="barCode" name="barcode" class="form-control" placeholder="بارکۆد">
-                                                        <button type="button" class="btn btn-outline-primary" id="generateBarcode">
+                                                        <button type="button" class="btn btn-primary" id="generateBarcode">
                                                             <i class="fas fa-plus"></i>
                                                         </button>
                                                     </div>
@@ -113,11 +164,11 @@ $units = $unitModel->getAll();
                                             <div class="row mb-4" id="unitQuantityContainer" style="display: none;">
                                                 <div class="col-md-4 mb-3" id="piecesPerBoxContainer" style="display: none;">
                                                     <label for="piecesPerBox" class="form-label">ژمارەی دانە لە کارتۆن</label>
-                                                    <input type="number" id="piecesPerBox" name="pieces_per_box" class="form-control" placeholder="ژمارەی دانە لە کارتۆن">
+                                                    <input type="text" id="piecesPerBox" name="pieces_per_box" class="form-control" placeholder="ژمارەی دانە لە کارتۆن" oninput="formatNumber(this)">
                                                 </div>
                                                 <div class="col-md-4 mb-3" id="boxesPerSetContainer" style="display: none;">
                                                     <label for="boxesPerSet" class="form-label">ژمارەی کارتۆن لە سێت</label>
-                                                    <input type="number" id="boxesPerSet" name="boxes_per_set" class="form-control" placeholder="ژمارەی کارتۆن لە سێت">
+                                                    <input type="text" id="boxesPerSet" name="boxes_per_set" class="form-control" placeholder="ژمارەی کارتۆن لە سێت" oninput="formatNumber(this)">
                                                 </div>
                                             </div>
                                             
@@ -157,21 +208,21 @@ $units = $unitModel->getAll();
                                                 <div class="col-md-4 mb-3" style="direction: rtl;">
                                                     <label for="buyingPrice" class="form-label">نرخی کڕین</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="buyingPrice" name="purchase_price" class="form-control" placeholder="نرخی کڕین">
+                                                        <input type="text" id="buyingPrice" name="purchase_price" class="form-control" placeholder="نرخی کڕین" oninput="formatNumber(this)">
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label for="sellingPrice" class="form-label">نرخی فرۆشتن</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="sellingPrice" name="selling_price_single" class="form-control" placeholder="نرخی فرۆشتن">
+                                                        <input type="text" id="sellingPrice" name="selling_price_single" class="form-control" placeholder="نرخی فرۆشتن" oninput="formatNumber(this)">
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label for="selling_price_wholesale" class="form-label">نرخی فرۆشتن (کۆمەڵ)</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="selling_price_wholesale" name="selling_price_wholesale" class="form-control" placeholder="نرخی فرۆشتن (کۆمەڵ)">
+                                                        <input type="text" id="selling_price_wholesale" name="selling_price_wholesale" class="form-control" placeholder="نرخی فرۆشتن (کۆمەڵ)" oninput="formatNumber(this)">
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
@@ -208,11 +259,11 @@ $units = $unitModel->getAll();
                                                 </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label for="min_quantity" class="form-label">کەمترین بڕ</label>
-                                                    <input type="number" id="min_quantity" name="min_quantity" class="form-control" placeholder="کەمترین بڕ">
+                                                    <input type="text" id="min_quantity" name="min_quantity" class="form-control" placeholder="کەمترین بڕ" oninput="formatNumber(this)">
                                                 </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label for="initialQuantity" class="form-label">بڕی سەرەتایی</label>
-                                                    <input type="number" id="initialQuantity" name="current_quantity" class="form-control" placeholder="بڕی سەرەتایی">
+                                                    <input type="text" id="initialQuantity" name="current_quantity" class="form-control" placeholder="بڕی سەرەتایی" oninput="formatNumber(this)">
                                                 </div>
                                             </div>
                                             
@@ -244,48 +295,41 @@ $units = $unitModel->getAll();
                             <div class="card shadow-sm mb-4">
                                 <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
                                     <h5 class="card-title mb-0">کاڵا نوێکان</h5>
-                                    <button class="btn btn-sm btn-outline-primary">
+                                    <button class="btn btn-sm btn-outline-primary refresh-products">
                                         <i class="fas fa-sync-alt"></i>
                                     </button>
                                 </div>
                                 <div class="card-body p-0">
                                     <ul class="list-group list-group-flush">
-                                        <li class="list-group-item">
-                                            <div class="d-flex align-items-center">
-                                                <div class="product-icon me-3 bg-light rounded p-2">
-                                                    <i class="fas fa-chair text-primary"></i>
-                                                </div>
-                                                <div class="product-info flex-grow-1">
-                                                    <h6 class="mb-0">کورسی ئۆفیس</h6>
-                                                    <small class="text-muted">زیادکرا: ١٠ خولەک لەمەوبەر</small>
-                                                </div>
-                                                <span class="badge bg-success">نوێ</span>
-                                            </div>
-                                        </li>
-                                        <li class="list-group-item">
-                                            <div class="d-flex align-items-center">
-                                                <div class="product-icon me-3 bg-light rounded p-2">
-                                                    <i class="fas fa-couch text-danger"></i>
-                                                </div>
-                                                <div class="product-info flex-grow-1">
-                                                    <h6 class="mb-0">قەنەفەی ڕاکشان</h6>
-                                                    <small class="text-muted">زیادکرا: ٢ کاتژمێر لەمەوبەر</small>
-                                                </div>
-                                                <span class="badge bg-success">نوێ</span>
-                                            </div>
-                                        </li>
-                                        <li class="list-group-item">
-                                            <div class="d-flex align-items-center">
-                                                <div class="product-icon me-3 bg-light rounded p-2">
-                                                    <i class="fas fa-table text-warning"></i>
-                                                </div>
-                                                <div class="product-info flex-grow-1">
-                                                    <h6 class="mb-0">مێزی خواردن</h6>
-                                                    <small class="text-muted">زیادکرا: ٥ کاتژمێر لەمەوبەر</small>
-                                                </div>
-                                                <span class="badge bg-success">نوێ</span>
-                                            </div>
-                                        </li>
+                                        <?php if (!empty($latestProducts)): ?>
+                                            <?php foreach ($latestProducts as $product): ?>
+                                                <li class="list-group-item">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="product-icon me-3">
+                                                            <?php if (!empty($product['image'])): ?>
+                                                                <img src="<?php echo htmlspecialchars($product['image']); ?>" 
+                                                                     alt="<?php echo htmlspecialchars($product['name']); ?>" 
+                                                                     class="product-thumbnail">
+                                                            <?php else: ?>
+                                                                <i class="fas fa-box"></i>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                        <div class="product-info flex-grow-1">
+                                                            <h6 class="mb-0"><?php echo htmlspecialchars($product['name']); ?></h6>
+                                                            <small class="text-muted">
+                                                                کۆد: <?php echo htmlspecialchars($product['code']); ?> | 
+                                                                زیادکرا: <?php echo date('Y/m/d H:i', strtotime($product['created_at'])); ?>
+                                                            </small>
+                                                        </div>
+                                                        <span class="badge bg-success">نوێ</span>
+                                                    </div>
+                                                </li>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <li class="list-group-item text-center text-muted">
+                                                هیچ کاڵایەک نەدۆزرایەوە
+                                            </li>
+                                        <?php endif; ?>
                                     </ul>
                                 </div>
                                 <div class="card-footer bg-transparent text-center">
@@ -342,8 +386,62 @@ $units = $unitModel->getAll();
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <!-- Custom JavaScript -->
     <script src="js/include-components.js"></script>
     <script src="js/addProduct.js"></script>
+    <script>
+    // زیادکردنی فانکشنی فۆرماتی ژمارەکان
+    function formatNumber(input) {
+        // سڕینەوەی هەموو نەژمارەکان و کۆماکان
+        let value = input.value.replace(/[^\d]/g, '');
+        
+        // زیادکردنی کۆما هەر سێ ژمارەیەک
+        value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        
+        // نوێکردنەوەی نرخی ئینپووت
+        input.value = value;
+    }
+
+    // زیادکردنی event listener بۆ ئینپووتەکان
+    document.addEventListener('DOMContentLoaded', function() {
+        // ئینپووتەکانی ژمارە
+        const numberInputs = [
+            'buyingPrice',
+            'sellingPrice',
+            'selling_price_wholesale',
+            'piecesPerBox',
+            'boxesPerSet',
+            'min_quantity',
+            'initialQuantity'
+        ];
+
+        // زیادکردنی event listener بۆ هەر ئینپووتێک
+        numberInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                // گۆڕینی تایپی ئینپووت
+                input.setAttribute('type', 'text');
+                
+                input.addEventListener('input', function() {
+                    formatNumber(this);
+                });
+            }
+        });
+        
+        // نوێکردنەوەی لیستی کاڵاکان
+        document.querySelector('.refresh-products').addEventListener('click', function() {
+            window.location.reload();
+        });
+    });
+    </script>
+    <style>
+    /* زیادکردنی CSS بۆ ئینپووتەکانی ژمارە */
+    input[type="text"].form-control {
+        text-align: right;
+        direction: rtl;
+    }
+    </style>
 </body>
 </html> 
