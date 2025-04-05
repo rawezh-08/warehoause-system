@@ -8,8 +8,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Select2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css">
     <!-- Custom CSS -->
-         <!-- Page CSS -->
+    <!-- Page CSS -->
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/addReceipt.css">
@@ -27,17 +30,17 @@
     
             <div class="d-flex justify-content-between align-items-center">
                 <div class="receipt-type-container">
-                    <h5 class="mb-0 ms-2">جۆری پسوڵە:</h5>
+                    <h5 class="mb-0 ms-2">جۆری پسوڵە</h5>
                     <div class="btn-group receipt-types" role="group">
                         <button class="btn receipt-type-btn active" data-type="selling">فرۆشتن</button>
                         <button class="btn receipt-type-btn" data-type="buying">کڕین</button>
                         <button class="btn receipt-type-btn" data-type="wasting">ڕێکخستنەوە</button>
                     </div>
                 </div>
-                <div class="checkbox-group">
+                <!-- <div class="checkbox-group">
                     <input type="checkbox" id="showCanceled" class="form-check-input">
                     <label for="showCanceled">کارەکانی هەڵوەشاوە</label>
-                </div>
+                </div> -->
             </div>
         </div>
     </div>
@@ -75,7 +78,13 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">کڕیار</label>
-                            <input type="text" class="form-control receipt-customer" placeholder="ناوی کڕیار">
+                            <select class="form-select customer-select">
+                                <option value="" selected disabled>کڕیار هەڵبژێرە</option>
+                                <option value="1">ئەحمەد محەمەد</option>
+                                <option value="2">کارزان عومەر</option>
+                                <option value="3">دلێر ڕەسوڵ</option>
+                                <option value="new">کڕیاری نوێ زیاد بکە...</option>
+                            </select>
                         </div>
                     </div>
 
@@ -97,18 +106,12 @@
                             <i class="fas fa-sync"></i>
                             نوێکردنەوە
                         </button>
-                        <button class="btn btn-outline-primary export-btn">
-                            <i class="fas fa-file-export"></i>
-                            ناردنە دەرەوە
-                        </button>
+                        
                         <button class="btn btn-outline-primary print-btn">
                             <i class="fas fa-print"></i>
                             چاپکردن
                         </button>
-                        <button class="btn btn-outline-primary add-new-btn">
-                            <i class="fas fa-plus"></i>
-                            زیادکردنی نوێ
-                        </button>
+                        
                     </div>
 
                     <!-- Items Table -->
@@ -128,7 +131,7 @@
                             <tbody class="items-list">
                                 <tr>
                                     <td>1</td>
-                                    <td><input type="text" class="form-control" placeholder="ناوی کاڵا"></td>
+                                    <td><select class="form-control product-select" style="width: 100%"></select></td>
                                     <td><input type="number" class="form-control price" step="0.01"></td>
                                     <td><input type="number" class="form-control quantity"></td>
                                     <td><input type="text" class="form-control" placeholder="وەسفکردن"></td>
@@ -155,10 +158,7 @@
                                 <label class="total-label">کۆ</label>
                                 <input type="number" class="form-control subtotal" readonly>
                             </div>
-                            <div class="col-md-3">
-                                <label class="total-label">باج</label>
-                                <input type="number" class="form-control tax" value="0">
-                            </div>
+                             
                             <div class="col-md-3">
                                 <label class="total-label">داشکاندن</label>
                                 <input type="number" class="form-control discount" value="0">
@@ -186,31 +186,37 @@
         <div class="receipt-container">
             <!-- Header Section -->
             <div class="row mb-4">
-                <div class="col-md-4">
+                <div class="col-md-4 col-sm-12">
                     <label class="form-label">ژمارە</label>
                     <input type="text" class="form-control receipt-number" placeholder="ژمارەی پسوڵە">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4 col-sm-12">
                     <label class="form-label">ناونیشانی پسوڵە</label>
                     <input type="text" class="form-control receipt-title" placeholder="ناونیشانی پسوڵە بنووسە">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4 col-sm-12">
                     <label class="form-label">فرۆشیار</label>
-                    <input type="text" class="form-control receipt-vendor" placeholder="ناوی فرۆشیار">
+                    <select class="form-select vendor-select">
+                        <option value="" selected disabled>فرۆشیار هەڵبژێرە</option>
+                        <option value="1">کۆمپانیای ئازاد</option>
+                        <option value="2">کۆمپانیای هیوا</option>
+                        <option value="3">کۆمپانیای ئارام</option>
+                        <option value="new">فرۆشیاری نوێ زیاد بکە...</option>
+                    </select>
                 </div>
             </div>
 
             <!-- Date and Vendor Info -->
             <div class="row mb-4">
-                <div class="col-md-4">
+                <div class="col-md-4 col-sm-12">
                     <label class="form-label">بەروار</label>
                     <input type="date" class="form-control purchase-date">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4 col-sm-12">
                     <label class="form-label">ڕەوانەکردن</label>
                     <input type="date" class="form-control delivery-date">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4 col-sm-12">
                     <label class="form-label">ژمارەی پسوڵەی فرۆشیار</label>
                     <input type="text" class="form-control vendor-invoice" placeholder="ژمارەی پسوڵەی فرۆشیار">
                 </div>
@@ -253,7 +259,7 @@
                     <tbody class="items-list">
                         <tr>
                             <td>1</td>
-                            <td><input type="text" class="form-control" placeholder="ناوی "></td>
+                            <td><select class="form-control product-select" style="width: 100%"></select></td>
                             <td><input type="number" class="form-control price" step="0.01"></td>
                             <td><input type="number" class="form-control quantity"></td>
                             <td><input type="text" class="form-control" placeholder="وەسفکردن"></td>
@@ -280,10 +286,7 @@
                         <label class="total-label">کۆ</label>
                         <input type="number" class="form-control subtotal" readonly>
                     </div>
-                    <div class="col-md-3">
-                        <label class="total-label">باج</label>
-                        <input type="number" class="form-control tax" value="0">
-                    </div>
+                    
                     <div class="col-md-3">
                         <label class="total-label">تێچووی گواستنەوە</label>
                         <input type="number" class="form-control shipping-cost" value="0">
@@ -309,17 +312,23 @@
         <div class="receipt-container">
             <!-- Header Section -->
             <div class="row mb-4">
-                <div class="col-md-4">
+                <div class="col-md-4 col-sm-12">
                     <label class="form-label">ژمارە</label>
                     <input type="text" class="form-control receipt-number" placeholder="ژمارەی پسوڵە">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4 col-sm-12">
                     <label class="form-label">ناونیشانی پسوڵە</label>
                     <input type="text" class="form-control receipt-title" placeholder="ناونیشانی پسوڵە بنووسە">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4 col-sm-12">
                     <label class="form-label">بەرپرسیار</label>
-                    <input type="text" class="form-control responsible-person" placeholder="ناوی بەرپرسیار">
+                    <select class="form-select responsible-select">
+                        <option value="" selected disabled>بەرپرسیار هەڵبژێرە</option>
+                        <option value="1">هێمن عەبدوڵا</option>
+                        <option value="2">نەوزاد عەلی</option>
+                        <option value="3">کامەران حەسەن</option>
+                        <option value="new">بەرپرسیاری نوێ زیاد بکە...</option>
+                    </select>
                 </div>
             </div>
 
@@ -354,18 +363,12 @@
                     <i class="fas fa-sync"></i>
                     نوێکردنەوە
                 </button>
-                <button class="btn btn-outline-primary export-btn">
-                    <i class="fas fa-file-export"></i>
-                    ناردنە دەرەوە
-                </button>
+                
                 <button class="btn btn-outline-primary print-btn">
                     <i class="fas fa-print"></i>
                     چاپکردن
                 </button>
-                <button class="btn btn-outline-primary add-new-btn">
-                    <i class="fas fa-plus"></i>
-                    زیادکردنی نوێ
-                </button>
+              
             </div>
 
             <!-- Items Table -->
@@ -386,7 +389,7 @@
                     <tbody class="items-list">
                         <tr>
                             <td>1</td>
-                            <td><input type="text" class="form-control" placeholder="ناوی کاڵا"></td>
+                            <td><select class="form-control product-select" style="width: 100%"></select></td>
                             <td><input type="number" class="form-control current-quantity" readonly></td>
                             <td><input type="number" class="form-control adjusted-quantity"></td>
                             <td><input type="number" class="form-control price" step="0.01"></td>
@@ -431,17 +434,23 @@
         <div class="receipt-container">
             <!-- Header Section -->
             <div class="row mb-4">
-                <div class="col-md-4">
+                <div class="col-md-4 col-sm-12">
                     <label class="form-label">ژمارە</label>
                     <input type="text" class="form-control receipt-number" placeholder="ژمارەی پسوڵە">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4 col-sm-12">
                     <label class="form-label">ناونیشانی پسوڵە</label>
                     <input type="text" class="form-control receipt-title" placeholder="ناونیشانی پسوڵە بنووسە">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4 col-sm-12">
                     <label class="form-label">کڕیار</label>
-                    <input type="text" class="form-control receipt-customer" placeholder="ناوی کڕیار">
+                    <select class="form-select customer-select">
+                        <option value="" selected disabled>کڕیار هەڵبژێرە</option>
+                        <option value="1">ئەحمەد محەمەد</option>
+                        <option value="2">کارزان عومەر</option>
+                        <option value="3">دلێر ڕەسوڵ</option>
+                        <option value="new">کڕیاری نوێ زیاد بکە...</option>
+                    </select>
                 </div>
             </div>
 
@@ -463,18 +472,12 @@
                     <i class="fas fa-sync"></i>
                     نوێکردنەوە
                 </button>
-                <button class="btn btn-outline-primary export-btn">
-                    <i class="fas fa-file-export"></i>
-                    ناردنە دەرەوە
-                </button>
+               
                 <button class="btn btn-outline-primary print-btn">
                     <i class="fas fa-print"></i>
                     چاپکردن
                 </button>
-                <button class="btn btn-outline-primary add-new-btn">
-                    <i class="fas fa-plus"></i>
-                    زیادکردنی نوێ
-                </button>
+               
             </div>
 
             <!-- Items Table -->
@@ -494,7 +497,7 @@
                     <tbody class="items-list">
                         <tr>
                             <td>1</td>
-                            <td><input type="text" class="form-control" placeholder="ناوی کاڵا"></td>
+                            <td><select class="form-control product-select" style="width: 100%"></select></td>
                             <td><input type="number" class="form-control price" step="0.01"></td>
                             <td><input type="number" class="form-control quantity"></td>
                             <td><input type="text" class="form-control" placeholder="وەسفکردن"></td>
@@ -521,10 +524,7 @@
                         <label class="total-label">کۆ</label>
                         <input type="number" class="form-control subtotal" readonly>
                     </div>
-                    <div class="col-md-3">
-                        <label class="total-label">باج</label>
-                        <input type="number" class="form-control tax" value="0">
-                    </div>
+                     
                     <div class="col-md-3">
                         <label class="total-label">داشکاندن</label>
                         <input type="number" class="form-control discount" value="0">
@@ -549,6 +549,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="js/addReceipt.js"></script>
     <script src="js/include-components.js"></script>
 </body>

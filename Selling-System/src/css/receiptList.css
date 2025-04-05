@@ -1,0 +1,183 @@
+/* Receipt List CSS */
+
+/* Tabs styling */
+.nav-tabs .nav-link {
+    color: #555;
+    border-radius: 0;
+    padding: 0.7rem 1.5rem;
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+    color: #007bff;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+
+/* Card styling */
+.card {
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e3e6f0;
+    padding: 1rem;
+}
+
+/* Table styling */
+.table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_length {
+    margin-bottom: 15px;
+}
+
+/* Status badges */
+.badge {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 4px;
+}
+
+.badge-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.badge-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+/* Action buttons */
+.action-btn {
+    color: #6c757d;
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-right: 5px;
+    font-size: 1rem;
+    transition: color 0.2s;
+}
+
+.action-btn:hover {
+    color: #007bff;
+}
+
+.action-btn.edit-btn:hover {
+    color: #28a745;
+}
+
+.action-btn.delete-btn:hover {
+    color: #dc3545;
+}
+
+.action-btn.print-btn:hover {
+    color: #17a2b8;
+}
+
+/* Filter section */
+.filters {
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* Custom search box */
+#sellingSearchBox,
+#buyingSearchBox,
+#wastingSearchBox {
+    min-width: 200px;
+}
+
+/* Modal styling */
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+.receipt-details-container {
+    padding: 15px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .filters .row {
+        margin-top: 10px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .action-buttons .btn {
+        margin-bottom: 5px;
+        width: 100%;
+    }
+    
+    .card-header {
+        flex-direction: column;
+    }
+    
+    .card-header h5 {
+        margin-bottom: 10px;
+    }
+    
+    .nav-tabs .nav-link {
+        padding: 0.5rem 1rem;
+    }
+}
+
+/* DataTables responsive styling */
+.dtr-details {
+    width: 100%;
+    padding: 10px;
+}
+
+table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control:before {
+    background-color: #007bff;
+}
+
+/* Page header styling */
+.top-nav {
+    margin-bottom: 20px;
+    padding: 15px 0;
+}
+
+/* Add some space between buttons */
+.d-flex .btn {
+    margin-right: 5px;
+}
+
+/* Action buttons in tables */
+.table .action-buttons {
+    display: flex;
+    justify-content: center;
+}
+
+.table .action-buttons .btn {
+    padding: 5px;
+    margin: 0 2px;
+} 

@@ -22,9 +22,8 @@ body {
     margin-bottom: 20px;
 }
 .receipt-type-btn {
-    margin: 0 5px;
     padding: 8px 15px;
-    border-radius: 5px;
+    border-radius: 50px;
     font-size: 0.9rem;
 }
 .receipt-type-btn.active {
@@ -93,7 +92,11 @@ body {
     padding-top: 20px;
 }
 .receipt-type-container {
+    /* display: flex; */
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
+    margin-top: 60px;
 }
 
 /* Type-specific styles */
@@ -156,4 +159,290 @@ body {
 /* Highlight readonly fields */
 input[readonly] {
     background-color: #f8f9fa;
+}
+
+.btn-group{
+    margin: 8px;
+    background-color: #e5eefc;
+    border: 1px solid #0d6efd;
+    border-radius: 50PX;
+    padding: 5px;
+}
+.btn{
+    border-radius: 50px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 767px) {
+    .receipt-container {
+        padding: 10px;
+    }
+    
+    .receipt-type-btn {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+    
+    .action-buttons {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .action-buttons button {
+        margin-bottom: 5px;
+        flex: 1 1 45%;
+    }
+    
+    .nav-tabs .nav-link {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+    
+    .table th, .table td {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .table input, .table select {
+        font-size: 0.85rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .form-label {
+        font-size: 0.9rem;
+    }
+    
+    .total-section .row > div {
+        margin-bottom: 10px;
+    }
+    
+    .save-btn {
+        width: 100%;
+    }
+    
+    /* Make tables scrollable horizontally on mobile */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Stack form elements on mobile */
+    .row > div {
+        margin-bottom: 15px;
+    }
+}
+
+/* Medium screens */
+@media (min-width: 768px) and (max-width: 991px) {
+    .action-buttons button {
+        font-size: 0.85rem;
+    }
+    
+    .table th, .table td {
+        padding: 0.6rem;
+    }
+}
+
+/* Dropdown enhancements */
+.form-select {
+    appearance: auto;
+    -webkit-appearance: auto;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-select:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Enhanced custom select styling */
+.custom-select-styling {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #ced4da;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.custom-select-styling:focus {
+    background-color: #fff;
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.2);
+}
+
+/* Product dropdown styling */
+.product-select {
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background-color: #f0f8ff;
+    border: 1px solid #cce5ff;
+}
+
+.product-select:focus {
+    background-color: #fff;
+    border-color: #86b7fe;
+}
+
+/* Custom style for the "add new" option in dropdowns */
+.form-select option[value="new"] {
+    font-style: italic;
+    border-top: 1px dashed #ced4da;
+    padding-top: 5px;
+    margin-top: 5px;
+    color: #0d6efd;
+    font-weight: 500;
+    background-color: #f0f7ff;
+}
+
+/* Highlighted options on hover */
+.form-select option:hover {
+    background-color: #e7f1ff !important;
+}
+
+/* Custom dropdown indicator */
+.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%230d6efd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    padding-right: 2rem !important;
+}
+
+/* Style for dropdown on different receipt types */
+[data-receipt-type="selling"] .product-select {
+    border-left: 3px solid #0d6efd;
+}
+
+[data-receipt-type="buying"] .product-select {
+    border-left: 3px solid #198754;
+}
+
+[data-receipt-type="wasting"] .product-select {
+    border-left: 3px solid #dc3545;
+}
+
+/* Mobile enhancements for dropdowns */
+@media (max-width: 767px) {
+    .custom-select-styling {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .product-select {
+        font-size: 0.85rem;
+        padding: 0.3rem 0.5rem;
+    }
+    
+    /* Make dropdown menus full width on mobile */
+    .table-responsive .form-select {
+        width: 100%;
+    }
+}
+
+/* SweetAlert customization for RTL */
+.swal2-popup {
+    direction: rtl;
+}
+
+.swal2-title, .swal2-content {
+    text-align: right;
+}
+
+/* Enhance print button for mobile */
+@media print {
+    .action-buttons, .nav-tabs, #navbar-container, #sidebar-container, .top-nav, .add-row-btn {
+        display: none !important;
+    }
+    
+    .receipt-container {
+        box-shadow: none;
+        padding: 0;
+    }
+    
+    .total-section {
+        break-inside: avoid;
+    }
+    
+    body {
+        background-color: white;
+    }
+}
+
+/* Add these styles to improve the Select2 product dropdown appearance */
+
+/* Product dropdown styles */
+.select2-container--bootstrap-5 .select2-results__option {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.select2-container--bootstrap-5 .select2-results__option:last-child {
+    border-bottom: none;
+}
+
+.select2-result-product {
+    display: flex;
+    flex-direction: column;
+}
+
+.select2-result-product__title {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.select2-result-product__meta {
+    display: flex;
+    font-size: 0.85rem;
+    gap: 15px;
+}
+
+.select2-result-product__code {
+    color: #666;
+}
+
+.select2-result-product__price {
+    color: #0d6efd;
+    font-weight: 500;
+}
+
+/* Make dropdown wider on desktop */
+@media (min-width: 768px) {
+    .select2-container--bootstrap-5 {
+        min-width: 280px !important;
+    }
+    
+    .select2-dropdown {
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        border-radius: 8px !important;
+        overflow: hidden;
+    }
+}
+
+/* Fix dropdown search input for RTL */
+.select2-search--dropdown .select2-search__field {
+    text-align: right;
+    padding-right: 12px;
+}
+
+/* Highlight on hover */
+.select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: #e7f1ff !important;
+    color: #333 !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option--selected {
+    background-color: #0d6efd !important;
+    color: white !important;
+}
+
+/* Improve placeholder alignment for RTL */
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__placeholder {
+    text-align: right;
+    display: block;
+    padding-right: 5px;
 }
