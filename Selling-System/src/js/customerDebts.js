@@ -1,402 +1,587 @@
 $(document).ready(function() {
-    // Initialize DataTable
-    const debtsTable = $('#debtsTable').DataTable({
-        responsive: true,
-        dom: '<"top"fl>rt<"bottom"ip>',
-        language: {
-            search: "گەڕان:",
-            lengthMenu: "پیشاندانی _MENU_ تۆماری",
-            info: "پیشاندانی _START_ بۆ _END_ لە _TOTAL_ تۆماری",
-            paginate: {
-                first: "یەکەم",
-                last: "کۆتایی",
-                next: "دواتر",
-                previous: "پێشتر"
-            }
-        },
-        columnDefs: [
-            { responsivePriority: 1, targets: [0, 1, 5, 9] },
-            { responsivePriority: 2, targets: [3, 8] }
-        ]
+    // Load sample data
+    loadSampleCustomers();
+    
+    // Event handler for search button
+    $('#searchBtn').on('click', function() {
+        const searchTerm = $('#searchInput').val().toLowerCase();
+        filterCustomers(searchTerm);
     });
-
-    // Initialize current date for debt date and payment date inputs
-    $('#debtDate, #paymentDate').val(new Date().toISOString().split('T')[0]);
-
-    // Search functionality
-    $('#searchBox').on('keyup', function() {
-        debtsTable.search($(this).val()).draw();
+    
+    // Event handler for search input
+    $('#searchInput').on('keyup', function(e) {
+        if (e.key === 'Enter') {
+            const searchTerm = $(this).val().toLowerCase();
+            filterCustomers(searchTerm);
+        }
     });
-
-    // Date filter functionality
-    $('#startDate, #endDate').on('change', function() {
-        applyDateFilter();
+    
+    // Event handler for sort select
+    $('#sortSelect').on('change', function() {
+        const sortOption = $(this).val();
+        sortCustomers(sortOption);
     });
-
-    // Refresh button click handler
+    
+    // Event handler for refresh button
     $('#refreshBtn').on('click', function() {
-        // For demo purposes, just reload the page
-        location.reload();
+        loadSampleCustomers();
     });
-
-    // View debt details
-    $(document).on('click', '.view-debt', function() {
-        const debtId = $(this).data('id');
-        
-        // In a real application, you would fetch the debt details from the server
-        // For demo purposes, we'll just show the modal with sample data
-        $('#viewDebtModal').modal('show');
+    
+    // Event handler for add debt button
+    $('#addDebtBtn').on('click', function() {
+        $('#addDebtForm')[0].reset();
+        $('#addDebtModal').modal('show');
     });
-
-    // Add payment functionality
-    $(document).on('click', '.pay-debt', function() {
-        const debtId = $(this).data('id');
-        
-        // Store the debt ID for use when saving the payment
-        $('#paymentModal').data('debtId', debtId);
-        
-        // Show the payment modal
-        $('#paymentModal').modal('show');
-    });
-
-    // Payment from view modal
-    $('#makePaymentBtn').on('click', function() {
-        $('#viewDebtModal').modal('hide');
-        $('#paymentModal').modal('show');
-    });
-
-    // Edit debt functionality
-    $(document).on('click', '.edit-debt', function() {
-        const debtId = $(this).data('id');
-        
-        // In a real application, you would fetch the debt details and populate the form
-        // For demo purposes, we'll just show a message
-        Swal.fire({
-            title: 'دەستکاریکردنی قەرز',
-            text: `دەستکاریکردنی قەرزی ژمارە ${debtId}`,
-            icon: 'info',
-            confirmButtonText: 'باشە'
-        });
-    });
-
-    // Calculate remaining amount when total or paid amount changes
-    $('#totalAmount, #paidAmount').on('input', function() {
-        calculateRemainingAmount();
-    });
-
-    // Save debt button click handler
+    
+    // Event handler for save debt button
     $('#saveDebtBtn').on('click', function() {
-        if (validateDebtForm()) {
-            // For demo purposes, just show a success message and close the modal
-            $('#addDebtModal').modal('hide');
-            
-            Swal.fire({
-                title: 'سەرکەوتوو',
-                text: 'قەرز بە سەرکەوتوویی زیادکرا',
-                icon: 'success',
-                confirmButtonText: 'باشە'
-            }).then(() => {
-                // In a real application, you would reload the data from the server
-                // For demo purposes, just reload the page
-                location.reload();
-            });
-        }
+        saveNewDebt();
     });
-
-    // Save payment button click handler
-    $('#savePaymentBtn').on('click', function() {
-        if (validatePaymentForm()) {
-            // Get the debt ID
-            const debtId = $('#paymentModal').data('debtId');
-            
-            // For demo purposes, just show a success message and close the modal
-            $('#paymentModal').modal('hide');
-            
-            Swal.fire({
-                title: 'سەرکەوتوو',
-                text: 'پارەدان بە سەرکەوتوویی زیادکرا',
-                icon: 'success',
-                confirmButtonText: 'باشە'
-            }).then(() => {
-                // In a real application, you would reload the data from the server
-                // For demo purposes, just reload the page
-                location.reload();
-            });
-        }
+    
+    // Event handler for repayment form submission
+    $('#repaymentForm').on('submit', function(e) {
+        e.preventDefault();
+        saveRepayment();
     });
-
-    // Print debt details
-    $('#printDebtDetailsBtn').on('click', function() {
-        printDebtDetails();
+    
+    // Event handler for opening customer profile
+    $(document).on('click', '.customer-card', function() {
+        const customerId = $(this).data('customer-id');
+        openCustomerProfile(customerId);
+    });
+    
+    // Event handler for view purchase details
+    $(document).on('click', '.view-purchase-btn', function(e) {
+        e.stopPropagation();
+        const purchaseId = $(this).data('purchase-id');
+        openPurchaseDetails(purchaseId);
     });
 });
 
-// Function to apply date filter
-function applyDateFilter() {
-    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-        const startDate = $('#startDate').val();
-        const endDate = $('#endDate').val();
-        const dateColumn = 2; // Date column index
-        
-        // If no date filter is set, show all rows
-        if (!startDate && !endDate) {
-            return true;
+// Function to load sample customer data
+function loadSampleCustomers() {
+    const sampleCustomers = [
+        {
+            id: 1,
+            name: 'ئەحمەد محەمەد',
+            phone: '07501234567',
+            address: 'ھەولێر، شەقامی ١٠٠ مەتری',
+            totalDebt: 1500.00,
+            paidAmount: 500.00,
+            remainingAmount: 1000.00,
+            debtLimit: 2000.00,
+            dueDate: '2023-12-30',
+            isOverdue: false
+        },
+        {
+            id: 2,
+            name: 'سارا عەلی',
+            phone: '07707654321',
+            address: 'سلێمانی، گەڕەکی بەختیاری',
+            totalDebt: 3000.00,
+            paidAmount: 1000.00,
+            remainingAmount: 2000.00,
+            debtLimit: 5000.00,
+            dueDate: '2023-11-15',
+            isOverdue: true
+        },
+        {
+            id: 3,
+            name: 'کارزان عومەر',
+            phone: '07501122334',
+            address: 'دھۆک، شەقامی نەورۆز',
+            totalDebt: 750.00,
+            paidAmount: 250.00,
+            remainingAmount: 500.00,
+            debtLimit: 1000.00,
+            dueDate: '2023-12-25',
+            isOverdue: false
+        },
+        {
+            id: 4,
+            name: 'هێڤی ڕەزا',
+            phone: '07705566778',
+            address: 'هەولێر، شاری نوێ',
+            totalDebt: 2200.00,
+            paidAmount: 700.00,
+            remainingAmount: 1500.00,
+            debtLimit: 3000.00,
+            dueDate: '2023-10-30',
+            isOverdue: true
+        },
+        {
+            id: 5,
+            name: 'دلێر ڕەسوڵ',
+            phone: '07508877665',
+            address: 'سلێمانی، سالم سترێت',
+            totalDebt: 900.00,
+            paidAmount: 900.00,
+            remainingAmount: 0.00,
+            debtLimit: 2000.00,
+            dueDate: '2023-11-20',
+            isOverdue: false
+        },
+        {
+            id: 6,
+            name: 'شادی حسێن',
+            phone: '07701234567',
+            address: 'هەولێر، گەڕەکی ئازادی',
+            totalDebt: 1800.00,
+            paidAmount: 800.00,
+            remainingAmount: 1000.00,
+            debtLimit: 2500.00,
+            dueDate: '2023-12-15',
+            isOverdue: false
         }
+    ];
+    
+    renderCustomerCards(sampleCustomers);
+}
+
+// Function to render customer cards
+function renderCustomerCards(customers) {
+    const container = $('#customerCardsContainer');
+    container.empty();
+    
+    customers.forEach(customer => {
+        const paymentStatus = customer.remainingAmount <= 0 ? 
+            '<span class="badge badge-paid">پارەدراوە</span>' : 
+            (customer.isOverdue ? 
+                '<span class="badge badge-unpaid">دواکەوتووە</span>' : 
+                '<span class="badge badge-partial">بەشێکی دراوە</span>');
+                
+        const dueDateClass = customer.isOverdue ? 'overdue' : '';
         
-        // Parse the date from the table
-        const rowDate = new Date(data[dateColumn]);
+        const card = `
+            <div class="customer-card" data-customer-id="${customer.id}">
+                <div class="card-header">
+                    <h5 class="customer-name">${customer.name}</h5>
+                    <div class="customer-info">
+                        <p><i class="fas fa-phone"></i> ${customer.phone}</p>
+                        <p><i class="fas fa-map-marker-alt"></i> ${customer.address}</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="debt-amount">$${customer.remainingAmount.toFixed(2)}</div>
+                    <div class="due-date ${dueDateClass}">
+                        <strong>بەرواری دانەوە:</strong> ${formatDate(customer.dueDate)}
+                    </div>
+                    <div class="debt-progress-container">
+                        <div class="progress debt-progress">
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                style="width: ${(customer.paidAmount / customer.totalDebt) * 100}%" 
+                                aria-valuenow="${customer.paidAmount}" 
+                                aria-valuemin="0" 
+                                aria-valuemax="${customer.totalDebt}">
+                            </div>
+                        </div>
+                        <div class="progress-label">
+                            <span>$${customer.paidAmount.toFixed(2)}</span>
+                            <span>$${customer.totalDebt.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div class="text-center mt-2">
+                        ${paymentStatus}
+                    </div>
+                </div>
+            </div>
+        `;
         
-        // Check if the date is within the range
-        if (startDate && !endDate) {
-            return rowDate >= new Date(startDate);
-        } else if (!startDate && endDate) {
-            return rowDate <= new Date(endDate);
+        container.append(card);
+    });
+}
+
+// Function to filter customers based on search term
+function filterCustomers(searchTerm) {
+    $('.customer-card').each(function() {
+        const customerName = $(this).find('.customer-name').text().toLowerCase();
+        const customerPhone = $(this).find('.customer-info p:first').text().toLowerCase();
+        const customerAddress = $(this).find('.customer-info p:last').text().toLowerCase();
+        
+        if (customerName.includes(searchTerm) || 
+            customerPhone.includes(searchTerm) || 
+            customerAddress.includes(searchTerm)) {
+            $(this).show();
         } else {
-            return rowDate >= new Date(startDate) && rowDate <= new Date(endDate);
+            $(this).hide();
         }
     });
-    
-    // Redraw the table
-    $('#debtsTable').DataTable().draw();
-    
-    // Remove the custom search function after it's done
-    $.fn.dataTable.ext.search.pop();
 }
 
-// Function to calculate remaining amount
-function calculateRemainingAmount() {
-    const totalAmount = parseFloat($('#totalAmount').val()) || 0;
-    const paidAmount = parseFloat($('#paidAmount').val()) || 0;
-    const remainingAmount = totalAmount - paidAmount;
+// Function to sort customers
+function sortCustomers(sortOption) {
+    const container = $('#customerCardsContainer');
+    const cards = container.find('.customer-card').get();
     
-    $('#remainingAmount').val(remainingAmount >= 0 ? remainingAmount : 0);
-}
-
-// Function to validate debt form
-function validateDebtForm() {
-    // Check if all required fields are filled
-    if (!$('#customerSelect').val()) {
-        showError('تکایە کڕیار هەڵبژێرە');
-        return false;
-    }
+    cards.sort(function(a, b) {
+        if (sortOption === 'name') {
+            const nameA = $(a).find('.customer-name').text().toLowerCase();
+            const nameB = $(b).find('.customer-name').text().toLowerCase();
+            return nameA.localeCompare(nameB);
+        } else if (sortOption === 'debt-high') {
+            const debtA = parseFloat($(a).find('.debt-amount').text().replace('$', ''));
+            const debtB = parseFloat($(b).find('.debt-amount').text().replace('$', ''));
+            return debtB - debtA;
+        } else if (sortOption === 'debt-low') {
+            const debtA = parseFloat($(a).find('.debt-amount').text().replace('$', ''));
+            const debtB = parseFloat($(b).find('.debt-amount').text().replace('$', ''));
+            return debtA - debtB;
+        } else if (sortOption === 'date') {
+            const dateA = new Date($(a).find('.due-date').text().split(':')[1].trim());
+            const dateB = new Date($(b).find('.due-date').text().split(':')[1].trim());
+            return dateA - dateB;
+        }
+        return 0;
+    });
     
-    if (!$('#receiptNumber').val()) {
-        showError('تکایە ژمارەی پسوڵە بنووسە');
-        return false;
-    }
-    
-    if (!$('#debtDate').val()) {
-        showError('تکایە بەرواری قەرز دیاریبکە');
-        return false;
-    }
-    
-    if (!$('#repaymentDate').val()) {
-        showError('تکایە بەرواری دانەوە دیاریبکە');
-        return false;
-    }
-    
-    if (!$('#totalAmount').val() || parseFloat($('#totalAmount').val()) <= 0) {
-        showError('تکایە بڕی پارەی دروست بنووسە');
-        return false;
-    }
-    
-    if (!$('#paidAmount').val()) {
-        showError('تکایە بڕی پارەی دراو بنووسە');
-        return false;
-    }
-    
-    if (!$('#creditLimit').val() || parseFloat($('#creditLimit').val()) <= 0) {
-        showError('تکایە سنوری قەرز دیاریبکە');
-        return false;
-    }
-    
-    // Check if the repayment date is after the debt date
-    const debtDate = new Date($('#debtDate').val());
-    const repaymentDate = new Date($('#repaymentDate').val());
-    
-    if (repaymentDate <= debtDate) {
-        showError('بەرواری دانەوە دەبێت دوای بەرواری قەرز بێت');
-        return false;
-    }
-    
-    // Additional validation can be added here
-    
-    return true;
-}
-
-// Function to validate payment form
-function validatePaymentForm() {
-    // Check if all required fields are filled
-    if (!$('#paymentDate').val()) {
-        showError('تکایە بەروار دیاریبکە');
-        return false;
-    }
-    
-    if (!$('#paymentAmount').val() || parseFloat($('#paymentAmount').val()) <= 0) {
-        showError('تکایە بڕی پارەی دروست بنووسە');
-        return false;
-    }
-    
-    if (!$('#paymentMethod').val()) {
-        showError('تکایە شێوازی پارەدان هەڵبژێرە');
-        return false;
-    }
-    
-    return true;
-}
-
-// Function to show error message
-function showError(message) {
-    Swal.fire({
-        title: 'هەڵە',
-        text: message,
-        icon: 'error',
-        confirmButtonText: 'باشە'
+    $.each(cards, function(i, card) {
+        container.append(card);
     });
 }
 
-// Function to print debt details
-function printDebtDetails() {
-    // Get the debt details
-    const customerName = $('#viewCustomerName').text();
-    const receiptNumber = $('#viewReceiptNumber').text();
-    const debtDate = $('#viewDebtDate').text();
-    const repaymentDate = $('#viewRepaymentDate').text();
-    const totalAmount = $('#viewTotalAmount').text();
-    const paidAmount = $('#viewPaidAmount').text();
-    const remainingAmount = $('#viewRemainingAmount').text();
-    const creditLimit = $('#viewCreditLimit').text();
-    const notes = $('#viewNotes').text();
+// Function to open customer profile
+function openCustomerProfile(customerId) {
+    // In a real app, this would fetch data from the server
+    // For demonstration, we'll use sample data
     
-    // Create a new window for printing
-    const printWindow = window.open('', '_blank');
+    const sampleCustomer = {
+        id: customerId,
+        name: customerId === 1 ? 'ئەحمەد محەمەد' : 
+             (customerId === 2 ? 'سارا عەلی' : 
+             (customerId === 3 ? 'کارزان عومەر' : 
+             (customerId === 4 ? 'هێڤی ڕەزا' : 
+             (customerId === 5 ? 'دلێر ڕەسوڵ' : 'شادی حسێن')))),
+        phone: customerId === 1 ? '07501234567' : 
+              (customerId === 2 ? '07707654321' : 
+              (customerId === 3 ? '07501122334' : 
+              (customerId === 4 ? '07705566778' : 
+              (customerId === 5 ? '07508877665' : '07701234567')))),
+        address: customerId === 1 ? 'ھەولێر، شەقامی ١٠٠ مەتری' : 
+                (customerId === 2 ? 'سلێمانی، گەڕەکی بەختیاری' : 
+                (customerId === 3 ? 'دھۆک، شەقامی نەورۆز' : 
+                (customerId === 4 ? 'هەولێر، شاری نوێ' : 
+                (customerId === 5 ? 'سلێمانی، سالم سترێت' : 'هەولێر، گەڕەکی ئازادی')))),
+        totalAmount: customerId === 1 ? 1500.00 : 
+                   (customerId === 2 ? 3000.00 : 
+                   (customerId === 3 ? 750.00 : 
+                   (customerId === 4 ? 2200.00 : 
+                   (customerId === 5 ? 900.00 : 1800.00)))),
+        paidAmount: customerId === 1 ? 500.00 : 
+                  (customerId === 2 ? 1000.00 : 
+                  (customerId === 3 ? 250.00 : 
+                  (customerId === 4 ? 700.00 : 
+                  (customerId === 5 ? 900.00 : 800.00)))),
+        remainingAmount: customerId === 1 ? 1000.00 : 
+                       (customerId === 2 ? 2000.00 : 
+                       (customerId === 3 ? 500.00 : 
+                       (customerId === 4 ? 1500.00 : 
+                       (customerId === 5 ? 0.00 : 1000.00)))),
+        debtLimit: customerId === 1 ? 2000.00 : 
+                 (customerId === 2 ? 5000.00 : 
+                 (customerId === 3 ? 1000.00 : 
+                 (customerId === 4 ? 3000.00 : 
+                 (customerId === 5 ? 2000.00 : 2500.00)))),
+        dueDate: customerId === 1 ? '2023-12-30' : 
+               (customerId === 2 ? '2023-11-15' : 
+               (customerId === 3 ? '2023-12-25' : 
+               (customerId === 4 ? '2023-10-30' : 
+               (customerId === 5 ? '2023-11-20' : '2023-12-15'))))
+    };
     
-    // Write the HTML content
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html dir="rtl">
-        <head>
-            <title>وردەکاری قەرز</title>
-            <meta charset="UTF-8">
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    margin: 0;
-                    padding: 20px;
-                    direction: rtl;
-                }
-                .header {
-                    text-align: center;
-                    margin-bottom: 20px;
-                }
-                .detail-row {
-                    display: flex;
-                    margin-bottom: 10px;
-                }
-                .detail-label {
-                    font-weight: bold;
-                    width: 150px;
-                }
-                .detail-value {
-                    flex: 1;
-                }
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-top: 20px;
-                }
-                th, td {
-                    border: 1px solid #ddd;
-                    padding: 8px;
-                    text-align: right;
-                }
-                th {
-                    background-color: #f2f2f2;
-                }
-                .footer {
-                    margin-top: 30px;
-                    text-align: center;
-                    font-size: 12px;
-                    color: #777;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h2>وردەکاری قەرز</h2>
-                <p>بەرواری چاپکردن: ${new Date().toLocaleDateString('ku-IQ')}</p>
-            </div>
-            
-            <div class="detail-row">
-                <div class="detail-label">ناوی کڕیار:</div>
-                <div class="detail-value">${customerName}</div>
-            </div>
-            <div class="detail-row">
-                <div class="detail-label">ژمارەی پسوڵە:</div>
-                <div class="detail-value">${receiptNumber}</div>
-            </div>
-            <div class="detail-row">
-                <div class="detail-label">بەرواری قەرز:</div>
-                <div class="detail-value">${debtDate}</div>
-            </div>
-            <div class="detail-row">
-                <div class="detail-label">بەرواری دانەوە:</div>
-                <div class="detail-value">${repaymentDate}</div>
-            </div>
-            <div class="detail-row">
-                <div class="detail-label">بڕی پارە:</div>
-                <div class="detail-value">${totalAmount}</div>
-            </div>
-            <div class="detail-row">
-                <div class="detail-label">بڕی پارەی دراو:</div>
-                <div class="detail-value">${paidAmount}</div>
-            </div>
-            <div class="detail-row">
-                <div class="detail-label">بڕی پارەی ماوە:</div>
-                <div class="detail-value">${remainingAmount}</div>
-            </div>
-            <div class="detail-row">
-                <div class="detail-label">سنوری قەرز:</div>
-                <div class="detail-value">${creditLimit}</div>
-            </div>
-            <div class="detail-row">
-                <div class="detail-label">تێبینیەکان:</div>
-                <div class="detail-value">${notes}</div>
-            </div>
-            
-            <h3>مێژووی پارەدان</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>بەروار</th>
-                        <th>بڕی پارە</th>
-                        <th>شێوازی پارەدان</th>
-                        <th>تێبینی</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>2023-10-15</td>
-                        <td>500,000 د.ع</td>
-                        <td>نەختینە</td>
-                        <td>پارەی سەرەتا</td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <div class="footer">
-                <p>سیستەمی فرۆشتن - قەرزی کڕیاران</p>
-            </div>
-        </body>
-        </html>
-    `);
+    // Set customer information in the modal
+    $('#customerName').text(sampleCustomer.name);
+    $('#customerPhone').text(sampleCustomer.phone);
+    $('#customerAddress').text(sampleCustomer.address);
+    $('#totalAmount').text(sampleCustomer.totalAmount.toFixed(2) + ' $');
+    $('#paidAmount').text(sampleCustomer.paidAmount.toFixed(2) + ' $');
+    $('#remainingAmount').text(sampleCustomer.remainingAmount.toFixed(2) + ' $');
+    $('#debtLimit').text(sampleCustomer.debtLimit.toFixed(2) + ' $');
+    $('#paymentDueDate').text(formatDate(sampleCustomer.dueDate));
     
-    // Close the document for writing
-    printWindow.document.close();
+    // Load purchases
+    loadSamplePurchases(customerId);
     
-    // Focus and print the window
-    printWindow.focus();
-    setTimeout(() => {
-        printWindow.print();
-    }, 500);
+    // Load payment history
+    loadSamplePaymentHistory(customerId);
+    
+    // Set current date as default for repayment
+    $('#repaymentDate').val(new Date().toISOString().split('T')[0]);
+    
+    // Show the modal
+    $('#customerProfileModal').modal('show');
+}
+
+// Function to load sample purchase data
+function loadSamplePurchases(customerId) {
+    const purchases = [
+        {
+            id: 101,
+            receiptNumber: 'INV-2023-001',
+            date: '2023-10-15',
+            total: 500.00,
+            paymentStatus: 'partial',
+            remainingAmount: 200.00
+        },
+        {
+            id: 102,
+            receiptNumber: 'INV-2023-005',
+            date: '2023-10-22',
+            total: 750.00,
+            paymentStatus: 'unpaid',
+            remainingAmount: 750.00
+        },
+        {
+            id: 103,
+            receiptNumber: 'INV-2023-008',
+            date: '2023-11-05',
+            total: 250.00,
+            paymentStatus: 'paid',
+            remainingAmount: 0.00
+        }
+    ];
+    
+    const tbody = $('#purchasesTableBody');
+    tbody.empty();
+    
+    purchases.forEach(purchase => {
+        const paymentStatusBadge = purchase.paymentStatus === 'paid' ? 
+            '<span class="badge bg-success">پارەدراوە</span>' : 
+            (purchase.paymentStatus === 'partial' ? 
+                '<span class="badge bg-warning">بەشێکی دراوە</span>' : 
+                '<span class="badge bg-danger">نەدراوە</span>');
+        
+        const row = `
+            <tr>
+                <td>${purchase.receiptNumber}</td>
+                <td>${formatDate(purchase.date)}</td>
+                <td>${purchase.total.toFixed(2)} $</td>
+                <td>${paymentStatusBadge}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-info view-purchase-btn" data-purchase-id="${purchase.id}">
+                        <i class="fas fa-eye"></i> بینین
+                    </button>
+                </td>
+            </tr>
+        `;
+        
+        tbody.append(row);
+    });
+}
+
+// Function to load sample payment history
+function loadSamplePaymentHistory(customerId) {
+    const payments = [
+        {
+            id: 201,
+            date: '2023-10-18',
+            amount: 300.00,
+            method: 'cash',
+            note: 'پارەدانی سەرەتایی'
+        },
+        {
+            id: 202,
+            date: '2023-11-01',
+            amount: 200.00,
+            method: 'bank_transfer',
+            note: 'گواستنەوە لە ڕێگەی بانکی کوردستان'
+        },
+        {
+            id: 203,
+            date: '2023-11-15',
+            amount: 250.00,
+            method: 'check',
+            note: 'چەکی ژمارە 12345'
+        }
+    ];
+    
+    const tbody = $('#paymentsTableBody');
+    tbody.empty();
+    
+    payments.forEach((payment, index) => {
+        const methodTranslated = payment.method === 'cash' ? 'نەقد' : 
+                              (payment.method === 'bank_transfer' ? 'گواستنەوەی بانکی' : 
+                              (payment.method === 'check' ? 'چەک' : 'شێوازی تر'));
+        
+        const row = `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${formatDate(payment.date)}</td>
+                <td>${payment.amount.toFixed(2)} $</td>
+                <td>${methodTranslated}</td>
+                <td>${payment.note}</td>
+            </tr>
+        `;
+        
+        tbody.append(row);
+    });
+}
+
+// Function to open purchase details
+function openPurchaseDetails(purchaseId) {
+    // Sample receipt items data
+    const receiptItems = [
+        {
+            id: 1001,
+            product: 'تەلەفزیۆنی سامسونگ ٥٥ ئینچ',
+            unitPrice: 350.00,
+            quantity: 1,
+            total: 350.00
+        },
+        {
+            id: 1002,
+            product: 'یاری پلەیستەیشن ٥',
+            unitPrice: 80.00,
+            quantity: 1,
+            total: 80.00
+        },
+        {
+            id: 1003,
+            product: 'دەسکی یاری پلەیستەیشن',
+            unitPrice: 35.00,
+            quantity: 2,
+            total: 70.00
+        }
+    ];
+    
+    // Set receipt details
+    $('#receiptNumber').text('INV-2023-001');
+    $('#receiptDate').text(formatDate('2023-10-15'));
+    $('#receiptTotal').text('500.00 $');
+    $('#receiptPaymentStatus').html('<span class="badge bg-warning">بەشێکی دراوە</span>');
+    $('#receiptRemainingAmount').text('200.00 $');
+    
+    // Load receipt items
+    const tbody = $('#receiptItemsTableBody');
+    tbody.empty();
+    
+    receiptItems.forEach((item, index) => {
+        const row = `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${item.product}</td>
+                <td>${item.unitPrice.toFixed(2)} $</td>
+                <td>${item.quantity}</td>
+                <td>${item.total.toFixed(2)} $</td>
+            </tr>
+        `;
+        
+        tbody.append(row);
+    });
+    
+    // Show the modal
+    $('#purchaseDetailsModal').modal('show');
+}
+
+// Function to save new debt
+function saveNewDebt() {
+    const name = $('#debtCustomerName').val();
+    const phone = $('#debtCustomerPhone').val();
+    const address = $('#debtCustomerAddress').val();
+    const amount = parseFloat($('#debtAmount').val());
+    const dueDate = $('#debtDueDate').val();
+    const note = $('#debtNote').val();
+    
+    if (!name || !phone || !amount || !dueDate) {
+        Swal.fire({
+            icon: 'error',
+            title: 'هەڵە',
+            text: 'تکایە هەموو خانەکان پڕ بکەرەوە'
+        });
+        return;
+    }
+    
+    // In a real app, this would send data to the server
+    // For demonstration, we'll just show a success message
+    
+    Swal.fire({
+        icon: 'success',
+        title: 'سەرکەوتوو',
+        text: 'قەرز بە سەرکەوتوویی زیادکرا'
+    }).then(() => {
+        $('#addDebtModal').modal('hide');
+        
+        // Add a new card for the new customer
+        const newCustomer = {
+            id: 7, // This would be generated by the server in a real app
+            name: name,
+            phone: phone,
+            address: address || 'ناونیشان نییە',
+            totalDebt: amount,
+            paidAmount: 0,
+            remainingAmount: amount,
+            debtLimit: amount * 1.5, // Just for demonstration
+            dueDate: dueDate,
+            isOverdue: false
+        };
+        
+        const customers = [newCustomer];
+        renderCustomerCards(customers);
+    });
+}
+
+// Function to save repayment
+function saveRepayment() {
+    const amount = parseFloat($('#repaymentAmount').val());
+    const date = $('#repaymentDate').val();
+    const method = $('#repaymentMethod').val();
+    const note = $('#repaymentNote').val();
+    
+    if (!amount || !date || !method) {
+        Swal.fire({
+            icon: 'error',
+            title: 'هەڵە',
+            text: 'تکایە هەموو خانەکان پڕ بکەرەوە'
+        });
+        return;
+    }
+    
+    // In a real app, this would send data to the server
+    // For demonstration, we'll just show a success message and update the payment history
+    
+    Swal.fire({
+        icon: 'success',
+        title: 'سەرکەوتوو',
+        text: 'پارەدانەوە بە سەرکەوتوویی تۆمارکرا'
+    }).then(() => {
+        // Update payment history by adding a new row
+        const methodTranslated = method === 'cash' ? 'نەقد' : 
+                            (method === 'bank_transfer' ? 'گواستنەوەی بانکی' : 
+                            (method === 'check' ? 'چەک' : 'شێوازی تر'));
+                            
+        const newPaymentRow = `
+            <tr>
+                <td>${$('#paymentsTableBody tr').length + 1}</td>
+                <td>${formatDate(date)}</td>
+                <td>${amount.toFixed(2)} $</td>
+                <td>${methodTranslated}</td>
+                <td>${note || ''}</td>
+            </tr>
+        `;
+        
+        $('#paymentsTableBody').append(newPaymentRow);
+        
+        // Update the customer summary
+        const currentPaid = parseFloat($('#paidAmount').text().replace('$', '').trim());
+        const currentRemaining = parseFloat($('#remainingAmount').text().replace('$', '').trim());
+        
+        const newPaid = currentPaid + amount;
+        const newRemaining = Math.max(0, currentRemaining - amount);
+        
+        $('#paidAmount').text(newPaid.toFixed(2) + ' $');
+        $('#remainingAmount').text(newRemaining.toFixed(2) + ' $');
+        
+        // Reset form
+        $('#repaymentForm')[0].reset();
+        $('#repaymentDate').val(new Date().toISOString().split('T')[0]);
+    });
+}
+
+// Helper function to format date
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ku-IQ', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
 } 

@@ -31,7 +31,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <h4 class="mb-0">قەرزی ئێمە لای خەڵک</h4>
                     <div class="d-flex">
-                        <button class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#addDebtModal">
+                        <button class="btn btn-primary ms-2" id="addDebtBtn">
                             <i class="fas fa-plus-circle"></i> زیادکردنی قەرز
                         </button>
                         <button class="btn btn-outline-secondary" id="refreshBtn">
@@ -41,190 +41,189 @@
                 </div>
             </div>
 
-            <!-- Main Content Area -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">لیستی قەرزەکان</h5>
-                        <div class="filters">
-                            <div class="row">
-                                <div class="col-md-4 col-sm-12 mb-2">
-                                    <input type="text" class="form-control" id="searchBox" placeholder="گەڕان...">
-                                </div>
-                                <div class="col-md-4 col-sm-6 mb-2">
-                                    <input type="date" class="form-control" id="startDate" placeholder="بەرواری دەستپێک">
-                                </div>
-                                <div class="col-md-4 col-sm-6 mb-2">
-                                    <input type="date" class="form-control" id="endDate" placeholder="بەرواری کۆتایی">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <!-- Search and Filter Section -->
+            <div class="card mb-4">
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover dt-responsive nowrap" id="debtsTable" width="100%">
-                            <thead>
-                                <tr>
-                                    <th>ناوی کڕیار</th>
-                                    <th>ڕەقەم</th>
-                                    <th>بەروار</th>
-                                    <th>بڕی پارە</th>
-                                    <th>بڕی پارەی دراو</th>
-                                    <th>بڕی پارەی ماوە</th>
-                                    <th>سنوری قەرز</th>
-                                    <th>بەرواری دانەوە</th>
-                                    <th>دۆخ</th>
-                                    <th>کردار</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Sample data -->
-                                <tr>
-                                    <td>ئەحمەد محەمەد</td>
-                                    <td>D-1001</td>
-                                    <td>2023-10-15</td>
-                                    <td>1,500,000 د.ع</td>
-                                    <td>500,000 د.ع</td>
-                                    <td>1,000,000 د.ع</td>
-                                    <td>2,000,000 د.ع</td>
-                                    <td>2024-01-15</td>
-                                    <td><span class="badge bg-warning">دواکەوتوو</span></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="btn btn-sm btn-outline-info view-debt" data-id="1001" title="بینین">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-success pay-debt" data-id="1001" title="پارەدان">
-                                                <i class="fas fa-money-bill-wave"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-primary edit-debt" data-id="1001" title="دەستکاریکردن">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>کارزان عومەر</td>
-                                    <td>D-1002</td>
-                                    <td>2023-11-20</td>
-                                    <td>2,200,000 د.ع</td>
-                                    <td>1,200,000 د.ع</td>
-                                    <td>1,000,000 د.ع</td>
-                                    <td>3,000,000 د.ع</td>
-                                    <td>2024-02-20</td>
-                                    <td><span class="badge bg-success">چالاک</span></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="btn btn-sm btn-outline-info view-debt" data-id="1002" title="بینین">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-success pay-debt" data-id="1002" title="پارەدان">
-                                                <i class="fas fa-money-bill-wave"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-primary edit-debt" data-id="1002" title="دەستکاریکردن">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>دلێر ڕەسوڵ</td>
-                                    <td>D-1003</td>
-                                    <td>2023-12-05</td>
-                                    <td>3,500,000 د.ع</td>
-                                    <td>2,500,000 د.ع</td>
-                                    <td>1,000,000 د.ع</td>
-                                    <td>5,000,000 د.ع</td>
-                                    <td>2024-03-05</td>
-                                    <td><span class="badge bg-success">چالاک</span></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="btn btn-sm btn-outline-info view-debt" data-id="1003" title="بینین">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-success pay-debt" data-id="1003" title="پارەدان">
-                                                <i class="fas fa-money-bill-wave"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-primary edit-debt" data-id="1003" title="دەستکاریکردن">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>سۆران ئەمین</td>
-                                    <td>D-1004</td>
-                                    <td>2024-01-10</td>
-                                    <td>4,000,000 د.ع</td>
-                                    <td>1,000,000 د.ع</td>
-                                    <td>3,000,000 د.ع</td>
-                                    <td>4,000,000 د.ع</td>
-                                    <td>2024-04-10</td>
-                                    <td><span class="badge bg-danger">سنور تێپەڕیوە</span></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="btn btn-sm btn-outline-info view-debt" data-id="1004" title="بینین">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-success pay-debt" data-id="1004" title="پارەدان">
-                                                <i class="fas fa-money-bill-wave"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-primary edit-debt" data-id="1004" title="دەستکاریکردن">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>نەوزاد عەلی</td>
-                                    <td>D-1005</td>
-                                    <td>2024-02-18</td>
-                                    <td>1,800,000 د.ع</td>
-                                    <td>800,000 د.ع</td>
-                                    <td>1,000,000 د.ع</td>
-                                    <td>3,000,000 د.ع</td>
-                                    <td>2024-05-18</td>
-                                    <td><span class="badge bg-success">چالاک</span></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button class="btn btn-sm btn-outline-info view-debt" data-id="1005" title="بینین">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-success pay-debt" data-id="1005" title="پارەدان">
-                                                <i class="fas fa-money-bill-wave"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-primary edit-debt" data-id="1005" title="دەستکاریکردن">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchInput" placeholder="گەڕان بە ناو، ژمارە تەلەفۆن...">
+                                <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                                    <i class="fas fa-search"></i> گەڕان
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" id="sortSelect">
+                                <option value="name">ڕیزکردن بە ناو</option>
+                                <option value="debt-high">زۆرترین قەرز</option>
+                                <option value="debt-low">کەمترین قەرز</option>
+                                <option value="date">بەروار</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
-                <div class="card-footer">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="summary-box">
-                                <h6>کۆی گشتی قەرز</h6>
-                                <p class="total-amount">7,000,000 د.ع</p>
+            </div>
+
+            <!-- Customer Debt Cards Section -->
+            <div class="customer-cards-container" id="customerCardsContainer">
+                <!-- Cards will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Profile Modal -->
+    <div class="modal fade" id="customerProfileModal" tabindex="-1" aria-labelledby="customerProfileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="customerProfileModalLabel">پڕۆفایلی قەرزار</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Customer Info Section -->
+                    <div class="customer-profile-header mb-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="customer-info">
+                                    <h4 id="customerName">ناوی قەرزار</h4>
+                                    <p><i class="fas fa-phone me-2"></i><span id="customerPhone">ژمارە تەلەفۆن</span></p>
+                                    <p><i class="fas fa-map-marker-alt me-2"></i><span id="customerAddress">ناونیشان</span></p>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="summary-box">
-                                <h6>قەرزی دواکەوتوو</h6>
-                                <p class="late-amount">1,000,000 د.ع</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="summary-box">
-                                <h6>قەرزی سنور تێپەڕیوو</h6>
-                                <p class="overdue-amount">3,000,000 د.ع</p>
+                            <div class="col-md-6">
+                                <div class="debt-summary">
+                                    <div class="row">
+                                        <div class="col-6 mb-3">
+                                            <div class="debt-stat">
+                                                <h6>بڕی پارەی گشتی</h6>
+                                                <h4 id="totalAmount">0 $</h4>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 mb-3">
+                                            <div class="debt-stat">
+                                                <h6>پارەی دراو</h6>
+                                                <h4 id="paidAmount">0 $</h4>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 mb-3">
+                                            <div class="debt-stat">
+                                                <h6>بڕی پارەی ماوە</h6>
+                                                <h4 id="remainingAmount">0 $</h4>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 mb-3">
+                                            <div class="debt-stat">
+                                                <h6>سنوری قەرز</h6>
+                                                <h4 id="debtLimit">0 $</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-12">
+                                            <p><strong>بەرواری دانەوە:</strong> <span id="paymentDueDate">--/--/----</span></p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Tabs Navigation -->
+                    <ul class="nav nav-tabs" id="customerProfileTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="purchases-tab" data-bs-toggle="tab" data-bs-target="#purchases" type="button" role="tab">هەموو کڕینەکان</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments" type="button" role="tab">مێژووی پارەدانەکان</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="repayments-tab" data-bs-toggle="tab" data-bs-target="#repayments" type="button" role="tab">پارەدانەوە</button>
+                        </li>
+                    </ul>
+
+                    <!-- Tabs Content -->
+                    <div class="tab-content mt-3" id="customerProfileTabsContent">
+                        <!-- Purchases Tab -->
+                        <div class="tab-pane fade show active" id="purchases" role="tabpanel" aria-labelledby="purchases-tab">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover" id="purchasesTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ژمارەی وەسڵ</th>
+                                            <th>بەروار</th>
+                                            <th>کۆی گشتی</th>
+                                            <th>باری پارەدان</th>
+                                            <th>کردار</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="purchasesTableBody">
+                                        <!-- Purchases will be loaded dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Payment History Tab -->
+                        <div class="tab-pane fade" id="payments" role="tabpanel" aria-labelledby="payments-tab">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover" id="paymentsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ژمارە</th>
+                                            <th>بەروار</th>
+                                            <th>بڕی پارە</th>
+                                            <th>شێوازی پارەدان</th>
+                                            <th>تێبینی</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="paymentsTableBody">
+                                        <!-- Payment history will be loaded dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Repayments Tab -->
+                        <div class="tab-pane fade" id="repayments" role="tabpanel" aria-labelledby="repayments-tab">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">زیادکردنی پارەدانەوە</h6>
+                                    <form id="repaymentForm">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="repaymentAmount" class="form-label">بڕی پارە</label>
+                                                <input type="number" class="form-control" id="repaymentAmount" min="0" step="0.01" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="repaymentDate" class="form-label">بەروار</label>
+                                                <input type="date" class="form-control" id="repaymentDate" required>
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="repaymentMethod" class="form-label">شێوازی پارەدان</label>
+                                                <select class="form-select" id="repaymentMethod" required>
+                                                    <option value="cash">نەقد</option>
+                                                    <option value="bank_transfer">گواستنەوەی بانکی</option>
+                                                    <option value="check">چەک</option>
+                                                    <option value="other">شێوازی تر</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="repaymentNote" class="form-label">تێبینی</label>
+                                                <input type="text" class="form-control" id="repaymentNote">
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">پاشەکەوتکردن</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
                 </div>
             </div>
         </div>
@@ -232,7 +231,7 @@
 
     <!-- Add Debt Modal -->
     <div class="modal fade" id="addDebtModal" tabindex="-1" aria-labelledby="addDebtModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="addDebtModalLabel">زیادکردنی قەرز</h5>
@@ -240,191 +239,81 @@
                 </div>
                 <div class="modal-body">
                     <form id="addDebtForm">
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="customerSelect" class="form-label">کڕیار</label>
-                                <select class="form-select" id="customerSelect" required>
-                                    <option value="" selected disabled>کڕیار هەڵبژێرە</option>
-                                    <option value="1">ئەحمەد محەمەد</option>
-                                    <option value="2">کارزان عومەر</option>
-                                    <option value="3">دلێر ڕەسوڵ</option>
-                                    <option value="4">سۆران ئەمین</option>
-                                    <option value="5">نەوزاد عەلی</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="receiptNumber" class="form-label">ژمارەی پسوڵە</label>
-                                <input type="text" class="form-control" id="receiptNumber" required>
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="debtDate" class="form-label">بەرواری قەرز</label>
-                                <input type="date" class="form-control" id="debtDate" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="repaymentDate" class="form-label">بەرواری دانەوە</label>
-                                <input type="date" class="form-control" id="repaymentDate" required>
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="totalAmount" class="form-label">بڕی پارە</label>
-                                <input type="number" class="form-control" id="totalAmount" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="paidAmount" class="form-label">بڕی پارەی دراو</label>
-                                <input type="number" class="form-control" id="paidAmount" required>
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="creditLimit" class="form-label">سنوری قەرز</label>
-                                <input type="number" class="form-control" id="creditLimit" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="remainingAmount" class="form-label">بڕی پارەی ماوە</label>
-                                <input type="number" class="form-control" id="remainingAmount" readonly>
-                            </div>
+                        <div class="mb-3">
+                            <label for="debtCustomerName" class="form-label">ناوی قەرزار</label>
+                            <input type="text" class="form-control" id="debtCustomerName" required>
                         </div>
                         <div class="mb-3">
-                            <label for="debtNotes" class="form-label">تێبینیەکان</label>
-                            <textarea class="form-control" id="debtNotes" rows="3"></textarea>
+                            <label for="debtCustomerPhone" class="form-label">ژمارە تەلەفۆن</label>
+                            <input type="tel" class="form-control" id="debtCustomerPhone" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="debtCustomerAddress" class="form-label">ناونیشان</label>
+                            <input type="text" class="form-control" id="debtCustomerAddress">
+                        </div>
+                        <div class="mb-3">
+                            <label for="debtAmount" class="form-label">بڕی قەرز</label>
+                            <input type="number" class="form-control" id="debtAmount" min="0" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="debtDueDate" class="form-label">بەرواری دانەوە</label>
+                            <input type="date" class="form-control" id="debtDueDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="debtNote" class="form-label">تێبینی</label>
+                            <textarea class="form-control" id="debtNote" rows="3"></textarea>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">پاشگەزبوونەوە</button>
                     <button type="button" class="btn btn-primary" id="saveDebtBtn">پاشەکەوتکردن</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- View Debt Modal -->
-    <div class="modal fade" id="viewDebtModal" tabindex="-1" aria-labelledby="viewDebtModalLabel" aria-hidden="true">
+    <!-- Purchase Details Modal -->
+    <div class="modal fade" id="purchaseDetailsModal" tabindex="-1" aria-labelledby="purchaseDetailsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="viewDebtModalLabel">وردەکاری قەرز</h5>
+                    <h5 class="modal-title" id="purchaseDetailsModalLabel">وردەکاری وەسڵی ژمارە: <span id="receiptNumber"></span></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h6>ناوی کڕیار:</h6>
-                            <p id="viewCustomerName">ئەحمەد محەمەد</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>ژمارەی پسوڵە:</h6>
-                            <p id="viewReceiptNumber">D-1001</p>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h6>بەرواری قەرز:</h6>
-                            <p id="viewDebtDate">2023-10-15</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>بەرواری دانەوە:</h6>
-                            <p id="viewRepaymentDate">2024-01-15</p>
+                    <div class="receipt-details mb-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>بەروار:</strong> <span id="receiptDate"></span></p>
+                                <p><strong>کۆی گشتی:</strong> <span id="receiptTotal"></span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>باری پارەدان:</strong> <span id="receiptPaymentStatus"></span></p>
+                                <p><strong>بڕی ماوە:</strong> <span id="receiptRemainingAmount"></span></p>
+                            </div>
                         </div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <h6>بڕی پارە:</h6>
-                            <p id="viewTotalAmount">1,500,000 د.ع</p>
-                        </div>
-                        <div class="col-md-4">
-                            <h6>بڕی پارەی دراو:</h6>
-                            <p id="viewPaidAmount">500,000 د.ع</p>
-                        </div>
-                        <div class="col-md-4">
-                            <h6>بڕی پارەی ماوە:</h6>
-                            <p id="viewRemainingAmount">1,000,000 د.ع</p>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h6>سنوری قەرز:</h6>
-                            <p id="viewCreditLimit">2,000,000 د.ع</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>دۆخ:</h6>
-                            <p id="viewStatus"><span class="badge bg-warning">دواکەوتوو</span></p>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <h6>تێبینیەکان:</h6>
-                        <p id="viewNotes">ئەم قەرزە پەیوەندی بە پسوڵەی ژمارە R-2023/156 ەوە هەیە.</p>
-                    </div>
-
-                    <h6 class="border-top pt-3">مێژووی پارەدان</h6>
+                    <h6>کاڵاکانی ناو وەسڵ</h6>
                     <div class="table-responsive">
-                        <table class="table table-sm table-bordered">
+                        <table class="table table-striped table-hover" id="receiptItemsTable">
                             <thead>
                                 <tr>
-                                    <th>بەروار</th>
-                                    <th>بڕی پارە</th>
-                                    <th>شێوازی پارەدان</th>
-                                    <th>تێبینی</th>
+                                    <th>#</th>
+                                    <th>کاڵا</th>
+                                    <th>نرخی یەکە</th>
+                                    <th>بڕ</th>
+                                    <th>کۆی گشتی</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td>2023-10-15</td>
-                                    <td>500,000 د.ع</td>
-                                    <td>نەختینە</td>
-                                    <td>پارەی سەرەتا</td>
-                                </tr>
+                            <tbody id="receiptItemsTableBody">
+                                <!-- Receipt items will be loaded dynamically -->
                             </tbody>
                         </table>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-success" id="makePaymentBtn">پارەدان</button>
-                    <button type="button" class="btn btn-primary" id="printDebtDetailsBtn">چاپکردن</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Payment Modal -->
-    <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="paymentModalLabel">زیادکردنی پارەدان</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="paymentForm">
-                        <div class="mb-3">
-                            <label for="paymentDate" class="form-label">بەروار</label>
-                            <input type="date" class="form-control" id="paymentDate" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="paymentAmount" class="form-label">بڕی پارە</label>
-                            <input type="number" class="form-control" id="paymentAmount" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="paymentMethod" class="form-label">شێوازی پارەدان</label>
-                            <select class="form-select" id="paymentMethod" required>
-                                <option value="cash">نەختینە</option>
-                                <option value="bank">بانک</option>
-                                <option value="check">چەک</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="paymentNotes" class="form-label">تێبینی</label>
-                            <textarea class="form-control" id="paymentNotes" rows="2"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
-                    <button type="button" class="btn btn-primary" id="savePaymentBtn">پاشەکەوتکردن</button>
                 </div>
             </div>
         </div>
