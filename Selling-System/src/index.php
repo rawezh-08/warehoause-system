@@ -23,7 +23,7 @@
 
 <body>
     <!-- Main Content Wrapper -->
-    <div id="content">
+    <div id="content" >
         <!-- Navbar container - will be populated by JavaScript -->
         <div id="navbar-container"></div>
 
@@ -31,8 +31,8 @@
         <div id="sidebar-container"></div>
 
         <!-- Main Content Area -->
-        <div class="main-content">
-            <div class="dashboard-container" id="content">
+        <div class="main-content" >
+            <div class="dashboard-container" id="content" style="margin: 0px;">
                 <div class="container-fluid p-0">
                     <!-- Quick Access Section -->
                     <div class="row mb-4">
