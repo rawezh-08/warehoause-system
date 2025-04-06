@@ -79,6 +79,22 @@
                    
                 </ul>
             </li>
+             <!-- Expenses -->
+             <li class="menu-item">
+                <a href="#deptsSubmenu" class="item-link">
+                <div class="icon-cont">
+                        <img src="assets/icons/spending.svg" alt="">
+                    </div> 
+                    <span>قەرزەکان</span>
+                    <i class="fas fa-chevron-down dropdown-icon"></i>
+                </a>
+                <ul class="submenu" id="deptsSubmenu">
+                    <li><a href="customerDebts.php">قەرزی کڕیاڕ لە ئێمە</a></li>
+                    <li><a href="#">قەرزی ئێمە لە دابینکەر</a></li>
+                   
+                </ul>
+            </li>
+
 
             <!-- Reports -->
             <li class="menu-item">
