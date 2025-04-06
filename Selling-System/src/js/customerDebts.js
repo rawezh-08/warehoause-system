@@ -47,7 +47,8 @@ $(document).ready(function() {
     // Event handler for opening customer profile
     $(document).on('click', '.customer-card', function() {
         const customerId = $(this).data('customer-id');
-        openCustomerProfile(customerId);
+        // Redirect to customer profile page instead of opening modal
+        window.location.href = `customerProfile.php?id=${customerId}`;
     });
     
     // Event handler for view purchase details
@@ -239,76 +240,11 @@ function sortCustomers(sortOption) {
     });
 }
 
-// Function to open customer profile
+// Function to open customer profile - keep this function for backward compatibility
+// but change its implementation to redirect instead of opening a modal
 function openCustomerProfile(customerId) {
-    // In a real app, this would fetch data from the server
-    // For demonstration, we'll use sample data
-    
-    const sampleCustomer = {
-        id: customerId,
-        name: customerId === 1 ? 'ئەحمەد محەمەد' : 
-             (customerId === 2 ? 'سارا عەلی' : 
-             (customerId === 3 ? 'کارزان عومەر' : 
-             (customerId === 4 ? 'هێڤی ڕەزا' : 
-             (customerId === 5 ? 'دلێر ڕەسوڵ' : 'شادی حسێن')))),
-        phone: customerId === 1 ? '07501234567' : 
-              (customerId === 2 ? '07707654321' : 
-              (customerId === 3 ? '07501122334' : 
-              (customerId === 4 ? '07705566778' : 
-              (customerId === 5 ? '07508877665' : '07701234567')))),
-        address: customerId === 1 ? 'ھەولێر، شەقامی ١٠٠ مەتری' : 
-                (customerId === 2 ? 'سلێمانی، گەڕەکی بەختیاری' : 
-                (customerId === 3 ? 'دھۆک، شەقامی نەورۆز' : 
-                (customerId === 4 ? 'هەولێر، شاری نوێ' : 
-                (customerId === 5 ? 'سلێمانی، سالم سترێت' : 'هەولێر، گەڕەکی ئازادی')))),
-        totalAmount: customerId === 1 ? 1500.00 : 
-                   (customerId === 2 ? 3000.00 : 
-                   (customerId === 3 ? 750.00 : 
-                   (customerId === 4 ? 2200.00 : 
-                   (customerId === 5 ? 900.00 : 1800.00)))),
-        paidAmount: customerId === 1 ? 500.00 : 
-                  (customerId === 2 ? 1000.00 : 
-                  (customerId === 3 ? 250.00 : 
-                  (customerId === 4 ? 700.00 : 
-                  (customerId === 5 ? 900.00 : 800.00)))),
-        remainingAmount: customerId === 1 ? 1000.00 : 
-                       (customerId === 2 ? 2000.00 : 
-                       (customerId === 3 ? 500.00 : 
-                       (customerId === 4 ? 1500.00 : 
-                       (customerId === 5 ? 0.00 : 1000.00)))),
-        debtLimit: customerId === 1 ? 2000.00 : 
-                 (customerId === 2 ? 5000.00 : 
-                 (customerId === 3 ? 1000.00 : 
-                 (customerId === 4 ? 3000.00 : 
-                 (customerId === 5 ? 2000.00 : 2500.00)))),
-        dueDate: customerId === 1 ? '2023-12-30' : 
-               (customerId === 2 ? '2023-11-15' : 
-               (customerId === 3 ? '2023-12-25' : 
-               (customerId === 4 ? '2023-10-30' : 
-               (customerId === 5 ? '2023-11-20' : '2023-12-15'))))
-    };
-    
-    // Set customer information in the modal
-    $('#customerName').text(sampleCustomer.name);
-    $('#customerPhone').text(sampleCustomer.phone);
-    $('#customerAddress').text(sampleCustomer.address);
-    $('#totalAmount').text(sampleCustomer.totalAmount.toFixed(2) + ' $');
-    $('#paidAmount').text(sampleCustomer.paidAmount.toFixed(2) + ' $');
-    $('#remainingAmount').text(sampleCustomer.remainingAmount.toFixed(2) + ' $');
-    $('#debtLimit').text(sampleCustomer.debtLimit.toFixed(2) + ' $');
-    $('#paymentDueDate').text(formatDate(sampleCustomer.dueDate));
-    
-    // Load purchases
-    loadSamplePurchases(customerId);
-    
-    // Load payment history
-    loadSamplePaymentHistory(customerId);
-    
-    // Set current date as default for repayment
-    $('#repaymentDate').val(new Date().toISOString().split('T')[0]);
-    
-    // Show the modal
-    $('#customerProfileModal').modal('show');
+    // Redirect to customer profile page
+    window.location.href = `customerProfile.php?id=${customerId}`;
 }
 
 // Function to load sample purchase data

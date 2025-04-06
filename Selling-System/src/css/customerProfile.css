@@ -1,0 +1,281 @@
+/* Customer Profile Styles */
+
+/* Customer Profile Header */
+.customer-profile-header {
+    border-radius: 10px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.customer-info h4 {
+    color: #343a40;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.customer-info p {
+    margin-bottom: 8px;
+    color: #495057;
+}
+
+.customer-info i {
+    color: #6c757d;
+    width: 20px;
+    text-align: center;
+}
+
+/* Debt Summary */
+.debt-stat {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    height: 100%;
+}
+
+.debt-stat h6 {
+    color: #6c757d;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.debt-stat h4 {
+    color: #343a40;
+    margin-bottom: 0;
+    font-weight: 600;
+}
+
+#totalAmount {
+    color: #007bff;
+}
+
+#paidAmount {
+    color: #28a745;
+}
+
+#remainingAmount {
+    color: #fd7e14;
+}
+
+#debtLimit {
+    color: #6c757d;
+}
+
+/* DataTables */
+.dataTables_wrapper {
+    margin-bottom: 30px;
+}
+
+.table thead th {
+    background-color: #f8f9fa;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    text-align: right !important;
+}
+
+.table tbody td {
+    text-align: right !important;
+}
+
+.table td:last-child {
+    text-align: center !important;
+}
+
+.dataTables_filter {
+    text-align: left !important;
+}
+
+.dataTables_length {
+    text-align: right !important;
+}
+
+.dataTables_info {
+    text-align: right !important;
+}
+
+.dataTables_paginate {
+    text-align: left !important;
+}
+
+.badge {
+    padding: 6px 10px;
+    font-weight: 500;
+}
+
+.badge-paid {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-unpaid {
+    background-color: #dc3545;
+    color: white;
+}
+
+.badge-partial {
+    background-color: #ffc107;
+    color: #343a40;
+}
+
+/* Tabs */
+.nav-tabs {
+    border-bottom: 2px solid #dee2e6;
+    margin-bottom: 20px;
+}
+
+.nav-tabs .nav-link {
+    margin-bottom: -2px;
+    border: none;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 10px 15px;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: transparent;
+    color: #343a40;
+}
+
+.nav-tabs .nav-link.active {
+    color: #007bff;
+    background-color: transparent;
+    border-bottom: 2px solid #007bff;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 767.98px) {
+    .debt-stat {
+        margin-bottom: 15px;
+    }
+    
+    .customer-info {
+        margin-bottom: 20px;
+    }
+    
+    .debt-stat h6 {
+        font-size: 0.85rem;
+    }
+    
+    .debt-stat h4 {
+        font-size: 1.1rem;
+    }
+}
+
+/* Repayment Form */
+#repaymentForm {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+/* Modal Styles */
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-title {
+    color: #343a40;
+    font-weight: 600;
+}
+
+.receipt-details {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.receipt-details p {
+    margin-bottom: 8px;
+}
+
+/* Button Styles */
+.btn-info {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+    color: white;
+}
+
+.view-purchase-btn {
+    white-space: nowrap;
+}
+
+/* DataTables Responsive */
+.dtr-inline.collapsed tbody tr td.dtr-control:before,
+.dtr-inline.collapsed tbody tr th.dtr-control:before {
+    background-color: #007bff !important;
+    cursor: pointer;
+}
+
+/* RTL support for responsive details */
+table.dataTable.dtr-inline.collapsed > tbody > tr > td:first-child:before,
+table.dataTable.dtr-inline.collapsed > tbody > tr > th:first-child:before {
+    right: 4px !important;
+    left: auto !important;
+}
+
+.dtr-details {
+    width: 100%;
+}
+
+.dtr-details li {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.dtr-details li:last-child {
+    border-bottom: none;
+}
+
+.dtr-title {
+    font-weight: 600;
+    color: #495057;
+    text-align: right !important;
+}
+
+.dtr-data {
+    text-align: left !important; /* Because the main direction is RTL */
+}
+
+/* Fix for RTL layout in responsive mode */
+table.dataTable.dtr-inline.collapsed.compact > tbody > tr > td:first-child,
+table.dataTable.dtr-inline.collapsed.compact > tbody > tr > th:first-child {
+    padding-right: 30px !important;
+}
+
+@media (max-width: 767.98px) {
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        text-align: center !important;
+        float: none !important;
+        margin-bottom: 10px;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 0.3em 0.6em;
+    }
+    
+    .table-responsive {
+        border: none;
+        margin-bottom: 0;
+    }
+}
+
+/* Table Cell Visibility Control for Responsive Design */
+@media (max-width: 576px) {
+    .dataTables_wrapper .dataTables_info {
+        white-space: normal;
+    }
+} 
