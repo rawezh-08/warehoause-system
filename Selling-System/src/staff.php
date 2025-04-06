@@ -830,9 +830,8 @@ $suppliers = $supplierModel->getAll();
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
-    <!-- Custom JavaScript -->
-    <script src="js/include-components.js"></script>
-    <script src="js/staff/script.js"></script>
+    <script src="./js/include-components.js"></script>
+
 </body>
 
 </html>

@@ -257,6 +257,7 @@
             </div>
         </div>
     </div>
+    <script src="./js/include-components.js"></script>
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -265,54 +266,7 @@
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <!-- Custom JavaScript -->
-    <script src="js/include-components.js"></script>
     <script src="js/addStaff/script.js"></script>
-    <script>
-        // Function to get URL parameter by name
-        function getUrlParameter(name) {
-            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-            var results = regex.exec(location.search);
-            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
-        }
-
-        $(document).ready(function() {
-            // Check if tab parameter exists in URL
-            var tabParam = getUrlParameter('tab');
-            
-            // If tab parameter exists, activate the corresponding tab
-            if (tabParam) {
-                // Find the tab button and activate it
-                $('#' + tabParam + '-tab').tab('show');
-            }
-            
-            // Apply formatting to number inputs
-            const debitOnBusinessInput = document.getElementById('debitOnBusiness');
-            if (debitOnBusinessInput) {
-                debitOnBusinessInput.addEventListener('input', function() {
-                    formatNumber(this);
-                });
-            }
-            
-            const debtOnMyselfInput = document.getElementById('debt_on_myself');
-            if (debtOnMyselfInput) {
-                debtOnMyselfInput.addEventListener('input', function() {
-                    formatNumber(this);
-                });
-            }
-        });
-        
-        // Format number with commas
-        function formatNumber(input) {
-            // Remove all non-digit characters
-            let value = input.value.replace(/[^\d]/g, '');
-            
-            // Add commas for thousands
-            value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-            
-            // Update the input value
-            input.value = value;
-        }
-    </script>
+   
 </body>
 </html> 
