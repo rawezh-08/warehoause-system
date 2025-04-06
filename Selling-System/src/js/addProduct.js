@@ -155,13 +155,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Generate product code
     if (generateCodeBtn) {
         generateCodeBtn.addEventListener('click', function() {
-            if (document.getElementById('category_id')) {
-                const category = document.getElementById('category_id').value;
-                const timestamp = Date.now().toString().slice(-6);
-                const code = `${category}${timestamp}`;
-                if (productCodeInput) {
-                    productCodeInput.value = code;
-                }
+            // Generate a code with 'A' prefix and 3 digits (A001, A002, etc.)
+            let randomNum = Math.floor(Math.random() * 999) + 1;
+            // Pad with leading zeros to make it 3 digits
+            let formattedNum = randomNum.toString().padStart(3, '0');
+            // Create the code in format A001
+            const code = `A${formattedNum}`;
+            
+            if (productCodeInput) {
+                productCodeInput.value = code;
             }
         });
     }

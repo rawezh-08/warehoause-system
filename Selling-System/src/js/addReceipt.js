@@ -478,53 +478,53 @@ $(document).ready(function() {
         
         // Check if the element is already initialized
         if (!element.data('select2')) {
-            element.select2({
-                theme: 'bootstrap-5',
-                placeholder: 'کاڵا هەڵبژێرە',
-                allowClear: true,
-                width: '100%',
-                ajax: {
-                    url: 'api/products.php',
-                    dataType: 'json',
-                    delay: 250,
-                    data: function(params) {
-                        return {
-                            search: params.term,
-                            page: params.page || 1
-                        };
-                    },
-                    processResults: function(data, params) {
-                        params.page = params.page || 1;
-                        
-                        return {
-                            results: data.products.map(function(product) {
-                                return {
-                                    id: product.id,
-                                    text: product.name,
-                                    code: product.code,
-                                    barcode: product.barcode,
-                                    purchase_price: product.purchase_price,
-                                    selling_price_single: product.selling_price_single,
-                                    selling_price_wholesale: product.selling_price_wholesale,
-                                    current_quantity: product.current_quantity,
-                                    pieces_per_box: product.pieces_per_box,
+        element.select2({
+            theme: 'bootstrap-5',
+            placeholder: 'کاڵا هەڵبژێرە',
+            allowClear: true,
+            width: '100%',
+            ajax: {
+                url: 'api/products.php',
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        search: params.term,
+                        page: params.page || 1
+                    };
+                },
+                processResults: function(data, params) {
+                    params.page = params.page || 1;
+                    
+                    return {
+                        results: data.products.map(function(product) {
+                            return {
+                                id: product.id,
+                                text: product.name,
+                                code: product.code,
+                                barcode: product.barcode,
+                                purchase_price: product.purchase_price,
+                                selling_price_single: product.selling_price_single,
+                                selling_price_wholesale: product.selling_price_wholesale,
+                                current_quantity: product.current_quantity,
+                                pieces_per_box: product.pieces_per_box,
                                     boxes_per_set: product.boxes_per_set,
                                     unit_id: product.unit_id,
                                     is_piece: product.is_piece,
                                     is_box: product.is_box,
                                     is_set: product.is_set
-                                };
-                            }),
-                            pagination: {
-                                more: (params.page * 10) < data.total_count
-                            }
-                        };
-                    },
-                    cache: true
+                            };
+                        }),
+                        pagination: {
+                            more: (params.page * 10) < data.total_count
+                        }
+                    };
                 },
-                templateResult: formatProductResult,
-                templateSelection: formatProductSelection
-            });
+                cache: true
+            },
+            templateResult: formatProductResult,
+            templateSelection: formatProductSelection
+        });
             
             // Add event handler for when a product is selected
             element.on('select2:select', function(e) {
@@ -548,36 +548,36 @@ $(document).ready(function() {
         
         // Check if the element is already initialized
         if (!element.data('select2')) {
-            element.select2({
-                theme: 'bootstrap-5',
-                placeholder: 'کڕیار هەڵبژێرە',
-                allowClear: true,
-                width: '100%',
-                ajax: {
-                    url: 'api/customers.php',
-                    dataType: 'json',
-                    delay: 250,
-                    data: function(params) {
-                        return {
-                            search: params.term,
-                            page: params.page || 1
-                        };
-                    },
-                    processResults: function(data, params) {
-                        params.page = params.page || 1;
-                        
-                        return {
-                            results: data.customers,
-                            pagination: {
-                                more: (params.page * 10) < data.total_count
-                            }
-                        };
-                    },
-                    cache: true
+        element.select2({
+            theme: 'bootstrap-5',
+            placeholder: 'کڕیار هەڵبژێرە',
+            allowClear: true,
+            width: '100%',
+            ajax: {
+                url: 'api/customers.php',
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        search: params.term,
+                        page: params.page || 1
+                    };
                 },
-                templateResult: formatCustomerResult,
-                templateSelection: formatCustomerSelection
-            });
+                processResults: function(data, params) {
+                    params.page = params.page || 1;
+                    
+                    return {
+                        results: data.customers,
+                        pagination: {
+                            more: (params.page * 10) < data.total_count
+                        }
+                    };
+                },
+                cache: true
+            },
+            templateResult: formatCustomerResult,
+            templateSelection: formatCustomerSelection
+        });
         }
     }
 
@@ -592,36 +592,36 @@ $(document).ready(function() {
         
         // Check if the element is already initialized
         if (!element.data('select2')) {
-            element.select2({
-                theme: 'bootstrap-5',
-                placeholder: 'فرۆشیار هەڵبژێرە',
-                allowClear: true,
-                width: '100%',
-                ajax: {
-                    url: 'api/suppliers.php',
-                    dataType: 'json',
-                    delay: 250,
-                    data: function(params) {
-                        return {
-                            search: params.term,
-                            page: params.page || 1
-                        };
-                    },
-                    processResults: function(data, params) {
-                        params.page = params.page || 1;
-                        
-                        return {
-                            results: data.suppliers,
-                            pagination: {
-                                more: (params.page * 10) < data.total_count
-                            }
-                        };
-                    },
-                    cache: true
+        element.select2({
+            theme: 'bootstrap-5',
+            placeholder: 'فرۆشیار هەڵبژێرە',
+            allowClear: true,
+            width: '100%',
+            ajax: {
+                url: 'api/suppliers.php',
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        search: params.term,
+                        page: params.page || 1
+                    };
                 },
-                templateResult: formatSupplierResult,
-                templateSelection: formatSupplierSelection
-            });
+                processResults: function(data, params) {
+                    params.page = params.page || 1;
+                    
+                    return {
+                        results: data.suppliers,
+                        pagination: {
+                            more: (params.page * 10) < data.total_count
+                        }
+                    };
+                },
+                cache: true
+            },
+            templateResult: formatSupplierResult,
+            templateSelection: formatSupplierSelection
+        });
         }
     }
 
@@ -687,14 +687,14 @@ $(document).ready(function() {
         
         // Check required fields specific to each receipt type
         if (isValid) {
-            if (receiptType === 'selling' && !tabPane.find('.customer-select').val()) {
-                Swal.fire('هەڵە', 'تکایە کڕیار هەڵبژێرە', 'error');
-                isValid = false;
-            } else if (receiptType === 'buying' && !tabPane.find('.supplier-select').val()) {
-                Swal.fire('هەڵە', 'تکایە فرۆشیار هەڵبژێرە', 'error');
-                isValid = false;
-            } else if (receiptType === 'wasting' && !tabPane.find('.responsible-select').val()) {
-                Swal.fire('هەڵە', 'تکایە بەرپرسیار هەڵبژێرە', 'error');
+        if (receiptType === 'selling' && !tabPane.find('.customer-select').val()) {
+            Swal.fire('هەڵە', 'تکایە کڕیار هەڵبژێرە', 'error');
+            isValid = false;
+        } else if (receiptType === 'buying' && !tabPane.find('.supplier-select').val()) {
+            Swal.fire('هەڵە', 'تکایە فرۆشیار هەڵبژێرە', 'error');
+            isValid = false;
+        } else if (receiptType === 'wasting' && !tabPane.find('.responsible-select').val()) {
+            Swal.fire('هەڵە', 'تکایە بەرپرسیار هەڵبژێرە', 'error');
                 isValid = false;
             }
         }
@@ -939,7 +939,7 @@ $(document).ready(function() {
                                                     <span class="fw-bold">نرخی فرۆشتن (دانە):</span>
                                                     <span class="text-success">${productData.selling_price_single} د.ع</span>
                                                 </li>
-                                                ${productData.selling_price_wholesale ? 
+                            ${productData.selling_price_wholesale ? 
                                                 `<li class="list-group-item d-flex justify-content-between">
                                                     <span class="fw-bold">نرخی فرۆشتن (کۆمەڵ):</span>
                                                     <span class="text-success">${productData.selling_price_wholesale} د.ع</span>

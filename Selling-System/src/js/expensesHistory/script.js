@@ -865,4 +865,273 @@ function getWithdrawalCategoryValue(category) {
         'جۆری تر': 'other'
     };
     return categoryMap[category] || 'other';
-} 
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize date pickers with default values
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    // Sales filters
+    const salesStartDate = document.getElementById('employeePaymentStartDate');
+    const salesEndDate = document.getElementById('employeePaymentEndDate');
+    const salesCustomerName = document.getElementById('employeePaymentName');
+    
+    // Purchases filters
+    const purchasesStartDate = document.getElementById('shippingStartDate');
+    const purchasesEndDate = document.getElementById('shippingEndDate');
+    const purchasesSupplierName = document.getElementById('shippingProvider');
+    
+    // Set default dates
+    if (salesStartDate) salesStartDate.valueAsDate = firstDayOfMonth;
+    if (salesEndDate) salesEndDate.valueAsDate = today;
+    if (purchasesStartDate) purchasesStartDate.valueAsDate = firstDayOfMonth;
+    if (purchasesEndDate) purchasesEndDate.valueAsDate = today;
+    
+    // Auto filter on change
+    const autoFilterElements = document.querySelectorAll('.auto-filter');
+    autoFilterElements.forEach(element => {
+        element.addEventListener('change', function() {
+            const tabContent = this.closest('.tab-pane');
+            if (tabContent.id === 'employee-payment-content') {
+                filterSales();
+            } else if (tabContent.id === 'shipping-content') {
+                filterPurchases();
+            }
+        });
+    });
+    
+    // Reset filters
+    document.getElementById('employeePaymentResetFilter')?.addEventListener('click', function() {
+        salesStartDate.valueAsDate = firstDayOfMonth;
+        salesEndDate.valueAsDate = today;
+        salesCustomerName.value = '';
+        filterSales();
+    });
+    
+    document.getElementById('shippingResetFilter')?.addEventListener('click', function() {
+        purchasesStartDate.valueAsDate = firstDayOfMonth;
+        purchasesEndDate.valueAsDate = today;
+        purchasesSupplierName.value = '';
+        filterPurchases();
+    });
+    
+    // Filter functions
+    function filterSales() {
+        const filters = {
+            action: 'filter',
+            type: 'sales',
+            start_date: salesStartDate.value,
+            end_date: salesEndDate.value,
+            customer_name: salesCustomerName.value
+        };
+        
+        fetch('receiptList.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(filters)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateSalesTable(data.data);
+            } else {
+                console.error('Error:', data.message);
+                showToast('error', 'هەڵە', data.message || 'هەڵەیەک ڕوویدا');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('error', 'هەڵە', 'هەڵەیەک ڕوویدا لە کاتی گەڕاندنەوەی زانیارییەکان');
+        });
+    }
+    
+    function filterPurchases() {
+        const filters = {
+            action: 'filter',
+            type: 'purchases',
+            start_date: purchasesStartDate.value,
+            end_date: purchasesEndDate.value,
+            supplier_name: purchasesSupplierName.value
+        };
+        
+        fetch('receiptList.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(filters)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updatePurchasesTable(data.data);
+            } else {
+                console.error('Error:', data.message);
+                showToast('error', 'هەڵە', data.message || 'هەڵەیەک ڕوویدا');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('error', 'هەڵە', 'هەڵەیەک ڕوویدا لە کاتی گەڕاندنەوەی زانیارییەکان');
+        });
+    }
+    
+    // Update table functions
+    function updateSalesTable(sales) {
+        const tbody = document.querySelector('#employeeHistoryTable tbody');
+        if (!tbody) return;
+        
+        if (sales.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="13" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = sales.map((sale, index) => `
+            <tr data-id="${sale.id}">
+                <td>${index + 1}</td>
+                <td>${escapeHtml(sale.invoice_number)}</td>
+                <td>${escapeHtml(sale.customer_name || 'N/A')}</td>
+                <td>${formatDate(sale.date)}</td>
+                <td>${escapeHtml(sale.products_list || '')}</td>
+                <td>${formatMoney(sale.subtotal)}</td>
+                <td>${formatMoney(sale.shipping_cost)}</td>
+                <td>${formatMoney(sale.other_costs)}</td>
+                <td>${formatMoney(sale.discount)}</td>
+                <td>${formatMoney(sale.total_amount)}</td>
+                <td>
+                    <span class="badge rounded-pill ${getPaymentTypeBadgeClass(sale.payment_type)}">
+                        ${getPaymentTypeText(sale.payment_type)}
+                    </span>
+                </td>
+                <td>${escapeHtml(sale.notes || '')}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${sale.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${sale.id}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${sale.id}">
+                            <i class="fas fa-print"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+        
+        // Update pagination info
+        updatePaginationInfo('employee', sales.length);
+    }
+    
+    function updatePurchasesTable(purchases) {
+        const tbody = document.querySelector('#shippingHistoryTable tbody');
+        if (!tbody) return;
+        
+        if (purchases.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="11" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = purchases.map((purchase, index) => `
+            <tr data-id="${purchase.id}">
+                <td>${index + 1}</td>
+                <td>${escapeHtml(purchase.invoice_number)}</td>
+                <td>${escapeHtml(purchase.supplier_name || 'N/A')}</td>
+                <td>${formatDate(purchase.date)}</td>
+                <td>${escapeHtml(purchase.products_list || '')}</td>
+                <td>${formatMoney(purchase.subtotal)}</td>
+                <td>${formatMoney(purchase.discount)}</td>
+                <td>${formatMoney(purchase.total_amount)}</td>
+                <td>
+                    <span class="badge rounded-pill ${getPaymentTypeBadgeClass(purchase.payment_type)}">
+                        ${getPaymentTypeText(purchase.payment_type)}
+                    </span>
+                </td>
+                <td>${escapeHtml(purchase.notes || '')}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${purchase.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${purchase.id}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${purchase.id}">
+                            <i class="fas fa-print"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+        
+        // Update pagination info
+        updatePaginationInfo('shipping', purchases.length);
+    }
+    
+    // Utility functions
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+    
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('ku-IQ', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+    }
+    
+    function formatMoney(amount) {
+        return new Intl.NumberFormat('ku-IQ', {
+            style: 'decimal',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount) + ' د.ع';
+    }
+    
+    function getPaymentTypeBadgeClass(type) {
+        switch (type) {
+            case 'cash': return 'bg-success';
+            case 'credit': return 'bg-warning';
+            default: return 'bg-info';
+        }
+    }
+    
+    function getPaymentTypeText(type) {
+        switch (type) {
+            case 'cash': return 'نەقد';
+            case 'credit': return 'قەرز';
+            default: return 'چەک';
+        }
+    }
+    
+    function updatePaginationInfo(prefix, totalRecords) {
+        const startEl = document.getElementById(`${prefix}StartRecord`);
+        const endEl = document.getElementById(`${prefix}EndRecord`);
+        const totalEl = document.getElementById(`${prefix}TotalRecords`);
+        
+        if (startEl) startEl.textContent = totalRecords > 0 ? '1' : '0';
+        if (endEl) endEl.textContent = totalRecords.toString();
+        if (totalEl) totalEl.textContent = totalRecords.toString();
+    }
+    
+    // Initialize tables with default filters
+    filterSales();
+    filterPurchases();
+}); 

@@ -34,7 +34,7 @@
                     <div class="btn-group receipt-types" role="group">
                         <button class="btn receipt-type-btn active" data-type="selling">فرۆشتن</button>
                         <button class="btn receipt-type-btn" data-type="buying">کڕین</button>
-                        <button class="btn receipt-type-btn" data-type="wasting">ڕێکخستنەوە</button>
+                        <button class="btn receipt-type-btn" data-type="wasting">بەفیڕۆچوو</button>
                     </div>
                 </div>
                 <!-- <div class="checkbox-group">
