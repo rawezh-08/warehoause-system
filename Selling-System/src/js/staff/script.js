@@ -24,6 +24,20 @@ $(document).ready(function() {
 });
 
 /**
+ * Format number with commas as thousands separators
+ */
+function formatNumber(number) {
+    // If not a number or empty, return as is
+    if (number === null || number === undefined || number === '') {
+        return '0';
+    }
+    // Convert to number if it's a string
+    const num = typeof number === 'string' ? parseFloat(number) : number;
+    // Format with commas
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+/**
  * Safe toast function to show notifications
  */
 function showToast(message, type) {
@@ -44,7 +58,6 @@ function showToast(message, type) {
         const config = {
             icon: type,
             title: message,
-            rtl: true,
             customClass: {
                 container: 'toast-container-rtl'
             }
@@ -113,6 +126,44 @@ function activateTabFromURL() {
     if (tabParam) {
         $(`#${tabParam}-tab`).tab('show');
     }
+    
+    // Set up number formatting for input fields
+    setupNumberFormatting();
+}
+
+/**
+ * Set up number formatting for input fields with the 'number-format' class
+ */
+function setupNumberFormatting() {
+    // Format on input
+    $('.number-format').on('input', function() {
+        let value = $(this).val().replace(/,/g, '');
+        if (value) {
+            value = parseInt(value).toString();
+            $(this).val(formatNumber(value));
+        }
+    });
+    
+    // Format on focus out
+    $('.number-format').on('blur', function() {
+        let value = $(this).val().replace(/,/g, '');
+        if (value) {
+            value = parseInt(value).toString();
+            $(this).val(formatNumber(value));
+        } else {
+            $(this).val('0');
+        }
+    });
+    
+    // Clear formatting on focus
+    $('.number-format').on('focus', function() {
+        let value = $(this).val().replace(/,/g, '');
+        if (value === '0') {
+            $(this).val('');
+        } else {
+            $(this).val(value);
+        }
+    });
 }
 
 /**
@@ -142,13 +193,13 @@ function setupFilterHandlers() {
     });
     
     // Supplier filters
-    $('#supplierName, #supplierType').on('input change', function() {
+    $('#supplierName, #supplierPhone').on('input change', function() {
         filterSupplierTable();
     });
     
     $('#supplierResetFilter').on('click', function() {
         $('#supplierName').val('');
-        $('#supplierType').val('');
+        $('#supplierPhone').val('');
         filterSupplierTable();
     });
 }
@@ -202,22 +253,29 @@ function setupEditModals() {
     // Supplier edit modal
     $(document).on('click', '#supplier-content .edit-btn', function() {
         const id = $(this).data('id');
-        const row = $(this).closest('tr');
         
-        // Get data from row
-        const name = row.find('td:eq(1)').text();
-        const phone = row.find('td:eq(2)').text();
-        const contactPerson = row.find('td:eq(3)').text();
-        const address = row.find('td:eq(4)').text();
-        const type = row.find('td:eq(5) .badge').text();
-        
-        // Populate modal fields
-        $('#editSupplierId').val(id);
-        $('#editSupplierName').val(name);
-        $('#editSupplierPhone').val(phone);
-        $('#editContactPerson').val(contactPerson);
-        $('#editSupplierAddress').val(address);
-        $('#editSupplierType').val(getSupplierTypeValue(type));
+        // Get supplier data from server
+        fetch(`api/get_supplier.php?id=${id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const supplier = data.supplier;
+                    
+                    // Populate modal fields
+                    $('#editSupplierId').val(supplier.id);
+                    $('#editSupplierName').val(supplier.name);
+                    $('#editSupplierPhone1').val(supplier.phone1);
+                    $('#editSupplierPhone2').val(supplier.phone2);
+                    $('#editSupplierDebt').val(formatNumber(supplier.debt_on_myself));
+                    $('#editSupplierNotes').val(supplier.notes);
+                } else {
+                    showToast(data.message || 'کێشەیەک ڕوویدا لە وەرگرتنی زانیاری دابینکەر', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('کێشەیەک ڕوویدا لە پەیوەندی کردن بە سێرڤەرەوە', 'error');
+            });
     });
     
     // Save employee edit
@@ -299,46 +357,88 @@ function setupEditModals() {
         });
     });
     
-    // Save supplier edit
+    // Handle supplier edit form submission
     $('#saveSupplierEdit').on('click', function() {
-        // Get form data
         const id = $('#editSupplierId').val();
         const name = $('#editSupplierName').val();
-        const phone = $('#editSupplierPhone').val();
-        const contactPerson = $('#editContactPerson').val();
-        const email = $('#editSupplierEmail').val();
-        const address = $('#editSupplierAddress').val();
-        const type = $('#editSupplierType').val();
-        const paymentTerms = $('#editPaymentTerms').val();
+        const phone1 = $('#editSupplierPhone1').val();
+        const phone2 = $('#editSupplierPhone2').val();
+        const debt = $('#editSupplierDebt').val().replace(/,/g, '');
+        const notes = $('#editSupplierNotes').val();
         
         // Validate form
-        if (!name || !phone) {
-            showToast('تکایە هەموو خانە پێویستەکان پڕبکەوە', 'error');
+        if (!name || !phone1) {
+            showToast('تکایە هەموو خانە پێویستەکان پڕ بکەوە', 'warning');
             return;
         }
         
-        // Here you would typically make an AJAX call to update the database
-        // For demo purposes, we'll just show a success message
+        // Show loading
         Swal.fire({
-            title: 'سەرکەوتوو بوو!',
-            text: 'زانیاری دابینکەر نوێکرایەوە',
-            icon: 'success',
-            confirmButtonText: 'باشە'
-        }).then(() => {
-            // Close the modal
-            $('#editSupplierModal').modal('hide');
+            title: 'تکایە چاوەڕێ بکە...',
+            html: 'زانیاری دابینکەر نوێ دەکرێتەوە',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        // Submit form data
+        const formData = {
+            id: id,
+            name: name,
+            phone1: phone1,
+            phone2: phone2,
+            debt_on_myself: debt,
+            notes: notes
+        };
+        
+        fetch('api/update_supplier.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => {
+            // Check if the response is OK
+            if (!response.ok) {
+                throw new Error('Server returned status: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Update response:', data); // Debug output
+            if (data.success) {
+                // Close modal
+                $('#editSupplierModal').modal('hide');
+                
+                // Refresh the table
+                const row = $(`#supplierTable tr[data-id="${id}"]`);
+                const index = row.find('td:eq(0)').text();
+                
+                // Update the row with new data
+                row.find('td:eq(1)').text(name);
+                row.find('td:eq(2)').text(phone1);
+                row.find('td:eq(3)').text(phone2 || '-');
+                row.find('td:eq(4)').text(formatNumber(debt) + ' دینار');
+                
+                // Show success message
+                Swal.fire({
+                    title: 'سەرکەوتوو بوو!',
+                    text: 'زانیاری دابینکەر بە سەرکەوتوویی نوێ کرایەوە',
+                    icon: 'success',
+                    confirmButtonText: 'باشە'
+                });
+            } else {
+                showToast(data.message || 'کێشەیەک ڕوویدا لە نوێکردنەوەی زانیاری دابینکەر', 'error');
+            }
             
-            // Update the table row with new data
-            const row = $(`#supplierTable tr[data-id="${id}"]`);
-            row.find('td:eq(1)').text(name);
-            row.find('td:eq(2)').text(phone);
-            row.find('td:eq(3)').text(contactPerson);
-            row.find('td:eq(4)').text(address);
-            
-            // Update supplier type badge
-            const badgeClass = getSupplierTypeBadgeClass(type);
-            const typeText = getSupplierTypeText(type);
-            row.find('td:eq(5)').html(`<span class="badge ${badgeClass}">${typeText}</span>`);
+            Swal.close();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('کێشەیەک ڕوویدا لە پەیوەندی کردن بە سێرڤەرەوە: ' + error.message, 'error');
+            Swal.close();
         });
     });
 }
@@ -417,6 +517,20 @@ function setupActionButtons() {
         const tabId = tabContainer.attr('id');
         
         showToast('داتاکان نوێکرانەوە', 'info');
+    });
+
+    // Notes button click handler for suppliers
+    $(document).on('click', '#supplier-content .notes-btn', function() {
+        const notes = $(this).data('notes');
+        const supplierName = $(this).data('supplier-name');
+        
+        // Display notes in SweetAlert2
+        Swal.fire({
+            title: 'تێبینییەکانی ' + supplierName,
+            html: notes ? notes : 'هیچ تێبینییەک نییە',
+            icon: 'info',
+            confirmButtonText: 'باشە'
+        });
     });
 }
 
@@ -541,28 +655,26 @@ function filterCustomerTable() {
  */
 function filterSupplierTable() {
     const nameFilter = $('#supplierName').val().toLowerCase();
-    const typeFilter = $('#supplierType').val().toLowerCase();
+    const phoneFilter = $('#supplierPhone').val().toLowerCase();
     const searchFilter = $('#supplierTableSearch').val().toLowerCase();
     
     $('#supplierTable tbody tr').each(function() {
         const name = $(this).find('td:eq(1)').text().toLowerCase();
-        const phone = $(this).find('td:eq(2)').text().toLowerCase();
-        const contactPerson = $(this).find('td:eq(3)').text().toLowerCase();
-        const address = $(this).find('td:eq(4)').text().toLowerCase();
-        const type = $(this).find('td:eq(5) .badge').text().toLowerCase();
+        const phone1 = $(this).find('td:eq(2)').text().toLowerCase();
+        const phone2 = $(this).find('td:eq(3)').text().toLowerCase();
+        const debt = $(this).find('td:eq(4)').text().toLowerCase();
         
         // Check if the row matches all active filters
         const matchesName = nameFilter === '' || name.includes(nameFilter);
-        const matchesType = typeFilter === '' || getSupplierTypeValue(type) === typeFilter;
+        const matchesPhone = phoneFilter === '' || phone1.includes(phoneFilter) || phone2.includes(phoneFilter);
         const matchesSearch = searchFilter === '' || 
                                name.includes(searchFilter) || 
-                               phone.includes(searchFilter) || 
-                               contactPerson.includes(searchFilter) || 
-                               address.includes(searchFilter) || 
-                               type.includes(searchFilter);
+                               phone1.includes(searchFilter) || 
+                               phone2.includes(searchFilter) || 
+                               debt.includes(searchFilter);
         
         // Show or hide the row based on the filter result
-        if (matchesName && matchesType && matchesSearch) {
+        if (matchesName && matchesPhone && matchesSearch) {
             $(this).show();
         } else {
             $(this).hide();
@@ -640,4 +752,418 @@ function getSupplierTypeBadgeClass(typeValue) {
         'wholesaler': 'bg-warning text-dark'
     };
     return classMap[typeValue] || 'bg-secondary';
-} 
+}
+
+// Customer Table Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const customerTable = document.getElementById('customerTable');
+    const customerTableSearch = document.getElementById('customerTableSearch');
+    const customerRecordsPerPage = document.getElementById('customerRecordsPerPage');
+    const customerStartRecord = document.getElementById('customerStartRecord');
+    const customerEndRecord = document.getElementById('customerEndRecord');
+    const customerTotalRecords = document.getElementById('customerTotalRecords');
+    const customerPrevPageBtn = document.getElementById('customerPrevPageBtn');
+    const customerNextPageBtn = document.getElementById('customerNextPageBtn');
+    const customerPaginationNumbers = document.getElementById('customerPaginationNumbers');
+    const customerFilterForm = document.getElementById('customerFilterForm');
+    const customerResetFilter = document.getElementById('customerResetFilter');
+    const editCustomerModal = new bootstrap.Modal(document.getElementById('editCustomerModal'));
+    const saveCustomerEdit = document.getElementById('saveCustomerEdit');
+
+    let currentPage = 1;
+    let recordsPerPage = parseInt(customerRecordsPerPage.value);
+    let filteredCustomers = Array.from(customerTable.getElementsByTagName('tbody')[0].rows);
+
+    // Function to update table display
+    function updateTableDisplay() {
+        const startIndex = (currentPage - 1) * recordsPerPage;
+        const endIndex = startIndex + recordsPerPage;
+        const totalPages = Math.ceil(filteredCustomers.length / recordsPerPage);
+
+        // Hide all rows
+        Array.from(customerTable.getElementsByTagName('tbody')[0].rows).forEach(row => {
+            row.style.display = 'none';
+        });
+
+        // Show rows for current page
+        filteredCustomers.slice(startIndex, endIndex).forEach(row => {
+            row.style.display = '';
+        });
+
+        // Update pagination info
+        customerStartRecord.textContent = filteredCustomers.length > 0 ? startIndex + 1 : 0;
+        customerEndRecord.textContent = Math.min(endIndex, filteredCustomers.length);
+        customerTotalRecords.textContent = filteredCustomers.length;
+
+        // Update pagination buttons
+        customerPrevPageBtn.disabled = currentPage === 1;
+        customerNextPageBtn.disabled = currentPage === totalPages;
+
+        // Update pagination numbers
+        customerPaginationNumbers.innerHTML = '';
+        for (let i = 1; i <= totalPages; i++) {
+            const button = document.createElement('button');
+            button.className = `btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2`;
+            button.textContent = i;
+            button.addEventListener('click', () => {
+                currentPage = i;
+                updateTableDisplay();
+            });
+            customerPaginationNumbers.appendChild(button);
+        }
+    }
+
+    // Search functionality
+    customerTableSearch.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        filteredCustomers = Array.from(customerTable.getElementsByTagName('tbody')[0].rows).filter(row => {
+            return Array.from(row.cells).some(cell => 
+                cell.textContent.toLowerCase().includes(searchTerm)
+            );
+        });
+        currentPage = 1;
+        updateTableDisplay();
+    });
+
+    // Records per page change
+    customerRecordsPerPage.addEventListener('change', function() {
+        recordsPerPage = parseInt(this.value);
+        currentPage = 1;
+        updateTableDisplay();
+    });
+
+    // Pagination buttons
+    customerPrevPageBtn.addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            updateTableDisplay();
+        }
+    });
+
+    customerNextPageBtn.addEventListener('click', () => {
+        const totalPages = Math.ceil(filteredCustomers.length / recordsPerPage);
+        if (currentPage < totalPages) {
+            currentPage++;
+            updateTableDisplay();
+        }
+    });
+
+    // Filter form
+    customerFilterForm.addEventListener('input', function(e) {
+        const nameFilter = document.getElementById('customerName').value.toLowerCase();
+        const phoneFilter = document.getElementById('customerPhone').value.toLowerCase();
+        const addressFilter = document.getElementById('customerAddress').value.toLowerCase();
+
+        filteredCustomers = Array.from(customerTable.getElementsByTagName('tbody')[0].rows).filter(row => {
+            const name = row.cells[1].textContent.toLowerCase();
+            const phone = row.cells[2].textContent.toLowerCase();
+            const address = row.cells[6].textContent.toLowerCase();
+
+            return name.includes(nameFilter) && 
+                   phone.includes(phoneFilter) && 
+                   address.includes(addressFilter);
+        });
+
+        currentPage = 1;
+        updateTableDisplay();
+    });
+
+    // Reset filter
+    customerResetFilter.addEventListener('click', function() {
+        customerFilterForm.reset();
+        filteredCustomers = Array.from(customerTable.getElementsByTagName('tbody')[0].rows);
+        currentPage = 1;
+        updateTableDisplay();
+    });
+
+    // Initialize table display
+    updateTableDisplay();
+
+    // Handle buttons in customer table
+    customerTable.addEventListener('click', function(e) {
+        const target = e.target.closest('button');
+        if (!target) return;
+
+        const row = target.closest('tr');
+        const customerId = row.dataset.id;
+
+        // Show Notes Button
+        if (target.classList.contains('notes-btn')) {
+            const notes = target.dataset.notes;
+            const customerName = target.dataset.customerName;
+            
+            Swal.fire({
+                title: `تێبینییەکانی ${customerName}`,
+                html: notes ? `<div class="text-right" dir="rtl">${notes}</div>` : '<div class="text-center">هیچ تێبینییەک نییە</div>',
+                confirmButtonText: 'داخستن',
+                customClass: {
+                    popup: 'swal-wide',
+                    htmlContainer: 'text-right'
+                }
+            });
+        }
+        // Edit Button
+        else if (target.classList.contains('edit-btn')) {
+            // Get customer data
+            fetch(`api/get_customer.php?id=${customerId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const customer = data.customer;
+                    
+                    // Fill the form with customer data
+                    document.getElementById('editCustomerId').value = customer.id;
+                    document.getElementById('editCustomerName').value = customer.name;
+                    document.getElementById('editCustomerPhone').value = customer.phone1;
+                    document.getElementById('editCustomerPhone2').value = customer.phone2 || '';
+                    document.getElementById('editCustomerAddress').value = customer.address || '';
+                    document.getElementById('editGuarantorName').value = customer.guarantor_name || '';
+                    document.getElementById('editGuarantorPhone').value = customer.guarantor_phone || '';
+                    document.getElementById('editDebitOnBusiness').value = customer.debit_on_business || 0;
+                    document.getElementById('editCustomerNotes').value = customer.notes || '';
+                    
+                    // Show the modal
+                    editCustomerModal.show();
+                } else {
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: data.message || 'ناتوانرێت داتای کڕیار بهێنرێت.',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    title: 'هەڵە!',
+                    text: 'هەڵە لە پەیوەندی بە سێرڤەرەوە.',
+                    icon: 'error',
+                    confirmButtonText: 'باشە'
+                });
+            });
+        }
+        // Delete Button
+        else if (target.classList.contains('delete-btn')) {
+            Swal.fire({
+                title: 'دڵنیای لە سڕینەوەی کڕیار؟',
+                text: 'ئەم کردارە ناتوانرێت گەڕێندرێتەوە!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'بەڵێ، بسڕەوە!',
+                cancelButtonText: 'نەخێر'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Send delete request
+                    fetch(`api/delete_customer.php?id=${customerId}`, {
+                        method: 'DELETE'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire(
+                                'سڕایەوە!',
+                                'کڕیار بە سەرکەوتوویی سڕایەوە.',
+                                'success'
+                            ).then(() => {
+                                row.remove();
+                                filteredCustomers = Array.from(customerTable.getElementsByTagName('tbody')[0].rows);
+                                updateTableDisplay();
+                            });
+                        } else {
+                            Swal.fire(
+                                'هەڵە!',
+                                data.message || 'هەڵە لە سڕینەوەی کڕیار.',
+                                'error'
+                            );
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire(
+                            'هەڵە!',
+                            'هەڵە لە پەیوەندی بە سێرڤەرەوە.',
+                            'error'
+                        );
+                    });
+                }
+            });
+        }
+    });
+
+    // Handle save customer edit button
+    saveCustomerEdit.addEventListener('click', function() {
+        const form = document.getElementById('editCustomerForm');
+        const formData = new FormData(form);
+        
+        // Show loading
+        Swal.fire({
+            title: 'تکایە چاوەڕێ بکە...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        // Send update request
+        fetch('api/update_customer.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    title: 'سەرکەوتوو!',
+                    text: 'زانیاری کڕیار بە سەرکەوتوویی نوێ کرایەوە.',
+                    icon: 'success',
+                    confirmButtonText: 'باشە'
+                }).then(() => {
+                    // Close the modal
+                    editCustomerModal.hide();
+                    
+                    // Update the table row instead of reloading
+                    const row = customerTable.querySelector(`tr[data-id="${formData.get('id')}"]`);
+                    if (row) {
+                        row.cells[1].textContent = formData.get('name');
+                        row.cells[2].textContent = formData.get('phone1');
+                        row.cells[3].textContent = formData.get('phone2') || '';
+                        row.cells[4].textContent = formData.get('guarantor_name') || '';
+                        row.cells[5].textContent = formData.get('guarantor_phone') || '';
+                        row.cells[6].textContent = formData.get('address') || '';
+                        row.cells[7].textContent = formatNumber(formData.get('debit_on_business'));
+                        
+                        // Update the notes button data
+                        const notesBtn = row.querySelector('.notes-btn');
+                        if (notesBtn) {
+                            notesBtn.dataset.notes = formData.get('notes') || '';
+                            notesBtn.dataset.customerName = formData.get('name');
+                        }
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: 'هەڵە!',
+                    text: data.message || 'هەڵە لە نوێکردنەوەی زانیاری کڕیار.',
+                    icon: 'error',
+                    confirmButtonText: 'باشە'
+                });
+            }
+        })
+        .catch(error => {
+            Swal.fire({
+                title: 'هەڵە!',
+                text: 'هەڵە لە پەیوەندی بە سێرڤەرەوە.',
+                icon: 'error',
+                confirmButtonText: 'باشە'
+            });
+        });
+    });
+
+    // Function to add new customer row to table
+    function addCustomerToTable(customer) {
+        const tbody = customerTable.querySelector('tbody');
+        const newRow = document.createElement('tr');
+        newRow.dataset.id = customer.id;
+        
+        newRow.innerHTML = `
+            <td>${tbody.children.length + 1}</td>
+            <td>${customer.name}</td>
+            <td>${customer.phone1}</td>
+            <td>${customer.phone2 || ''}</td>
+            <td>${customer.guarantor_name || ''}</td>
+            <td>${customer.guarantor_phone || ''}</td>
+            <td>${customer.address || ''}</td>
+            <td>${number_format(customer.debit_on_business, 0)}</td>
+            <td>
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${customer.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${customer.id}">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning rounded-circle notes-btn" 
+                            data-notes="${customer.notes || ''}"
+                            data-customer-name="${customer.name}">
+                        <i class="fas fa-sticky-note"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${customer.id}">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(newRow);
+        updateTableDisplay();
+    }
+
+    // Function to format number with no decimal places
+    function formatNumber(number) {
+        // Remove any existing commas
+        const cleanNumber = number.toString().replace(/,/g, '');
+        // Format with no decimal places
+        return parseFloat(cleanNumber).toFixed(0);
+    }
+
+    // Handle add customer form submission
+    const addCustomerForm = document.getElementById('addCustomerForm');
+    if (addCustomerForm) {
+        addCustomerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            // Show loading
+            Swal.fire({
+                title: 'تکایە چاوەڕێ بکە...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Send add request
+            fetch('api/add_customer.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: 'سەرکەوتوو!',
+                        text: 'کڕیار بە سەرکەوتوویی زیاد کرا.',
+                        icon: 'success',
+                        confirmButtonText: 'باشە'
+                    }).then(() => {
+                        // Add new customer to table
+                        addCustomerToTable(data.customer);
+                        // Reset form
+                        this.reset();
+                        // Close modal if exists
+                        const addCustomerModal = bootstrap.Modal.getInstance(document.getElementById('addCustomerModal'));
+                        if (addCustomerModal) {
+                            addCustomerModal.hide();
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: data.message || 'هەڵە لە زیادکردنی کڕیار.',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    title: 'هەڵە!',
+                    text: 'هەڵە لە پەیوەندی بە سێرڤەرەوە.',
+                    icon: 'error',
+                    confirmButtonText: 'باشە'
+                });
+            });
+        });
+    }
+}); 

@@ -132,70 +132,54 @@
                                         <h5 class="card-title mb-0">زانیاری بازرگان</h5>
                                     </div>
                                     <div class="card-body">
-                                        <form id="customerForm" class="needs-validation" novalidate>
+                                        <form id="customerForm" action="process/add_customer.php" method="POST" class="needs-validation" novalidate>
                                             <div class="row g-3">
                                                 <div class="col-md-6">
-                                                    <label for="businessMan" class="form-label">ناوی بازرگان</label>
-                                                    <input type="text" class="form-control" id="businessMan" name="businessMan" required>
+                                                    <label for="businessMan" class="form-label">ناوی کڕیار</label>
+                                                    <input type="text" class="form-control" id="businessMan" name="businessMan" placeholder="ناوی کڕیار" required>
                                                     <div class="invalid-feedback">
-                                                        ناوی بازرگان داخڵ بکە
+                                                        ناوی کڕیار داخڵ بکە
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <label for="businessManType" class="form-label">جۆری بازرگان</label>
-                                                    <select class="form-select" id="businessManType" name="businessManType">
-                                                        <option value="" selected disabled>هەڵبژێرە</option>
-                                                        <option value="customer">کڕیار</option>
-                                                        <option value="supplier">فرۆشیار</option>
-                                                        <option value="both">هەردوکیان</option>
-                                                    </select>
-                                                </div>
+                                              
                                                 <div class="col-md-6">
                                                     <label for="phone1" class="form-label">ژمارەی مۆبایی یەکەم</label>
-                                                    <input type="tel" class="form-control" id="phone1" name="phone1" required placeholder="07700000000">
+                                                    <input type="tel" class="form-control" id="phone1" name="phone1" required placeholder="07xxxxxxxxx" pattern="07[0-9]{9}">
                                                     <div class="invalid-feedback">
-                                                        تکایە ژمارەی مۆبایلی یەکەم داخل بکە
+                                                        ژمارەی مۆبایل دەبێت بە 07 دەست پێبکات و 11 ژمارە بێت
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label for="phone2" class="form-label">ژمارەی مۆبایلی دووەم</label>
-                                                    <input type="tel" class="form-control" id="phone2" name="phone2" required placeholder="07700000000">
-                                                   
+                                                    <label for="phone2" class="form-label">ژمارەی مۆبایلی دووەم (اختیاری)</label>
+                                                    <input type="tel" class="form-control" id="phone2" name="phone2" placeholder="07xxxxxxxxx" pattern="07[0-9]{9}">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="guarantorName" class="form-label">ناوی کەفیل</label>
-                                                    <input type="text" class="form-control" id="guarantorName" name="guarantorName">
+                                                    <input type="text" class="form-control" id="guarantorName" name="guarantorName" placeholder="ناوی کەفیل">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label for="guarantorPhone" class="form-label">ژمارەی مۆبایلی کەفیل</label>
-                                                    <input type="tel" class="form-control" id="guarantorPhone" placeholder="07700000000" name="guarantorPhone">
+                                                    <input type="tel" class="form-control" id="guarantorPhone" placeholder="07xxxxxxxxx" name="guarantorPhone" pattern="07[0-9]{9}">
                                                 </div>
-                                                <div class="col-md-12">
+                                                <div class="col-md-6 mb-4">
+                                                    <label for="debitOnBusiness" class="form-label">قەرز بەسەر کڕیار</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="debitOnBusiness" name="debitOnBusiness" class="form-control" placeholder="بڕی قەرز لە سەر کڕیار" oninput="formatNumber(this)">
+                                                        <span class="input-group-text">د.ع</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
                                                     <label for="customerAddress" class="form-label">ناونیشان</label>
-                                                    <textarea class="form-control" id="customerAddress" name="customerAddress" rows="2"></textarea>
+                                                    <textarea class="form-control" id="customerAddress" name="customerAddress" rows="2" placeholder="ناونیشانی کڕیار"></textarea>
                                                 </div>
                                                
-                                               <label for="creditLimit" class="form-label">قەرزەکان</label>
-                                               <hr>
+                                            
 
-                                               <div class="col-md-6 mb-3">
-                                                    <label for="debitOnBusiness" class="form-label">قەرز بەسەر ئەو</label>
-                                                    <div class="input-group">
-                                                        <input type="text" id="debitOnBusiness" name="debitOnBusiness" class="form-control" placeholder="قەرز بەسەر ئەو بازرگانەی کە پارەدانەوە" oninput="formatNumber(this)">
-                                                        <span class="input-group-text">د.ع</span>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="debitOnMyself" class="form-label">قەرز بەسەر من</label>
-                                                    <div class="input-group">
-                                                        <input type="text" id="debitOnMyself" name="debitOnMyself" class="form-control" placeholder="قەرز بەسەر من" oninput="formatNumber(this)">
-                                                        <span class="input-group-text">د.ع</span>
-                                                    </div>
-                                                </div>
+                                             
                                                 
-                                                <div class="col-12">
+                                                <div class="col-6">
                                                     <label for="customerNotes" class="form-label">تێبینی</label>
-                                                    <textarea class="form-control" id="customerNotes" name="customerNotes" rows="2"></textarea>
+                                                    <textarea class="form-control" id="customerNotes" name="customerNotes" rows="2" placeholder="تێبینی لەسەر کڕیار"></textarea>
                                                 </div>
                                                 <div class="col-12 text-end">
                                                     <button type="button" class="btn btn-outline-secondary me-2" id="resetCustomerForm">
@@ -222,56 +206,37 @@
                                         <h5 class="card-title mb-0">زانیاری دابینکەر</h5>
                                     </div>
                                     <div class="card-body">
-                                        <form id="supplierForm" class="needs-validation" novalidate>
+                                        <form id="supplierForm" action="process/add_supplier.php" method="POST" class="needs-validation" novalidate>
                                             <div class="row g-3">
                                                 <div class="col-md-6">
                                                     <label for="supplierName" class="form-label">ناوی دابینکەر</label>
-                                                    <input type="text" class="form-control" id="supplierName" name="supplierName" required>
+                                                    <input type="text" class="form-control" id="supplierName" name="supplierName" placeholder="ناوی دابینکەر" required>
                                                     <div class="invalid-feedback">
                                                         تکایە ناوی دابینکەر داخل بکە
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label for="supplierPhone" class="form-label">ژمارەی پەیوەندی</label>
-                                                    <input type="tel" class="form-control" id="supplierPhone" name="supplierPhone" required>
+                                                    <label for="supplierPhone" class="form-label">ژمارەی مۆبایلی یەکەم</label>
+                                                    <input type="tel" class="form-control" id="supplierPhone" name="supplierPhone" placeholder="07xxxxxxxxx" pattern="07[0-9]{9}" required>
                                                     <div class="invalid-feedback">
-                                                        تکایە ژمارەی پەیوەندی داخل بکە
+                                                        ژمارەی مۆبایل دەبێت بە 07 دەست پێبکات و 11 ژمارە بێت
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label for="contactPerson" class="form-label">کەسی پەیوەندی</label>
-                                                    <input type="text" class="form-control" id="contactPerson" name="contactPerson">
+                                                    <label for="supplierPhone2" class="form-label">ژمارەی مۆبایلی دووەم</label>
+                                                    <input type="tel" class="form-control" id="supplierPhone2" name="supplierPhone2" placeholder="07xxxxxxxxx" pattern="07[0-9]{9}">
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <label for="supplierEmail" class="form-label">ئیمەیل</label>
-                                                    <input type="email" class="form-control" id="supplierEmail" name="supplierEmail">
+                                                <div class="col-md-6 mb-4">
+                                                    <label for="debt_on_myself" class="form-label">قەرز بەسەر من</label>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" id="debt_on_myself" name="debt_on_myself" placeholder="بڕی قەرز بەسەر من" oninput="formatNumber(this)">
+                                                        <span class="input-group-text">د.ع</span>
+                                                    </div>
                                                 </div>
-                                                <div class="col-12">
-                                                    <label for="supplierAddress" class="form-label">ناونیشان</label>
-                                                    <textarea class="form-control" id="supplierAddress" name="supplierAddress" rows="2"></textarea>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label for="supplierType" class="form-label">جۆری دابینکەر</label>
-                                                    <select class="form-select" id="supplierType" name="supplierType">
-                                                        <option value="" selected disabled>هەڵبژێرە</option>
-                                                        <option value="manufacturer">بەرهەمهێنەر</option>
-                                                        <option value="distributor">دابەشکەر</option>
-                                                        <option value="wholesaler">فرۆشیاری کۆ</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label for="paymentTerms" class="form-label">مەرجەکانی پارەدان</label>
-                                                    <select class="form-select" id="paymentTerms" name="paymentTerms">
-                                                        <option value="" selected disabled>هەڵبژێرە</option>
-                                                        <option value="immediate">دەستبەجێ</option>
-                                                        <option value="15days">15 ڕۆژ</option>
-                                                        <option value="30days">30 ڕۆژ</option>
-                                                        <option value="60days">60 ڕۆژ</option>
-                                                    </select>
-                                                </div>
+                                              
                                                 <div class="col-12">
                                                     <label for="supplierNotes" class="form-label">تێبینی</label>
-                                                    <textarea class="form-control" id="supplierNotes" name="supplierNotes" rows="2"></textarea>
+                                                    <textarea class="form-control" id="supplierNotes" name="supplierNotes" rows="2" placeholder="تێبینی لەسەر دابینکەر"></textarea>
                                                 </div>
                                                 <div class="col-12 text-end">
                                                     <button type="button" class="btn btn-outline-secondary me-2" id="resetSupplierForm">
@@ -302,5 +267,52 @@
     <!-- Custom JavaScript -->
     <script src="js/include-components.js"></script>
     <script src="js/addStaff/script.js"></script>
+    <script>
+        // Function to get URL parameter by name
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        $(document).ready(function() {
+            // Check if tab parameter exists in URL
+            var tabParam = getUrlParameter('tab');
+            
+            // If tab parameter exists, activate the corresponding tab
+            if (tabParam) {
+                // Find the tab button and activate it
+                $('#' + tabParam + '-tab').tab('show');
+            }
+            
+            // Apply formatting to number inputs
+            const debitOnBusinessInput = document.getElementById('debitOnBusiness');
+            if (debitOnBusinessInput) {
+                debitOnBusinessInput.addEventListener('input', function() {
+                    formatNumber(this);
+                });
+            }
+            
+            const debtOnMyselfInput = document.getElementById('debt_on_myself');
+            if (debtOnMyselfInput) {
+                debtOnMyselfInput.addEventListener('input', function() {
+                    formatNumber(this);
+                });
+            }
+        });
+        
+        // Format number with commas
+        function formatNumber(input) {
+            // Remove all non-digit characters
+            let value = input.value.replace(/[^\d]/g, '');
+            
+            // Add commas for thousands
+            value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            
+            // Update the input value
+            input.value = value;
+        }
+    </script>
 </body>
 </html> 

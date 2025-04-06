@@ -103,6 +103,7 @@ class Product {
             throw new Exception('هەڵە لە هەڵبژاردنی وێنە');
         }
         
+        // Always return the relative path to the image
         return 'uploads/products/' . $filename;
     }
     

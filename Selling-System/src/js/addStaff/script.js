@@ -93,41 +93,78 @@ function setupTabHandlers() {
  * Initialize employee form
  */
 function initializeEmployeeForm() {
-    // Form validation
+    // Get form elements
     const employeeForm = document.getElementById('employeeForm');
+    const resetEmployeeForm = document.getElementById('resetEmployeeForm');
+    
+    // Initialize form validation
     if (employeeForm) {
-        employeeForm.addEventListener('submit', function(event) {
-            event.preventDefault();
+        employeeForm.addEventListener('submit', function(e) {
+            e.preventDefault();
             
+            // Add employee form submission handler
             if (!employeeForm.checkValidity()) {
-                event.stopPropagation();
+                e.stopPropagation();
                 employeeForm.classList.add('was-validated');
                 return;
             }
             
-            // Collect form data
-            const formData = new FormData(employeeForm);
-            const employeeData = Object.fromEntries(formData.entries());
-            
-            // Here you would typically make an AJAX call to submit the data
-            // For demo purposes, we'll just show a success message
+            // Show loading state
             Swal.fire({
-                title: 'سەرکەوتوو بوو!',
-                text: 'زانیاری کارمەند پاشەکەوت کرا',
-                icon: 'success',
-                confirmButtonText: 'باشە'
-            }).then(() => {
-                // Reset form
-                employeeForm.reset();
-                employeeForm.classList.remove('was-validated');
+                title: 'تکایە چاوەڕێ بکە...',
+                text: 'زیادکردنی کارمەند بەردەوامە',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Create FormData object
+            const formData = new FormData(employeeForm);
+            
+            // Send form data using fetch API
+            fetch('process/add_employee.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'سەرکەوتوو',
+                        text: data.message,
+                        confirmButtonText: 'باشە'
+                    }).then(() => {
+                        employeeForm.reset();
+                        employeeForm.classList.remove('was-validated');
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: data.message,
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە',
+                    confirmButtonText: 'باشە'
+                });
             });
         });
-        
-        // Reset button
-        document.getElementById('resetEmployeeForm').addEventListener('click', function() {
+    }
+    
+    // Reset form buttons
+    if (resetEmployeeForm) {
+        resetEmployeeForm.addEventListener('click', function() {
             employeeForm.reset();
             employeeForm.classList.remove('was-validated');
-            showToast('فۆرمەکە ڕیسێت کرا', 'info');
         });
     }
 }
@@ -136,41 +173,135 @@ function initializeEmployeeForm() {
  * Initialize customer form
  */
 function initializeCustomerForm() {
-    // Form validation
+    // Get form elements
     const customerForm = document.getElementById('customerForm');
+    const resetCustomerForm = document.getElementById('resetCustomerForm');
+    
+    // Initialize form validation
     if (customerForm) {
-        customerForm.addEventListener('submit', function(event) {
-            event.preventDefault();
+        // Phone number validation function
+        function validatePhoneNumber(phone) {
+            return /^07\d{9}$/.test(phone);
+        }
+        
+        // Add input validation on blur
+        const phone1Input = document.getElementById('phone1');
+        if (phone1Input) {
+            phone1Input.addEventListener('blur', function() {
+                if (this.value && !validatePhoneNumber(this.value)) {
+                    this.classList.add('is-invalid');
+                    this.nextElementSibling.textContent = 'ژمارە مۆبایل دەبێت بە 07 دەست پێبکات و 11 ژمارە بێت';
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        }
+        
+        const phone2Input = document.getElementById('phone2');
+        if (phone2Input) {
+            phone2Input.addEventListener('blur', function() {
+                if (this.value && !validatePhoneNumber(this.value)) {
+                    this.classList.add('is-invalid');
+                    if (!this.nextElementSibling || !this.nextElementSibling.classList.contains('invalid-feedback')) {
+                        const feedback = document.createElement('div');
+                        feedback.className = 'invalid-feedback';
+                        feedback.textContent = 'ژمارە مۆبایل دەبێت بە 07 دەست پێبکات و 11 ژمارە بێت';
+                        this.parentNode.appendChild(feedback);
+                    }
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        }
+        
+        const guarantorPhoneInput = document.getElementById('guarantorPhone');
+        if (guarantorPhoneInput) {
+            guarantorPhoneInput.addEventListener('blur', function() {
+                if (this.value && !validatePhoneNumber(this.value)) {
+                    this.classList.add('is-invalid');
+                    if (!this.nextElementSibling || !this.nextElementSibling.classList.contains('invalid-feedback')) {
+                        const feedback = document.createElement('div');
+                        feedback.className = 'invalid-feedback';
+                        feedback.textContent = 'ژمارە مۆبایل دەبێت بە 07 دەست پێبکات و 11 ژمارە بێت';
+                        this.parentNode.appendChild(feedback);
+                    }
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        }
+        
+        customerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
             
             if (!customerForm.checkValidity()) {
-                event.stopPropagation();
+                e.stopPropagation();
                 customerForm.classList.add('was-validated');
                 return;
             }
             
-            // Collect form data
-            const formData = new FormData(customerForm);
-            const customerData = Object.fromEntries(formData.entries());
-            
-            // Here you would typically make an AJAX call to submit the data
-            // For demo purposes, we'll just show a success message
+            // Show loading state
             Swal.fire({
-                title: 'سەرکەوتوو بوو!',
-                text: 'زانیاری کڕیار پاشەکەوت کرا',
-                icon: 'success',
-                confirmButtonText: 'باشە'
-            }).then(() => {
-                // Reset form
-                customerForm.reset();
-                customerForm.classList.remove('was-validated');
+                title: 'تکایە چاوەڕێ بکە...',
+                text: 'زیادکردنی کڕیار بەردەوامە',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Clean number inputs (remove commas)
+            const debitInput = document.getElementById('debitOnBusiness');
+            if (debitInput && debitInput.value) {
+                debitInput.value = debitInput.value.replace(/,/g, '');
+            }
+            
+            // Create FormData object
+            const formData = new FormData(customerForm);
+            
+            // Send form data using fetch API
+            fetch(customerForm.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'سەرکەوتوو',
+                        text: data.message,
+                        confirmButtonText: 'باشە'
+                    }).then(() => {
+                        customerForm.reset();
+                        customerForm.classList.remove('was-validated');
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: data.message,
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە',
+                    confirmButtonText: 'باشە'
+                });
             });
         });
-        
-        // Reset button
-        document.getElementById('resetCustomerForm').addEventListener('click', function() {
+    }
+    
+    // Reset form buttons
+    if (resetCustomerForm) {
+        resetCustomerForm.addEventListener('click', function() {
             customerForm.reset();
             customerForm.classList.remove('was-validated');
-            showToast('فۆرمەکە ڕیسێت کرا', 'info');
         });
     }
 }
@@ -179,41 +310,95 @@ function initializeCustomerForm() {
  * Initialize supplier form
  */
 function initializeSupplierForm() {
-    // Form validation
+    // Get form elements
     const supplierForm = document.getElementById('supplierForm');
+    const resetSupplierForm = document.getElementById('resetSupplierForm');
+    
+    // Initialize form validation
     if (supplierForm) {
-        supplierForm.addEventListener('submit', function(event) {
-            event.preventDefault();
+        supplierForm.addEventListener('submit', function(e) {
+            e.preventDefault();
             
             if (!supplierForm.checkValidity()) {
-                event.stopPropagation();
+                e.stopPropagation();
                 supplierForm.classList.add('was-validated');
                 return;
             }
             
-            // Collect form data
-            const formData = new FormData(supplierForm);
-            const supplierData = Object.fromEntries(formData.entries());
-            
-            // Here you would typically make an AJAX call to submit the data
-            // For demo purposes, we'll just show a success message
+            // Show loading state
             Swal.fire({
-                title: 'سەرکەوتوو بوو!',
-                text: 'زانیاری دابینکەر پاشەکەوت کرا',
-                icon: 'success',
-                confirmButtonText: 'باشە'
-            }).then(() => {
-                // Reset form
-                supplierForm.reset();
-                supplierForm.classList.remove('was-validated');
+                title: 'تکایە چاوەڕێ بکە...',
+                text: 'زیادکردنی دابینکەر بەردەوامە',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Clean number inputs (remove commas)
+            const debtInput = document.getElementById('debt_on_myself');
+            if (debtInput && debtInput.value) {
+                debtInput.value = debtInput.value.replace(/,/g, '');
+            }
+            
+            // Create FormData object
+            const formData = new FormData(supplierForm);
+            
+            // Send form data using fetch API
+            fetch(supplierForm.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'سەرکەوتوو',
+                        text: data.message,
+                        confirmButtonText: 'باشە'
+                    }).then(() => {
+                        supplierForm.reset();
+                        supplierForm.classList.remove('was-validated');
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: data.message,
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە',
+                    confirmButtonText: 'باشە'
+                });
             });
         });
-        
-        // Reset button
-        document.getElementById('resetSupplierForm').addEventListener('click', function() {
+    }
+    
+    // Reset form buttons
+    if (resetSupplierForm) {
+        resetSupplierForm.addEventListener('click', function() {
             supplierForm.reset();
             supplierForm.classList.remove('was-validated');
-            showToast('فۆرمەکە ڕیسێت کرا', 'info');
         });
     }
+}
+
+// Function to format numbers with commas
+function formatNumber(input) {
+    // Remove all non-digit characters
+    let value = input.value.replace(/[^\d]/g, '');
+    
+    // Add commas for thousands
+    value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    
+    // Update the input value
+    input.value = value;
 } 

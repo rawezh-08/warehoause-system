@@ -73,6 +73,9 @@
 }
 
 * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
     font-family: 'Rabar', sans-serif;
 }
 
@@ -755,7 +758,7 @@ img {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-hover);
+    background-color: var(--gray-400);
 }
 
 /* Firefox Scrollbar */

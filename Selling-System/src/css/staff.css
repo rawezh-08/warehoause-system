@@ -1,0 +1,106 @@
+/* Transparent search input */
+.table-search-input {
+    background-color: transparent !important;
+    border: 1px solid #dee2e6;
+}
+
+/* Word wrapping for table cells */
+.custom-table td,
+th {
+    white-space: normal;
+    word-wrap: break-word;
+    vertical-align: middle;
+    padding: 0.75rem;
+}
+
+#supplierTable td {
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#customerTable td {
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#employeeTable td {
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#supplierTable th {
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#customerTable th {
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#employeeTable th {
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Notes button styles */
+.notes-btn {
+    margin: 0 2px;
+}
+
+/* SweetAlert custom classes */
+.swal-wide {
+    width: 600px !important;
+    max-width: 80vw !important;
+}
+
+.text-right {
+    text-align: right !important;
+    direction: rtl !important;
+    white-space: pre-wrap !important;
+    line-height: 1.6 !important;
+    font-size: 1.1rem !important;
+}
+
+/* Adjust pagination display for many pages */
+.pagination-numbers {
+    flex-wrap: wrap;
+    max-width: 300px;
+    overflow: hidden;
+}
+
+.pagination-numbers .btn {
+    margin-bottom: 5px;
+}
+
+/* RTL Toast Container Styles */
+.toast-container-rtl {
+    right: 0 !important;
+    left: auto !important;
+}
+
+.toast-container-rtl .swal2-toast {
+    margin-right: 1em !important;
+    margin-left: 0 !important;
+}
+
+.toast-container-rtl .swal2-toast .swal2-title {
+    text-align: right !important;
+}
+
+.toast-container-rtl .swal2-toast .swal2-icon {
+    margin-right: 0 !important;
+    margin-left: 0.5em !important;
+} 

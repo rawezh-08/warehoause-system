@@ -41,6 +41,30 @@ body {
     gap: 5px;
     font-size: 0.9rem;
 }
+.table td,
+        th {
+            white-space: normal;
+            word-wrap: break-word;
+            vertical-align: middle;
+            padding: 0.75rem;
+        }
+
+        .table td {
+
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+  
+        .table th {
+
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 .table th {
     background-color: #f8f9fa;
     font-weight: 600;
@@ -445,4 +469,66 @@ input[readonly] {
     text-align: right;
     display: block;
     padding-right: 5px;
+}
+
+/* Fix Select2 RTL issues */
+.select2-container--bootstrap-5 .select2-selection {
+    padding-left: 2rem !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single {
+    padding-right: 1rem !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection__clear {
+    left: 0.5rem !important;
+    right: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: none !important;
+    color: #6c757d !important;
+    font-size: 1.2rem !important;
+    line-height: 1 !important;
+    height: auto !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection__clear:hover {
+    color: #dc3545 !important;
+    background: none !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection__arrow {
+    right: auto !important;
+    left: 2rem !important;
+}
+
+/* Fix dropdown appearance */
+.select2-container--bootstrap-5 .select2-dropdown {
+    border: 1px solid #ced4da !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option {
+    padding: 0.5rem 1rem !important;
+}
+
+.select2-container--bootstrap-5 .select2-search__field {
+    padding: 0.5rem !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 4px !important;
+}
+
+/* Improve dropdown positioning */
+.select2-container--bootstrap-5.select2-container--open .select2-dropdown {
+    margin-top: 2px !important;
+}
+
+/* Fix dropdown arrow icon */
+.select2-container--bootstrap-5 .select2-selection__arrow b {
+    border-color: #6c757d transparent transparent transparent !important;
+}
+
+.select2-container--bootstrap-5.select2-container--open .select2-selection__arrow b {
+    border-color: transparent transparent #6c757d transparent !important;
 }

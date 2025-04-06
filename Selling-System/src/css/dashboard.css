@@ -93,7 +93,7 @@ body {
   grid-template-columns: 1fr;
   gap: 25px;
   padding: 25px;
-  margin-right: 250;
+  margin-right: 250px;
   transition: all 0.3s ease;
   width: 100%;
 }

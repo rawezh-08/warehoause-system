@@ -1,4 +1,25 @@
 <?php
+require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/models/Customer.php';
+require_once __DIR__ . '/models/Supplier.php';
+
+// Create a database connection
+$db = new Database();
+// Ensure we get a valid PDO connection
+$conn = $db->getConnection();
+
+// Create Customer model instance
+$customerModel = new Customer($conn);
+
+// Create Supplier model instance
+$supplierModel = new Supplier($conn);
+
+// Get all customers
+$customers = $customerModel->getAll();
+
+// Get all suppliers
+$suppliers = $supplierModel->getAll();
+
 // You can add PHP logic here if needed
 ?>
 <!DOCTYPE html>
@@ -12,116 +33,15 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <!-- Global CSS -->
     <link rel="stylesheet" href="assets/css/custom.css">
     <!-- Page CSS -->
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/employeePayment/style.css">
-    <!-- SweetAlert2 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
-    <!-- Custom styles for this page -->
-    <style>
-        /* Transparent search input */
-        .table-search-input {
-            background-color: transparent !important;
-            border: 1px solid #dee2e6;
-        }
-
-        /* Word wrapping for table cells */
-        .custom-table td,
-        th {
-            white-space: normal;
-            word-wrap: break-word;
-            vertical-align: middle;
-            padding: 0.75rem;
-        }
-
-        #supplierTable td {
-
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        #customerTable td {
-
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        #employeeTable td {
-
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        #supplierTable th {
-
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        #customerTable th {
-
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        #employeeTable th {
-
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-
-        
-
-
-
-        /* Adjust pagination display for many pages */
-        .pagination-numbers {
-            flex-wrap: wrap;
-            max-width: 300px;
-            overflow: hidden;
-        }
-
-        .pagination-numbers .btn {
-            margin-bottom: 5px;
-        }
-
-        /* RTL Toast Container Styles */
-        .toast-container-rtl {
-            right: 0 !important;
-            left: auto !important;
-        }
-
-        .toast-container-rtl .swal2-toast {
-            margin-right: 1em !important;
-            margin-left: 0 !important;
-        }
-
-        .toast-container-rtl .swal2-toast .swal2-title {
-            text-align: right !important;
-        }
-
-        .toast-container-rtl .swal2-toast .swal2-icon {
-            margin-right: 0 !important;
-            margin-left: 0.5em !important;
-        }
-    </style>
+    <link rel="stylesheet" href="css/staff.css">
 </head>
 
 <body>
@@ -413,22 +333,20 @@
                                     <div class="card-body">
                                         <h5 class="card-title mb-4">فلتەر بەپێی ناو</h5>
                                         <form id="customerFilterForm" class="row g-3">
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <label for="customerName" class="form-label">ناوی کڕیار</label>
                                                 <input type="text" class="form-control auto-filter" id="customerName">
                                             </div>
-                                            <div class="col-md-4">
-                                                <label for="customerType" class="form-label">جۆری کڕیار</label>
-                                                <select class="form-select auto-filter" id="customerType">
-                                                    <option value="">هەموو جۆرەکان</option>
-                                                    <option value="retail">تاک</option>
-                                                    <option value="wholesale">کۆ</option>
-                                                    <option value="regular">بەردەوام</option>
-                                                </select>
+                                            <div class="col-md-3">
+                                                <label for="customerPhone" class="form-label">ژمارەی مۆبایل</label>
+                                                <input type="text" class="form-control auto-filter" id="customerPhone">
                                             </div>
-                                            <div class="col-md-2 d-flex align-items-end">
-                                                <button type="button" class="btn btn-outline-secondary w-100"
-                                                    id="customerResetFilter">
+                                            <div class="col-md-3">
+                                                <label for="customerAddress" class="form-label">ناونیشان</label>
+                                                <input type="text" class="form-control auto-filter" id="customerAddress">
+                                            </div>
+                                            <div class="col-md-1 d-flex align-items-end">
+                                                <button type="button" class="btn btn-outline-secondary w-100" id="customerResetFilter">
                                                     <i class="fas fa-redo me-2"></i> ڕیسێت
                                                 </button>
                                             </div>
@@ -500,98 +418,43 @@
                                                             <th>#</th>
                                                             <th>ناوی کڕیار</th>
                                                             <th>ژمارەی مۆبایل</th>
+                                                            <th>ژمارەی مۆبایلی دووەم</th>
+                                                            <th>ناوی کەفیل</th>
+                                                            <th>ژمارەی مۆبایلی کەفیل</th>
                                                             <th>ناونیشان</th>
-                                                            <th>جۆری کڕیار</th>
-                                                            <th>سنووری قەرز</th>
+                                                            <th>قەرز بەسەر کڕیار</th>
                                                             <th>کردارەکان</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <!-- Sample data - will be replaced with real data from database -->
-                                                        <tr data-id="1">
-                                                            <td>1</td>
-                                                            <td>ئازاد حسین</td>
-                                                            <td>0750 222 3333</td>
-                                                            <td>دهۆک، شەقامی نەوروز</td>
-                                                            <td><span class="badge bg-success">بەردەوام</span></td>
-                                                            <td>$2000</td>
+                                                        <?php foreach ($customers as $index => $customer): ?>
+                                                        <tr data-id="<?php echo $customer['id']; ?>">
+                                                            <td><?php echo $index + 1; ?></td>
+                                                            <td><?php echo htmlspecialchars($customer['name']); ?></td>
+                                                            <td><?php echo htmlspecialchars($customer['phone1']); ?></td>
+                                                            <td><?php echo htmlspecialchars($customer['phone2'] ?? ''); ?></td>
+                                                            <td><?php echo htmlspecialchars($customer['guarantor_name'] ?? ''); ?></td>
+                                                            <td><?php echo htmlspecialchars($customer['guarantor_phone'] ?? ''); ?></td>
+                                                            <td><?php echo htmlspecialchars($customer['address'] ?? ''); ?></td>
+                                                            <td><?php echo number_format($customer['debit_on_business'], 0); ?></td>
                                                             <td>
                                                                 <div class="action-buttons">
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-primary rounded-circle edit-btn"
-                                                                        data-id="1" data-bs-toggle="modal"
-                                                                        data-bs-target="#editCustomerModal">
+                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="<?php echo $customer['id']; ?>">
                                                                         <i class="fas fa-edit"></i>
                                                                     </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-info rounded-circle view-btn"
-                                                                        data-id="1">
-                                                                        <i class="fas fa-eye"></i>
+                                                                  
+                                                                    <button type="button" class="btn btn-sm btn-outline-warning rounded-circle notes-btn" 
+                                                                            data-notes="<?php echo htmlspecialchars($customer['notes'] ?? ''); ?>"
+                                                                            data-customer-name="<?php echo htmlspecialchars($customer['name']); ?>">
+                                                                        <i class="fas fa-sticky-note"></i>
                                                                     </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-danger rounded-circle delete-btn"
-                                                                        data-id="1">
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="<?php echo $customer['id']; ?>">
                                                                         <i class="fas fa-trash-alt"></i>
                                                                     </button>
                                                                 </div>
                                                             </td>
                                                         </tr>
-                                                        <tr data-id="2">
-                                                            <td>2</td>
-                                                            <td>بێریڤان عەبدوڵڵا</td>
-                                                            <td>0750 444 5555</td>
-                                                            <td>هەولێر، گوندی ئینزا</td>
-                                                            <td><span class="badge bg-info">تاک</span></td>
-                                                            <td>$500</td>
-                                                            <td>
-                                                                <div class="action-buttons">
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-primary rounded-circle edit-btn"
-                                                                        data-id="2" data-bs-toggle="modal"
-                                                                        data-bs-target="#editCustomerModal">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-info rounded-circle view-btn"
-                                                                        data-id="2">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-danger rounded-circle delete-btn"
-                                                                        data-id="2">
-                                                                        <i class="fas fa-trash-alt"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr data-id="3">
-                                                            <td>3</td>
-                                                            <td>کاروان ڕەشید</td>
-                                                            <td>0750 777 8888</td>
-                                                            <td>سلێمانی، شەقامی بازاڕ</td>
-                                                            <td><span class="badge bg-warning text-dark">کۆ</span></td>
-                                                            <td>$5000</td>
-                                                            <td>
-                                                                <div class="action-buttons">
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-primary rounded-circle edit-btn"
-                                                                        data-id="3" data-bs-toggle="modal"
-                                                                        data-bs-target="#editCustomerModal">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-info rounded-circle view-btn"
-                                                                        data-id="3">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-danger rounded-circle delete-btn"
-                                                                        data-id="3">
-                                                                        <i class="fas fa-trash-alt"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
+                                                        <?php endforeach; ?>
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -601,25 +464,18 @@
                                                 <div class="row align-items-center">
                                                     <div class="col-md-6 mb-2 mb-md-0">
                                                         <div class="pagination-info">
-                                                            نیشاندانی <span id="customerStartRecord">1</span> تا <span
-                                                                id="customerEndRecord">3</span> لە کۆی <span
-                                                                id="customerTotalRecords">3</span> تۆمار
+                                                            نیشاندانی <span id="customerStartRecord">1</span> تا <span id="customerEndRecord"><?php echo count($customers); ?></span> لە کۆی <span id="customerTotalRecords"><?php echo count($customers); ?></span> تۆمار
                                                         </div>
                                                     </div>
                                                     <div class="col-md-6">
                                                         <div class="pagination-controls d-flex justify-content-md-end">
-                                                            <button id="customerPrevPageBtn"
-                                                                class="btn btn-sm btn-outline-primary rounded-circle me-2"
-                                                                disabled>
+                                                            <button id="customerPrevPageBtn" class="btn btn-sm btn-outline-primary rounded-circle me-2" disabled>
                                                                 <i class="fas fa-chevron-right"></i>
                                                             </button>
-                                                            <div id="customerPaginationNumbers"
-                                                                class="pagination-numbers d-flex">
-                                                                <button
-                                                                    class="btn btn-sm btn-primary rounded-circle me-2 active">1</button>
+                                                            <div id="customerPaginationNumbers" class="pagination-numbers d-flex">
+                                                                <button class="btn btn-sm btn-primary rounded-circle me-2 active">1</button>
                                                             </div>
-                                                            <button id="customerNextPageBtn"
-                                                                class="btn btn-sm btn-outline-primary rounded-circle">
+                                                            <button id="customerNextPageBtn" class="btn btn-sm btn-outline-primary rounded-circle">
                                                                 <i class="fas fa-chevron-left"></i>
                                                             </button>
                                                         </div>
@@ -647,13 +503,8 @@
                                                 <input type="text" class="form-control auto-filter" id="supplierName">
                                             </div>
                                             <div class="col-md-4">
-                                                <label for="supplierType" class="form-label">جۆری دابینکەر</label>
-                                                <select class="form-select auto-filter" id="supplierType">
-                                                    <option value="">هەموو جۆرەکان</option>
-                                                    <option value="manufacturer">بەرهەمهێنەر</option>
-                                                    <option value="distributor">دابەشکەر</option>
-                                                    <option value="wholesaler">فرۆشیاری کۆ</option>
-                                                </select>
+                                                <label for="supplierPhone" class="form-label">ژمارەی پەیوەندی</label>
+                                                <input type="text" class="form-control auto-filter" id="supplierPhone">
                                             </div>
                                             <div class="col-md-2 d-flex align-items-end">
                                                 <button type="button" class="btn btn-outline-secondary w-100"
@@ -729,99 +580,53 @@
                                                             <th>#</th>
                                                             <th>ناوی دابینکەر</th>
                                                             <th>ژمارەی پەیوەندی</th>
-                                                            <th>کەسی پەیوەندی</th>
-                                                            <th>ناونیشان</th>
-                                                            <th>جۆری دابینکەر</th>
+                                                            <th>ژمارەی پەیوەندی ٢</th>
+                                                            <th>قەرز لەسەر خۆم</th>
                                                             <th>کردارەکان</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <!-- Sample data - will be replaced with real data from database -->
-                                                        <tr data-id="1">
-                                                            <td>1</td>
-                                                            <td>کۆمپانیای تیوان</td>
-                                                            <td>0750 999 0000</td>
-                                                            <td>ئاراس سەعید</td>
-                                                            <td>هەولێر، شەقامی ئازادی</td>
-                                                            <td><span class="badge bg-primary">بەرهەمهێنەر</span></td>
-                                                            <td>
-                                                                <div class="action-buttons">
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-primary rounded-circle edit-btn"
-                                                                        data-id="1" data-bs-toggle="modal"
-                                                                        data-bs-target="#editSupplierModal">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-info rounded-circle view-btn"
-                                                                        data-id="1">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-danger rounded-circle delete-btn"
-                                                                        data-id="1">
-                                                                        <i class="fas fa-trash-alt"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
+                                                        <?php if (empty($suppliers)): ?>
+                                                        <tr>
+                                                            <td colspan="6" class="text-center">هیچ دابینکەرێک نەدۆزرایەوە</td>
                                                         </tr>
-                                                        <tr data-id="2">
-                                                            <td>2</td>
-                                                            <td>کۆمپانیای ئارەزوو</td>
-                                                            <td>0750 111 2222</td>
-                                                            <td>هێڤیدار خالید</td>
-                                                            <td>سلێمانی، شەقامی مەولەوی</td>
-                                                            <td><span class="badge bg-info">دابەشکەر</span></td>
-                                                            <td>
-                                                                <div class="action-buttons">
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-primary rounded-circle edit-btn"
-                                                                        data-id="2" data-bs-toggle="modal"
-                                                                        data-bs-target="#editSupplierModal">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-info rounded-circle view-btn"
-                                                                        data-id="2">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-danger rounded-circle delete-btn"
-                                                                        data-id="2">
-                                                                        <i class="fas fa-trash-alt"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr data-id="3">
-                                                            <td>3</td>
-                                                            <td>کۆمپانیای هێمن</td>
-                                                            <td>0750 333 4444</td>
-                                                            <td>هەڵۆ عەزیز</td>
-                                                            <td>دهۆک، شەقامی زانکۆ</td>
-                                                            <td><span class="badge bg-warning text-dark">فرۆشیاری
-                                                                    کۆ</span></td>
-                                                            <td>
-                                                                <div class="action-buttons">
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-primary rounded-circle edit-btn"
-                                                                        data-id="3" data-bs-toggle="modal"
-                                                                        data-bs-target="#editSupplierModal">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-info rounded-circle view-btn"
-                                                                        data-id="3">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-danger rounded-circle delete-btn"
-                                                                        data-id="3">
-                                                                        <i class="fas fa-trash-alt"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
+                                                        <?php else: ?>
+                                                            <?php foreach ($suppliers as $index => $supplier): ?>
+                                                            <tr data-id="<?php echo $supplier['id']; ?>">
+                                                                <td><?php echo $index + 1; ?></td>
+                                                                <td><?php echo htmlspecialchars($supplier['name']); ?></td>
+                                                                <td><?php echo htmlspecialchars($supplier['phone1']); ?></td>
+                                                                <td><?php echo htmlspecialchars($supplier['phone2'] ? $supplier['phone2'] : '-'); ?></td>
+                                                                <td><?php echo number_format($supplier['debt_on_myself'], 0, '.', ','); ?> دینار</td>
+                                                                <td>
+                                                                    <div class="action-buttons">
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-primary rounded-circle edit-btn"
+                                                                            data-id="<?php echo $supplier['id']; ?>" data-bs-toggle="modal"
+                                                                            data-bs-target="#editSupplierModal">
+                                                                            <i class="fas fa-edit"></i>
+                                                                        </button>
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-info rounded-circle view-btn"
+                                                                            data-id="<?php echo $supplier['id']; ?>">
+                                                                            <i class="fas fa-eye"></i>
+                                                                        </button>
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-warning rounded-circle notes-btn"
+                                                                            data-notes="<?php echo htmlspecialchars($supplier['notes'] ?? ''); ?>"
+                                                                            data-supplier-name="<?php echo htmlspecialchars($supplier['name']); ?>">
+                                                                            <i class="fas fa-sticky-note"></i>
+                                                                        </button>
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-danger rounded-circle delete-btn"
+                                                                            data-id="<?php echo $supplier['id']; ?>">
+                                                                            <i class="fas fa-trash-alt"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                            <?php endforeach; ?>
+                                                        <?php endif; ?>
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -831,9 +636,7 @@
                                                 <div class="row align-items-center">
                                                     <div class="col-md-6 mb-2 mb-md-0">
                                                         <div class="pagination-info">
-                                                            نیشاندانی <span id="supplierStartRecord">1</span> تا <span
-                                                                id="supplierEndRecord">3</span> لە کۆی <span
-                                                                id="supplierTotalRecords">3</span> تۆمار
+                                                            نیشاندانی <span id="supplierStartRecord">1</span> تا <span id="supplierEndRecord"><?php echo count($suppliers); ?></span> لە کۆی <span id="supplierTotalRecords"><?php echo count($suppliers); ?></span> تۆمار
                                                         </div>
                                                     </div>
                                                     <div class="col-md-6">
@@ -915,7 +718,7 @@
     <!-- Customer Edit Modal -->
     <div class="modal fade" id="editCustomerModal" tabindex="-1" aria-labelledby="editCustomerModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editCustomerModalLabel">دەستکاری زانیاری کڕیار</h5>
@@ -923,42 +726,46 @@
                 </div>
                 <div class="modal-body">
                     <form id="editCustomerForm">
-                        <input type="hidden" id="editCustomerId">
-                        <div class="mb-3">
-                            <label for="editCustomerName" class="form-label">ناوی کڕیار</label>
-                            <input type="text" class="form-control" id="editCustomerName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editCustomerPhone" class="form-label">ژمارەی مۆبایل</label>
-                            <input type="tel" class="form-control" id="editCustomerPhone" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editCustomerAddress" class="form-label">ناونیشان</label>
-                            <textarea class="form-control" id="editCustomerAddress" rows="2"></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editGuarantorName" class="form-label">ناوی کەفیل</label>
-                            <input type="text" class="form-control" id="editGuarantorName">
-                        </div>
-                        <div class="mb-3">
-                            <label for="editGuarantorPhone" class="form-label">ژمارەی مۆبایلی کەفیل</label>
-                            <input type="tel" class="form-control" id="editGuarantorPhone">
-                        </div>
-                        <div class="mb-3">
-                            <label for="editCustomerType" class="form-label">جۆری کڕیار</label>
-                            <select class="form-select" id="editCustomerType">
-                                <option value="" selected disabled>هەڵبژێرە</option>
-                                <option value="retail">تاک</option>
-                                <option value="wholesale">کۆ</option>
-                                <option value="regular">بەردەوام</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editCreditLimit" class="form-label">سنووری قەرز</label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="editCreditLimit">
-                                <span class="input-group-text">$</span>
+                        <input type="hidden" id="editCustomerId" name="id">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editCustomerName" class="form-label">ناوی کڕیار</label>
+                                <input type="text" class="form-control" id="editCustomerName" name="name" required>
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editCustomerPhone" class="form-label">ژمارەی مۆبایل</label>
+                                <input type="tel" class="form-control" id="editCustomerPhone" name="phone1" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editCustomerPhone2" class="form-label">ژمارەی مۆبایلی دووەم</label>
+                                <input type="tel" class="form-control" id="editCustomerPhone2" name="phone2">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editCustomerAddress" class="form-label">ناونیشان</label>
+                                <input type="text" class="form-control" id="editCustomerAddress" name="address">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editGuarantorName" class="form-label">ناوی کەفیل</label>
+                                <input type="text" class="form-control" id="editGuarantorName" name="guarantor_name">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editGuarantorPhone" class="form-label">ژمارەی مۆبایلی کەفیل</label>
+                                <input type="tel" class="form-control" id="editGuarantorPhone" name="guarantor_phone">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editDebitOnBusiness" class="form-label">قەرز بەسەر کڕیار</label>
+                                <input type="number" class="form-control" id="editDebitOnBusiness" name="debit_on_business" step="0.01">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editCustomerNotes" class="form-label">تێبینی</label>
+                            <textarea class="form-control" id="editCustomerNotes" name="notes" rows="3"></textarea>
                         </div>
                     </form>
                 </div>
@@ -987,39 +794,25 @@
                             <input type="text" class="form-control" id="editSupplierName" required>
                         </div>
                         <div class="mb-3">
-                            <label for="editSupplierPhone" class="form-label">ژمارەی پەیوەندی</label>
-                            <input type="tel" class="form-control" id="editSupplierPhone" required>
+                            <label for="editSupplierPhone1" class="form-label">ژمارەی پەیوەندی</label>
+                            <input type="tel" class="form-control" id="editSupplierPhone1" required pattern="[0-9]{4} [0-9]{3} [0-9]{4}">
+                          
                         </div>
                         <div class="mb-3">
-                            <label for="editContactPerson" class="form-label">کەسی پەیوەندی</label>
-                            <input type="text" class="form-control" id="editContactPerson">
+                            <label for="editSupplierPhone2" class="form-label">ژمارەی پەیوەندی ٢</label>
+                            <input type="tel" class="form-control" id="editSupplierPhone2" pattern="[0-9]{4} [0-9]{3} [0-9]{4}">
+                           
                         </div>
                         <div class="mb-3">
-                            <label for="editSupplierEmail" class="form-label">ئیمەیل</label>
-                            <input type="email" class="form-control" id="editSupplierEmail">
+                            <label for="editSupplierDebt" class="form-label">قەرز لەسەر خۆم</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control number-format" id="editSupplierDebt" value="0">
+                                <span class="input-group-text">دینار</span>
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <label for="editSupplierAddress" class="form-label">ناونیشان</label>
-                            <textarea class="form-control" id="editSupplierAddress" rows="2"></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editSupplierType" class="form-label">جۆری دابینکەر</label>
-                            <select class="form-select" id="editSupplierType">
-                                <option value="" selected disabled>هەڵبژێرە</option>
-                                <option value="manufacturer">بەرهەمهێنەر</option>
-                                <option value="distributor">دابەشکەر</option>
-                                <option value="wholesaler">فرۆشیاری کۆ</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editPaymentTerms" class="form-label">مەرجەکانی پارەدان</label>
-                            <select class="form-select" id="editPaymentTerms">
-                                <option value="" selected disabled>هەڵبژێرە</option>
-                                <option value="immediate">دەستبەجێ</option>
-                                <option value="15days">15 ڕۆژ</option>
-                                <option value="30days">30 ڕۆژ</option>
-                                <option value="60days">60 ڕۆژ</option>
-                            </select>
+                            <label for="editSupplierNotes" class="form-label">تێبینییەکان</label>
+                            <textarea class="form-control" id="editSupplierNotes" rows="3"></textarea>
                         </div>
                     </form>
                 </div>

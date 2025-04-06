@@ -620,7 +620,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize by making sure we're on the correct tab and buttons are set up
     switchToTab('basic-info');
 
-    // Add form submission handling
+    // Form submission handler
     if (addProductForm) {
         addProductForm.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -629,66 +629,103 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!validateAllTabs()) {
                 return;
             }
-
+            
             // Clean number inputs (remove commas)
             cleanNumberInputs();
-
+            
             // Create FormData object
             const formData = new FormData(this);
-
+            
             try {
-                const response = await fetch(this.action, {
+                // Show loading indicator
+                Swal.fire({
+                    title: 'تکایە چاوەڕێ بکە...',
+                    text: 'زیادکردنی کاڵا بەردەوامە',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Submit form using fetch
+                const response = await fetch('process/add_product.php', {
                     method: 'POST',
                     body: formData
                 });
-
+                
                 const data = await response.json();
-
+                
                 if (data.success) {
-                    // Show success message
-                    Swal.fire({
-                        title: 'سەرکەوتوو بوو!',
-                        text: data.message,
+                    await Swal.fire({
                         icon: 'success',
+                        title: 'سەرکەوتوو',
+                        text: data.message || 'کاڵاکە بە سەرکەوتوویی زیاد کرا',
                         confirmButtonText: 'باشە'
-                    }).then(() => {
-                        // Reset form
-                        this.reset();
-                        
-                        // Clear image preview
-                        const imagePreview = document.querySelector('.image-preview');
-                        if (imagePreview) {
-                            imagePreview.innerHTML = `
-                                <i class="fas fa-cloud-upload-alt"></i>
-                                <p>وێنە هەڵبژێرە</p>
-                            `;
-                        }
-                        
-                        // Switch back to basic info tab
-                        switchToTab('basic-info');
-                        
-                        // Update latest products list
-                        updateLatestProducts();
                     });
+                    
+                    // Reset form and image preview
+                    this.reset();
+                    resetImagePreview();
+                    
+                    // Reset to first tab
+                    switchToTab('basic-info');
+                    
+                    // Refresh the latest products list
+                    if (document.querySelector('.refresh-products')) {
+                        document.querySelector('.refresh-products').click();
+                    }
+                    
+                    // Clear any validation errors
+                    clearAllValidationErrors();
+                    
+                    // Reset unit quantity fields
+                    const unitQuantityContainer = document.getElementById('unitQuantityContainer');
+                    if (unitQuantityContainer) {
+                        unitQuantityContainer.style.display = 'none';
+                    }
+                    
+                    // Reset select elements
+                    const selects = this.querySelectorAll('select');
+                    selects.forEach(select => {
+                        select.value = '';
+                    });
+                    
                 } else {
-                    // Show error message
-                    Swal.fire({
-                        title: 'هەڵە!',
-                        text: data.message,
-                        icon: 'error',
-                        confirmButtonText: 'باشە'
-                    });
+                    throw new Error(data.message || 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا');
                 }
             } catch (error) {
                 console.error('Error:', error);
                 Swal.fire({
-                    title: 'هەڵە!',
-                    text: 'کێشەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە',
                     icon: 'error',
+                    title: 'هەڵە',
+                    text: error.message || 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا',
                     confirmButtonText: 'باشە'
                 });
             }
         });
+    }
+
+    // Function to clear all validation errors
+    function clearAllValidationErrors() {
+        const invalidFields = document.querySelectorAll('.is-invalid');
+        invalidFields.forEach(field => {
+            field.classList.remove('is-invalid');
+            const errorElement = field.nextElementSibling;
+            if (errorElement && errorElement.classList.contains('invalid-feedback')) {
+                errorElement.remove();
+            }
+        });
+    }
+
+    // Reset image preview
+    function resetImagePreview() {
+        const imagePreview = document.querySelector('.image-preview');
+        if (imagePreview) {
+            imagePreview.innerHTML = `
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>وێنە هەڵبژێرە</p>
+            `;
+        }
     }
 });
 

@@ -1,7 +1,7 @@
 $(document).ready(function() {
     // Set default dates
     const today = new Date().toISOString().split('T')[0];
-    $('.start-date, .end-date, .purchase-date, .delivery-date, .adjustment-date').val(today);
+    $('.start-date, .end-date, .purchase-date, .delivery-date, .adjustment-date, .sale-date').val(today);
 
     // Tab counter for each type
     let tabCounters = {
@@ -13,30 +13,161 @@ $(document).ready(function() {
     // Current active receipt type
     let activeReceiptType = 'selling';
     
-    // Sample product prices (in a real app, these would come from database)
-    const productPrices = {
-        '1': 499.99, // مۆبایل سامسونگ
-        '2': 1299.99, // لاپتۆپ ئەپڵ
-        '3': 89.99, // سپیکەر JBL
-        '4': 199.99 // مۆنیتەر LG
-    };
+    // Initialize all select2 dropdowns for the first time
+    initializeFirstTimeDropdowns();
+    
+    // Initialize all select2 dropdowns
+    function initializeFirstTimeDropdowns() {
+        console.log('Initializing all dropdowns...');
+        
+        // Initialize product dropdowns
+        $('.product-select').each(function() {
+            initializeProductSelect($(this));
+        });
+        
+        // Initialize customer dropdowns
+        $('.customer-select').each(function() {
+            initializeCustomerSelect($(this));
+        });
+        
+        // Initialize supplier dropdowns
+        $('.supplier-select').each(function() {
+            initializeSupplierSelect($(this));
+        });
+    }
 
-    // Initialize product select dropdowns
-    initProductDropdowns();
+    // Legacy initialize function (kept for compatibility)
+    function initDropdowns() {
+        // Initialize product dropdowns
+        initProductDropdowns();
+        
+        // Initialize customer dropdowns
+        initCustomerDropdowns();
+        
+        // Initialize supplier dropdowns
+        initSupplierDropdowns();
+    }
+
+    // Function to fetch products from database
+    function loadProducts() {
+        return $.ajax({
+            url: 'api/products.php',
+            type: 'GET',
+            dataType: 'json'
+        });
+    }
+
+    // Initialize product dropdowns
+ 
+
+    // Initialize customer dropdowns
+    function initCustomerDropdowns() {
+        $('.customer-select').each(function() {
+            if (!$(this).hasClass('select2-hidden-accessible')) {
+                $(this).select2({
+                    theme: 'bootstrap-5',
+                    placeholder: 'کڕیار هەڵبژێرە',
+                    allowClear: true,
+                    width: '100%',
+                    ajax: {
+                        url: 'api/customers.php',
+                        dataType: 'json',
+                        delay: 250,
+                        data: function(params) {
+                            return {
+                                search: params.term,
+                                page: params.page || 1
+                            };
+                        },
+                        processResults: function(data, params) {
+                            params.page = params.page || 1;
+                            
+                            return {
+                                results: data.customers,
+                                pagination: {
+                                    more: (params.page * 10) < data.total_count
+                                }
+                            };
+                        },
+                        cache: true
+                    },
+                    templateResult: formatCustomerResult,
+                    templateSelection: formatCustomerSelection
+                });
+            }
+        });
+    }
+
+
+
+    // Format the product in the dropdown
+    function formatProductResult(product) {
+        if (!product.id) return product.text;
+        
+        // Create a more detailed result with stock information
+        return $(
+            `<div class="product-result d-flex justify-content-between align-items-center">
+                <div class="product-info">
+                    <div class="product-name">${product.text}</div>
+                    <div class="product-meta small text-muted">کۆد: ${product.code} | بارکۆد: ${product.barcode}</div>
+                </div>
+                <div class="product-price text-end">
+                    <div>دانە: ${product.selling_price_single}</div>
+                    ${product.selling_price_wholesale ? `<div>کۆمەڵ: ${product.selling_price_wholesale}</div>` : ''}
+                    <div class="text-success">بەردەست: ${product.current_quantity}</div>
+                </div>
+            </div>`
+        );
+    }
+
+    // Format customer display in dropdown
+    function formatCustomerResult(customer) {
+        if (!customer.id) return customer.text;
+        
+        return $(
+            `<div class="customer-result">
+                <div class="customer-name">${customer.text}</div>
+                <div class="small text-muted">${customer.phone1 || ''}</div>
+                ${customer.debit_on_business > 0 ? `<div class="text-danger">قەرز: ${customer.debit_on_business}</div>` : ''}
+            </div>`
+        );
+    }
+
+    // Format supplier display in dropdown
+    function formatSupplierResult(supplier) {
+        if (!supplier.id) return supplier.text;
+        
+        return $(
+            `<div class="supplier-result">
+                <div class="supplier-name">${supplier.text}</div>
+                <div class="small text-muted">${supplier.phone1 || ''}</div>
+                ${supplier.debt_on_myself > 0 ? `<div class="text-success">قەرزم: ${supplier.debt_on_myself}</div>` : ''}
+            </div>`
+        );
+    }
+
+    // Format customer selection
+    function formatCustomerSelection(customer) {
+        if (!customer.id) return customer.text;
+        return customer.text;
+    }
+
+    // Format supplier selection
+    function formatSupplierSelection(supplier) {
+        if (!supplier.id) return supplier.text;
+        return supplier.text;
+    }
 
     // Calculate row total
     function calculateRowTotal(row) {
-        const price = parseFloat($(row).find('.price').val()) || 0;
-        const quantity = parseFloat($(row).find('.quantity').val()) || 0;
-        const adjustedQuantity = parseFloat($(row).find('.adjusted-quantity').val()) || 0;
+        const unitPrice = parseFloat(row.find('.unit-price, .price').val()) || 0;
+        const quantity = parseFloat(row.find('.quantity, .adjusted-quantity').val()) || 0;
+        const total = unitPrice * quantity;
         
-        // For wasting type, use adjusted quantity instead if available
-        const qtyToUse = $(row).closest('[data-receipt-type="wasting"]').length ? adjustedQuantity : quantity;
+        row.find('.total').val(total);
         
-        $(row).find('.total').val((price * qtyToUse).toFixed(2));
-        
-        // Calculate grand total for the current tab
-        const tabId = $('.tab-pane.active').attr('id');
+        // Recalculate tab totals
+        const tabId = row.closest('.tab-pane').attr('id');
         calculateGrandTotal(tabId);
     }
 
@@ -49,151 +180,37 @@ $(document).ready(function() {
             subtotal += parseFloat($(this).val()) || 0;
         });
         
-        const tax = parseFloat(tabPane.find('.tax').val()) || 0;
         const discount = parseFloat(tabPane.find('.discount').val()) || 0;
-        const shippingCost = parseFloat(tabPane.find('.shipping-cost').val()) || 0;
+        const receiptType = tabPane.data('receipt-type');
         
         // Different calculation based on receipt type
-        const receiptType = tabPane.data('receipt-type');
-        let grandTotal;
+        let grandTotal = subtotal - discount;
         
-        if (receiptType === 'buying') {
-            grandTotal = subtotal + tax + shippingCost;
-        } else if (receiptType === 'wasting') {
-            grandTotal = subtotal; // Just the subtotal for wasting
-        } else { // selling
-            grandTotal = subtotal + tax - discount;
+        // If selling receipt, add shipping cost
+        if (receiptType === 'selling') {
+            const shippingCost = parseFloat(tabPane.find('.shipping-cost').val()) || 0;
+            const otherCosts = parseFloat(tabPane.find('.other-costs').val()) || 0;
+            tabPane.find('.shipping-cost-total').val(shippingCost);
+            grandTotal = grandTotal + shippingCost + otherCosts;
         }
         
-        tabPane.find('.subtotal').val(subtotal.toFixed(2));
-        tabPane.find('.grand-total').val(grandTotal.toFixed(2));
-    }
-
-    // Reset form - used by refresh button
-    function resetForm(tabPane) {
-        // Reset text inputs and numbers except readonly ones
-        tabPane.find('input:not([readonly])').val('');
-        
-        // Reset selects to first option
-        tabPane.find('select').prop('selectedIndex', 0);
-        
-        // Clear and reload Select2 dropdowns
-        tabPane.find('.product-select').val(null).trigger('change');
-        
-        // Reset date fields to today
-        tabPane.find('.start-date, .end-date, .purchase-date, .delivery-date, .adjustment-date').val(today);
-        
-        // Set default values for numeric inputs
-        tabPane.find('.tax, .discount, .shipping-cost').val('0');
-        
-        // Keep just the first row in the items table and clear its values
-        const itemsList = tabPane.find('.items-list');
-        const firstRow = itemsList.find('tr:first').clone();
-        firstRow.find('input').val('');
-        firstRow.find('select').prop('selectedIndex', 0);
-        
-        // Reinitialize product select in the first row
-        const productCell = firstRow.find('td:nth-child(2)');
-        productCell.html('<select class="form-control product-select" style="width: 100%"></select>');
-        
-        itemsList.empty().append(firstRow);
-        initProductDropdowns();
-        
-        // Reset totals
-        tabPane.find('.subtotal, .grand-total').val('0.00');
-    }
-
-    // Function to initialize product dropdown with Select2
-    function initProductDropdowns() {
-        $('.product-select').each(function() {
-            if (!$(this).hasClass('select2-hidden-accessible')) {
-                $(this).select2({
-                    theme: 'bootstrap-5',
-                    width: '100%',
-                    placeholder: 'ناوی کاڵا',
-                    allowClear: true,
-                    language: {
-                        noResults: function() {
-                            return "هیچ ئەنجامێک نەدۆزرایەوە";
-                        },
-                        searching: function() {
-                            return "گەڕان...";
-                        }
-                    },
-                    ajax: {
-                        url: 'process/search_products.php',
-                        dataType: 'json',
-                        delay: 250,
-                        data: function(params) {
-                            return {
-                                term: params.term || '',
-                                show_initial: params.term ? 0 : 1 // Send flag to show initial products if no search term
-                            };
-                        },
-                        processResults: function(data) {
-                            return data;
-                        },
-                        cache: true
-                    },
-                    escapeMarkup: function(markup) {
-                        return markup;
-                    },
-                    templateResult: formatProduct,
-                    templateSelection: formatProductSelection,
-                    // Automatically open the dropdown when it's focused
-                    // to show initial products
-                    minimumInputLength: 0
-                });
-                
-                // When dropdown is opened, send request to get initial products
-                $(this).on('select2:open', function() {
-                    // Trigger a minimal search to load initial products
-                    const select2Instance = $(this).data('select2');
-                    if (select2Instance && !select2Instance.isSearching) {
-                        const searchField = $('.select2-search__field');
-                        if (searchField.length && !searchField.val()) {
-                            searchField.trigger('input');
-                        }
-                    }
-                });
-            }
-        });
-    }
-
-    // Format the dropdown item display
-    function formatProduct(product) {
-        if (product.loading) return product.text;
-        if (!product.id) return product.text;
-        
-        // Format prices with commas for better readability
-        const sellingPrice = parseFloat(product.selling_price).toLocaleString();
-        const purchasePrice = parseFloat(product.purchase_price).toLocaleString();
-        
-        // Check which receipt type is active to show appropriate price
-        const receiptType = $('.receipt-type-btn.active').data('type');
-        const showPurchasePrice = receiptType === 'buying';
-        const priceLabel = showPurchasePrice ? 'نرخی کڕین' : 'نرخی فرۆشتن';
-        const priceValue = showPurchasePrice ? purchasePrice : sellingPrice;
-        
-        let markup = `
-            <div class="select2-result-product">
-                <div class="select2-result-product__title">${product.name}</div>
-                <div class="select2-result-product__meta">
-                    <div class="select2-result-product__code">کۆد: ${product.code}</div>
-                    <div class="select2-result-product__price">${priceLabel}: ${priceValue}</div>
-                </div>
-            </div>
-        `;
-        
-        return markup;
+        tabPane.find('.subtotal').val(subtotal);
+        tabPane.find('.grand-total').val(grandTotal);
     }
 
     // Format the selected item
     function formatProductSelection(product) {
         if (!product.id) return product.text;
         
-        // Create a more informative selection display
-        return `<span title="${product.name} - ${product.code}">${product.name}</span>`;
+        // Show only name for the selected product
+        return $(
+            `<div class="d-flex align-items-center justify-content-between w-100">
+                <span title="${product.text} (${product.code})">${product.text}</span>
+                <button type="button" class="btn btn-sm btn-outline-info product-info-btn ms-2" data-product-id="${product.id}">
+                    <i class="fas fa-info-circle"></i>
+                </button>
+            </div>`
+        );
     }
 
     // Add new row to a table
@@ -207,31 +224,52 @@ $(document).ready(function() {
         newRow.find('td:first').text(rowNumber);
         newRow.find('input').val('');
         
-        // Reset the product select
+        // Reset the product select - create a new one instead of cloning
         const productCell = newRow.find('td:nth-child(2)');
         productCell.html('<select class="form-control product-select" style="width: 100%"></select>');
         
         newRow.appendTo(itemsList);
         
-        // Initialize the select2 in the new row
-        initProductDropdowns();
+        // Initialize the select2 in the new row only
+        initializeProductSelect(newRow.find('.product-select'));
     });
 
-    // Product selection change - auto-fill price
+    // Product selection change - auto-fill price and other details
     $(document).on('change', '.product-select', function() {
         const productData = $(this).select2('data')[0];
         const row = $(this).closest('tr');
+        const tabPane = row.closest('.tab-pane');
+        const receiptType = tabPane.data('receipt-type');
         
         if (productData && productData.id) {
-            // Set the price from the product data
-            const price = productData.selling_price || 0;
-            row.find('.price').val(parseFloat(price).toFixed(2));
+            console.log("Product selected:", productData); // Debug log
+            console.log("Receipt type:", receiptType); // Debug log
+            console.log("Unit properties:", {
+                unit_id: productData.unit_id,
+                is_piece: productData.is_piece,
+                is_box: productData.is_box,
+                is_set: productData.is_set
+            });
             
-            // If in wasting tab, simulate fetching the current quantity
-            if (row.closest('[data-receipt-type="wasting"]').length) {
-                // In a real app, this would fetch the actual inventory quantity
-                const simulatedCurrentQty = Math.floor(Math.random() * 100) + 1; // Random quantity 1-100
-                row.find('.current-quantity').val(simulatedCurrentQty);
+            // Update unit type dropdown based on product's unit
+            updateUnitTypeOptions(row, productData);
+            
+            // Set appropriate values based on receipt type
+            if (receiptType === 'selling') {
+                // For selling, use wholesale or single price based on selection
+                const priceType = tabPane.find('.price-type').val();
+                const price = priceType === 'wholesale' && productData.selling_price_wholesale ? 
+                    productData.selling_price_wholesale : productData.selling_price_single;
+                    
+                row.find('.unit-price').val(parseFloat(price));
+            } else if (receiptType === 'buying') {
+                // For buying, use purchase price
+                console.log("Setting buying price to:", productData.purchase_price); // Debug log
+                row.find('.unit-price').val(parseFloat(productData.purchase_price));
+            } else if (receiptType === 'wasting') {
+                // For wasting, use purchase price and set current quantity
+                row.find('.price').val(parseFloat(productData.purchase_price));
+                row.find('.current-quantity').val(productData.current_quantity);
             }
             
             // Update the row total
@@ -239,9 +277,108 @@ $(document).ready(function() {
         }
     });
 
+    // Update unit type options based on product unit
+    function updateUnitTypeOptions(row, productData) {
+        console.log("Updating unit options for product:", productData);
+        const unitTypeSelect = row.find('.unit-type');
+        
+        // Clear existing options
+        unitTypeSelect.empty();
+        
+        // Add available unit options based on product's unit settings
+        if (productData.is_piece) {
+            unitTypeSelect.append('<option value="piece">دانە</option>');
+        }
+        
+        if (productData.is_box) {
+            unitTypeSelect.append('<option value="box">کارتۆن</option>');
+        }
+        
+        if (productData.is_set) {
+            unitTypeSelect.append('<option value="set">سێت</option>');
+        }
+        
+        // Set default selection to piece if available, otherwise first option
+        if (productData.is_piece) {
+            unitTypeSelect.val('piece').trigger('change');
+        } else {
+            unitTypeSelect.val(unitTypeSelect.find('option:first').val()).trigger('change');
+        }
+    }
+
+    // Handle unit type change - update pricing
+    $(document).on('change', '.unit-type', function() {
+        const row = $(this).closest('tr');
+        const productSelect = row.find('.product-select');
+        
+        if (productSelect.val()) {
+            const productData = productSelect.select2('data')[0];
+            const unitType = $(this).val();
+            const tabPane = row.closest('.tab-pane');
+            const priceType = tabPane.find('.price-type').val();
+            
+            let price = productData.selling_price_single;
+            
+            // Adjust price based on unit type and price type
+            if (priceType === 'wholesale' && productData.selling_price_wholesale) {
+                price = productData.selling_price_wholesale;
+            }
+            
+            if (unitType === 'box' && productData.pieces_per_box) {
+                price = price * productData.pieces_per_box;
+            } else if (unitType === 'set' && productData.pieces_per_box && productData.boxes_per_set) {
+                price = price * productData.pieces_per_box * productData.boxes_per_set;
+            }
+            
+            row.find('.unit-price').val(parseFloat(price));
+            calculateRowTotal(row);
+        }
+    });
+
+    // Update prices when price type changes (wholesale/single)
+    $(document).on('change', '.price-type', function() {
+        const tabPane = $(this).closest('.tab-pane');
+        const priceType = $(this).val();
+        
+        // Update all product rows with the new price type
+        tabPane.find('.items-list tr').each(function() {
+            const row = $(this);
+            const productSelect = row.find('.product-select');
+            
+            if (productSelect.val()) {
+                const productData = productSelect.select2('data')[0];
+                const unitType = row.find('.unit-type').val();
+                
+                let price = productData.selling_price_single;
+                
+                // Adjust price based on price type
+                if (priceType === 'wholesale' && productData.selling_price_wholesale) {
+                    price = productData.selling_price_wholesale;
+                }
+                
+                // Adjust price based on unit type
+                if (unitType === 'box' && productData.pieces_per_box) {
+                    price = price * productData.pieces_per_box;
+                } else if (unitType === 'set' && productData.pieces_per_box && productData.boxes_per_set) {
+                    price = price * productData.pieces_per_box * productData.boxes_per_set;
+                }
+                
+                row.find('.unit-price').val(parseFloat(price));
+                calculateRowTotal(row);
+            }
+        });
+    });
+
     // Calculate totals on input
-    $(document).on('input', '.price, .quantity, .adjusted-quantity', function() {
-        calculateRowTotal($(this).closest('tr'));
+    $(document).on('input', '.unit-price, .quantity, .adjusted-quantity, .discount, .shipping-cost, .other-costs', function() {
+        const row = $(this).closest('tr');
+        if (row.length) {
+            calculateRowTotal(row);
+        } else {
+            // If not in a row (like discount field), just recalculate the grand total
+            const tabId = $(this).closest('.tab-pane').attr('id');
+            calculateGrandTotal(tabId);
+        }
     });
 
     // Remove row
@@ -268,199 +405,450 @@ $(document).ready(function() {
         activeReceiptType = $(this).data('type');
     });
 
-    // Tax, discount, and shipping cost updates
-    $(document).on('input', '.tax, .discount, .shipping-cost', function() {
-        const tabId = $(this).closest('.tab-pane').attr('id');
-        calculateGrandTotal(tabId);
-    });
-
-    // Handle dropdown select for adding new customer/vendor/responsible
-    $(document).on('change', '.customer-select, .vendor-select, .responsible-select', function() {
-        if ($(this).val() === 'new') {
-            // Reset to first option
-            $(this).prop('selectedIndex', 0);
-            
-            // Show modal or prompt for adding new entity
-            Swal.fire({
-                title: 'زیادکردنی نوێ',
-                input: 'text',
-                inputLabel: 'ناو',
-                inputPlaceholder: 'ناوی تەواو بنووسە',
-                showCancelButton: true,
-                confirmButtonText: 'زیادکردن',
-                cancelButtonText: 'پاشگەزبوونەوە',
-                inputValidator: (value) => {
-                    if (!value) {
-                        return 'تکایە ناوێک بنووسە';
-                    }
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Add new option and select it
-                    const newOptionValue = Date.now(); // Using timestamp as unique ID
-                    const newOption = new Option(result.value, newOptionValue);
-                    $(this).append(newOption);
-                    $(this).val(newOptionValue);
-                }
-            });
-        }
-    });
-
-    // Click handler for refresh button
-    $(document).on('click', '.refresh-btn', function() {
-        const tabPane = $(this).closest('.tab-pane');
+    // Add new tab
+    $('#addNewTab').click(function() {
+        const newTabType = activeReceiptType;
+        tabCounters[newTabType]++;
         
-        Swal.fire({
-            title: 'دڵنیای؟',
-            text: 'هەموو داتاکان لە پسوڵەکە دەسڕێنەوە.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'بەڵێ',
-            cancelButtonText: 'نەخێر'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                resetForm(tabPane);
-            }
-        });
-    });
-
-    // Dynamically add new tab on adding new receipt button click
-    $('#addNewTab').on('click', function() {
-        // Get the selected receipt type from the active button
-        const receiptType = $('.receipt-type-btn.active').data('type');
+        // Create new tab
+        const tabId = `${newTabType}-${tabCounters[newTabType]}`;
+        const tabLabel = `${getReceiptTypeLabel(newTabType)} #${tabCounters[newTabType]}`;
         
-        // Increment the counter for this type
-        tabCounters[receiptType]++;
-        
-        // Get the appropriate template
-        const templateId = receiptType + '-template';
-        const tabContentTemplate = $('#' + templateId).html();
-        
-        // Create a unique ID for the new tab
-        const newTabId = receiptType + '-' + tabCounters[receiptType];
-        
-        // Create the tab button
-        const tabButton = `
+        // Create tab button
+        const tabBtn = `
             <li class="nav-item" role="presentation">
-                <button class="nav-link receipt-tab" id="tab-${newTabId}" data-bs-toggle="tab" data-bs-target="#${newTabId}" type="button" role="tab">
-                    ${receiptType === 'selling' ? 'فرۆشتن' : receiptType === 'buying' ? 'کڕین' : 'ڕێکخستنەوە'} #${tabCounters[receiptType]}
+                <button class="nav-link receipt-tab" id="tab-${tabId}" data-bs-toggle="tab" data-bs-target="#${tabId}" type="button" role="tab">
+                    ${tabLabel}
                     <span class="close-tab"><i class="fas fa-times"></i></span>
                 </button>
             </li>
         `;
         
-        // Insert the new tab button before the add button
-        $(this).parent().before(tabButton);
+        // Insert tab button before + button
+        $(tabBtn).insertBefore($(this).parent());
         
-        // Create the tab content
-        const tabContent = `<div class="tab-pane fade" id="${newTabId}" role="tabpanel" data-receipt-type="${receiptType}">${tabContentTemplate}</div>`;
+        // Create tab content
+        const tabTemplate = $(`#${newTabType}-template`).html();
+        const tabContent = `
+            <div class="tab-pane fade" id="${tabId}" role="tabpanel" data-receipt-type="${newTabType}">
+                ${tabTemplate}
+            </div>
+        `;
         
-        // Add the tab content to the content area
+        // Add tab content
         $('#receiptTabsContent').append(tabContent);
         
-        // Initialize product dropdowns in the new tab
-        $(`#${newTabId}`).find('td:nth-child(2)').each(function() {
-            $(this).html('<select class="form-control product-select" style="width: 100%"></select>');
-        });
-        initProductDropdowns();
+        // Set default date in the new tab
+        $(`#${tabId} .sale-date, #${tabId} .purchase-date, #${tabId} .adjustment-date`).val(today);
         
-        // Show the new tab
-        $(`#tab-${newTabId}`).tab('show');
+        // Activate the new tab
+        $(`#tab-${tabId}`).tab('show');
+        
+        // Force reinitialize dropdowns in the new tab
+        setTimeout(function() {
+            // Don't try to destroy existing select2 instances - just initialize new ones
+            
+            // Initialize product dropdowns
+            $(`#${tabId} .product-select`).each(function() {
+                initializeProductSelect($(this));
+            });
+            
+            // Initialize customer or supplier dropdowns based on tab type
+            if (newTabType === 'selling') {
+                $(`#${tabId} .customer-select`).each(function() {
+                    initializeCustomerSelect($(this));
+                });
+            } else if (newTabType === 'buying') {
+                $(`#${tabId} .supplier-select`).each(function() {
+                    initializeSupplierSelect($(this));
+                });
+            }
+        }, 100);
     });
+
+    // Helper functions to initialize individual selects
+    function initializeProductSelect(element) {
+        try {
+            if (element.hasClass('select2-hidden-accessible')) {
+                element.select2('destroy');
+            }
+        } catch (error) {
+            console.log('Error destroying product select2:', error);
+        }
+        
+        // Check if the element is already initialized
+        if (!element.data('select2')) {
+            element.select2({
+                theme: 'bootstrap-5',
+                placeholder: 'کاڵا هەڵبژێرە',
+                allowClear: true,
+                width: '100%',
+                ajax: {
+                    url: 'api/products.php',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            search: params.term,
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function(data, params) {
+                        params.page = params.page || 1;
+                        
+                        return {
+                            results: data.products.map(function(product) {
+                                return {
+                                    id: product.id,
+                                    text: product.name,
+                                    code: product.code,
+                                    barcode: product.barcode,
+                                    purchase_price: product.purchase_price,
+                                    selling_price_single: product.selling_price_single,
+                                    selling_price_wholesale: product.selling_price_wholesale,
+                                    current_quantity: product.current_quantity,
+                                    pieces_per_box: product.pieces_per_box,
+                                    boxes_per_set: product.boxes_per_set,
+                                    unit_id: product.unit_id,
+                                    is_piece: product.is_piece,
+                                    is_box: product.is_box,
+                                    is_set: product.is_set
+                                };
+                            }),
+                            pagination: {
+                                more: (params.page * 10) < data.total_count
+                            }
+                        };
+                    },
+                    cache: true
+                },
+                templateResult: formatProductResult,
+                templateSelection: formatProductSelection
+            });
+            
+            // Add event handler for when a product is selected
+            element.on('select2:select', function(e) {
+                const productData = e.params.data;
+                const row = $(this).closest('tr');
+                
+                // Update unit options
+                updateUnitTypeOptions(row, productData);
+            });
+        }
+    }
+
+    function initializeCustomerSelect(element) {
+        try {
+            if (element.hasClass('select2-hidden-accessible')) {
+                element.select2('destroy');
+            }
+        } catch (error) {
+            console.log('Error destroying customer select2:', error);
+        }
+        
+        // Check if the element is already initialized
+        if (!element.data('select2')) {
+            element.select2({
+                theme: 'bootstrap-5',
+                placeholder: 'کڕیار هەڵبژێرە',
+                allowClear: true,
+                width: '100%',
+                ajax: {
+                    url: 'api/customers.php',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            search: params.term,
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function(data, params) {
+                        params.page = params.page || 1;
+                        
+                        return {
+                            results: data.customers,
+                            pagination: {
+                                more: (params.page * 10) < data.total_count
+                            }
+                        };
+                    },
+                    cache: true
+                },
+                templateResult: formatCustomerResult,
+                templateSelection: formatCustomerSelection
+            });
+        }
+    }
+
+    function initializeSupplierSelect(element) {
+        try {
+            if (element.hasClass('select2-hidden-accessible')) {
+                element.select2('destroy');
+            }
+        } catch (error) {
+            console.log('Error destroying supplier select2:', error);
+        }
+        
+        // Check if the element is already initialized
+        if (!element.data('select2')) {
+            element.select2({
+                theme: 'bootstrap-5',
+                placeholder: 'فرۆشیار هەڵبژێرە',
+                allowClear: true,
+                width: '100%',
+                ajax: {
+                    url: 'api/suppliers.php',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            search: params.term,
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function(data, params) {
+                        params.page = params.page || 1;
+                        
+                        return {
+                            results: data.suppliers,
+                            pagination: {
+                                more: (params.page * 10) < data.total_count
+                            }
+                        };
+                    },
+                    cache: true
+                },
+                templateResult: formatSupplierResult,
+                templateSelection: formatSupplierSelection
+            });
+        }
+    }
+
+    // Get receipt type label
+    function getReceiptTypeLabel(type) {
+        switch(type) {
+            case 'selling': return 'فرۆشتن';
+            case 'buying': return 'کڕین';
+            case 'wasting': return 'ڕێکخستنەوە';
+            default: return type;
+        }
+    }
 
     // Close tab
     $(document).on('click', '.close-tab', function(e) {
-        e.stopPropagation(); // Prevent the tab from being activated
+        e.preventDefault();
+        e.stopPropagation();
         
-        const tabNavItem = $(this).closest('.nav-item');
-        const tabId = tabNavItem.find('.nav-link').attr('data-bs-target').substring(1);
+        // Get the tab button and content
+        const tabBtn = $(this).closest('.nav-link');
+        const tabId = tabBtn.attr('data-bs-target') || tabBtn.attr('href');
         
-        Swal.fire({
-            title: 'دڵنیای؟',
-            text: 'ئایا دەتەوێت ئەم پسوڵەیە دابخەیت؟',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'بەڵێ',
-            cancelButtonText: 'نەخێر'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Check if closing active tab
-                const isActive = tabNavItem.find('.nav-link').hasClass('active');
-                
-                // Remove tab and its content
-                tabNavItem.remove();
-                $('#' + tabId).remove();
-                
-                // If the active tab was closed, show the first tab
-                if (isActive && $('.receipt-tab').length > 0) {
-                    $('.receipt-tab:first').tab('show');
-                }
-            }
-        });
+        // Check if this is the active tab
+        const isActive = tabBtn.hasClass('active');
+        
+        // Remove tab content and button
+        $(tabId).remove();
+        tabBtn.closest('li').remove();
+        
+        // If this was the active tab, activate another tab
+        if (isActive && $('.receipt-tab').length > 0) {
+            $('.receipt-tab:first').tab('show');
+        }
     });
 
     // Save receipt
     $(document).on('click', '.save-btn', function() {
         const tabPane = $(this).closest('.tab-pane');
         const receiptType = tabPane.data('receipt-type');
+        const invoiceNumber = tabPane.find('.receipt-number').val();
         
         // Validate the form
         let isValid = true;
         
+        // Check if invoice number exists
+        if (invoiceNumber) {
+            $.ajax({
+                url: 'api/check_invoice.php',
+                type: 'POST',
+                data: {
+                    invoice_number: invoiceNumber,
+                    receipt_type: receiptType
+                },
+                async: false,
+                success: function(response) {
+                    if (response.exists) {
+                        Swal.fire('هەڵە', 'ژمارەی پسووڵە پێشتر بەکارهاتووە', 'error');
+                        isValid = false;
+                    }
+                }
+            });
+        }
+        
         // Check required fields specific to each receipt type
-        if (receiptType === 'selling') {
-            if (!tabPane.find('.customer-select').val()) {
+        if (isValid) {
+            if (receiptType === 'selling' && !tabPane.find('.customer-select').val()) {
                 Swal.fire('هەڵە', 'تکایە کڕیار هەڵبژێرە', 'error');
                 isValid = false;
-            }
-        } else if (receiptType === 'buying') {
-            if (!tabPane.find('.vendor-select').val()) {
+            } else if (receiptType === 'buying' && !tabPane.find('.supplier-select').val()) {
                 Swal.fire('هەڵە', 'تکایە فرۆشیار هەڵبژێرە', 'error');
                 isValid = false;
-            }
-        } else if (receiptType === 'wasting') {
-            if (!tabPane.find('.responsible-select').val()) {
+            } else if (receiptType === 'wasting' && !tabPane.find('.responsible-select').val()) {
                 Swal.fire('هەڵە', 'تکایە بەرپرسیار هەڵبژێرە', 'error');
                 isValid = false;
             }
         }
         
-        // Check if there are items in the receipt
+        // If form is valid, submit it
         if (isValid) {
-            let hasItems = false;
-            tabPane.find('.items-list tr').each(function() {
-                const product = $(this).find('.product-select').val();
-                const quantity = $(this).find('.quantity').val() || $(this).find('.adjusted-quantity').val();
+            // Collect form data
+            const formData = {
+                receipt_type: receiptType,
+                items: []
+            };
+            
+            // Common fields
+            formData.invoice_number = tabPane.find('.receipt-number').val();
+            formData.notes = tabPane.find('.notes').val();
+            formData.discount = tabPane.find('.discount').val() || 0;
+            
+            // Receipt type specific fields
+            if (receiptType === 'selling') {
+                formData.customer_id = tabPane.find('.customer-select').val();
+                formData.payment_type = tabPane.find('.payment-type').val();
+                formData.price_type = tabPane.find('.price-type').val();
+                formData.shipping_cost = tabPane.find('.shipping-cost').val() || 0;
+                formData.other_costs = tabPane.find('.other-costs').val() || 0;
+                formData.date = tabPane.find('.sale-date').val();
                 
-                if (product && quantity && parseFloat(quantity) > 0) {
-                    hasItems = true;
-                    return false; // Break the loop
+                // Collect selling items
+                tabPane.find('.items-list tr').each(function() {
+                    const product_id = $(this).find('.product-select').val();
+                    const quantity = $(this).find('.quantity').val();
+                    
+                    if (product_id && quantity && parseFloat(quantity) > 0) {
+                        const unit_type = $(this).find('.unit-type').val() || 'piece'; // Default to 'piece' if not found
+                        formData.items.push({
+                            product_id: product_id,
+                            quantity: quantity,
+                            unit_type: unit_type,
+                            unit_price: $(this).find('.unit-price').val(),
+                            total_price: $(this).find('.total').val()
+                        });
+                    }
+                });
+            } else if (receiptType === 'buying') {
+                formData.supplier_id = tabPane.find('.supplier-select').val();
+                formData.payment_type = tabPane.find('.payment-type').val();
+                formData.date = tabPane.find('.purchase-date').val();
+                
+                // Collect buying items
+                tabPane.find('.items-list tr').each(function() {
+                    const product_id = $(this).find('.product-select').val();
+                    const quantity = $(this).find('.quantity').val();
+                    
+                    if (product_id && quantity && parseFloat(quantity) > 0) {
+                        formData.items.push({
+                            product_id: product_id,
+                            quantity: quantity,
+                            unit_price: $(this).find('.unit-price').val(),
+                            total_price: $(this).find('.total').val()
+                        });
+                    }
+                });
+            } else if (receiptType === 'wasting') {
+                formData.responsible_id = tabPane.find('.responsible-select').val();
+                formData.adjustment_reason = tabPane.find('.adjustment-reason').val();
+                formData.date = tabPane.find('.adjustment-date').val();
+                
+                // Collect adjustment items
+                tabPane.find('.items-list tr').each(function() {
+                    const product_id = $(this).find('.product-select').val();
+                    const adjusted_quantity = $(this).find('.adjusted-quantity').val();
+                    
+                    if (product_id && adjusted_quantity && parseFloat(adjusted_quantity) > 0) {
+                        formData.items.push({
+                            product_id: product_id,
+                            expected_quantity: $(this).find('.current-quantity').val(),
+                            actual_quantity: adjusted_quantity,
+                            price: $(this).find('.price').val(),
+                            total_price: $(this).find('.total').val()
+                        });
+                    }
+                });
+            }
+            
+            // Submit the form data
+            $.ajax({
+                url: 'api/save_receipt.php',
+                type: 'POST',
+                data: JSON.stringify(formData),
+                contentType: 'application/json',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        // Show success message
+                        Swal.fire({
+                            title: 'سەرکەوتوو',
+                            text: 'پسوڵە بە سەرکەوتوویی پاشەکەوت کرا',
+                            icon: 'success',
+                            confirmButtonText: 'باشە'
+                        }).then((result) => {
+                            // Don't redirect, just reset the current tab or create a new one
+                            // Clear form fields, but keep the customer/supplier selection
+                            const currentTab = $('.tab-pane.active');
+                            const receiptType = currentTab.data('receipt-type');
+                            
+                            // Save current selection data
+                            let savedData = {};
+                            if (receiptType === 'selling') {
+                                savedData.customer_id = currentTab.find('.customer-select').val();
+                                savedData.payment_type = currentTab.find('.payment-type').val();
+                                savedData.price_type = currentTab.find('.price-type').val();
+                            } else if (receiptType === 'buying') {
+                                savedData.supplier_id = currentTab.find('.supplier-select').val();
+                                savedData.payment_type = currentTab.find('.payment-type').val();
+                            }
+                            
+                            // Reset items
+                            currentTab.find('.items-list tr:not(:first)').remove();
+                            currentTab.find('.items-list tr:first').find('input').val('');
+                            currentTab.find('.items-list tr:first').find('.product-select').val(null).trigger('change');
+                            
+                            // Reset totals
+                            currentTab.find('.subtotal').val('0.00');
+                            currentTab.find('.discount').val('0');
+                            currentTab.find('.shipping-cost').val('0');
+                            currentTab.find('.other-costs').val('0');
+                            currentTab.find('.grand-total').val('0.00');
+                            
+                            // Reset invoice number
+                            currentTab.find('.receipt-number').val('');
+                            
+                            // Set date to today
+                            const today = new Date().toISOString().split('T')[0];
+                            currentTab.find('.sale-date, .purchase-date, .adjustment-date').val(today);
+                            
+                            // Restore saved selections
+                            if (receiptType === 'selling') {
+                                if (savedData.customer_id) currentTab.find('.customer-select').val(savedData.customer_id).trigger('change');
+                                if (savedData.payment_type) currentTab.find('.payment-type').val(savedData.payment_type);
+                                if (savedData.price_type) currentTab.find('.price-type').val(savedData.price_type);
+                            } else if (receiptType === 'buying') {
+                                if (savedData.supplier_id) currentTab.find('.supplier-select').val(savedData.supplier_id).trigger('change');
+                                if (savedData.payment_type) currentTab.find('.payment-type').val(savedData.payment_type);
+                            }
+                        });
+                    } else {
+                        Swal.fire('هەڵە', response.message || 'هەڵەیەک ڕوویدا', 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error(xhr.responseText);
+                    Swal.fire('هەڵە', 'هەڵەیەک ڕوویدا لە کاتی پاشەکەوتکردن', 'error');
                 }
             });
-            
-            if (!hasItems) {
-                Swal.fire('هەڵە', 'تکایە لانی کەم یەک کاڵا زیاد بکە', 'error');
-                isValid = false;
-            }
         }
-        
-        // If form is valid, proceed with saving
-        if (isValid) {
-            // Here you would typically collect all data and send to server
-            // For now, just show success message
-            Swal.fire({
-                title: 'سەرکەوتوو بوو',
-                text: 'پسوڵە بە سەرکەوتوویی پاشەکەوت کرا',
-                icon: 'success',
-                confirmButtonText: 'باشە'
-            });
-        }
-    });
-
-    // Print receipt
-    $(document).on('click', '.print-btn', function() {
-        // Implement print functionality here
-        alert('چاپکردنی پسوڵە لێرە پێکهاتووە');
     });
 
     // Mobile view adjustments
@@ -487,4 +875,168 @@ $(document).ready(function() {
     // Run mobile adjustments on load and resize
     adjustForMobileView();
     $(window).resize(adjustForMobileView);
+
+    // Add event handler for product info button
+    $(document).on('click', '.product-info-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const productId = $(this).data('product-id');
+        const productSelect = $(this).closest('tr').find('.product-select');
+        const productData = productSelect.select2('data')[0];
+        
+        if (productData) {
+            // Calculate total pieces in box and set
+            const piecesPerBox = productData.pieces_per_box || 0;
+            const boxesPerSet = productData.boxes_per_set || 0;
+            const totalPiecesPerSet = piecesPerBox * boxesPerSet;
+            
+            // Create a formatted modal with product details using cards
+            Swal.fire({
+                title: productData.text,
+                html: `
+                    <div class="product-details">
+                        <div class="container-fluid px-0">
+                            <div class="row g-3">
+                                <!-- Basic Info Card -->
+                                <div class="col-md-6">
+                                    <div class="card h-100 shadow-sm">
+                                        <div class="card-header bg-primary text-white">
+                                            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>زانیاری بنەڕەتی</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <ul class="list-group list-group-flush">
+                                                <li class="list-group-item d-flex justify-content-between">
+                                                    <span class="fw-bold">کۆد:</span>
+                                                    <span>${productData.code}</span>
+                                                </li>
+                                                <li class="list-group-item d-flex justify-content-between">
+                                                    <span class="fw-bold">بارکۆد:</span>
+                                                    <span>${productData.barcode || 'نییە'}</span>
+                                                </li>
+                                                <li class="list-group-item d-flex justify-content-between">
+                                                    <span class="fw-bold">بڕی بەردەست:</span>
+                                                    <span class="badge bg-${productData.current_quantity > 10 ? 'success' : 'warning'} fs-6">${productData.current_quantity} دانە</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Price Info Card -->
+                                <div class="col-md-6">
+                                    <div class="card h-100 shadow-sm">
+                                        <div class="card-header bg-success text-white">
+                                            <h5 class="mb-0"><i class="fas fa-tags me-2"></i>نرخەکان</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <ul class="list-group list-group-flush">
+                                                <li class="list-group-item d-flex justify-content-between">
+                                                    <span class="fw-bold">نرخی کڕین:</span>
+                                                    <span class="text-primary">${productData.purchase_price} د.ع</span>
+                                                </li>
+                                                <li class="list-group-item d-flex justify-content-between">
+                                                    <span class="fw-bold">نرخی فرۆشتن (دانە):</span>
+                                                    <span class="text-success">${productData.selling_price_single} د.ع</span>
+                                                </li>
+                                                ${productData.selling_price_wholesale ? 
+                                                `<li class="list-group-item d-flex justify-content-between">
+                                                    <span class="fw-bold">نرخی فرۆشتن (کۆمەڵ):</span>
+                                                    <span class="text-success">${productData.selling_price_wholesale} د.ع</span>
+                                                </li>` : ''}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                ${(piecesPerBox || boxesPerSet) ? `
+                                <!-- Unit Conversion Card -->
+                                <div class="col-12">
+                                    <div class="card shadow-sm">
+                                        <div class="card-header bg-info text-white">
+                                            <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>یەکەکان</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                ${piecesPerBox ? `
+                                                <div class="col-md-4 mb-2">
+                                                    <div class="border rounded p-3 text-center h-100">
+                                                        <div class="fs-1 text-primary">${piecesPerBox}</div>
+                                                        <div>دانە = ١ کارتۆن</div>
+                                                        <div class="small text-muted">${Math.floor(productData.current_quantity / piecesPerBox)} کارتۆن بەردەستە</div>
+                                                    </div>
+                                                </div>` : ''}
+                                                
+                                                ${boxesPerSet ? `
+                                                <div class="col-md-4 mb-2">
+                                                    <div class="border rounded p-3 text-center h-100">
+                                                        <div class="fs-1 text-primary">${boxesPerSet}</div>
+                                                        <div>کارتۆن = ١ سێت</div>
+                                                        <div class="small text-muted">${Math.floor(productData.current_quantity / piecesPerBox / boxesPerSet)} سێت بەردەستە</div>
+                                                    </div>
+                                                </div>` : ''}
+                                                
+                                                ${totalPiecesPerSet ? `
+                                                <div class="col-md-4 mb-2">
+                                                    <div class="border rounded p-3 text-center h-100">
+                                                        <div class="fs-1 text-primary">${totalPiecesPerSet}</div>
+                                                        <div>دانە = ١ سێت</div>
+                                                        <div class="small text-muted">${Math.floor(productData.current_quantity / totalPiecesPerSet)} سێت بەردەستە</div>
+                                                    </div>
+                                                </div>` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: 'داخستن',
+                width: '800px',
+                showClass: {
+                    popup: 'animate__animated animate__fadeInDown'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__fadeOutUp'
+                },
+                customClass: {
+                    container: 'product-info-modal'
+                }
+            });
+        }
+    });
+
+    // Refresh button
+    $(document).on('click', '.refresh-btn', function(e) {
+        e.preventDefault();
+        const tabPane = $(this).closest('.tab-pane');
+        const receiptType = tabPane.data('receipt-type');
+        
+        console.log('Refreshing dropdowns for tab type:', receiptType);
+        
+        // Reinitialize product dropdowns
+        tabPane.find('.product-select').each(function() {
+            initializeProductSelect($(this));
+        });
+        
+        // Reinitialize other dropdowns based on receipt type
+        if (receiptType === 'selling') {
+            tabPane.find('.customer-select').each(function() {
+                initializeCustomerSelect($(this));
+            });
+        } else if (receiptType === 'buying') {
+            tabPane.find('.supplier-select').each(function() {
+                initializeSupplierSelect($(this));
+            });
+        }
+        
+        Swal.fire({
+            title: 'نوێکرایەوە',
+            text: 'سێلێکتەکان بە سەرکەوتووی نوێ کرانەوە',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    });
 });

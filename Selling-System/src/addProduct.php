@@ -16,6 +16,9 @@ $units = $unitModel->getAll();
 // Get latest products (last 5)
 try {
     $latestProducts = $productModel->getLatest(5);
+    if ($latestProducts === null) {
+        $latestProducts = [];
+    }
 } catch (Exception $e) {
     // If there's an error, set an empty array
     $latestProducts = [];
@@ -268,7 +271,7 @@ try {
                                             <div class="row mb-4">
                                                 <div class="col-md-12 mb-3">
                                                     <label for="notes" class="form-label">تێبینی</label>
-                                                    <textarea id="notes" class="form-control" rows="3" placeholder="تێبینی لێرە بنووسە..."></textarea>
+                                                    <textarea id="notes" name="notes" class="form-control" rows="3" placeholder="تێبینی لێرە بنووسە..."></textarea>
                                                 </div>
                                             </div>
                                             
