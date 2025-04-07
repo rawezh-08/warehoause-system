@@ -72,16 +72,24 @@
     font-display: swap;
 }
 
+@font-face {
+    font-family: 'Zain';
+    src: url('../assets/fonts/zain.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Rabar', sans-serif;
+    font-family: 'Zain', sans-serif;
 }
 
 /* Base styles */
 body {
-    font-family: 'Rabar', sans-serif;
+    font-family: 'Zain', sans-serif;
     background-color: #f5f7fa;
     color: var(--text-color);
     line-height: 1.6;

@@ -19,6 +19,198 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/global.css">
+    <style>
+        /* Enhanced Color Contrast Styles */
+        :root {
+            /* Darker text colors for better contrast */
+            --text-primary: #212529;
+            --text-secondary: #495057;
+            --text-muted: #6c757d;
+            
+            /* Stronger colors for status indicators */
+            --success-color: #198754;
+            --warning-color: #cc8800;
+            --danger-color: #dc3545;
+            --info-color: #0d6efd;
+        }
+        
+        /* Enhanced KPI card styles */
+        .kpi-card {
+            border: 1px solid #dee2e6;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+        
+        .kpi-title {
+            color: #212529;
+            font-weight: 600;
+        }
+        
+        .kpi-value {
+            color: #000000;
+            font-weight: 700;
+            font-size: 1.75rem;
+        }
+        
+        .kpi-comparison.positive {
+            color: #198754;
+            font-weight: 600;
+        }
+        
+        .kpi-comparison.negative {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        /* Enhanced quick access items */
+        .quick-access-text {
+            color: #212529;
+            font-weight: 500;
+        }
+        
+        /* Enhanced chart card styles */
+        .chart-card {
+            border: 1px solid #dee2e6;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+        
+        .chart-title {
+            color: #212529;
+            font-weight: 600;
+        }
+        
+        /* Enhanced product tables */
+        .product-table thead th {
+            background-color: #f8f9fa;
+            color: #212529;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .product-table tbody td {
+            color: #212529;
+        }
+        
+        .product-count {
+            background-color: #e9ecef;
+            color: #212529;
+            font-weight: 600;
+        }
+        
+        /* Badge enhancements */
+        .badge.bg-danger {
+            background-color: #dc3545 !important;
+            color: white !important;
+            font-weight: 600;
+        }
+        
+        .badge.bg-warning.text-dark {
+            background-color: #cc8800 !important;
+            color: white !important;
+            font-weight: 600;
+        }
+        
+        /* Button enhancements */
+        .btn-outline-primary {
+            color: #0d6efd;
+            border-color: #0d6efd;
+            font-weight: 500;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: #0d6efd;
+            color: white;
+        }
+        
+        /* Notification panel enhancements */
+        .notification-content h4 {
+            color: #212529;
+            font-weight: 600;
+        }
+        
+        .notification-content p {
+            color: #495057;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .notification-time {
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        .notification-panel {
+            border-left: 1px solid #dee2e6;
+            background-color: #ffffff;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+        }
+        
+        .panel-header {
+            border-bottom: 1px solid #dee2e6;
+            background-color: #f8f9fa;
+        }
+        
+        .panel-title {
+            color: #212529;
+            font-weight: 600;
+        }
+        
+        .notification-item {
+            border-bottom: 1px solid #f1f1f1;
+        }
+        
+        .notification-item.unread {
+            background-color: #f0f7ff;
+        }
+        
+        .notification-icon.warning {
+            background-color: #fff6e5;
+            color: #cc8800;
+        }
+        
+        .notification-icon.success {
+            background-color: #e8f8f2;
+            color: #198754;
+        }
+        
+        .notification-icon.info {
+            background-color: #e6f2ff;
+            color: #0d6efd;
+        }
+        
+        /* Progress chart enhancements */
+        .progress-circle-container {
+            padding: 15px;
+        }
+        
+        .progress-value {
+            color: #000000;
+            font-weight: 700;
+            font-size: 2rem;
+        }
+        
+        .progress-label {
+            color: #212529;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .progress-legend {
+            margin-top: 15px;
+        }
+        
+        .legend-item {
+            font-weight: 500;
+            color: #212529;
+        }
+        
+        .legend-color.blue {
+            background-color: #0d6efd;
+        }
+        
+        .legend-color.light-blue {
+            background-color: #a8c7fa;
+        }
+    </style>
 </head>
 
 <body>
