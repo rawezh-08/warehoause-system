@@ -107,7 +107,7 @@
 
             <!-- Settings -->
             <li class="menu-item">
-                <a href="settings.php" class="item-link">
+                <a href="bank.php" class="item-link">
                 <div class="icon-cont">
                         <img src="assets/icons/balance.svg" alt="">
                     </div>                    <span>باڵانسەکان</span>

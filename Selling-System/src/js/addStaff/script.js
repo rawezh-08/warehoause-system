@@ -448,3 +448,21 @@ function formatNumber(input) {
     // Update the input value
     input.value = value;
 }
+
+       // Select the appropriate tab based on URL parameter
+       document.addEventListener('DOMContentLoaded', function() {
+        // Get tab parameter from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+        
+        // If tab parameter exists, activate the corresponding tab
+        if (tabParam) {
+            // Find the tab button
+            const tabButton = document.getElementById(tabParam + '-tab');
+            if (tabButton) {
+                // Create a new Bootstrap Tab instance and show it
+                const tab = new bootstrap.Tab(tabButton);
+                tab.show();
+            }
+        }
+    });
