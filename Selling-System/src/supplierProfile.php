@@ -825,20 +825,11 @@ foreach ($debtTransactions as $debtTransaction) {
                                             <div class="mb-3">
                                                 <label for="returnAmount" class="form-label">بڕی پارەی گەڕاوە</label>
                                                 <div class="input-group">
-                                                    <input type="number" class="form-control" id="returnAmount" name="amount" 
-                                                           min="1" 
-                                                           max="<?php echo $customer['debit_on_business']; ?>" 
-                                                           oninput="validateReturnAmount(this)"
-                                                           required>
+                                                    <input type="number" class="form-control" id="returnAmount" name="amount" min="1" max="<?php echo $customer['debit_on_business']; ?>" required>
                                                     <span class="input-group-text">دینار</span>
-                                                </div>
-                                                <div class="form-text text-danger" id="amountError" style="display: none;">
-                                                    بڕی پارەی گەڕاوە ناتوانێت لە <?php echo number_format($customer['debit_on_business']); ?> دینار زیاتر بێت
-                                                </div>
-                                                <div class="form-text">
-                                                    زۆرترین بڕی نوێ: <?php echo number_format($customer['debit_on_business']); ?> دینار
-                                                </div>
-                                            </div>
+                            </div>
+                                                <div class="form-text">زۆرترین بڕی نوێ: <?php echo number_format($customer['debit_on_business']); ?> دینار</div>
+                            </div>
                                             
                                             <div class="mb-3">
                                                 <label for="returnDate" class="form-label">بەرواری گەڕانەوە</label>
@@ -1009,18 +1000,8 @@ foreach ($debtTransactions as $debtTransaction) {
                         <div class="mb-3">
                             <label for="editDebtAmount" class="form-label">بڕی پارە</label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="editDebtAmount" name="amount" 
-                                       required min="1" 
-                                       max="<?php echo $customer['debit_on_business']; ?>"
-                                       oninput="validateEditAmount(this)"
-                                       >
+                                <input type="number" class="form-control" id="editDebtAmount" name="amount" required min="1">
                                 <span class="input-group-text">دینار</span>
-                            </div>
-                            <div class="form-text text-danger" id="editAmountError" style="display: none;">
-                                بڕی پارە ناتوانێت لە <?php echo number_format($customer['debit_on_business']); ?> دینار زیاتر بێت
-                            </div>
-                            <div class="form-text">
-                                زۆرترین بڕی نوێ: <?php echo number_format($customer['debit_on_business']); ?> دینار
                             </div>
                         </div>
                         
@@ -1189,71 +1170,78 @@ foreach ($debtTransactions as $debtTransaction) {
             
             // Update debt transaction button handler
             $('#updateDebtBtn').on('click', function() {
-                const editAmount = parseInt($('#editDebtAmount').val());
-                const maxDebt = <?php echo $customer['debit_on_business']; ?>;
-
-                // Validate amount before proceeding
-                if (!editAmount || editAmount <= 0) {
-                    Swal.fire({
-                        title: 'هەڵە!',
-                        text: 'تکایە بڕی پارە بەدروستی داخل بکە',
-                        icon: 'error',
-                        confirmButtonText: 'باشە'
-                    });
-                    return;
-                }
-
-                // Check if amount exceeds total debt
-                if (editAmount > maxDebt) {
-                    Swal.fire({
-                        title: 'هەڵە!',
-                        text: 'بڕی پارە ناتوانێت لە ' + maxDebt.toLocaleString() + ' دینار زیاتر بێت',
-                        icon: 'error',
-                        confirmButtonText: 'باشە'
-                    });
-                    return;
-                }
-
+                const formData = new FormData($('#editDebtForm')[0]);
+                
                 // Get the current transaction data
                 const transactionId = $('#debtTransactionId').val();
                 
-                // Prepare form data
-                const formData = new FormData();
-                formData.append('transaction_id', transactionId);
-                formData.append('amount', editAmount);
-                
-                // Create JSON notes to store additional information
-                const notesObj = {
-                    payment_method: $('#paymentMethod').val(),
-                    reference_number: $('#referenceNumber').val(),
-                    notes: $('#editDebtNotes').val(),
-                    return_date: $('#returnDate').val()
-                };
-                
-                formData.append('notes', JSON.stringify(notesObj));
-                
-                // Send AJAX request
                 $.ajax({
-                    url: 'ajax/update_debt_transaction.php',
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(updateResponse) {
-                        const updateData = JSON.parse(updateResponse);
-                        if (updateData.success) {
-                            Swal.fire({
-                                title: 'سەرکەوتوو بوو!',
-                                text: updateData.message,
-                                icon: 'success',
-                                confirmButtonText: 'باشە'
-                            }).then(() => {
-                                location.reload();
+                    url: 'ajax/get_debt_transaction.php',
+                    type: 'GET',
+                    data: { id: transactionId },
+                    success: function(response) {
+                        const data = JSON.parse(response);
+                        if (data.success) {
+                            const updateFormData = new FormData();
+                            updateFormData.append('transaction_id', transactionId);
+                            updateFormData.append('amount', $('#editDebtAmount').val());
+                            
+                            // Check if the original notes were in JSON format
+                            try {
+                                const originalNotesObj = JSON.parse(data.transaction.notes);
+                                if (originalNotesObj && typeof originalNotesObj === 'object') {
+                                    // If it was JSON, maintain the same structure but update the notes field
+                                    const updatedNotesObj = {...originalNotesObj, notes: $('#editDebtNotes').val()};
+                                    updateFormData.append('notes', JSON.stringify(updatedNotesObj));
+                                } else {
+                                    // If it wasn't JSON originally, just use the plain text
+                                    updateFormData.append('notes', $('#editDebtNotes').val());
+                                }
+                            } catch (e) {
+                                // If not valid JSON, use the notes as is
+                                updateFormData.append('notes', $('#editDebtNotes').val());
+                            }
+                            
+                            // Send the update request
+                            $.ajax({
+                                url: 'ajax/update_debt_transaction.php',
+                                type: 'POST',
+                                data: updateFormData,
+                                processData: false,
+                                contentType: false,
+                                success: function(updateResponse) {
+                                    const updateData = JSON.parse(updateResponse);
+                                    if (updateData.success) {
+                                        Swal.fire({
+                                            title: 'سەرکەوتوو بوو!',
+                                            text: updateData.message,
+                                            icon: 'success',
+                                            confirmButtonText: 'باشە'
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            title: 'هەڵە!',
+                                            text: updateData.message,
+                                            icon: 'error',
+                                            confirmButtonText: 'باشە'
+                                        });
+                                    }
+                                },
+                                error: function() {
+                                    Swal.fire({
+                                        title: 'هەڵە!',
+                                        text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر.',
+                                        icon: 'error',
+                                        confirmButtonText: 'باشە'
+                                    });
+                                }
                             });
                         } else {
                             Swal.fire({
                                 title: 'هەڵە!',
-                                text: updateData.message,
+                                text: data.message,
                                 icon: 'error',
                                 confirmButtonText: 'باشە'
                             });
@@ -1269,27 +1257,6 @@ foreach ($debtTransactions as $debtTransaction) {
                     }
                 });
             });
-            
-            // Add validation function for edit amount
-            function validateEditAmount(input) {
-                const editAmount = parseInt(input.value);
-                const maxDebt = <?php echo $customer['debit_on_business']; ?>;
-                const errorDiv = document.getElementById('editAmountError');
-                const updateBtn = document.getElementById('updateDebtBtn');
-
-                if (editAmount > maxDebt) {
-                    errorDiv.style.display = 'block';
-                    input.classList.add('is-invalid');
-                    updateBtn.disabled = true;
-                } else {
-                    errorDiv.style.display = 'none';
-                    input.classList.remove('is-invalid');
-                    updateBtn.disabled = false;
-                }
-            }
-
-            // Add validateEditAmount to window object
-            window.validateEditAmount = validateEditAmount;
             
             // Helper functions
             function initTablePagination(tableId) {
@@ -1513,11 +1480,8 @@ foreach ($debtTransactions as $debtTransaction) {
 
             // Save debt return button handler
             $('#saveDebtReturnBtn').on('click', function() {
-                const returnAmount = parseInt($('#returnAmount').val());
-                const maxDebt = <?php echo $customer['debit_on_business']; ?>;
-
                 // Validate form
-                if (!returnAmount || returnAmount <= 0) {
+                if (!$('#returnAmount').val() || parseInt($('#returnAmount').val()) <= 0) {
                     Swal.fire({
                         title: 'هەڵە!',
                         text: 'تکایە بڕی پارەی گەڕاوە بەدروستی داخل بکە',
@@ -1528,10 +1492,13 @@ foreach ($debtTransactions as $debtTransaction) {
                 }
 
                 // Check if amount exceeds total debt
-                if (returnAmount > maxDebt) {
+                const returnAmount = parseInt($('#returnAmount').val());
+                const totalDebt = <?php echo $customer['debit_on_business']; ?>;
+                
+                if (returnAmount > totalDebt) {
                     Swal.fire({
                         title: 'هەڵە!',
-                        text: 'بڕی پارەی گەڕاوە ناتوانێت لە ' + maxDebt.toLocaleString() + ' دینار زیاتر بێت',
+                        text: 'بڕی پارەی گەڕاوە ناتوانێت لە کۆی قەرز زیاتر بێت. کۆی قەرز: ' + totalDebt.toLocaleString() + ' دینار',
                         icon: 'error',
                         confirmButtonText: 'باشە'
                     });
@@ -1542,12 +1509,12 @@ foreach ($debtTransactions as $debtTransaction) {
                 const formData = new FormData();
                 formData.append('customer_id', <?php echo $customer['id']; ?>);
                 formData.append('transaction_type', 'collection');
-                formData.append('amount', returnAmount);
+                formData.append('amount', $('#returnAmount').val());
                 
                 // Create JSON notes to store additional information
                 const notesObj = {
                     payment_method: $('#paymentMethod').val(),
-                    reference_number: $('#referenceNumber').val(),
+                    reference_number: $('#referenceNumber').val() || '',
                     notes: $('#returnNotes').val(),
                     return_date: $('#returnDate').val()
                 };
@@ -1592,26 +1559,13 @@ foreach ($debtTransactions as $debtTransaction) {
                 });
             });
 
-            // Add this new function for real-time validation
-            function validateReturnAmount(input) {
-                const returnAmount = parseInt(input.value);
-                const maxDebt = <?php echo $customer['debit_on_business']; ?>;
-                const errorDiv = document.getElementById('amountError');
-                const submitBtn = document.getElementById('saveDebtReturnBtn');
-
-                if (returnAmount > maxDebt) {
-                    errorDiv.style.display = 'block';
-                    input.classList.add('is-invalid');
-                    submitBtn.disabled = true;
-                } else {
-                    errorDiv.style.display = 'none';
-                    input.classList.remove('is-invalid');
-                    submitBtn.disabled = false;
-                }
-            }
-
-            // Add the validateReturnAmount function to the window object
-            window.validateReturnAmount = validateReturnAmount;
+            // Print receipt button click handler
+            $(document).on('click', '.print-receipt-btn', function(e) {
+                e.preventDefault();
+                const transactionId = $(this).data('id');
+                // Redirect to receipt print page
+                window.open('printDebtReceipt.php?id=' + transactionId, '_blank');
+            });
         });
     </script>
 </body>

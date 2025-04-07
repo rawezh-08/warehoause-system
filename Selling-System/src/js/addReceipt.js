@@ -13,31 +13,48 @@ $(document).ready(function() {
     // Current active receipt type
     let activeReceiptType = 'selling';
     
-    // Initialize all select2 dropdowns for the first time
+    // Initialize all select2 dropdowns for the first time - ONLY THIS SHOULD BE CALLED
     initializeFirstTimeDropdowns();
     
     // Initialize all select2 dropdowns
     function initializeFirstTimeDropdowns() {
-        console.log('Initializing all dropdowns...');
+        console.log('Initializing all dropdowns in the first tab...');
+        
+        // To prevent re-initialization, add a data attribute to the tab
+        const firstTab = $('#selling-1');
+        if (firstTab.data('initialized')) {
+            console.log('First tab already initialized, skipping...');
+            return;
+        }
         
         // Initialize product dropdowns
+        console.log('Initializing product dropdowns in first tab...');
         $('.product-select').each(function() {
             initializeProductSelect($(this));
         });
         
         // Initialize customer dropdowns
+        console.log('Initializing customer dropdowns in first tab...');
         $('.customer-select').each(function() {
             initializeCustomerSelect($(this));
         });
         
         // Initialize supplier dropdowns
+        console.log('Initializing supplier dropdowns in first tab...');
         $('.supplier-select').each(function() {
             initializeSupplierSelect($(this));
         });
+        
+        // Mark the tab as initialized
+        firstTab.data('initialized', true);
+        console.log('First tab initialization complete.');
     }
 
-    // Legacy initialize function (kept for compatibility)
+    // Legacy initialize function (kept for reference but not called anywhere)
     function initDropdowns() {
+        // This function should NOT be called to avoid duplicate initializations
+        console.warn('initDropdowns() called - this should not happen');
+        
         // Initialize product dropdowns
         initProductDropdowns();
         
@@ -468,16 +485,16 @@ $(document).ready(function() {
 
     // Helper functions to initialize individual selects
     function initializeProductSelect(element) {
-        try {
-            if (element.hasClass('select2-hidden-accessible')) {
+        // If already initialized, destroy it first
+        if (element.hasClass('select2-hidden-accessible')) {
+            try {
                 element.select2('destroy');
+            } catch (error) {
+                console.log('Error destroying product select2:', error);
             }
-        } catch (error) {
-            console.log('Error destroying product select2:', error);
         }
         
-        // Check if the element is already initialized
-        if (!element.data('select2')) {
+        // Initialize the select2 dropdown
         element.select2({
             theme: 'bootstrap-5',
             placeholder: 'کاڵا هەڵبژێرە',
@@ -508,11 +525,11 @@ $(document).ready(function() {
                                 selling_price_wholesale: product.selling_price_wholesale,
                                 current_quantity: product.current_quantity,
                                 pieces_per_box: product.pieces_per_box,
-                                    boxes_per_set: product.boxes_per_set,
-                                    unit_id: product.unit_id,
-                                    is_piece: product.is_piece,
-                                    is_box: product.is_box,
-                                    is_set: product.is_set
+                                boxes_per_set: product.boxes_per_set,
+                                unit_id: product.unit_id,
+                                is_piece: product.is_piece,
+                                is_box: product.is_box,
+                                is_set: product.is_set
                             };
                         }),
                         pagination: {
@@ -524,30 +541,34 @@ $(document).ready(function() {
             },
             templateResult: formatProductResult,
             templateSelection: formatProductSelection
+        }).on('select2:open', function() {
+            // Ensure proper focus when dropdown opens
+            setTimeout(function() {
+                $('.select2-search__field').focus();
+            }, 0);
         });
+        
+        // Add event handler for when a product is selected
+        element.on('select2:select', function(e) {
+            const productData = e.params.data;
+            const row = $(this).closest('tr');
             
-            // Add event handler for when a product is selected
-            element.on('select2:select', function(e) {
-                const productData = e.params.data;
-                const row = $(this).closest('tr');
-                
-                // Update unit options
-                updateUnitTypeOptions(row, productData);
-            });
-        }
+            // Update unit options
+            updateUnitTypeOptions(row, productData);
+        });
     }
 
     function initializeCustomerSelect(element) {
-        try {
-            if (element.hasClass('select2-hidden-accessible')) {
+        // If already initialized, destroy it first
+        if (element.hasClass('select2-hidden-accessible')) {
+            try {
                 element.select2('destroy');
+            } catch (error) {
+                console.log('Error destroying customer select2:', error);
             }
-        } catch (error) {
-            console.log('Error destroying customer select2:', error);
         }
         
-        // Check if the element is already initialized
-        if (!element.data('select2')) {
+        // Initialize the select2 dropdown
         element.select2({
             theme: 'bootstrap-5',
             placeholder: 'کڕیار هەڵبژێرە',
@@ -577,21 +598,25 @@ $(document).ready(function() {
             },
             templateResult: formatCustomerResult,
             templateSelection: formatCustomerSelection
+        }).on('select2:open', function() {
+            // Ensure proper focus when dropdown opens
+            setTimeout(function() {
+                $('.select2-search__field').focus();
+            }, 0);
         });
-        }
     }
 
     function initializeSupplierSelect(element) {
-        try {
-            if (element.hasClass('select2-hidden-accessible')) {
+        // If already initialized, destroy it first
+        if (element.hasClass('select2-hidden-accessible')) {
+            try {
                 element.select2('destroy');
+            } catch (error) {
+                console.log('Error destroying supplier select2:', error);
             }
-        } catch (error) {
-            console.log('Error destroying supplier select2:', error);
         }
         
-        // Check if the element is already initialized
-        if (!element.data('select2')) {
+        // Initialize the select2 dropdown
         element.select2({
             theme: 'bootstrap-5',
             placeholder: 'فرۆشیار هەڵبژێرە',
@@ -621,8 +646,12 @@ $(document).ready(function() {
             },
             templateResult: formatSupplierResult,
             templateSelection: formatSupplierSelection
+        }).on('select2:open', function() {
+            // Ensure proper focus when dropdown opens
+            setTimeout(function() {
+                $('.select2-search__field').focus();
+            }, 0);
         });
-        }
     }
 
     // Get receipt type label
@@ -939,7 +968,7 @@ $(document).ready(function() {
                                                     <span class="fw-bold">نرخی فرۆشتن (دانە):</span>
                                                     <span class="text-success">${productData.selling_price_single} د.ع</span>
                                                 </li>
-                            ${productData.selling_price_wholesale ? 
+                                                ${productData.selling_price_wholesale ? 
                                                 `<li class="list-group-item d-flex justify-content-between">
                                                     <span class="fw-bold">نرخی فرۆشتن (کۆمەڵ):</span>
                                                     <span class="text-success">${productData.selling_price_wholesale} د.ع</span>

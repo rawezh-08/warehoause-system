@@ -215,7 +215,7 @@
                     <label class="form-label">ژمارەی پسوڵە</label>
                     <input type="text" class="form-control receipt-number" placeholder="ژمارەی پسوڵە">
                 </div>
-                <div class="col-md-4 col-sm-12">
+                <div class="col-md-4">
                     <label class="form-label">فرۆشیار</label>
                     <select class="form-select supplier-select" style="width: 100%">
                         <option value="" selected disabled>فرۆشیار هەڵبژێرە</option>
