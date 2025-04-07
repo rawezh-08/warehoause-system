@@ -26,6 +26,7 @@
         }
         
         .balance-card {
+            background-color: #f8f9fa;
             transition: all 0.3s ease;
             border-radius: 10px;
             overflow: hidden;

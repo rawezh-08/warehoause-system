@@ -15,16 +15,31 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/global.css">
     <style>
+        /* Add improved button styles */
+        .btn-outline-secondary {
+            color: #495057;
+            border-color: #6c757d;
+            font-weight: 500;
+        }
+        
+        .btn-outline-secondary:hover {
+            background-color: #6c757d;
+            color: #fff;
+        }
+        
         .supplier-info-card {
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
             margin-bottom: 20px;
+            border: 1px solid #dee2e6;
         }
         
         .supplier-info-card .card-header {
-            background-color: #f8f9fa;
+            background-color: #f0f2f5;
             border-bottom: 1px solid rgba(0,0,0,.125);
             padding: 15px 20px;
+            color: #212529;
+            font-weight: 600;
         }
         
         .supplier-info-card .card-body {
@@ -40,34 +55,74 @@
         .info-label {
             font-weight: bold;
             min-width: 150px;
-            color: #6c757d;
+            color: #495057;
         }
         
         .info-value {
             flex: 1;
+            color: #212529;
+            font-weight: 500;
         }
         
         .balance-card {
+            background-color: #ffffff;
             text-align: center;
-            padding: 20px;
+            padding: 25px;
             border-radius: 10px;
             margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border: 1px solid #dee2e6;
+        }
+        
+        .balance-card h5 {
+            color: #343a40;
+            font-weight: 600;
+            margin-bottom: 15px;
         }
         
         .positive-balance {
-            background-color: #d4edda;
+            background-color: #effaf3;
+            border: 2px solid #28a745;
             color: #155724;
         }
         
         .negative-balance {
-            background-color: #f8d7da;
+            background-color: #fcf0f2;
+            border: 2px solid #dc3545;
             color: #721c24;
         }
         
         .balance-amount {
-            font-size: 2rem;
-            font-weight: bold;
-            margin: 10px 0;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 15px 0;
+            text-shadow: 0px 1px 1px rgba(255,255,255,0.8);
+            letter-spacing: 0.5px;
+        }
+        
+        /* Add classes for currency display */
+        .currency-positive {
+            color: #0d6832;
+            background-color: rgba(40, 167, 69, 0.1);
+            padding: 8px 15px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        
+        .currency-negative {
+            color: #a71d2a;
+            background-color: rgba(220, 53, 69, 0.1);
+            padding: 8px 15px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        
+        .currency-neutral {
+            color: #343a40;
+            background-color: rgba(108, 117, 125, 0.1);
+            padding: 8px 15px;
+            border-radius: 5px;
+            display: inline-block;
         }
         
         .transaction-history {
@@ -75,17 +130,30 @@
         }
         
         .transaction-card {
+            
             border-left: 4px solid;
             margin-bottom: 15px;
             border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
         
         .transaction-positive {
-            border-left-color: #28a745;
+            border-left-color: #218838;
+            background-color: #f8fffa;
         }
         
         .transaction-negative {
-            border-left-color: #dc3545;
+            border-left-color: #c82333;
+            background-color: #fff9f9;
+        }
+        
+        .card-header {
+            background-color: #f0f2f5;
+            font-weight: bold;
+        }
+        
+        .text-muted {
+            color: #495057 !important;
         }
         
         @media (max-width: 768px) {
@@ -420,18 +488,31 @@
                     $('#supplierNotes').text(supplier.notes || '-');
                     
                     // Update balance card
-                    $('#currentBalance').text(formatCurrency(balance));
+                    $('#currentBalance').removeClass('text-success text-danger currency-positive currency-negative currency-neutral');
                     const balanceCard = $('#balanceCard');
                     balanceCard.removeClass('positive-balance negative-balance');
                     
+                    const formattedBalance = formatCurrency(balance);
+                    
                     if (balance > 0) {
                         balanceCard.addClass('positive-balance');
-                        $('#balanceStatus').text('ئەوان قەرزداری ئێمەن');
+                        $('#currentBalance').addClass('currency-positive');
+                        $('#currentBalance').html(`<span>${formattedBalance}</span>`);
+                        $('#balanceStatus').html(`<strong class="text-success" style="font-size: 1.2rem;">ئەوان قەرزداری ئێمەن</strong>`);
                     } else if (balance < 0) {
                         balanceCard.addClass('negative-balance');
-                        $('#balanceStatus').text('ئێمە قەرزداری ئەوانین');
+                        $('#currentBalance').addClass('currency-negative');
+                        $('#currentBalance').html(`<span>${formattedBalance}</span>`);
+                        $('#balanceStatus').html(`<strong class="text-danger" style="font-size: 1.2rem;">ئێمە قەرزداری ئەوانین</strong>`);
                     } else {
-                        $('#balanceStatus').text('باڵانس یەکسانە');
+                        // Neutral balance
+                        balanceCard.css({
+                            'background-color': '#f8f9fa',
+                            'border': '2px solid #6c757d'
+                        });
+                        $('#currentBalance').addClass('currency-neutral');
+                        $('#currentBalance').html(`<span>${formattedBalance}</span>`);
+                        $('#balanceStatus').html(`<strong class="text-dark" style="font-size: 1.2rem;">باڵانس یەکسانە</strong>`);
                     }
                     
                     // Update transaction history
@@ -440,17 +521,18 @@
                         const isPositive = transaction.direction === 'from_supplier';
                         const transactionClass = isPositive ? 'transaction-positive' : 'transaction-negative';
                         const directionText = isPositive ? 'وەرگرتنی پارە' : 'پارەدان';
+                        const amountTextColor = isPositive ? 'text-success fw-bold' : 'text-danger fw-bold';
                         
                         return `
                             <div class="card transaction-card ${transactionClass}">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between">
                                         <div>
-                                            <h6 class="mb-1">${directionText}</h6>
+                                            <h6 class="mb-1 ${isPositive ? 'text-success' : 'text-danger'} fw-bold">${directionText}</h6>
                                             <p class="mb-0 text-muted">${transaction.created_at}</p>
                                         </div>
                                         <div class="text-end">
-                                            <h6 class="mb-1">${formatCurrency(amount)}</h6>
+                                            <h6 class="mb-1 ${amountTextColor}">${formatCurrency(amount)}</h6>
                                             ${transaction.notes ? `<p class="mb-0 text-muted">${transaction.notes}</p>` : ''}
                                         </div>
                                     </div>
