@@ -117,7 +117,6 @@ try {
                                     <div class="tab-header d-flex flex-wrap mb-4">
                                         <div class="tab-item active me-3 mb-2" data-tab="basic-info">زانیاری بنەڕەتی</div>
                                         <div class="tab-item me-3 mb-2" data-tab="price-info">نرخ</div>
-                                        <div class="tab-item mb-2" data-tab="location-info">شوێن لە کۆگا</div>
                                     </div>
                                     
                                     <form id="addProductForm" action="process/add_product.php" method="POST" enctype="multipart/form-data">
@@ -211,7 +210,7 @@ try {
                                             </div>
                                         </div>
                                         
-                                        <!-- Tab Content: Price Info (Initially Hidden) -->
+                                        <!-- Tab Content: Price Info with Location fields added -->
                                         <div class="tab-content" id="price-info-content" style="display: none;">
                                             <div class="row mb-4">
                                                 <div class="col-md-4 mb-3" style="direction: rtl;">
@@ -235,32 +234,9 @@ try {
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
-                                              
                                             </div>
                                             
-
-                                            
-                                            
-                                            
-                                            <hr class="my-4">
-                                            
-                                            <div class="d-flex justify-content-between flex-wrap">
-                                                <button type="button" id="prevTabBtn2" class="btn btn-outline-primary mb-2">
-                                                    <i class="fas fa-arrow-right me-2"></i> پێشوو
-                                                </button>
-                                                <button type="button" id="nextTabBtn2" class="btn btn-outline-primary mb-2">
-                                                    دواتر <i class="fas fa-arrow-left ms-2"></i>
-                                                </button>
-                                                <button type="submit" id="submitBtn2" class="btn btn-primary mb-2" style="display: none;">
-                                                    <i class="fas fa-save me-2"></i> زیادکردنی کاڵا
-                                                </button>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Tab Content: Location Info (Initially Hidden) -->
-                                        <div class="tab-content" id="location-info-content" style="display: none;">
-                                       
-                                            
+                                            <!-- Added location fields here -->
                                             <div class="row mb-4">
                                                 <div class="col-md-4 mb-3">
                                                     <label for="min_quantity" class="form-label">کەمترین بڕ</label>
@@ -278,10 +254,10 @@ try {
                                             <hr class="my-4">
                                             
                                             <div class="d-flex justify-content-between flex-wrap">
-                                                <button type="button" id="prevTabBtn3" class="btn btn-outline-primary mb-2">
+                                                <button type="button" id="prevTabBtn2" class="btn btn-outline-primary mb-2">
                                                     <i class="fas fa-arrow-right me-2"></i> پێشوو
                                                 </button>
-                                                <button type="submit" id="submitBtn3" class="btn btn-primary mb-2">
+                                                <button type="submit" id="submitBtn2" class="btn btn-primary mb-2">
                                                     <i class="fas fa-save me-2"></i> زیادکردنی کاڵا
                                                 </button>
                                             </div>
@@ -363,16 +339,7 @@ try {
                                             </div>
                                             <p class="text-muted small mb-0">نرخی کڕین، فرۆشتن، بەکۆمەڵ و ڕێژەی باج دیاری بکە.</p>
                                         </div>
-                                        <div class="instruction-item">
-                                            <div class="d-flex align-items-center mb-2">
-                                                <div class="instruction-icon me-2 rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
-                                                    <small>3</small>
-                                                </div>
-                                                <h6 class="mb-0">شوێن و بڕ</h6>
-                                            </div>
-                                            <p class="text-muted small mb-0">دیاریکردنی شوێنی کاڵا لە کۆگا و بڕی سەرەتایی.</p>
-                                        </div>
-                                    </div>
+                                     </div>
                                 </div>
                             </div>
                         </div>

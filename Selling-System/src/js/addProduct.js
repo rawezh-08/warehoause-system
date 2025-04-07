@@ -15,7 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const sellingPriceInput = document.getElementById('sellingPrice');
     const nextTabBtn = document.getElementById('nextTabBtn');
     const prevTabBtn = document.getElementById('prevTabBtn');
+    const prevTabBtn2 = document.getElementById('prevTabBtn2');
     const submitBtn = document.getElementById('submitBtn');
+    const submitBtn2 = document.getElementById('submitBtn2');
     const generateCodeBtn = document.getElementById('generateCode');
     const generateBarcodeBtn = document.getElementById('generateBarcode');
     const productCodeInput = document.getElementById('productCode');
@@ -36,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Current tab tracking
     let currentTabIndex = 0;
-    const tabIds = ['basic-info', 'price-info', 'location-info'];
+    const tabIds = ['basic-info', 'price-info'];
     
     // Toggle sidebar on mobile
     if (toggleSidebarBtn && sidebar) {
@@ -89,9 +91,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Navigation buttons event listeners
-    const allPrevButtons = ['prevTabBtn', 'prevTabBtn2', 'prevTabBtn3'];
-    const allNextButtons = ['nextTabBtn', 'nextTabBtn2'];
-    const allSubmitButtons = ['submitBtn', 'submitBtn2', 'submitBtn3'];
+    const allPrevButtons = ['prevTabBtn', 'prevTabBtn2'];
+    const allNextButtons = ['nextTabBtn'];
+    const allSubmitButtons = ['submitBtn', 'submitBtn2'];
 
     // Add event listeners for all previous buttons
     allPrevButtons.forEach(btnId => {
@@ -366,12 +368,6 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 clearValidationError('sellingPrice');
             }
-        }
-        
-        // Location info tab validation
-        else if (currentTabId === 'location-info') {
-            // No validation needed for location tab
-            isValid = true;
         }
         
         return isValid;
@@ -777,4 +773,19 @@ async function updateLatestProducts() {
     } catch (error) {
         console.error('Error updating latest products:', error);
     }
+}
+
+// Format numbers with commas
+function formatNumber(input) {
+    // Remove existing commas
+    let value = input.value.replace(/,/g, '');
+    
+    // Only allow numbers
+    value = value.replace(/[^\d]/g, '');
+    
+    // Add commas
+    value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    
+    // Update input value
+    input.value = value;
 } 

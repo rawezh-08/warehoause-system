@@ -236,30 +236,30 @@
                                     </div>
                                     <span class="quick-access-text">زیادکردنی کاڵا</span>
                                 </a>
-                                <a href="buying.php" class="quick-access-item m-2">
+                                <a href="addReceipt.php" class="quick-access-item m-2">
                                     <div class="quick-access-icon purple">
                                         <img src="assets/icons/buy.svg" alt="">
                                     </div>
-                                    <span class="quick-access-text"> کڕینی نوێ</span>
+                                    <span class="quick-access-text"> پسوڵەی نوێ</span>
                                 </a>
-                                <a href="sales.php" class="quick-access-item m-2">
+                                <a href="customers.php" class="quick-access-item m-2">
                                     <div class="quick-access-icon green">
                                         <img src="assets/icons/sell.svg" alt="">
                                     </div>
-                                    <span class="quick-access-text">فرۆشتنی نوێ</span>
+                                    <span class="quick-access-text"> قەرزارەکان</span>
                                 </a>
-                                <a href="accounts-list.php" class="quick-access-item m-2">
+                                <a href="staff.php" class="quick-access-item m-2">
                                     <div class="quick-access-icon orange">
                                         <img src="assets/icons/users.svg" alt="">
                                     </div>
                                     <span class="quick-access-text">هەژمارەکان</span>
                                 </a>
-                                <a href="#" class="quick-access-item m-2">
+                                <!-- <a href="#" class="quick-access-item m-2">
                                     <div class="quick-access-icon bordered">
                                         <img src="assets/icons/add.svg" alt="">
                                     </div>
                                     <span class="quick-access-text">زیاتر</span>
-                                </a>
+                                </a> -->
                             </div>
                         </div>
                     </div>

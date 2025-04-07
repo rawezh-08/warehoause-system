@@ -1429,3 +1429,4 @@ canvas {
 .text-responsive {
   font-size: calc(var(--font-size-base) * var(--scale-ratio));
 }
+

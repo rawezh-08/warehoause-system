@@ -58,7 +58,7 @@ $suppliers = $supplierModel->getAll();
             <div class="container-fluid">
                 <div class="row mb-4">
                     <div class="col-12">
-                        <h3 class="page-title">لیستی هاوکارەکان</h3>
+                        <h3 class="page-title">لیستی هەژمارەکان</h3>
                     </div>
                 </div>
 
