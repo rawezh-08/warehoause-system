@@ -2,8 +2,8 @@
 // For ASHKAN Warehouse Management System
 document.addEventListener('DOMContentLoaded', function() {
     // Load components
-    loadComponent('navbar-container', 'components/navbar.php');
-    loadComponent('sidebar-container', 'components/sidebar.php');
+    loadComponent('navbar-container', '/warehouse-system/Selling-System/src/components/navbar.php');
+    loadComponent('sidebar-container', '/warehouse-system/Selling-System/src/components/sidebar.php');
     
     // Initialize sidebar
     initSidebar();
@@ -57,22 +57,10 @@ function initSidebarMenu() {
     if (!menuItems.length) return;
     
     menuItems.forEach(item => {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Toggle submenu visibility
-            const submenuId = this.getAttribute('href');
-            const submenu = document.querySelector(submenuId);
-            
-            if (submenu) {
-                submenu.classList.toggle('show');
-                // Toggle dropdown icon rotation
-                const dropdownIcon = this.querySelector('.dropdown-icon');
-                if (dropdownIcon) {
-                    dropdownIcon.classList.toggle('rotate');
-                }
-            }
-        });
+        // Remove existing event listeners
+        item.removeEventListener('click', toggleSubmenu);
+        // Add new event listener
+        item.addEventListener('click', toggleSubmenu);
     });
     
     // Set active menu item based on current page
@@ -96,7 +84,7 @@ function setActiveMenuItem() {
             // Set active class
             link.classList.add('active');
             
-            // If in submenu, expand parent
+            // If in submenu, expand parent and keep it expanded
             const submenu = link.closest('.submenu');
             if (submenu) {
                 submenu.classList.add('show');
@@ -110,10 +98,36 @@ function setActiveMenuItem() {
                     if (dropdownIcon) {
                         dropdownIcon.classList.add('rotate');
                     }
+                    
+                    // Remove the click event that would toggle the submenu
+                    parentLink.removeEventListener('click', toggleSubmenu);
+                    parentLink.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        // Keep submenu open when clicking the parent
+                        submenu.classList.add('show');
+                        if (dropdownIcon) {
+                            dropdownIcon.classList.add('rotate');
+                        }
+                    });
                 }
             }
         }
     });
+}
+
+// Separate function for toggling submenu
+function toggleSubmenu(e) {
+    e.preventDefault();
+    const submenuId = this.getAttribute('href');
+    const submenu = document.querySelector(submenuId);
+    
+    if (submenu) {
+        submenu.classList.toggle('show');
+        const dropdownIcon = this.querySelector('.dropdown-icon');
+        if (dropdownIcon) {
+            dropdownIcon.classList.toggle('rotate');
+        }
+    }
 }
 
 /**

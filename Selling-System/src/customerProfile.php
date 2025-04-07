@@ -831,14 +831,14 @@ foreach ($debtTransactions as $debtTransaction) {
                                                            oninput="validateReturnAmount(this)"
                                                            required>
                                                     <span class="input-group-text">دینار</span>
-                                                </div>
+                            </div>
                                                 <div class="form-text text-danger" id="amountError" style="display: none;">
                                                     بڕی پارەی گەڕاوە ناتوانێت لە <?php echo number_format($customer['debit_on_business']); ?> دینار زیاتر بێت
-                                                </div>
+                            </div>
                                                 <div class="form-text">
                                                     زۆرترین بڕی نوێ: <?php echo number_format($customer['debit_on_business']); ?> دینار
-                                                </div>
-                                            </div>
+                        </div>
+                    </div>
                                             
                                             <div class="mb-3">
                                                 <label for="returnDate" class="form-label">بەرواری گەڕانەوە</label>
