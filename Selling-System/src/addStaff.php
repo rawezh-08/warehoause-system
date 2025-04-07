@@ -285,6 +285,17 @@
                     tab.show();
                 }
             }
+
+            // Reinitialize sidebar when tabs are changed
+            const tabButtons = document.querySelectorAll('button[data-bs-toggle="tab"]');
+            tabButtons.forEach(button => {
+                button.addEventListener('shown.bs.tab', function (e) {
+                    // Reinitialize sidebar menu
+                    initSidebarMenu();
+                    // Reinitialize sidebar toggle
+                    initSidebarToggle();
+                });
+            });
         });
     </script>
    

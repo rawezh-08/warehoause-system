@@ -4,21 +4,21 @@ require_once 'config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
 
-// Get all customers
-$query = "SELECT * FROM customers ORDER BY name ASC";
+// Get all suppliers
+$query = "SELECT * FROM suppliers ORDER BY name ASC";
 $stmt = $conn->prepare($query);
 $stmt->execute();
-$customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$suppliers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Calculate summary statistics
-$totalCustomers = count($customers);
+$totalSuppliers = count($suppliers);
 $totalDebt = 0;
-$customersWithDebt = 0;
+$suppliersWithDebt = 0;
 
-foreach ($customers as $customer) {
-    if ($customer['debit_on_business'] > 0) {
-        $totalDebt += $customer['debit_on_business'];
-        $customersWithDebt++;
+foreach ($suppliers as $supplier) {
+    if ($supplier['debt_on_myself'] > 0) {
+        $totalDebt += $supplier['debt_on_myself'];
+        $suppliersWithDebt++;
     }
 }
 ?>
@@ -27,7 +27,7 @@ foreach ($customers as $customer) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>کڕیارەکان - سیستەمی بەڕێوەبردنی کۆگا</title>
+    <title>دابینکەرەکان - سیستەمی بەڕێوەبردنی کۆگا</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -56,16 +56,14 @@ foreach ($customers as $customer) {
             padding: 0.75rem;
         }
 
-        #customersTable td {
-
+        #suppliersTable td {
             text-align: center;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        #customersTable th {
-
+        #suppliersTable th {
             text-align: center;
             white-space: nowrap;
             overflow: hidden;
@@ -157,9 +155,9 @@ foreach ($customers as $customer) {
             <div class="container-fluid">
                 <div class="row mb-4">
                     <div class="col-12 d-flex justify-content-between align-items-center">
-                        <h3 class="page-title">لیستی کڕیارەکان</h3>
-                        <a href="addStaff.php?tab=customer" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i> زیادکردنی کڕیاری نوێ
+                        <h3 class="page-title">لیستی دابینکەرەکان</h3>
+                        <a href="addStaff.php?tab=supplier" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i> زیادکردنی دابینکەری نوێ
                         </a>
                     </div>
                 </div>
@@ -170,11 +168,11 @@ foreach ($customers as $customer) {
                         <div class="card summary-card bg-white border-0">
                             <div class="card-body d-flex align-items-center">
                                 <div class="icon-bg bg-primary me-3">
-                                    <i class="fas fa-users"></i>
+                                    <i class="fas fa-truck"></i>
                                 </div>
                                 <div>
-                                    <h5 class="card-title">کۆی کڕیارەکان</h5>
-                                    <p class="card-value"><?php echo number_format($totalCustomers); ?></p>
+                                    <h5 class="card-title">کۆی دابینکەرەکان</h5>
+                                    <p class="card-value"><?php echo number_format($totalSuppliers); ?></p>
                                 </div>
                             </div>
                         </div>
@@ -199,20 +197,20 @@ foreach ($customers as $customer) {
                                     <i class="fas fa-user-tag"></i>
                                 </div>
                                 <div>
-                                    <h5 class="card-title">کڕیارەکانی قەرزدار</h5>
-                                    <p class="card-value"><?php echo number_format($customersWithDebt); ?></p>
+                                    <h5 class="card-title">دابینکەری قەرزدار</h5>
+                                    <p class="card-value"><?php echo number_format($suppliersWithDebt); ?></p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Customers Table -->
+                <!-- Suppliers Table -->
                 <div class="row">
                     <div class="col-12">
                         <div class="card shadow-sm">
                             <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                                <h5 class="card-title mb-0">هەموو کڕیارەکان</h5>
+                                <h5 class="card-title mb-0">هەموو دابینکەرەکان</h5>
                                 <div>
                                     <button class="btn btn-sm btn-outline-primary refresh-btn me-2">
                                         <i class="fas fa-sync-alt"></i>
@@ -228,7 +226,7 @@ foreach ($customers as $customer) {
                                                 <div class="records-per-page">
                                                     <label class="me-2">نیشاندان:</label>
                                                     <div class="custom-select-wrapper">
-                                                        <select id="customersRecordsPerPage" class="form-select form-select-sm rounded-pill">
+                                                        <select id="suppliersRecordsPerPage" class="form-select form-select-sm rounded-pill">
                                                             <option value="5">5</option>
                                                             <option value="10" selected>10</option>
                                                             <option value="25">25</option>
@@ -240,7 +238,7 @@ foreach ($customers as $customer) {
                                             <div class="col-md-8 col-sm-6">
                                                 <div class="search-container">
                                                     <div class="input-group">
-                                                        <input type="text" id="customersTableSearch" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
+                                                        <input type="text" id="suppliersTableSearch" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
                                                         <span class="input-group-text rounded-pill-end bg-light">
                                                             <i class="fas fa-search"></i>
                                                         </span>
@@ -252,54 +250,46 @@ foreach ($customers as $customer) {
                                     
                                     <!-- Table Content -->
                                     <div class="table-responsive">
-                                        <table id="customersTable" class="table table-bordered custom-table table-hover">
+                                        <table id="suppliersTable" class="table table-bordered table-hover custom-table">
                                             <thead class="table-light">
                                                 <tr>
                                                     <th>#</th>
-                                                    <th>ناوی کڕیار</th>
-                                                    <th>ژمارەی مۆبایل</th>
-                                                    <th>ناونیشان</th>
-                                                    <th>دۆخی قەرز</th>
+                                                    <th>ناو</th>
+                                                    <th>ژمارەی تەلەفۆن</th>
+                                                    <th>ژ. مۆبایلی ٢</th>
                                                     <th>بڕی قەرز</th>
+                                                    <th>تێبینی</th>
                                                     <th>کردارەکان</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <?php if (count($customers) > 0): ?>
+                                                <?php if (count($suppliers) > 0): ?>
                                                     <?php $counter = 1; ?>
-                                                    <?php foreach ($customers as $customer): ?>
-                                                    <tr data-id="<?php echo $customer['id']; ?>">
+                                                    <?php foreach ($suppliers as $supplier): ?>
+                                                    <tr>
                                                         <td><?php echo $counter++; ?></td>
-                                                        <td><?php echo htmlspecialchars($customer['name']); ?></td>
-                                                        <td><?php echo htmlspecialchars($customer['phone1']); ?></td>
-                                                        <td><?php echo htmlspecialchars($customer['address'] ?? 'نادیار'); ?></td>
+                                                        <td><?php echo htmlspecialchars($supplier['name']); ?></td>
+                                                        <td><?php echo htmlspecialchars($supplier['phone1']); ?></td>
+                                                        <td><?php echo !empty($supplier['phone2']) ? htmlspecialchars($supplier['phone2']) : '-'; ?></td>
                                                         <td>
-                                                            <?php if ($customer['debit_on_business'] > 0): ?>
-                                                            <span class="badge rounded-pill bg-danger">قەرزدار</span>
-                                                            <?php elseif ($customer['debit_on_business'] < 0): ?>
-                                                            <span class="badge rounded-pill bg-success">پێشەکی</span>
+                                                            <?php if ($supplier['debt_on_myself'] > 0): ?>
+                                                                <span class="text-danger">
+                                                                    <?php echo number_format($supplier['debt_on_myself']); ?> دینار
+                                                                </span>
                                                             <?php else: ?>
-                                                            <span class="badge rounded-pill bg-secondary">هاوسەنگ</span>
+                                                                <span class="text-success">0 دینار</span>
                                                             <?php endif; ?>
                                                         </td>
-                                                        <td>
-                                                            <?php if ($customer['debit_on_business'] > 0): ?>
-                                                            <span class="text-danger"><?php echo number_format($customer['debit_on_business']); ?> دینار</span>
-                                                            <?php elseif ($customer['debit_on_business'] < 0): ?>
-                                                            <span class="text-success"><?php echo number_format(abs($customer['debit_on_business'])); ?> دینار پێشەکی</span>
-                                                            <?php else: ?>
-                                                            <span class="text-muted">0 دینار</span>
-                                                            <?php endif; ?>
-                                                        </td>
+                                                        <td><?php echo !empty($supplier['notes']) ? htmlspecialchars($supplier['notes']) : '-'; ?></td>
                                                         <td>
                                                             <div class="action-buttons">
-                                                                <a href="customerProfile.php?id=<?php echo $customer['id']; ?>" class="btn btn-sm btn-outline-primary rounded-circle">
-                                                                    <i class="fas fa-user-circle"></i>
+                                                                <a href="supplierProfile.php?id=<?php echo $supplier['id']; ?>" class="btn btn-sm btn-outline-primary rounded-circle">
+                                                                    <i class="fas fa-eye"></i>
                                                                 </a>
-                                                                <a href="editCustomer.php?id=<?php echo $customer['id']; ?>" class="btn btn-sm btn-outline-warning rounded-circle">
+                                                                <button type="button" class="btn btn-sm btn-outline-warning rounded-circle edit-supplier-btn" data-id="<?php echo $supplier['id']; ?>">
                                                                     <i class="fas fa-edit"></i>
-                                                                </a>
-                                                                <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="<?php echo $customer['id']; ?>">
+                                                                </button>
+                                                                <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-supplier-btn" data-id="<?php echo $supplier['id']; ?>">
                                                                     <i class="fas fa-trash-alt"></i>
                                                                 </button>
                                                             </div>
@@ -308,7 +298,7 @@ foreach ($customers as $customer) {
                                                     <?php endforeach; ?>
                                                 <?php else: ?>
                                                     <tr>
-                                                        <td colspan="7" class="text-center">هیچ کڕیارێک نەدۆزرایەوە</td>
+                                                        <td colspan="7" class="text-center">هیچ داتایەک نەدۆزرایەوە</td>
                                                     </tr>
                                                 <?php endif; ?>
                                             </tbody>
@@ -320,19 +310,18 @@ foreach ($customers as $customer) {
                                         <div class="row align-items-center">
                                             <div class="col-md-6 mb-2 mb-md-0">
                                                 <div class="pagination-info">
-                                                    نیشاندانی <span id="customersStartRecord">1</span> تا <span id="customersEndRecord"><?php echo min(count($customers), 10); ?></span> لە کۆی <span id="customersTotalRecords"><?php echo count($customers); ?></span> تۆمار
+                                                    نیشاندانی <span id="suppliersStartRecord">1</span> تا <span id="suppliersEndRecord">10</span> لە کۆی <span id="suppliersTotalRecords"><?php echo count($suppliers); ?></span> تۆمار
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="pagination-controls d-flex justify-content-md-end">
-                                                    <button id="customersPrevPageBtn" class="btn btn-sm btn-outline-primary rounded-circle me-2" disabled>
+                                                    <button id="suppliersPrevPageBtn" class="btn btn-sm btn-outline-primary rounded-circle me-2" disabled>
                                                         <i class="fas fa-chevron-right"></i>
                                                     </button>
-                                                    <div id="customersPaginationNumbers" class="pagination-numbers d-flex">
-                                                        <!-- Pagination numbers will be generated by JavaScript -->
-                                                        <button class="btn btn-sm btn-primary rounded-circle me-2 active">1</button>
+                                                    <div id="suppliersPaginationNumbers" class="pagination-numbers d-flex">
+                                                        <!-- Will be populated by JavaScript -->
                                                     </div>
-                                                    <button id="customersNextPageBtn" class="btn btn-sm btn-outline-primary rounded-circle">
+                                                    <button id="suppliersNextPageBtn" class="btn btn-sm btn-outline-primary rounded-circle">
                                                         <i class="fas fa-chevron-left"></i>
                                                     </button>
                                                 </div>
@@ -348,179 +337,165 @@ foreach ($customers as $customer) {
         </div>
     </div>
     
-    <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteCustomerModal" tabindex="-1" aria-labelledby="deleteCustomerModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteCustomerModalLabel">دڵنیاکردنەوەی سڕینەوە</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>ئایا دڵنیایت لە سڕینەوەی ئەم کڕیارە؟</p>
-                    <p class="text-danger"><strong>ئاگاداری:</strong> هەموو مامەڵەکانی ئەم کڕیارە بەتەواوی دەسڕێنەوە.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">پاشگەزبوونەوە</button>
-                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">سڕینەوە</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Bootstrap 5 JS Bundle with Popper -->
+    <!-- Bootstrap JS and Popper.js -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
-    <!-- Custom Scripts -->
+    <!-- Initialize common elements -->
     <script src="js/include-components.js"></script>
-    <!-- Page Specific Script -->
+    
     <script>
         $(document).ready(function() {
-            // Initialize pagination
-            initTablePagination();
+            // Table pagination functionality
+            let currentPage = 1;
+            const recordsPerPageSelect = $('#suppliersRecordsPerPage');
+            let recordsPerPage = parseInt(recordsPerPageSelect.val());
+            const tableRows = $('#suppliersTable tbody tr');
+            const totalRecords = tableRows.length;
             
-            // Table search functionality
-            $('#customersTableSearch').on('keyup', function() {
-                const value = $(this).val().toLowerCase();
-                $('#customersTable tbody tr').filter(function() {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
-                });
-                updatePagination();
+            // Update records per page when select changes
+            recordsPerPageSelect.on('change', function() {
+                recordsPerPage = parseInt($(this).val());
+                currentPage = 1; // Reset to first page
+                updateTable();
             });
             
-            // Records per page change handler
-            $('#customersRecordsPerPage').on('change', function() {
-                updatePagination();
-            });
-            
-            // Delete customer button handler
-            $('.delete-btn').on('click', function() {
-                const customerId = $(this).data('id');
-                $('#confirmDeleteBtn').data('id', customerId);
-                $('#deleteCustomerModal').modal('show');
-            });
-            
-            // Confirm delete button handler
-            $('#confirmDeleteBtn').on('click', function() {
-                const customerId = $(this).data('id');
+            // Update the table display based on current page and records per page
+            function updateTable() {
+                const startIndex = (currentPage - 1) * recordsPerPage;
+                const endIndex = startIndex + recordsPerPage;
                 
-                $.ajax({
-                    url: 'ajax/delete_customer.php',
-                    type: 'POST',
-                    data: { id: customerId },
-                    success: function(response) {
-                        const data = JSON.parse(response);
-                        if (data.success) {
-                            $('#deleteCustomerModal').modal('hide');
-                            Swal.fire({
-                                title: 'سەرکەوتوو بوو!',
-                                text: data.message,
-                                icon: 'success',
-                                confirmButtonText: 'باشە'
-                            }).then(() => {
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire({
-                                title: 'هەڵە!',
-                                text: data.message,
-                                icon: 'error',
-                                confirmButtonText: 'باشە'
-                            });
-                        }
-                    },
-                    error: function() {
-                        Swal.fire({
-                            title: 'هەڵە!',
-                            text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر.',
-                            icon: 'error',
-                            confirmButtonText: 'باشە'
-                        });
+                // Hide all rows
+                tableRows.hide();
+                
+                // Show only rows for current page
+                tableRows.slice(startIndex, endIndex).show();
+                
+                // Update pagination info
+                $('#suppliersStartRecord').text(totalRecords > 0 ? startIndex + 1 : 0);
+                $('#suppliersEndRecord').text(Math.min(endIndex, totalRecords));
+                $('#suppliersTotalRecords').text(totalRecords);
+                
+                // Enable/disable pagination buttons
+                $('#suppliersPrevPageBtn').prop('disabled', currentPage === 1);
+                $('#suppliersNextPageBtn').prop('disabled', endIndex >= totalRecords);
+                
+                // Update pagination numbers
+                updatePaginationNumbers();
+            }
+            
+            // Create pagination number buttons
+            function updatePaginationNumbers() {
+                const totalPages = Math.ceil(totalRecords / recordsPerPage);
+                const paginationNumbersContainer = $('#suppliersPaginationNumbers');
+                
+                // Clear existing pagination numbers
+                paginationNumbersContainer.empty();
+                
+                // Calculate which page numbers to show
+                let startPage = Math.max(1, currentPage - 2);
+                let endPage = Math.min(totalPages, startPage + 4);
+                
+                if (endPage - startPage < 4 && startPage > 1) {
+                    startPage = Math.max(1, endPage - 4);
+                }
+                
+                // Add first page button if needed
+                if (startPage > 1) {
+                    paginationNumbersContainer.append(`
+                        <button class="btn btn-sm btn-outline-primary rounded-pill me-1 page-number" data-page="1">1</button>
+                    `);
+                    
+                    if (startPage > 2) {
+                        paginationNumbersContainer.append(`
+                            <span class="d-flex align-items-center mx-1">...</span>
+                        `);
                     }
-                });
+                }
+                
+                // Add page number buttons
+                for (let i = startPage; i <= endPage; i++) {
+                    const activeClass = i === currentPage ? 'btn-primary text-white' : 'btn-outline-primary';
+                    paginationNumbersContainer.append(`
+                        <button class="btn btn-sm ${activeClass} rounded-pill me-1 page-number" data-page="${i}">${i}</button>
+                    `);
+                }
+                
+                // Add last page button if needed
+                if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) {
+                        paginationNumbersContainer.append(`
+                            <span class="d-flex align-items-center mx-1">...</span>
+                        `);
+                    }
+                    
+                    paginationNumbersContainer.append(`
+                        <button class="btn btn-sm btn-outline-primary rounded-pill me-1 page-number" data-page="${totalPages}">${totalPages}</button>
+                    `);
+                }
+            }
+            
+            // Handle pagination button clicks
+            $(document).on('click', '.page-number', function() {
+                currentPage = parseInt($(this).data('page'));
+                updateTable();
             });
             
-            // Refresh button handler
+            // Next page button
+            $('#suppliersNextPageBtn').on('click', function() {
+                if (currentPage < Math.ceil(totalRecords / recordsPerPage)) {
+                    currentPage++;
+                    updateTable();
+                }
+            });
+            
+            // Previous page button
+            $('#suppliersPrevPageBtn').on('click', function() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updateTable();
+                }
+            });
+            
+            // Search functionality
+            $('#suppliersTableSearch').on('keyup', function() {
+                const searchTerm = $(this).val().toLowerCase();
+                
+                // If search term is empty, reset table
+                if (searchTerm === '') {
+                    tableRows.show();
+                    updateTable();
+                    return;
+                }
+                
+                // Filter rows based on search term
+                tableRows.hide();
+                const filteredRows = tableRows.filter(function() {
+                    const rowText = $(this).text().toLowerCase();
+                    return rowText.includes(searchTerm);
+                });
+                
+                filteredRows.show();
+                
+                // Update pagination information
+                $('#suppliersStartRecord').text(filteredRows.length > 0 ? 1 : 0);
+                $('#suppliersEndRecord').text(filteredRows.length);
+                $('#suppliersTotalRecords').text(filteredRows.length);
+                
+                // Disable pagination when searching
+                $('#suppliersPrevPageBtn, #suppliersNextPageBtn').prop('disabled', true);
+                $('#suppliersPaginationNumbers').empty();
+            });
+            
+            // Refresh button
             $('.refresh-btn').on('click', function() {
                 location.reload();
             });
             
-            // Helper functions
-            function initTablePagination() {
-                updatePagination();
-                
-                // Pagination button handlers
-                $('#customersPrevPageBtn').on('click', function() {
-                    const currentPage = parseInt($('#customersPaginationNumbers .active').text());
-                    if (currentPage > 1) {
-                        goToPage(currentPage - 1);
-                    }
-                });
-                
-                $('#customersNextPageBtn').on('click', function() {
-                    const currentPage = parseInt($('#customersPaginationNumbers .active').text());
-                    const totalPages = Math.ceil($('#customersTotalRecords').text() / $('#customersRecordsPerPage').val());
-                    if (currentPage < totalPages) {
-                        goToPage(currentPage + 1);
-                    }
-                });
-            }
-            
-            function updatePagination() {
-                const recordsPerPage = parseInt($('#customersRecordsPerPage').val());
-                const visibleRows = $('#customersTable tbody tr:visible').length;
-                const totalPages = Math.ceil(visibleRows / recordsPerPage);
-                
-                // Update total records
-                $('#customersTotalRecords').text(visibleRows);
-                
-                // Generate pagination numbers
-                let paginationHtml = '';
-                for (let i = 1; i <= totalPages; i++) {
-                    paginationHtml += `<button class="btn btn-sm ${i === 1 ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2 ${i === 1 ? 'active' : ''}" data-page="${i}">${i}</button>`;
-                }
-                $('#customersPaginationNumbers').html(paginationHtml);
-                
-                // Add click handlers for pagination numbers
-                $('#customersPaginationNumbers button').on('click', function() {
-                    const page = parseInt($(this).data('page'));
-                    goToPage(page);
-                });
-                
-                // Show only first page
-                goToPage(1);
-            }
-            
-            function goToPage(page) {
-                const recordsPerPage = parseInt($('#customersRecordsPerPage').val());
-                const visibleRows = $('#customersTable tbody tr:visible');
-                
-                // Hide all rows
-                visibleRows.hide();
-                
-                // Show rows for current page
-                const startIndex = (page - 1) * recordsPerPage;
-                const endIndex = startIndex + recordsPerPage;
-                
-                visibleRows.slice(startIndex, endIndex).show();
-                
-                // Update pagination UI
-                $('#customersPaginationNumbers button').removeClass('btn-primary active').addClass('btn-outline-primary');
-                $('#customersPaginationNumbers button[data-page="' + page + '"]').removeClass('btn-outline-primary').addClass('btn-primary active');
-                
-                // Update pagination info
-                const startRecord = visibleRows.length > 0 ? startIndex + 1 : 0;
-                const endRecord = Math.min(endIndex, visibleRows.length);
-                $('#customersStartRecord').text(startRecord);
-                $('#customersEndRecord').text(endRecord);
-                
-                // Update prev/next buttons
-                $('#customersPrevPageBtn').prop('disabled', page === 1);
-                $('#customersNextPageBtn').prop('disabled', page === Math.ceil(visibleRows.length / recordsPerPage));
-            }
+            // Initialize table on page load
+            updateTable();
         });
     </script>
 </body>
