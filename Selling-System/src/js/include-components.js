@@ -2,8 +2,8 @@
 // For ASHKAN Warehouse Management System
 document.addEventListener('DOMContentLoaded', function() {
     // Load components
-    loadComponent('navbar-container', '/warehouse-system/Selling-System/src/components/navbar.php');
-    loadComponent('sidebar-container', '/warehouse-system/Selling-System/src/components/sidebar.php');
+    loadComponent('navbar-container', 'components/navbar.php');
+    loadComponent('sidebar-container', 'components/sidebar.php');
     
     // Initialize sidebar
     initSidebar();

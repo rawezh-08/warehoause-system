@@ -273,7 +273,7 @@
             </div>
 
             <!-- Table View for supplier balances -->
-            <div id="supplierTableView" class="card mb-4">
+            <!-- <div id="supplierTableView" class="card mb-4">
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-striped table-hover" id="balanceTable">
@@ -288,12 +288,11 @@
                                 </tr>
                             </thead>
                             <tbody id="balanceTableBody">
-                                <!-- Supplier balance entries will be loaded dynamically -->
-                            </tbody>
+                             </tbody>
                         </table>
                     </div>
                 </div>
-            </div>
+            </div> -->
         </div>
     </div>
 
