@@ -27,6 +27,20 @@ $(document).ready(function() {
             return;
         }
         
+        // For selling tab, fetch initial invoice number
+        if (firstTab.data('receipt-type') === 'selling') {
+            $.ajax({
+                url: 'api/get_next_invoice.php',
+                type: 'GET',
+                data: { type: 'selling' },
+                success: function(response) {
+                    if (response.success) {
+                        firstTab.find('.receipt-number').val(response.invoice_number);
+                    }
+                }
+            });
+        }
+        
         // Initialize product dropdowns
         console.log('Initializing product dropdowns in first tab...');
         $('.product-select').each(function() {
@@ -121,18 +135,11 @@ $(document).ready(function() {
     function formatProductResult(product) {
         if (!product.id) return product.text;
         
-        // Create a more detailed result with stock information
+        // Simple display showing only product name and barcode
         return $(
-            `<div class="product-result d-flex justify-content-between align-items-center">
-                <div class="product-info">
-                    <div class="product-name">${product.text}</div>
-                    <div class="product-meta small text-muted">کۆد: ${product.code} | بارکۆد: ${product.barcode}</div>
-                </div>
-                <div class="product-price text-end">
-                    <div>دانە: ${product.selling_price_single}</div>
-                    ${product.selling_price_wholesale ? `<div>کۆمەڵ: ${product.selling_price_wholesale}</div>` : ''}
-                    <div class="text-success">بەردەست: ${product.current_quantity}</div>
-                </div>
+            `<div class="product-result">
+                <div class="product-name">${product.text}</div>
+                <div class="product-meta small text-muted">بارکۆد: ${product.barcode}</div>
             </div>`
         );
     }
@@ -222,10 +229,7 @@ $(document).ready(function() {
         // Show only name for the selected product
         return $(
             `<div class="d-flex align-items-center justify-content-between w-100">
-                <span title="${product.text} (${product.code})">${product.text}</span>
-                <button type="button" class="btn btn-sm btn-outline-info product-info-btn ms-2" data-product-id="${product.id}">
-                    <i class="fas fa-info-circle"></i>
-                </button>
+                <span title="${product.text}">${product.text}</span>
             </div>`
         );
     }
@@ -244,6 +248,9 @@ $(document).ready(function() {
         // Reset the product select - create a new one instead of cloning
         const productCell = newRow.find('td:nth-child(2)');
         productCell.html('<select class="form-control product-select" style="width: 100%"></select>');
+        
+        // Clear the image cell
+        newRow.find('.product-image-cell').empty();
         
         newRow.appendTo(itemsList);
         
@@ -415,11 +422,47 @@ $(document).ready(function() {
         }
     });
 
-    // Receipt type buttons
-    $('.receipt-type-btn').click(function() {
+    // Receipt type tabs click handler
+    $('.receipt-type-btn').on('click', function() {
+        // Get the new type
+        const newType = $(this).data('type');
+        
+        // If it's already active, do nothing
+        if ($(this).hasClass('active')) return;
+        
+        // Remove active class from all tabs
         $('.receipt-type-btn').removeClass('active');
+        
+        // Add active class to clicked tab
         $(this).addClass('active');
-        activeReceiptType = $(this).data('type');
+        
+        // Set the active receipt type
+        activeReceiptType = newType;
+        
+        // When changing receipt type, we also need to:
+        // 1. Update tab class/appearance 
+        // 2. Close all open tabs of other types
+        // 3. Open a new tab of the selected type if none exists
+        
+        let hasTabOfNewType = false;
+        
+        // Check if any open tabs match the new type
+        $('.nav-link.receipt-tab').each(function() {
+            const tabId = $(this).attr('id').replace('tab-', '');
+            const tabType = $('#' + tabId).data('receipt-type');
+            
+            if (tabType === newType) {
+                hasTabOfNewType = true;
+                // Show this tab
+                $(this).tab('show');
+            } 
+        });
+        
+        // If no tabs of new type exist, create one
+        if (!hasTabOfNewType) {
+            // Click the add tab button to create a new tab
+            $('#addNewTab').click();
+        }
     });
 
     // Add new tab
@@ -444,16 +487,38 @@ $(document).ready(function() {
         // Insert tab button before + button
         $(tabBtn).insertBefore($(this).parent());
         
-        // Create tab content
-        const tabTemplate = $(`#${newTabType}-template`).html();
-        const tabContent = `
+        // Added for more accurate row cloning
+        let tabContent = '';
+        
+        if (newTabType === 'selling') {
+            tabContent = $('#selling-template').html();
+            
+            // Fetch next invoice number for sales
+            $.ajax({
+                url: 'api/get_next_invoice.php',
+                type: 'GET',
+                data: { type: 'selling' },
+                success: function(response) {
+                    if (response.success) {
+                        $(`#${tabId} .receipt-number`).val(response.invoice_number);
+                    }
+                }
+            });
+        } else if (newTabType === 'buying') {
+            tabContent = $('#buying-template').html();
+        } else if (newTabType === 'wasting') {
+            tabContent = $('#wasting-template').html();
+        }
+        
+        // Create the tab content
+        const tabContentHtml = `
             <div class="tab-pane fade" id="${tabId}" role="tabpanel" data-receipt-type="${newTabType}">
-                ${tabTemplate}
+                ${tabContent}
             </div>
         `;
         
         // Add tab content
-        $('#receiptTabsContent').append(tabContent);
+        $('#receiptTabsContent').append(tabContentHtml);
         
         // Set default date in the new tab
         $(`#${tabId} .sale-date, #${tabId} .purchase-date, #${tabId} .adjustment-date`).val(today);
@@ -463,28 +528,40 @@ $(document).ready(function() {
         
         // Force reinitialize dropdowns in the new tab
         setTimeout(function() {
-            // Don't try to destroy existing select2 instances - just initialize new ones
+            console.log(`Initializing dropdowns for new tab: ${tabId}, type: ${newTabType}`);
             
             // Initialize product dropdowns
             $(`#${tabId} .product-select`).each(function() {
+                console.log(`Initializing product select in ${tabId}`);
                 initializeProductSelect($(this));
             });
             
             // Initialize customer or supplier dropdowns based on tab type
             if (newTabType === 'selling') {
                 $(`#${tabId} .customer-select`).each(function() {
+                    console.log(`Initializing customer select in ${tabId}`);
                     initializeCustomerSelect($(this));
                 });
             } else if (newTabType === 'buying') {
                 $(`#${tabId} .supplier-select`).each(function() {
+                    console.log(`Initializing supplier select in ${tabId}`);
                     initializeSupplierSelect($(this));
                 });
             }
-        }, 100);
+            
+            // Add event listeners for this specific tab
+            initTabEventListeners(tabId, newTabType);
+        }, 500);  // Increased timeout to ensure DOM is ready
     });
 
     // Helper functions to initialize individual selects
     function initializeProductSelect(element) {
+        // Check if element exists
+        if (!element.length) {
+            console.error('Product select element not found');
+            return;
+        }
+        
         // If already initialized, destroy it first
         if (element.hasClass('select2-hidden-accessible')) {
             try {
@@ -500,6 +577,14 @@ $(document).ready(function() {
             placeholder: 'کاڵا هەڵبژێرە',
             allowClear: true,
             width: '100%',
+            language: {
+                searching: function() {
+                    return "گەڕان...";
+                },
+                noResults: function() {
+                    return "هیچ ئەنجامێک نەدۆزرایەوە";
+                }
+            },
             ajax: {
                 url: 'api/products.php',
                 dataType: 'json',
@@ -553,12 +638,42 @@ $(document).ready(function() {
             const productData = e.params.data;
             const row = $(this).closest('tr');
             
+            // Set unit price based on receipt type
+            const tabPane = row.closest('.tab-pane');
+            const receiptType = tabPane.data('receipt-type');
+            
+            // Display product image
+            fetchProductImage(productData.id, row);
+            
+            if (receiptType === 'selling') {
+                const priceType = tabPane.find('.price-type').val();
+                if (priceType === 'wholesale' && productData.selling_price_wholesale) {
+                    row.find('.unit-price').val(productData.selling_price_wholesale);
+                } else {
+                    row.find('.unit-price').val(productData.selling_price_single);
+                }
+            } else if (receiptType === 'buying') {
+                row.find('.unit-price').val(productData.purchase_price);
+            }
+            
             // Update unit options
             updateUnitTypeOptions(row, productData);
+            
+            // Update quantity
+            row.find('.quantity').val(1);
+            
+            // Calculate row total
+            calculateRowTotal(row);
         });
     }
 
     function initializeCustomerSelect(element) {
+        // Check if element exists
+        if (!element.length) {
+            console.error('Customer select element not found');
+            return;
+        }
+        
         // If already initialized, destroy it first
         if (element.hasClass('select2-hidden-accessible')) {
             try {
@@ -574,6 +689,14 @@ $(document).ready(function() {
             placeholder: 'کڕیار هەڵبژێرە',
             allowClear: true,
             width: '100%',
+            language: {
+                searching: function() {
+                    return "گەڕان...";
+                },
+                noResults: function() {
+                    return "هیچ ئەنجامێک نەدۆزرایەوە";
+                }
+            },
             ajax: {
                 url: 'api/customers.php',
                 dataType: 'json',
@@ -607,6 +730,12 @@ $(document).ready(function() {
     }
 
     function initializeSupplierSelect(element) {
+        // Check if element exists
+        if (!element.length) {
+            console.error('Supplier select element not found');
+            return;
+        }
+        
         // If already initialized, destroy it first
         if (element.hasClass('select2-hidden-accessible')) {
             try {
@@ -622,6 +751,14 @@ $(document).ready(function() {
             placeholder: 'فرۆشیار هەڵبژێرە',
             allowClear: true,
             width: '100%',
+            language: {
+                searching: function() {
+                    return "گەڕان...";
+                },
+                noResults: function() {
+                    return "هیچ ئەنجامێک نەدۆزرایەوە";
+                }
+            },
             ajax: {
                 url: 'api/suppliers.php',
                 dataType: 'json',
@@ -696,48 +833,55 @@ $(document).ready(function() {
         let isValid = true;
         
         // Check if invoice number exists
-        if (invoiceNumber) {
+        if (!invoiceNumber && receiptType === 'selling') {
+            // Fetch new invoice number if not set
             $.ajax({
-                url: 'api/check_invoice.php',
-                type: 'POST',
-                data: {
-                    invoice_number: invoiceNumber,
-                    receipt_type: receiptType
-                },
+                url: 'api/get_next_invoice.php',
+                type: 'GET',
+                data: { type: 'selling' },
                 async: false,
                 success: function(response) {
-                    if (response.exists) {
-                        Swal.fire('هەڵە', 'ژمارەی پسووڵە پێشتر بەکارهاتووە', 'error');
+                    if (response.success) {
+                        tabPane.find('.receipt-number').val(response.invoice_number);
+                    } else {
+                        Swal.fire('هەڵە', 'کێشەیەک هەیە لە دروستکردنی ژمارەی پسوڵە', 'error');
                         isValid = false;
                     }
+                },
+                error: function() {
+                    Swal.fire('هەڵە', 'کێشەیەک هەیە لە دروستکردنی ژمارەی پسوڵە', 'error');
+                    isValid = false;
                 }
             });
         }
         
         // Check required fields specific to each receipt type
         if (isValid) {
-        if (receiptType === 'selling' && !tabPane.find('.customer-select').val()) {
-            Swal.fire('هەڵە', 'تکایە کڕیار هەڵبژێرە', 'error');
-            isValid = false;
-        } else if (receiptType === 'buying' && !tabPane.find('.supplier-select').val()) {
-            Swal.fire('هەڵە', 'تکایە فرۆشیار هەڵبژێرە', 'error');
-            isValid = false;
-        } else if (receiptType === 'wasting' && !tabPane.find('.responsible-select').val()) {
-            Swal.fire('هەڵە', 'تکایە بەرپرسیار هەڵبژێرە', 'error');
+            if (receiptType === 'selling' && !tabPane.find('.customer-select').val()) {
+                Swal.fire('هەڵە', 'تکایە کڕیار هەڵبژێرە', 'error');
+                isValid = false;
+            } else if (receiptType === 'buying' && !tabPane.find('.supplier-select').val()) {
+                Swal.fire('هەڵە', 'تکایە فرۆشیار هەڵبژێرە', 'error');
+                isValid = false;
+            } else if (receiptType === 'wasting' && !tabPane.find('.responsible-select').val()) {
+                Swal.fire('هەڵە', 'تکایە بەرپرسیار هەڵبژێرە', 'error');
                 isValid = false;
             }
         }
         
         // If form is valid, submit it
         if (isValid) {
+            // Get the final invoice number
+            const finalInvoiceNumber = tabPane.find('.receipt-number').val();
+            
             // Collect form data
             const formData = {
                 receipt_type: receiptType,
+                invoice_number: finalInvoiceNumber,
                 items: []
             };
             
             // Common fields
-            formData.invoice_number = tabPane.find('.receipt-number').val();
             formData.notes = tabPane.find('.notes').val();
             formData.discount = tabPane.find('.discount').val() || 0;
             
@@ -816,15 +960,20 @@ $(document).ready(function() {
                 dataType: 'json',
                 success: function(response) {
                     if (response.success) {
-                        // Show success message
+                        // Show success message with custom styling
                         Swal.fire({
                             title: 'سەرکەوتوو',
                             text: 'پسوڵە بە سەرکەوتوویی پاشەکەوت کرا',
                             icon: 'success',
-                            confirmButtonText: 'باشە'
+                            confirmButtonText: 'باشە',
+                            customClass: {
+                                popup: 'swal2-rtl',
+                                title: 'swal2-title',
+                                htmlContainer: 'swal2-html-container',
+                                confirmButton: 'swal2-confirm'
+                            }
                         }).then((result) => {
-                            // Don't redirect, just reset the current tab or create a new one
-                            // Clear form fields, but keep the customer/supplier selection
+                            // Reset form after success
                             const currentTab = $('.tab-pane.active');
                             const receiptType = currentTab.data('receipt-type');
                             
@@ -869,12 +1018,34 @@ $(document).ready(function() {
                             }
                         });
                     } else {
-                        Swal.fire('هەڵە', response.message || 'هەڵەیەک ڕوویدا', 'error');
+                        Swal.fire({
+                            title: 'هەڵە',
+                            text: response.message || 'هەڵەیەک ڕوویدا',
+                            icon: 'error',
+                            confirmButtonText: 'باشە',
+                            customClass: {
+                                popup: 'swal2-rtl',
+                                title: 'swal2-title',
+                                htmlContainer: 'swal2-html-container',
+                                confirmButton: 'swal2-confirm'
+                            }
+                        });
                     }
                 },
                 error: function(xhr, status, error) {
                     console.error(xhr.responseText);
-                    Swal.fire('هەڵە', 'هەڵەیەک ڕوویدا لە کاتی پاشەکەوتکردن', 'error');
+                    Swal.fire({
+                        title: 'هەڵە',
+                        text: 'هەڵەیەک ڕوویدا لە کاتی پاشەکەوتکردن',
+                        icon: 'error',
+                        confirmButtonText: 'باشە',
+                        customClass: {
+                            popup: 'swal2-rtl',
+                            title: 'swal2-title',
+                            htmlContainer: 'swal2-html-container',
+                            confirmButton: 'swal2-confirm'
+                        }
+                    });
                 }
             });
         }
@@ -1065,7 +1236,188 @@ $(document).ready(function() {
             text: 'سێلێکتەکان بە سەرکەوتووی نوێ کرانەوە',
             icon: 'success',
             timer: 1500,
-            showConfirmButton: false
+            showConfirmButton: false,
+            customClass: {
+                popup: 'swal2-rtl',
+                title: 'swal2-title',
+                htmlContainer: 'swal2-html-container'
+            }
         });
     });
+
+    // Initialize tab-specific event listeners
+    function initTabEventListeners(tabId, tabType) {
+        console.log(`Setting up event listeners for tab ${tabId}, type: ${tabType}`);
+        
+        // Price type change handler (selling only)
+        if (tabType === 'selling') {
+            $(`#${tabId} .price-type`).on('change', function() {
+                const priceType = $(this).val();
+                const itemsList = $(`#${tabId} .items-list`);
+                
+                // Update all product rows with the new price type
+                itemsList.find('tr').each(function() {
+                    const row = $(this);
+                    const productSelect = row.find('.product-select');
+                    const productData = productSelect.select2('data')[0];
+                    
+                    if (productData && productData.id) {
+                        if (priceType === 'wholesale' && productData.selling_price_wholesale) {
+                            row.find('.unit-price').val(productData.selling_price_wholesale);
+                        } else {
+                            row.find('.unit-price').val(productData.selling_price_single);
+                        }
+                        
+                        // Recalculate totals
+                        calculateRowTotal(row);
+                    }
+                });
+            });
+        }
+        
+        // Set up event handlers for this tab's elements
+        
+        // Product row quantity and price change handlers
+        $(`#${tabId} .quantity, #${tabId} .unit-price, #${tabId} .adjusted-quantity, #${tabId} .price`).on('input', function() {
+            const row = $(this).closest('tr');
+            calculateRowTotal(row);
+        });
+        
+        // Add row button handler
+        $(`#${tabId} .add-row-btn`).on('click', function() {
+            const itemsList = $(`#${tabId} .items-list`);
+            addNewRow(itemsList);
+        });
+        
+        // Remove row button handler
+        $(`#${tabId}`).on('click', '.remove-row', function() {
+            const row = $(this).closest('tr');
+            const itemsList = row.closest('.items-list');
+            
+            // Don't remove if it's the only row
+            if (itemsList.find('tr').length > 1) {
+                row.remove();
+                
+                // Renumber rows
+                itemsList.find('tr').each(function(index) {
+                    $(this).find('td:first').text(index + 1);
+                });
+                
+                // Recalculate totals
+                calculateGrandTotal(tabId);
+            }
+        });
+        
+        // Shipping cost and discount change handlers for selling receipts
+        if (tabType === 'selling') {
+            $(`#${tabId} .shipping-cost, #${tabId} .other-costs, #${tabId} .discount`).on('input', function() {
+                calculateGrandTotal(tabId);
+            });
+        } else {
+            // Just discount for other receipt types
+            $(`#${tabId} .discount`).on('input', function() {
+                calculateGrandTotal(tabId);
+            });
+        }
+        
+        // Save button handler
+        $(`#${tabId} .save-btn`).on('click', function(e) {
+            e.preventDefault();
+            saveReceipt(tabId, tabType);
+        });
+        
+        console.log(`Event listeners set up for tab ${tabId}`);
+    }
+    
+    // Add a new row to a table
+    function addNewRow(itemsList) {
+        const lastRow = itemsList.find('tr:last');
+        const newRow = lastRow.clone();
+        const rowNumber = itemsList.find('tr').length + 1;
+        
+        // Update row number
+        newRow.find('td:first').text(rowNumber);
+        
+        // Clear all inputs
+        newRow.find('input').val('');
+        
+        // Reset the product select - create a new one instead of cloning to avoid duplicate IDs
+        const productCell = newRow.find('td:nth-child(2)');
+        const tabPane = itemsList.closest('.tab-pane');
+        const tabType = tabPane.data('receipt-type');
+        
+        // Create new select element
+        productCell.html('<select class="form-control product-select" style="width: 100%"></select>');
+        
+        // Append the new row
+        newRow.appendTo(itemsList);
+        
+        // Initialize the product select in the new row
+        initializeProductSelect(newRow.find('.product-select'));
+        
+        return newRow;
+    }
+
+    // Function to fetch product image
+    function fetchProductImage(productId, row) {
+        $.ajax({
+            url: 'api/product_details.php',
+            type: 'GET',
+            data: { id: productId },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success && response.product) {
+                    const imageUrl = response.product.image || 'assets/img/pro-1.png';
+                    const productName = response.product.name || 'کاڵا';
+                    const imgHtml = `
+                        <div class="product-image-container" data-bs-toggle="tooltip" data-bs-placement="top" title="${productName}">
+                            <img src="${imageUrl}" alt="${productName}" class="product-image">
+                        </div>`;
+                    
+                    // Add image to the designated cell
+                    row.find('.product-image-cell').html(imgHtml);
+
+                    // Initialize tooltips
+                    const tooltips = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                    tooltips.forEach(function (tooltipTriggerEl) {
+                        new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
+
+                    // Add click event for zooming
+                    row.find('.product-image-container').on('click', function() {
+                        const img = $(this).find('img');
+                        const modal = document.createElement('div');
+                        modal.className = 'modal fade image-modal';
+                        modal.innerHTML = `
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <img src="${img.attr('src')}" alt="${img.attr('alt')}">
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        document.body.appendChild(modal);
+                        const modalInstance = new bootstrap.Modal(modal);
+                        modalInstance.show();
+                        
+                        $(modal).on('hidden.bs.modal', function () {
+                            modal.remove();
+                        });
+                    });
+                }
+            },
+            error: function() {
+                // If error, show default image
+                const imgHtml = `
+                    <div class="product-image-container">
+                        <img src="assets/img/pro-1.png" alt="کاڵا" class="product-image">
+                    </div>`;
+                row.find('.product-image-cell').html(imgHtml);
+            }
+        });
+    }
 });

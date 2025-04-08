@@ -1,3 +1,7 @@
+<?php
+// Include database connection
+require_once 'config/database.php';
+?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
 <head>
@@ -16,6 +20,129 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/addReceipt.css">
+    <style>
+        /* زیادکردنی CSS بۆ ئینپووتەکانی ژمارە */
+        input[type="text"].form-control {
+            text-align: right;
+            direction: rtl;
+        }
+        
+        /* ستایلی تایبەت بۆ ئینپوتی ژمارەی پسوڵە */
+        .receipt-number[readonly] {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+            color: #495057;
+            cursor: default;
+            font-weight: 500;
+        }
+        
+        .receipt-number[readonly]:focus {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+            box-shadow: none;
+        }
+        
+        /* SweetAlert2 Custom Styles */
+        .swal2-popup {
+            font-family: 'NRTRabar', sans-serif !important;
+        }
+
+        .swal2-title, .swal2-content {
+            text-align: center !important;
+            font-family: 'NRTRabar', sans-serif !important;
+        }
+
+        .swal2-html-container {
+            text-align: center !important;
+            font-family: 'NRTRabar', sans-serif !important;
+        }
+
+        .swal2-confirm, .swal2-cancel {
+            font-family: 'NRTRabar', sans-serif !important;
+        }
+
+        /* Fix for RTL support in SweetAlert2 */
+        .swal2-actions {
+            flex-direction: row-reverse;
+        }
+
+        /* Center the toast notifications */
+        .swal2-toast {
+            direction: rtl !important;
+            text-align: center !important;
+        }
+
+        .swal2-toast .swal2-title {
+            margin: 0 auto !important;
+            text-align: center !important;
+        }
+        
+        /* Product Image Styles */
+        .product-image-container {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .product-image-container:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-image-cell {
+            text-align: center;
+            vertical-align: middle;
+            width: 50px;
+        }
+
+        /* Image Modal Styles */
+        .image-modal .modal-dialog {
+            max-width: 90%;
+            margin: 1.75rem auto;
+        }
+
+        .image-modal .modal-content {
+            background: transparent;
+            border: none;
+        }
+
+        .image-modal .modal-body {
+            padding: 0;
+            text-align: center;
+        }
+
+        .image-modal img {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .image-modal .modal-header {
+            border: none;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1;
+        }
+
+        .image-modal .btn-close {
+            background-color: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            padding: 8px;
+        }
+    </style>
 </head>
 <body>
     <!-- Top Navigation -->
@@ -70,7 +197,7 @@
                     <div class="row mb-4">
                         <div class="col-md-4">
                             <label class="form-label">ژمارەی پسوڵە</label>
-                            <input type="text" class="form-control receipt-number" placeholder="ژمارەی پسوڵە">
+                            <input type="text" class="form-control receipt-number" placeholder="ژمارەی پسوڵە" readonly>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">کڕیار</label>
@@ -137,6 +264,7 @@
                                 <tr>
                                     <th style="width: 50px">#</th>
                                     <th>کاڵا</th>
+                                    <th>وێنە</th>
                                     <th>جۆری یەکە</th>
                                     <th>نرخی یەکە</th>
                                     <th>بڕی یەکە</th>
@@ -148,6 +276,7 @@
                                 <tr>
                                     <td>1</td>
                                     <td><select class="form-control product-select" style="width: 100%"></select></td>
+                                    <td class="product-image-cell"></td>
                                     <td>
                                         <select class="form-control unit-type">
                                             <option value="piece">دانە</option>
@@ -261,6 +390,7 @@
                         <tr>
                             <th style="width: 50px">#</th>
                             <th>کاڵا</th>
+                            <th>وێنە</th>
                             <th>نرخی یەکە</th>
                             <th>بڕی یەکە</th>
                             <th>کۆی گشتی</th>
@@ -271,6 +401,7 @@
                         <tr>
                             <td>1</td>
                             <td><select class="form-control product-select" style="width: 100%"></select></td>
+                            <td class="product-image-cell"></td>
                             <td><input type="number" class="form-control unit-price" min="0"></td>
                             <td><input type="number" class="form-control quantity" min="0"></td>
                             <td><input type="number" class="form-control total" readonly></td>
@@ -387,6 +518,7 @@
                         <tr>
                             <th style="width: 50px">#</th>
                             <th>کاڵا</th>
+                            <th>وێنە</th>
                             <th>بڕی بەردەست</th>
                             <th>بڕی ڕێکخراو</th>
                             <th>نرخی یەکە</th>
@@ -399,6 +531,7 @@
                         <tr>
                             <td>1</td>
                             <td><select class="form-control product-select" style="width: 100%"></select></td>
+                            <td class="product-image-cell"></td>
                             <td><input type="number" class="form-control current-quantity" readonly></td>
                             <td><input type="number" class="form-control adjusted-quantity"></td>
                             <td><input type="number" class="form-control price" step="0.01"></td>
@@ -445,7 +578,7 @@
             <div class="row mb-4">
                 <div class="col-md-4 col-sm-12">
                     <label class="form-label">ژمارەی پسوڵە</label>
-                    <input type="text" class="form-control receipt-number" placeholder="ژمارەی پسوڵە">
+                    <input type="text" class="form-control receipt-number" placeholder="ژمارەی پسوڵە" readonly>
                 </div>
                 <div class="col-md-4 col-sm-12">
                     <label class="form-label">کڕیار</label>
@@ -512,6 +645,7 @@
                         <tr>
                             <th style="width: 50px">#</th>
                             <th>کاڵا</th>
+                            <th>وێنە</th>
                             <th>جۆری یەکە</th>
                             <th>نرخی یەکە</th>
                             <th>بڕی یەکە</th>
@@ -523,6 +657,7 @@
                         <tr>
                             <td>1</td>
                             <td><select class="form-control product-select" style="width: 100%"></select></td>
+                            <td class="product-image-cell"></td>
                             <td>
                                 <select class="form-control unit-type">
                                     <option value="piece">دانە</option>
@@ -587,5 +722,24 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="js/addReceipt.js"></script>
     <script src="js/include-components.js"></script>
+    
+    <script>
+        // Get the last receipt number
+        <?php
+        $stmt = $conn->query("SELECT MAX(CAST(SUBSTRING(receipt_number, 3) AS UNSIGNED)) as max_number FROM sales");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $nextNumber = ($result['max_number'] ?? 0) + 1;
+        $receiptNumber = 'A-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+        ?>
+        
+        // Set receipt number to all receipt fields
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set the receipt number
+            const receiptFields = document.querySelectorAll('.receipt-number');
+            receiptFields.forEach(field => {
+                field.value = '<?php echo $receiptNumber; ?>';
+            });
+        });
+    </script>
 </body>
 </html> 

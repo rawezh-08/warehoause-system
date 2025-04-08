@@ -242,6 +242,10 @@ try {
                                                     <label for="min_quantity" class="form-label">کەمترین بڕ</label>
                                                     <input type="text" id="min_quantity" name="min_quantity" class="form-control" placeholder="کەمترین بڕ" oninput="formatNumber(this)">
                                                 </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label for="current_quantity" class="form-label">بڕی بەردەست</label>
+                                                    <input type="text" id="current_quantity" name="current_quantity" class="form-control" placeholder="بڕی بەردەست" oninput="formatNumber(this)">
+                                                </div>
                                             </div>
                                             
                                             <div class="row mb-4">
@@ -382,7 +386,7 @@ try {
             'piecesPerBox',
             'boxesPerSet',
             'min_quantity',
-            'initialQuantity'
+            'current_quantity'
         ];
 
         // زیادکردنی event listener بۆ هەر ئینپووتێک

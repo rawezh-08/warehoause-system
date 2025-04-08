@@ -528,12 +528,6 @@ try {
                                     </div>
                                     <span class="quick-access-text">هەژمارەکان</span>
                                 </a>
-                                <!-- <a href="#" class="quick-access-item m-2">
-                                    <div class="quick-access-icon bordered">
-                                        <img src="assets/icons/add.svg" alt="">
-                                    </div>
-                                    <span class="quick-access-text">زیاتر</span>
-                                </a> -->
                             </div>
                         </div>
                     </div>
@@ -635,7 +629,7 @@ try {
                                                             نوێکردنەوە</a></li>
                                                     <li><a class="dropdown-item" href="#"><i
                                                                 class="fas fa-share-alt me-2"></i> هاوبەشکردن</a></li>
-                                                    <li><a class="dropdown-item" href="#"><i
+                                                    <li><a class="dropdown-item" href="#" id="changeChartType"><i
                                                                 class="fas fa-chart-pie me-2"></i> گۆڕینی جۆری چارت</a></li>
                                                 </ul>
                                             </div>
@@ -845,173 +839,22 @@ try {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Component loading script -->
     <script src="js/include-components.js"></script>
+    <!-- Pass PHP data to JavaScript -->
+    <script>
+        // Make sure the data is properly formatted
+        window.chartMonths = <?php echo $chartMonthsJson; ?>;
+        window.salesData = <?php echo $salesValuesJson; ?>;
+        window.purchasesData = <?php echo $purchasesValuesJson; ?>;
+        window.salesPercentage = <?php echo $salesPercentage; ?>;
+        window.purchasesPercentage = <?php echo $purchasesPercentage; ?>;
+        
+        // Debug data
+        console.log('Chart Months:', window.chartMonths);
+        console.log('Sales Data:', window.salesData);
+        console.log('Purchases Data:', window.purchasesData);
+    </script>
     <!-- Other custom scripts -->
     <script src="js/dashboard.js"></script>
-    <script>
-    // Sales and Purchases chart
-    document.addEventListener('DOMContentLoaded', function() {
-        var ctx = document.getElementById('salesChart').getContext('2d');
-        
-        // Parse data from PHP
-        var months = <?php echo $chartMonthsJson; ?>;
-        var salesData = <?php echo $salesValuesJson; ?>;
-        var purchasesData = <?php echo $purchasesValuesJson; ?>;
-        
-        // Calculate max value for better y-axis scaling
-        var maxValue = Math.max(...salesData, ...purchasesData);
-        var yAxisMax = Math.ceil(maxValue * 1.1 / 1000000) * 1000000; // Round up to nearest million
-        
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: months,
-                datasets: [
-                    {
-                        label: 'فرۆشتن',
-                        data: salesData,
-                        backgroundColor: 'rgba(13, 110, 253, 0.1)', // Light blue with opacity
-                        borderColor: '#0d6efd',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4, // Smooth curves
-                        pointBackgroundColor: '#0d6efd',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 5,
-                        pointHoverRadius: 7
-                    },
-                    {
-                        label: 'کڕین',
-                        data: purchasesData,
-                        backgroundColor: 'rgba(168, 199, 250, 0.1)', // Very light blue with opacity
-                        borderColor: '#a8c7fa',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4, // Smooth curves
-                        pointBackgroundColor: '#a8c7fa',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 5,
-                        pointHoverRadius: 7
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: yAxisMax,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                if (value >= 1000000) {
-                                    return (value / 1000000).toFixed(1) + ' ملیۆن د.ع';
-                                } else if (value >= 1000) {
-                                    return (value / 1000).toFixed(1) + ' هەزار د.ع';
-                                }
-                                return value + ' د.ع';
-                            },
-                            padding: 10
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            padding: 10
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        align: 'end',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 20,
-                            font: {
-                                size: 12
-                            }
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                        titleColor: '#000',
-                        titleFont: {
-                            size: 14,
-                            weight: 'bold'
-                        },
-                        bodyColor: '#666',
-                        bodyFont: {
-                            size: 13
-                        },
-                        borderColor: 'rgba(0, 0, 0, 0.1)',
-                        borderWidth: 1,
-                        padding: 12,
-                        displayColors: true,
-                        callbacks: {
-                            label: function(context) {
-                                var label = context.dataset.label || '';
-                                var value = context.parsed.y || 0;
-                                if (value >= 1000000) {
-                                    return label + ': ' + (value / 1000000).toFixed(1) + ' ملیۆن د.ع';
-                                } else if (value >= 1000) {
-                                    return label + ': ' + (value / 1000).toFixed(1) + ' هەزار د.ع';
-                                }
-                                return label + ': ' + value + ' د.ع';
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    });
-
-    // Update the inventory chart (doughnut chart)
-    document.addEventListener('DOMContentLoaded', function() {
-        var ctx = document.getElementById('inventoryChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['فرۆشتن', 'کڕین'],
-                datasets: [{
-                    data: [<?php echo $salesPercentage; ?>, <?php echo $purchasesPercentage; ?>],
-                    backgroundColor: ['#0d6efd', '#a8c7fa'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                cutout: '65%',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                var label = context.label || '';
-                                var value = context.formattedValue || '';
-                                return label + ': ' + value + '%';
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    });
-    </script>
 </body>
 
 </html>

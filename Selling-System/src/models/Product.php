@@ -45,12 +45,12 @@ class Product {
                 name, code, barcode, category_id, unit_id, 
                 pieces_per_box, boxes_per_set, purchase_price, 
                 selling_price_single, selling_price_wholesale, 
-                min_quantity,  notes, image
+                min_quantity, current_quantity, notes, image
             ) VALUES (
                 :name, :code, :barcode, :category_id, :unit_id, 
                 :pieces_per_box, :boxes_per_set, :purchase_price, 
                 :selling_price_single, :selling_price_wholesale, 
-                :min_quantity, :notes, :image
+                :min_quantity, :current_quantity, :notes, :image
             )";
             
             $stmt = $this->conn->prepare($sql);
@@ -66,7 +66,7 @@ class Product {
                 ':selling_price_single' => $data['selling_price_single'],
                 ':selling_price_wholesale' => $data['selling_price_wholesale'],
                 ':min_quantity' => $data['min_quantity'],
-
+                ':current_quantity' => $data['current_quantity'],
                 ':notes' => $data['notes'] ?? null,
                 ':image' => $imagePath
             ]);
