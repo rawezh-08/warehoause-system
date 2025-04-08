@@ -266,6 +266,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <!-- Custom JavaScript -->
     <script src="js/addStaff/script.js"></script>
+    <script src="js/include-components.js"></script>
     
     <script>
         // Select the appropriate tab based on URL parameter
