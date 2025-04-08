@@ -21,7 +21,7 @@
   --icon-bg: #E8F5FE;
 
   /* Sizing & Spacing */
-  --card-radius: 16px;
+  --card-radius: 20px;
   --btn-radius: 12px;
   --input-radius: 8px;
   --sidebar-width: 260px;
@@ -149,38 +149,6 @@ body {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
   margin: 0;
-}
-
-/* Search Component */
-.search-container {
-  position: relative;
-  max-width: 400px;
-  width: 100%;
-}
-
-.search-input {
-  width: 100%;
-  padding: 0.75rem 1rem 0.75rem 2.5rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--input-radius);
-  background-color: var(--bg-color);
-  color: var(--text-primary);
-  transition: all 0.3s ease;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
-}
-
-.search-icon {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-  pointer-events: none;
 }
 
 /* Header Actions */
@@ -384,7 +352,7 @@ z-index: 1;
   background-color: var(--card-bg);
   border-radius: var(--card-radius);
   padding: 20px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  /* box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05); */
   transition: transform 0.3s, box-shadow 0.3s;
   position: relative;
   overflow: hidden;
@@ -394,11 +362,13 @@ z-index: 1;
   width: 100%;
   max-width: 350px;
   height: 100%;
+  border: 1px solid rgba(12, 133, 255, 0.223);
+  
 }
 
 .kpi-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 7px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 7px 20px rgba(144, 142, 255, 0.516);
 }
 
 .kpi-icon-wrapper {
@@ -1253,13 +1223,15 @@ canvas {
   flex-direction: column;
   align-items: center;
   justify-content: space-evenly;
-  border-radius: 10px;
+  border-radius: 16px;
   background-color: var(--card-bg);
   transition: all 0.3s ease;
   color: var(--primary-color);
   font-size: 24px;
   position: relative;
   overflow: hidden;
+  border: 1px solid rgba(12, 133, 255, 0.223);
+
 }
 
 
