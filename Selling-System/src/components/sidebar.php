@@ -9,8 +9,8 @@
         <div class="sidebar-header" onclick="window.location.href='index.php'">
                        
         <a href="index.php" class="">
-                    <div class="icon-cont">
-                        <img src="assets/icons/Dashboard.svg" alt="" class="dash-icon">
+                    <div class="dash-cont">
+                        <img src="assets/icons/dashboard.svg" alt="" class="dash-icon">
                     </div>
                     <span>بەشی سەرەکی</span>
                 </a>
