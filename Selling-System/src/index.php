@@ -1,5 +1,236 @@
 <?php
-// You can add PHP logic here if needed
+// Database connection
+require_once 'config/database.php';
+
+try {
+
+    
+    // Get current date and previous period date
+    $currentDate = date('Y-m-d');
+    $previousPeriodStart = date('Y-m-d', strtotime('-30 days'));
+    
+    // Fetch current period cash sales
+    $currentCashSalesQuery = "SELECT COALESCE(SUM(si.total_price), 0) as total 
+                             FROM sales s 
+                             JOIN sale_items si ON s.id = si.sale_id 
+                             WHERE s.payment_type = 'cash'
+                             AND s.date >= :previousPeriodStart";
+    $stmt = $conn->prepare($currentCashSalesQuery);
+    $stmt->execute(['previousPeriodStart' => $previousPeriodStart]);
+    $cashSales = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    // Fetch previous period cash sales
+    $previousCashSalesQuery = "SELECT COALESCE(SUM(si.total_price), 0) as total 
+                              FROM sales s 
+                              JOIN sale_items si ON s.id = si.sale_id 
+                              WHERE s.payment_type = 'cash'
+                              AND s.date < :previousPeriodStart
+                              AND s.date >= DATE_SUB(:previousPeriodStart, INTERVAL 30 DAY)";
+    $stmt = $conn->prepare($previousCashSalesQuery);
+    $stmt->execute(['previousPeriodStart' => $previousPeriodStart]);
+    $previousCashSales = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    // Calculate cash sales percentage change
+    $cashSalesPercentage = $previousCashSales > 0 ? 
+        round((($cashSales - $previousCashSales) / $previousCashSales) * 100, 1) : 0;
+    
+    // Fetch current period credit sales
+    $currentCreditSalesQuery = "SELECT COALESCE(SUM(si.total_price), 0) as total 
+                               FROM sales s 
+                               JOIN sale_items si ON s.id = si.sale_id 
+                               WHERE s.payment_type = 'credit'
+                               AND s.date >= :previousPeriodStart";
+    $stmt = $conn->prepare($currentCreditSalesQuery);
+    $stmt->execute(['previousPeriodStart' => $previousPeriodStart]);
+    $creditSales = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    // Fetch previous period credit sales
+    $previousCreditSalesQuery = "SELECT COALESCE(SUM(si.total_price), 0) as total 
+                                FROM sales s 
+                                JOIN sale_items si ON s.id = si.sale_id 
+                                WHERE s.payment_type = 'credit'
+                                AND s.date < :previousPeriodStart
+                                AND s.date >= DATE_SUB(:previousPeriodStart, INTERVAL 30 DAY)";
+    $stmt = $conn->prepare($previousCreditSalesQuery);
+    $stmt->execute(['previousPeriodStart' => $previousPeriodStart]);
+    $previousCreditSales = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    // Calculate credit sales percentage change
+    $creditSalesPercentage = $previousCreditSales > 0 ? 
+        round((($creditSales - $previousCreditSales) / $previousCreditSales) * 100, 1) : 0;
+    
+    // Fetch current period cash purchases
+    $currentCashPurchasesQuery = "SELECT COALESCE(SUM(pi.total_price), 0) as total 
+                                 FROM purchases p 
+                                 JOIN purchase_items pi ON p.id = pi.purchase_id 
+                                 WHERE p.payment_type = 'cash'
+                                 AND p.date >= :previousPeriodStart";
+    $stmt = $conn->prepare($currentCashPurchasesQuery);
+    $stmt->execute(['previousPeriodStart' => $previousPeriodStart]);
+    $cashPurchases = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    // Fetch previous period cash purchases
+    $previousCashPurchasesQuery = "SELECT COALESCE(SUM(pi.total_price), 0) as total 
+                                  FROM purchases p 
+                                  JOIN purchase_items pi ON p.id = pi.purchase_id 
+                                  WHERE p.payment_type = 'cash'
+                                  AND p.date < :previousPeriodStart
+                                  AND p.date >= DATE_SUB(:previousPeriodStart, INTERVAL 30 DAY)";
+    $stmt = $conn->prepare($previousCashPurchasesQuery);
+    $stmt->execute(['previousPeriodStart' => $previousPeriodStart]);
+    $previousCashPurchases = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    // Calculate cash purchases percentage change
+    $cashPurchasesPercentage = $previousCashPurchases > 0 ? 
+        round((($cashPurchases - $previousCashPurchases) / $previousCashPurchases) * 100, 1) : 0;
+    
+    // Fetch current period credit purchases
+    $currentCreditPurchasesQuery = "SELECT COALESCE(SUM(pi.total_price), 0) as total 
+                                   FROM purchases p 
+                                   JOIN purchase_items pi ON p.id = pi.purchase_id 
+                                   WHERE p.payment_type = 'credit'
+                                   AND p.date >= :previousPeriodStart";
+    $stmt = $conn->prepare($currentCreditPurchasesQuery);
+    $stmt->execute(['previousPeriodStart' => $previousPeriodStart]);
+    $creditPurchases = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    // Fetch previous period credit purchases
+    $previousCreditPurchasesQuery = "SELECT COALESCE(SUM(pi.total_price), 0) as total 
+                                    FROM purchases p 
+                                    JOIN purchase_items pi ON p.id = pi.purchase_id 
+                                    WHERE p.payment_type = 'credit'
+                                    AND p.date < :previousPeriodStart
+                                    AND p.date >= DATE_SUB(:previousPeriodStart, INTERVAL 30 DAY)";
+    $stmt = $conn->prepare($previousCreditPurchasesQuery);
+    $stmt->execute(['previousPeriodStart' => $previousPeriodStart]);
+    $previousCreditPurchases = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    // Calculate credit purchases percentage change
+    $creditPurchasesPercentage = $previousCreditPurchases > 0 ? 
+        round((($creditPurchases - $previousCreditPurchases) / $previousCreditPurchases) * 100, 1) : 0;
+    
+    // Fetch low stock products with unit information
+    $lowStockQuery = "SELECT p.*, c.name as category_name, u.name as unit_name 
+                      FROM products p 
+                      JOIN categories c ON p.category_id = c.id 
+                      JOIN units u ON p.unit_id = u.id
+                      WHERE p.current_quantity <= p.min_quantity 
+                      ORDER BY p.current_quantity ASC 
+                      LIMIT 4";
+    $lowStockProducts = $conn->query($lowStockQuery)->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Fetch top selling products with unit information
+    $topSellingQuery = "SELECT p.*, c.name as category_name, u.name as unit_name,
+                        SUM(si.quantity) as total_sold,
+                        si.unit_type
+                        FROM products p 
+                        JOIN categories c ON p.category_id = c.id 
+                        JOIN units u ON p.unit_id = u.id
+                        JOIN sale_items si ON p.id = si.product_id 
+                        GROUP BY p.id, si.unit_type
+                        ORDER BY total_sold DESC 
+                        LIMIT 4";
+    $topSellingProducts = $conn->query($topSellingQuery)->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Calculate warehouse occupancy percentage
+    $totalProductsQuery = "SELECT COUNT(*) as total FROM products";
+    $totalProducts = $conn->query($totalProductsQuery)->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    $lowStockCountQuery = "SELECT COUNT(*) as count FROM products WHERE current_quantity <= min_quantity";
+    $lowStockCount = $conn->query($lowStockCountQuery)->fetch(PDO::FETCH_ASSOC)['count'];
+    
+    $warehouseOccupancy = $totalProducts > 0 ? round(($lowStockCount / $totalProducts) * 100) : 0;
+    
+    // Calculate total sales and purchases for chart
+    $totalSalesQuery = "SELECT COALESCE(SUM(si.total_price), 0) as total 
+                        FROM sales s 
+                        JOIN sale_items si ON s.id = si.sale_id";
+    $totalSales = $conn->query($totalSalesQuery)->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    $totalPurchasesQuery = "SELECT COALESCE(SUM(pi.total_price), 0) as total 
+                           FROM purchases p 
+                           JOIN purchase_items pi ON p.id = pi.purchase_id";
+    $totalPurchases = $conn->query($totalPurchasesQuery)->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    $totalTransactions = $totalSales + $totalPurchases;
+    $salesPercentage = $totalTransactions > 0 ? round(($totalSales / $totalTransactions) * 100) : 0;
+    $purchasesPercentage = $totalTransactions > 0 ? round(($totalPurchases / $totalTransactions) * 100) : 0;
+    
+    // Calculate monthly sales and purchases data for chart
+    $monthlySalesQuery = "SELECT 
+            DATE_FORMAT(s.date, '%Y-%m') as month,
+            SUM(si.total_price) as total
+        FROM 
+            sales s
+        JOIN 
+            sale_items si ON s.id = si.sale_id
+        WHERE 
+            s.date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+        GROUP BY 
+            DATE_FORMAT(s.date, '%Y-%m')
+        ORDER BY 
+            month ASC";
+            
+    $monthlyPurchasesQuery = "SELECT 
+            DATE_FORMAT(p.date, '%Y-%m') as month,
+            SUM(pi.total_price) as total
+        FROM 
+            purchases p
+        JOIN 
+            purchase_items pi ON p.id = pi.purchase_id
+        WHERE 
+            p.date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+        GROUP BY 
+            DATE_FORMAT(p.date, '%Y-%m')
+        ORDER BY 
+            month ASC";
+    
+    $salesData = $conn->query($monthlySalesQuery)->fetchAll(PDO::FETCH_ASSOC);
+    $purchasesData = $conn->query($monthlyPurchasesQuery)->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Format the data for the chart
+    $chartMonths = [];
+    $chartSales = [];
+    $chartPurchases = [];
+    
+    // Get the last 6 months
+    $months = [];
+    for ($i = 5; $i >= 0; $i--) {
+        $months[] = date('Y-m', strtotime("-$i month"));
+    }
+    
+    // Initialize arrays with zeros
+    foreach ($months as $month) {
+        $chartMonths[] = date('M Y', strtotime($month));
+        $chartSales[$month] = 0;
+        $chartPurchases[$month] = 0;
+    }
+    
+    // Fill in actual data where it exists
+    foreach ($salesData as $data) {
+        if (isset($chartSales[$data['month']])) {
+            $chartSales[$data['month']] = (float)$data['total'];
+        }
+    }
+    
+    foreach ($purchasesData as $data) {
+        if (isset($chartPurchases[$data['month']])) {
+            $chartPurchases[$data['month']] = (float)$data['total'];
+        }
+    }
+    
+    // Convert to simple arrays for the chart
+    $salesValues = array_values($chartSales);
+    $purchasesValues = array_values($chartPurchases);
+    
+    // JSON encode for JavaScript use
+    $chartMonthsJson = json_encode(array_values($chartMonths));
+    $salesValuesJson = json_encode($salesValues);
+    $purchasesValuesJson = json_encode($purchasesValues);
+    
+} catch(PDOException $e) {
+    die("Connection failed: " . $e->getMessage());
+}
 ?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
@@ -9,6 +240,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#7380ec">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>ASHKAN Warehouse - سیستەمی بەڕێوەبردنی کۆگا</title>
 
@@ -34,6 +266,54 @@
             --info-color: #0d6efd;
         }
         
+        /* Table cell alignment fixes */
+        .product-table td {
+            vertical-align: middle !important;
+        }
+        
+        .product-table .product-img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        
+        .product-table .product-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .product-table .quantity-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .product-table .quantity-info .product-count {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+        
+        .product-table .quantity-info .unit-type {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        /* Currency alignment fix */
+        .kpi-value {
+            direction: ltr;
+            text-align: right;
+            color: #000000;
+            font-weight: 700;
+            font-size: 1.75rem;
+        }
+        
+        .kpi-value .currency {
+            margin-right: 4px;
+        }
+        
         /* Enhanced KPI card styles */
         .kpi-card {
             border: 1px solid #dee2e6;
@@ -43,12 +323,6 @@
         .kpi-title {
             color: #212529;
             font-weight: 600;
-        }
-        
-        .kpi-value {
-            color: #000000;
-            font-weight: 700;
-            font-size: 1.75rem;
         }
         
         .kpi-comparison.positive {
@@ -276,9 +550,9 @@
                                     </div>
                                 </div>
                                 <div class="kpi-content">
-                                    <div class="kpi-value">$ 24,500</div>
-                                    <div class="kpi-comparison positive">
-                                        <i class="fas fa-arrow-up"></i> 12.5%
+                                    <div class="kpi-value"><?php echo number_format($cashSales, 0, '.', ','); ?> <span class="currency">د.ع</span></div>
+                                    <div class="kpi-comparison <?php echo $cashSalesPercentage >= 0 ? 'positive' : 'negative'; ?>">
+                                        <i class="fas fa-arrow-<?php echo $cashSalesPercentage >= 0 ? 'up' : 'down'; ?>"></i> <?php echo abs($cashSalesPercentage); ?>%
                                     </div>
                                 </div>
                             </div>
@@ -294,9 +568,9 @@
                                     </div>
                                 </div>
                                 <div class="kpi-content">
-                                    <div class="kpi-value">157</div>
-                                    <div class="kpi-comparison positive">
-                                        <i class="fas fa-arrow-up"></i> 8.2%
+                                    <div class="kpi-value"><?php echo number_format($creditSales, 0, '.', ','); ?> <span class="currency">د.ع</span></div>
+                                    <div class="kpi-comparison <?php echo $creditSalesPercentage >= 0 ? 'positive' : 'negative'; ?>">
+                                        <i class="fas fa-arrow-<?php echo $creditSalesPercentage >= 0 ? 'up' : 'down'; ?>"></i> <?php echo abs($creditSalesPercentage); ?>%
                                     </div>
                                 </div>
                             </div>
@@ -312,9 +586,9 @@
                                     </div>
                                 </div>
                                 <div class="kpi-content">
-                                    <div class="kpi-value">2,856</div>
-                                    <div class="kpi-comparison negative">
-                                        <i class="fas fa-arrow-down"></i> 3.1%
+                                    <div class="kpi-value"><?php echo number_format($cashPurchases, 0, '.', ','); ?> <span class="currency">د.ع</span></div>
+                                    <div class="kpi-comparison <?php echo $cashPurchasesPercentage >= 0 ? 'positive' : 'negative'; ?>">
+                                        <i class="fas fa-arrow-<?php echo $cashPurchasesPercentage >= 0 ? 'up' : 'down'; ?>"></i> <?php echo abs($cashPurchasesPercentage); ?>%
                                     </div>
                                 </div>
                             </div>
@@ -330,9 +604,9 @@
                                     </div>
                                 </div>
                                 <div class="kpi-content">
-                                    <div class="kpi-value">78,000</div>
-                                    <div class="kpi-comparison positive">
-                                        <i class="fas fa-arrow-up"></i> 5.7%
+                                    <div class="kpi-value"><?php echo number_format($creditPurchases, 0, '.', ','); ?> <span class="currency">د.ع</span></div>
+                                    <div class="kpi-comparison <?php echo $creditPurchasesPercentage >= 0 ? 'positive' : 'negative'; ?>">
+                                        <i class="fas fa-arrow-<?php echo $creditPurchasesPercentage >= 0 ? 'up' : 'down'; ?>"></i> <?php echo abs($creditPurchasesPercentage); ?>%
                                     </div>
                                 </div>
                             </div>
@@ -346,7 +620,7 @@
                             <div class="card chart-card h-100">
                                 <div class="card-header bg-transparent border-0">
                                     <div class="chart-header d-flex justify-content-between align-items-center flex-wrap">
-                                        <h5 class="chart-title mb-2 mb-md-0">شیکاری فرۆش</h5>
+                                        <h5 class="chart-title mb-2 mb-md-0">شیکاری فرۆش و کڕین</h5>
                                         <div class="chart-actions">
                                             <button class="btn btn-sm btn-outline-primary me-2">
                                                 <i class="fas fa-download"></i> <span class="d-none d-md-inline">داگرتن</span>
@@ -380,24 +654,20 @@
                         <div class="col-lg-4 col-md-12 mb-4">
                             <div class="card h-100">
                                 <div class="card-header bg-transparent border-0">
-                                    <h5 class="card-title">شیکاری کۆگا</h5>
+                                    <h5 class="card-title">شیکاری فرۆشتن و کڕین</h5>
                                 </div>
                                 <div class="card-body d-flex flex-column justify-content-center">
                                     <div class="progress-circle-container">
-                                        <div class="progress-indicator">
-                                            <div class="progress-value">68<span style="font-size: 1.2rem;">%</span></div>
-                                            <div class="progress-label">پڕبوونی کۆگا</div>
-                                        </div>
                                         <canvas id="inventoryChart"></canvas>
                                     </div>
-                                    <div class="progress-legend">
+                                    <div class="progress-legend mt-3">
                                         <div class="legend-item">
                                             <span class="legend-color blue"></span>
-                                            <span>پڕبوو</span>
+                                            <span>فرۆشتن (<?php echo $salesPercentage; ?>%)</span>
                                         </div>
                                         <div class="legend-item">
                                             <span class="legend-color light-blue"></span>
-                                            <span>بەتاڵ</span>
+                                            <span>کڕین (<?php echo $purchasesPercentage; ?>%)</span>
                                         </div>
                                     </div>
                                 </div>
@@ -430,54 +700,29 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
+                                                <?php foreach ($lowStockProducts as $product): ?>
                                                 <tr>
                                                     <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <img src="assets/img/pro-1.png" class="product-img me-3"
-                                                                alt="Product">
-                                                            <span>سەماوەر</span>
+                                                        <div class="product-info">
+                                                            <img src="<?php echo $product['image'] ? $product['image'] : 'assets/img/pro-1.png'; ?>" 
+                                                                 class="product-img" alt="Product">
+                                                            <span><?php echo htmlspecialchars($product['name']); ?></span>
                                                         </div>
                                                     </td>
-                                                    <td>P-1001</td>
-                                                    <td><span class="product-count">3</span></td>
-                                                    <td><span class="badge bg-danger">کەم</span></td>
-                                                </tr>
-                                                <tr>
+                                                    <td><?php echo htmlspecialchars($product['barcode']); ?></td>
                                                     <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <img src="assets/img/pro-1.png" class="product-img me-3"
-                                                                alt="Product">
-                                                            <span>شەرباتخۆر</span>
+                                                        <div class="quantity-info">
+                                                            <span class="product-count"><?php echo $product['current_quantity']; ?></span>
+                                                            <span class="unit-type"><?php echo htmlspecialchars($product['unit_name']); ?></span>
                                                         </div>
                                                     </td>
-                                                    <td>P-1002</td>
-                                                    <td><span class="product-count">5</span></td>
-                                                    <td><span class="badge bg-warning text-dark">کەم</span></td>
-                                                </tr>
-                                                <tr>
                                                     <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <img src="assets/img/pro-1.png" class="product-img me-3"
-                                                                alt="Product">
-                                                            <span>تلێفزیۆن</span>
-                                                        </div>
+                                                        <span class="badge <?php echo $product['current_quantity'] <= $product['min_quantity'] ? 'bg-danger' : 'bg-warning text-dark'; ?>">
+                                                            کەم
+                                                        </span>
                                                     </td>
-                                                    <td>P-1003</td>
-                                                    <td><span class="product-count">8</span></td>
-                                                    <td><span class="badge bg-warning text-dark">کەم</span></td>
                                                 </tr>
-                                                <tr>
-                                                    <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <img src="assets/img/pro-1.png" class="product-img me-3"
-                                                                alt="Product">
-                                                            <span>مایکرۆویڤ</span>
-                                                        </div>
-                                                    </td>
-                                                    <td>P-1004</td>
-                                                    <td><span class="product-count">2</span></td>
-                                                    <td><span class="badge bg-danger">کەم</span></td>
-                                                </tr>
+                                                <?php endforeach; ?>
                                             </tbody>
                                         </table>
                                     </div>
@@ -508,54 +753,36 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
+                                                <?php foreach ($topSellingProducts as $product): ?>
                                                 <tr>
                                                     <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <img src="assets/img/pro-1.png" class="product-img me-3"
-                                                                alt="Product">
-                                                            <span>کمپیوتەر</span>
+                                                        <div class="product-info">
+                                                            <img src="<?php echo $product['image'] ? $product['image'] : 'assets/img/pro-1.png'; ?>" 
+                                                                 class="product-img" alt="Product">
+                                                            <span><?php echo htmlspecialchars($product['name']); ?></span>
                                                         </div>
                                                     </td>
-                                                    <td>P-2001</td>
-                                                    <td><span class="product-count">32</span></td>
-                                                    <td><a href="#" class="btn btn-sm btn-outline-primary">بینین</a></td>
-                                                </tr>
-                                                <tr>
+                                                    <td><?php echo htmlspecialchars($product['barcode']); ?></td>
                                                     <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <img src="assets/img/pro-1.png" class="product-img me-3"
-                                                                alt="Product">
-                                                            <span>مۆبایل</span>
+                                                        <div class="quantity-info">
+                                                            <span class="product-count"><?php echo $product['total_sold']; ?></span>
+                                                            <span class="unit-type">
+                                                                <?php 
+                                                                $unitType = $product['unit_type'];
+                                                                if ($unitType == 'piece') {
+                                                                    echo 'دانە';
+                                                                } elseif ($unitType == 'box') {
+                                                                    echo 'کارتۆن';
+                                                                } elseif ($unitType == 'set') {
+                                                                    echo 'سێت';
+                                                                }
+                                                                ?>
+                                                            </span>
                                                         </div>
                                                     </td>
-                                                    <td>P-2002</td>
-                                                    <td><span class="product-count">28</span></td>
                                                     <td><a href="#" class="btn btn-sm btn-outline-primary">بینین</a></td>
                                                 </tr>
-                                                <tr>
-                                                    <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <img src="assets/img/pro-1.png" class="product-img me-3"
-                                                                alt="Product">
-                                                            <span>سەلاجە</span>
-                                                        </div>
-                                                    </td>
-                                                    <td>P-2003</td>
-                                                    <td><span class="product-count">25</span></td>
-                                                    <td><a href="#" class="btn btn-sm btn-outline-primary">بینین</a></td>
-                                                </tr>
-                                                <tr>
-                                                    <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <img src="assets/img/pro-1.png" class="product-img me-3"
-                                                                alt="Product">
-                                                            <span>تەلەفزیۆن</span>
-                                                        </div>
-                                                    </td>
-                                                    <td>P-2004</td>
-                                                    <td><span class="product-count">20</span></td>
-                                                    <td><a href="#" class="btn btn-sm btn-outline-primary">بینین</a></td>
-                                                </tr>
+                                                <?php endforeach; ?>
                                             </tbody>
                                         </table>
                                     </div>
@@ -620,6 +847,171 @@
     <script src="js/include-components.js"></script>
     <!-- Other custom scripts -->
     <script src="js/dashboard.js"></script>
+    <script>
+    // Sales and Purchases chart
+    document.addEventListener('DOMContentLoaded', function() {
+        var ctx = document.getElementById('salesChart').getContext('2d');
+        
+        // Parse data from PHP
+        var months = <?php echo $chartMonthsJson; ?>;
+        var salesData = <?php echo $salesValuesJson; ?>;
+        var purchasesData = <?php echo $purchasesValuesJson; ?>;
+        
+        // Calculate max value for better y-axis scaling
+        var maxValue = Math.max(...salesData, ...purchasesData);
+        var yAxisMax = Math.ceil(maxValue * 1.1 / 1000000) * 1000000; // Round up to nearest million
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [
+                    {
+                        label: 'فرۆشتن',
+                        data: salesData,
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)', // Light blue with opacity
+                        borderColor: '#0d6efd',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4, // Smooth curves
+                        pointBackgroundColor: '#0d6efd',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    },
+                    {
+                        label: 'کڕین',
+                        data: purchasesData,
+                        backgroundColor: 'rgba(168, 199, 250, 0.1)', // Very light blue with opacity
+                        borderColor: '#a8c7fa',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4, // Smooth curves
+                        pointBackgroundColor: '#a8c7fa',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: yAxisMax,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                if (value >= 1000000) {
+                                    return (value / 1000000).toFixed(1) + ' ملیۆن د.ع';
+                                } else if (value >= 1000) {
+                                    return (value / 1000).toFixed(1) + ' هەزار د.ع';
+                                }
+                                return value + ' د.ع';
+                            },
+                            padding: 10
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            padding: 10
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        align: 'end',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        titleColor: '#000',
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyColor: '#666',
+                        bodyFont: {
+                            size: 13
+                        },
+                        borderColor: 'rgba(0, 0, 0, 0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                var label = context.dataset.label || '';
+                                var value = context.parsed.y || 0;
+                                if (value >= 1000000) {
+                                    return label + ': ' + (value / 1000000).toFixed(1) + ' ملیۆن د.ع';
+                                } else if (value >= 1000) {
+                                    return label + ': ' + (value / 1000).toFixed(1) + ' هەزار د.ع';
+                                }
+                                return label + ': ' + value + ' د.ع';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+
+    // Update the inventory chart (doughnut chart)
+    document.addEventListener('DOMContentLoaded', function() {
+        var ctx = document.getElementById('inventoryChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['فرۆشتن', 'کڕین'],
+                datasets: [{
+                    data: [<?php echo $salesPercentage; ?>, <?php echo $purchasesPercentage; ?>],
+                    backgroundColor: ['#0d6efd', '#a8c7fa'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                cutout: '65%',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var label = context.label || '';
+                                var value = context.formattedValue || '';
+                                return label + ': ' + value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+    </script>
 </body>
 
 </html>
