@@ -27,6 +27,20 @@ $(document).ready(function() {
             return;
         }
         
+        // For selling tab, fetch initial invoice number
+        if (firstTab.data('receipt-type') === 'selling') {
+            $.ajax({
+                url: 'api/get_next_invoice.php',
+                type: 'GET',
+                data: { type: 'selling' },
+                success: function(response) {
+                    if (response.success) {
+                        firstTab.find('.receipt-number').val(response.invoice_number);
+                    }
+                }
+            });
+        }
+        
         // Initialize product dropdowns
         console.log('Initializing product dropdowns in first tab...');
         $('.product-select').each(function() {
@@ -121,18 +135,11 @@ $(document).ready(function() {
     function formatProductResult(product) {
         if (!product.id) return product.text;
         
-        // Create a more detailed result with stock information
+        // Simple display showing only product name and barcode
         return $(
-            `<div class="product-result d-flex justify-content-between align-items-center">
-                <div class="product-info">
-                    <div class="product-name">${product.text}</div>
-                    <div class="product-meta small text-muted">کۆد: ${product.code} | بارکۆد: ${product.barcode}</div>
-                </div>
-                <div class="product-price text-end">
-                    <div>دانە: ${product.selling_price_single}</div>
-                    ${product.selling_price_wholesale ? `<div>کۆمەڵ: ${product.selling_price_wholesale}</div>` : ''}
-                    <div class="text-success">بەردەست: ${product.current_quantity}</div>
-                </div>
+            `<div class="product-result">
+                <div class="product-name">${product.text}</div>
+                <div class="product-meta small text-muted">بارکۆد: ${product.barcode}</div>
             </div>`
         );
     }
@@ -222,10 +229,7 @@ $(document).ready(function() {
         // Show only name for the selected product
         return $(
             `<div class="d-flex align-items-center justify-content-between w-100">
-                <span title="${product.text} (${product.code})">${product.text}</span>
-                <button type="button" class="btn btn-sm btn-outline-info product-info-btn ms-2" data-product-id="${product.id}">
-                    <i class="fas fa-info-circle"></i>
-                </button>
+                <span title="${product.text}">${product.text}</span>
             </div>`
         );
     }
@@ -244,6 +248,9 @@ $(document).ready(function() {
         // Reset the product select - create a new one instead of cloning
         const productCell = newRow.find('td:nth-child(2)');
         productCell.html('<select class="form-control product-select" style="width: 100%"></select>');
+        
+        // Clear the image cell
+        newRow.find('.product-image-cell').empty();
         
         newRow.appendTo(itemsList);
         
@@ -485,6 +492,18 @@ $(document).ready(function() {
         
         if (newTabType === 'selling') {
             tabContent = $('#selling-template').html();
+            
+            // Fetch next invoice number for sales
+            $.ajax({
+                url: 'api/get_next_invoice.php',
+                type: 'GET',
+                data: { type: 'selling' },
+                success: function(response) {
+                    if (response.success) {
+                        $(`#${tabId} .receipt-number`).val(response.invoice_number);
+                    }
+                }
+            });
         } else if (newTabType === 'buying') {
             tabContent = $('#buying-template').html();
         } else if (newTabType === 'wasting') {
@@ -622,6 +641,9 @@ $(document).ready(function() {
             // Set unit price based on receipt type
             const tabPane = row.closest('.tab-pane');
             const receiptType = tabPane.data('receipt-type');
+            
+            // Display product image
+            fetchProductImage(productData.id, row);
             
             if (receiptType === 'selling') {
                 const priceType = tabPane.find('.price-type').val();
@@ -811,48 +833,55 @@ $(document).ready(function() {
         let isValid = true;
         
         // Check if invoice number exists
-        if (invoiceNumber) {
+        if (!invoiceNumber && receiptType === 'selling') {
+            // Fetch new invoice number if not set
             $.ajax({
-                url: 'api/check_invoice.php',
-                type: 'POST',
-                data: {
-                    invoice_number: invoiceNumber,
-                    receipt_type: receiptType
-                },
+                url: 'api/get_next_invoice.php',
+                type: 'GET',
+                data: { type: 'selling' },
                 async: false,
                 success: function(response) {
-                    if (response.exists) {
-                        Swal.fire('هەڵە', 'ژمارەی پسووڵە پێشتر بەکارهاتووە', 'error');
+                    if (response.success) {
+                        tabPane.find('.receipt-number').val(response.invoice_number);
+                    } else {
+                        Swal.fire('هەڵە', 'کێشەیەک هەیە لە دروستکردنی ژمارەی پسوڵە', 'error');
                         isValid = false;
                     }
+                },
+                error: function() {
+                    Swal.fire('هەڵە', 'کێشەیەک هەیە لە دروستکردنی ژمارەی پسوڵە', 'error');
+                    isValid = false;
                 }
             });
         }
         
         // Check required fields specific to each receipt type
         if (isValid) {
-        if (receiptType === 'selling' && !tabPane.find('.customer-select').val()) {
-            Swal.fire('هەڵە', 'تکایە کڕیار هەڵبژێرە', 'error');
-            isValid = false;
-        } else if (receiptType === 'buying' && !tabPane.find('.supplier-select').val()) {
-            Swal.fire('هەڵە', 'تکایە فرۆشیار هەڵبژێرە', 'error');
-            isValid = false;
-        } else if (receiptType === 'wasting' && !tabPane.find('.responsible-select').val()) {
-            Swal.fire('هەڵە', 'تکایە بەرپرسیار هەڵبژێرە', 'error');
+            if (receiptType === 'selling' && !tabPane.find('.customer-select').val()) {
+                Swal.fire('هەڵە', 'تکایە کڕیار هەڵبژێرە', 'error');
+                isValid = false;
+            } else if (receiptType === 'buying' && !tabPane.find('.supplier-select').val()) {
+                Swal.fire('هەڵە', 'تکایە فرۆشیار هەڵبژێرە', 'error');
+                isValid = false;
+            } else if (receiptType === 'wasting' && !tabPane.find('.responsible-select').val()) {
+                Swal.fire('هەڵە', 'تکایە بەرپرسیار هەڵبژێرە', 'error');
                 isValid = false;
             }
         }
         
         // If form is valid, submit it
         if (isValid) {
+            // Get the final invoice number
+            const finalInvoiceNumber = tabPane.find('.receipt-number').val();
+            
             // Collect form data
             const formData = {
                 receipt_type: receiptType,
+                invoice_number: finalInvoiceNumber,
                 items: []
             };
             
             // Common fields
-            formData.invoice_number = tabPane.find('.receipt-number').val();
             formData.notes = tabPane.find('.notes').val();
             formData.discount = tabPane.find('.discount').val() || 0;
             
@@ -931,15 +960,20 @@ $(document).ready(function() {
                 dataType: 'json',
                 success: function(response) {
                     if (response.success) {
-                        // Show success message
+                        // Show success message with custom styling
                         Swal.fire({
                             title: 'سەرکەوتوو',
                             text: 'پسوڵە بە سەرکەوتوویی پاشەکەوت کرا',
                             icon: 'success',
-                            confirmButtonText: 'باشە'
+                            confirmButtonText: 'باشە',
+                            customClass: {
+                                popup: 'swal2-rtl',
+                                title: 'swal2-title',
+                                htmlContainer: 'swal2-html-container',
+                                confirmButton: 'swal2-confirm'
+                            }
                         }).then((result) => {
-                            // Don't redirect, just reset the current tab or create a new one
-                            // Clear form fields, but keep the customer/supplier selection
+                            // Reset form after success
                             const currentTab = $('.tab-pane.active');
                             const receiptType = currentTab.data('receipt-type');
                             
@@ -984,12 +1018,34 @@ $(document).ready(function() {
                             }
                         });
                     } else {
-                        Swal.fire('هەڵە', response.message || 'هەڵەیەک ڕوویدا', 'error');
+                        Swal.fire({
+                            title: 'هەڵە',
+                            text: response.message || 'هەڵەیەک ڕوویدا',
+                            icon: 'error',
+                            confirmButtonText: 'باشە',
+                            customClass: {
+                                popup: 'swal2-rtl',
+                                title: 'swal2-title',
+                                htmlContainer: 'swal2-html-container',
+                                confirmButton: 'swal2-confirm'
+                            }
+                        });
                     }
                 },
                 error: function(xhr, status, error) {
                     console.error(xhr.responseText);
-                    Swal.fire('هەڵە', 'هەڵەیەک ڕوویدا لە کاتی پاشەکەوتکردن', 'error');
+                    Swal.fire({
+                        title: 'هەڵە',
+                        text: 'هەڵەیەک ڕوویدا لە کاتی پاشەکەوتکردن',
+                        icon: 'error',
+                        confirmButtonText: 'باشە',
+                        customClass: {
+                            popup: 'swal2-rtl',
+                            title: 'swal2-title',
+                            htmlContainer: 'swal2-html-container',
+                            confirmButton: 'swal2-confirm'
+                        }
+                    });
                 }
             });
         }
@@ -1180,7 +1236,12 @@ $(document).ready(function() {
             text: 'سێلێکتەکان بە سەرکەوتووی نوێ کرانەوە',
             icon: 'success',
             timer: 1500,
-            showConfirmButton: false
+            showConfirmButton: false,
+            customClass: {
+                popup: 'swal2-rtl',
+                title: 'swal2-title',
+                htmlContainer: 'swal2-html-container'
+            }
         });
     });
 
@@ -1295,5 +1356,68 @@ $(document).ready(function() {
         initializeProductSelect(newRow.find('.product-select'));
         
         return newRow;
+    }
+
+    // Function to fetch product image
+    function fetchProductImage(productId, row) {
+        $.ajax({
+            url: 'api/product_details.php',
+            type: 'GET',
+            data: { id: productId },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success && response.product) {
+                    const imageUrl = response.product.image || 'assets/img/pro-1.png';
+                    const productName = response.product.name || 'کاڵا';
+                    const imgHtml = `
+                        <div class="product-image-container" data-bs-toggle="tooltip" data-bs-placement="top" title="${productName}">
+                            <img src="${imageUrl}" alt="${productName}" class="product-image">
+                        </div>`;
+                    
+                    // Add image to the designated cell
+                    row.find('.product-image-cell').html(imgHtml);
+
+                    // Initialize tooltips
+                    const tooltips = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                    tooltips.forEach(function (tooltipTriggerEl) {
+                        new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
+
+                    // Add click event for zooming
+                    row.find('.product-image-container').on('click', function() {
+                        const img = $(this).find('img');
+                        const modal = document.createElement('div');
+                        modal.className = 'modal fade image-modal';
+                        modal.innerHTML = `
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <img src="${img.attr('src')}" alt="${img.attr('alt')}">
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        document.body.appendChild(modal);
+                        const modalInstance = new bootstrap.Modal(modal);
+                        modalInstance.show();
+                        
+                        $(modal).on('hidden.bs.modal', function () {
+                            modal.remove();
+                        });
+                    });
+                }
+            },
+            error: function() {
+                // If error, show default image
+                const imgHtml = `
+                    <div class="product-image-container">
+                        <img src="assets/img/pro-1.png" alt="کاڵا" class="product-image">
+                    </div>`;
+                row.find('.product-image-cell').html(imgHtml);
+            }
+        });
     }
 });

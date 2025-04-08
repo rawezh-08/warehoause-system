@@ -65,11 +65,10 @@
 }
 
 @font-face {
-    font-family: 'Rabar';
+    font-family: 'NRTRabar';
     src: url('../assets/fonts/Rabar_021.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
-    font-display: swap;
 }
 
 @font-face {
@@ -84,12 +83,12 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Rabar', sans-serif;
+    font-family: 'NRTRabar', sans-serif;
 }
 
 /* Base styles */
 body {
-    font-family: 'Rabar', sans-serif;
+    font-family: 'NRTRabar', sans-serif !important;
     background-color: #f5f7fa;
     color: var(--text-color);
     line-height: 1.6;
