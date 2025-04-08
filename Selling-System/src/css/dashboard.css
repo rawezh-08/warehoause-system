@@ -30,7 +30,7 @@
   --transition-speed: 0.3s;
 
   /* Typography */
-  --font-body: 'Zain', sans-serif;
+  --font-body: 'Rabar', sans-serif;
   --font-size-xs: 12px;
   --font-size-sm: 14px;
   --font-size-md: 16px;
@@ -70,7 +70,7 @@
 }
 
 @font-face {
-  font-family: 'Zain';
+  font-family: 'Rabar';
   src: url('../assets/fonts/Roboto-Regular.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;

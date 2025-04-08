@@ -73,7 +73,7 @@
 }
 
 @font-face {
-    font-family: 'Zain';
+    font-family: 'Rabar';
     src: url('../assets/fonts/zain.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
@@ -84,7 +84,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Zain', sans-serif;
+    font-family: 'Rabar', sans-serif;
 }
 
 /* Base styles */

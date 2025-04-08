@@ -1050,7 +1050,7 @@ $totalProductsSold = array_sum(array_column($topProducts, 'quantity'));
             chart: {
                 height: 350,
                 type: 'bar',
-                fontFamily: 'Zain, sans-serif',
+                fontFamily: 'Rabar, sans-serif',
                 toolbar: {
                     show: false
                 }
@@ -1079,7 +1079,7 @@ $totalProductsSold = array_sum(array_column($topProducts, 'quantity'));
                 position: 'bottom',
                 labels: {
                     style: {
-                        fontFamily: 'Zain, sans-serif'
+                        fontFamily: 'Rabar, sans-serif'
                     }
                 },
                 axisBorder: {
@@ -1095,7 +1095,7 @@ $totalProductsSold = array_sum(array_column($topProducts, 'quantity'));
                         return val.toLocaleString() + ' د.ع';
                     },
                     style: {
-                        fontFamily: 'Zain, sans-serif'
+                        fontFamily: 'Rabar, sans-serif'
                     }
                 }
             },
@@ -1125,13 +1125,13 @@ $totalProductsSold = array_sum(array_column($topProducts, 'quantity'));
                 width: '100%',
                 height: 350,
                 type: 'pie',
-                fontFamily: 'Zain, sans-serif'
+                fontFamily: 'Rabar, sans-serif'
             },
             labels: ['جۆری ١', 'جۆری ٢', 'جۆری ٣', 'جۆری ٤', 'جۆری ٥'],
             colors: ['#7380ec', '#41f1b6', '#ffbb55', '#ff7782', '#9a86f3'],
             legend: {
                 position: 'bottom',
-                fontFamily: 'Zain, sans-serif'
+                fontFamily: 'Rabar, sans-serif'
             },
             responsive: [{
                 breakpoint: 480,
@@ -1146,7 +1146,7 @@ $totalProductsSold = array_sum(array_column($topProducts, 'quantity'));
             }],
             dataLabels: {
                 style: {
-                    fontFamily: 'Zain, sans-serif'
+                    fontFamily: 'Rabar, sans-serif'
                 }
             },
             tooltip: {
