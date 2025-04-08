@@ -17,8 +17,8 @@
     --text-muted: #848bc82e;
 
     /* Text Colors */
-    --text-primary: #363949;
-    --text-secondary: #848bc82e;
+    --text-primary: #00000087;
+    --text-secondary: #00000074;
     --text-tertiary: #6b6b6b;
 
     
@@ -157,84 +157,6 @@ a:hover {
     font-size: 0.6rem;
 }
 
-/* Navbar Styles */
-.navbar {
-    padding: 0 1rem;
-    background-color: white;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
-    position: fixed;
-    top: 0;
-    right: 0;
-    left: 0;
-    height: 60px;
-    z-index: 1020;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.navbar-nav {
-    display: flex;
-    align-items: center;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    margin-left: auto; /* Push items to the left */
-}
-
-.nav-item {
-    height: 100%;
-    display: flex;
-    align-items: center;
-    margin-left: 0.5rem; /* Reduce space between items */
-}
-
-.nav-link {
-    display: flex;
-    align-items: center;
-    height: 100%;
-    padding: 0 0.75rem; /* Reduce horizontal padding */
-    color: var(--dark-color);
-    text-decoration: none;
-    transition: color 0.3s ease;
-}
-
-.nav-link:hover {
-    color: var(--primary-color);
-}
-
-/* Notification Bell */
-.notification-bell {
-    position: relative;
-    margin-left: 0.5rem; /* Reduce space between bell and avatar */
-}
-
-.notification-badge {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    background-color: var(--danger-color);
-    color: white;
-    border-radius: 50%;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-    min-width: 18px;
-    height: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* User Avatar */
-.user-avatar {
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-left: 0.5rem; /* Reduce space between avatar and other elements */
-}
-
 
 /* Main content */
 .main-content {
@@ -293,7 +215,7 @@ body.sidebar-active .main-content {
 /* Form controls */
 .form-label {
     font-weight: 500;
-    color: var(--primary-color);
+    color: var(--text-secondary);
     margin-bottom: var(--spacing-sm);
 }
 
@@ -363,7 +285,7 @@ input[type="number"]::placeholder {
 .btn-primary:hover {
     background-color: var(--primary-hover);
     border-color: var(--primary-hover);
-    transform: translateY(-2px);
+    transform: translateX(+2px);
     box-shadow: var(--shadow-hover);
 }
 
@@ -973,3 +895,57 @@ body.sidebar-active .sidebar-toggle img {
 div{
     color: var(--text-tertiary);
 } 
+
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="time"],
+input[type="week"],
+select,
+textarea {
+    color: var(--primary-color);
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="email"]:focus, 
+input[type="password"]:focus,
+input[type="search"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+input[type="date"]:focus,
+input[type="datetime-local"]:focus,
+input[type="month"]:focus,
+input[type="time"]:focus,
+input[type="week"]:focus,
+select:focus,
+textarea:focus {
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+}
+
+input[type="text"]:focus::placeholder,
+input[type="number"]:focus::placeholder,
+input[type="email"]:focus::placeholder,
+input[type="password"]:focus::placeholder,
+input[type="search"]:focus::placeholder,
+input[type="tel"]:focus::placeholder,
+input[type="url"]:focus::placeholder,
+input[type="date"]:focus::placeholder,
+input[type="datetime-local"]:focus::placeholder,
+input[type="month"]:focus::placeholder,
+input[type="time"]:focus::placeholder,
+input[type="week"]:focus::placeholder,
+select:focus::placeholder,
+textarea:focus::placeholder {
+    color: var(--primary-color);
+}
+
+ 

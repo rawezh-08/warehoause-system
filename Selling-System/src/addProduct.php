@@ -41,57 +41,17 @@ try {
     <!-- Global CSS -->
     <link rel="stylesheet" href="assets/css/custom.css">
     <!-- Page CSS -->
+    <!-- <link rel="stylesheet" href="css/dashboard.css"> -->
     <link rel="stylesheet" href="css/addProduct.css">
-    <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/global.css">
-    <style>
-        .product-thumbnail {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 4px;
-        }
-        .product-icon {
-            width: 60px;
-            height: 60px;
-            /* display: flex; */
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            background-color: #f8f9fa;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .product-icon i {
-            font-size: 1.5rem;
-            color: #0d6efd;
-        }
-        .list-group-item {
-            transition: all 0.3s ease;
-            padding: 1rem;
-            border-left: none;
-            border-right: none;
-        }
-        .list-group-item:hover {
-            background-color: #f8f9fa;
-        }
-        .badge.bg-success {
-            padding: 0.5rem 0.75rem;
-            font-weight: 500;
-        }
-        .product-info h6 {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-        .product-info small {
-            font-size: 0.8rem;
-        }
-    </style>
+
+
+   
 </head>
 <body>
 <div>
 <div id="navbar-container"></div>
-
+    
 <!-- Sidebar container - will be populated by JavaScript -->
 <div id="sidebar-container"></div>
     <!-- Main Content Wrapper -->
@@ -116,7 +76,7 @@ try {
                                     
                                     <div class="tab-header d-flex flex-wrap mb-4">
                                         <div class="tab-item active me-3 mb-2" data-tab="basic-info">زانیاری بنەڕەتی</div>
-                                        <div class="tab-item me-3 mb-2" data-tab="price-info">نرخ</div>
+                                        <div class="tab-item me-3 mb-2" data-tab="price-info">نرخ و بڕی کاڵا</div>
                                     </div>
                                     
                                     <form id="addProductForm" action="process/add_product.php" method="POST" enctype="multipart/form-data">
@@ -184,12 +144,13 @@ try {
                                                 <div class="col-md-12 mb-3">
                                                     <label class="form-label">وێنەی کاڵا</label>
                                                     <div class="product-image-upload">
+                                                    <button type="button" id="uploadBtn" class="btn btn-light upload-btn mt-2 w-100">
                                                         <div class="image-preview">
                                                             <i class="fas fa-cloud-upload-alt"></i>
                                                             <p>وێنە هەڵبژێرە</p>
                                                         </div>
                                                         <input type="file" id="productImage" name="image" class="form-control d-none">
-                                                        <button type="button" id="uploadBtn" class="btn btn-light upload-btn mt-2 w-100">وێنە هەڵبژێرە</button>
+                                                        </button>
                                                     </div>
                                                 </div>
                                          
