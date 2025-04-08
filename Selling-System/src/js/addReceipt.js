@@ -415,11 +415,47 @@ $(document).ready(function() {
         }
     });
 
-    // Receipt type buttons
-    $('.receipt-type-btn').click(function() {
+    // Receipt type tabs click handler
+    $('.receipt-type-btn').on('click', function() {
+        // Get the new type
+        const newType = $(this).data('type');
+        
+        // If it's already active, do nothing
+        if ($(this).hasClass('active')) return;
+        
+        // Remove active class from all tabs
         $('.receipt-type-btn').removeClass('active');
+        
+        // Add active class to clicked tab
         $(this).addClass('active');
-        activeReceiptType = $(this).data('type');
+        
+        // Set the active receipt type
+        activeReceiptType = newType;
+        
+        // When changing receipt type, we also need to:
+        // 1. Update tab class/appearance 
+        // 2. Close all open tabs of other types
+        // 3. Open a new tab of the selected type if none exists
+        
+        let hasTabOfNewType = false;
+        
+        // Check if any open tabs match the new type
+        $('.nav-link.receipt-tab').each(function() {
+            const tabId = $(this).attr('id').replace('tab-', '');
+            const tabType = $('#' + tabId).data('receipt-type');
+            
+            if (tabType === newType) {
+                hasTabOfNewType = true;
+                // Show this tab
+                $(this).tab('show');
+            } 
+        });
+        
+        // If no tabs of new type exist, create one
+        if (!hasTabOfNewType) {
+            // Click the add tab button to create a new tab
+            $('#addNewTab').click();
+        }
     });
 
     // Add new tab
@@ -444,16 +480,26 @@ $(document).ready(function() {
         // Insert tab button before + button
         $(tabBtn).insertBefore($(this).parent());
         
-        // Create tab content
-        const tabTemplate = $(`#${newTabType}-template`).html();
-        const tabContent = `
+        // Added for more accurate row cloning
+        let tabContent = '';
+        
+        if (newTabType === 'selling') {
+            tabContent = $('#selling-template').html();
+        } else if (newTabType === 'buying') {
+            tabContent = $('#buying-template').html();
+        } else if (newTabType === 'wasting') {
+            tabContent = $('#wasting-template').html();
+        }
+        
+        // Create the tab content
+        const tabContentHtml = `
             <div class="tab-pane fade" id="${tabId}" role="tabpanel" data-receipt-type="${newTabType}">
-                ${tabTemplate}
+                ${tabContent}
             </div>
         `;
         
         // Add tab content
-        $('#receiptTabsContent').append(tabContent);
+        $('#receiptTabsContent').append(tabContentHtml);
         
         // Set default date in the new tab
         $(`#${tabId} .sale-date, #${tabId} .purchase-date, #${tabId} .adjustment-date`).val(today);
@@ -463,28 +509,40 @@ $(document).ready(function() {
         
         // Force reinitialize dropdowns in the new tab
         setTimeout(function() {
-            // Don't try to destroy existing select2 instances - just initialize new ones
+            console.log(`Initializing dropdowns for new tab: ${tabId}, type: ${newTabType}`);
             
             // Initialize product dropdowns
             $(`#${tabId} .product-select`).each(function() {
+                console.log(`Initializing product select in ${tabId}`);
                 initializeProductSelect($(this));
             });
             
             // Initialize customer or supplier dropdowns based on tab type
             if (newTabType === 'selling') {
                 $(`#${tabId} .customer-select`).each(function() {
+                    console.log(`Initializing customer select in ${tabId}`);
                     initializeCustomerSelect($(this));
                 });
             } else if (newTabType === 'buying') {
                 $(`#${tabId} .supplier-select`).each(function() {
+                    console.log(`Initializing supplier select in ${tabId}`);
                     initializeSupplierSelect($(this));
                 });
             }
-        }, 100);
+            
+            // Add event listeners for this specific tab
+            initTabEventListeners(tabId, newTabType);
+        }, 500);  // Increased timeout to ensure DOM is ready
     });
 
     // Helper functions to initialize individual selects
     function initializeProductSelect(element) {
+        // Check if element exists
+        if (!element.length) {
+            console.error('Product select element not found');
+            return;
+        }
+        
         // If already initialized, destroy it first
         if (element.hasClass('select2-hidden-accessible')) {
             try {
@@ -500,6 +558,14 @@ $(document).ready(function() {
             placeholder: 'کاڵا هەڵبژێرە',
             allowClear: true,
             width: '100%',
+            language: {
+                searching: function() {
+                    return "گەڕان...";
+                },
+                noResults: function() {
+                    return "هیچ ئەنجامێک نەدۆزرایەوە";
+                }
+            },
             ajax: {
                 url: 'api/products.php',
                 dataType: 'json',
@@ -553,12 +619,39 @@ $(document).ready(function() {
             const productData = e.params.data;
             const row = $(this).closest('tr');
             
+            // Set unit price based on receipt type
+            const tabPane = row.closest('.tab-pane');
+            const receiptType = tabPane.data('receipt-type');
+            
+            if (receiptType === 'selling') {
+                const priceType = tabPane.find('.price-type').val();
+                if (priceType === 'wholesale' && productData.selling_price_wholesale) {
+                    row.find('.unit-price').val(productData.selling_price_wholesale);
+                } else {
+                    row.find('.unit-price').val(productData.selling_price_single);
+                }
+            } else if (receiptType === 'buying') {
+                row.find('.unit-price').val(productData.purchase_price);
+            }
+            
             // Update unit options
             updateUnitTypeOptions(row, productData);
+            
+            // Update quantity
+            row.find('.quantity').val(1);
+            
+            // Calculate row total
+            calculateRowTotal(row);
         });
     }
 
     function initializeCustomerSelect(element) {
+        // Check if element exists
+        if (!element.length) {
+            console.error('Customer select element not found');
+            return;
+        }
+        
         // If already initialized, destroy it first
         if (element.hasClass('select2-hidden-accessible')) {
             try {
@@ -574,6 +667,14 @@ $(document).ready(function() {
             placeholder: 'کڕیار هەڵبژێرە',
             allowClear: true,
             width: '100%',
+            language: {
+                searching: function() {
+                    return "گەڕان...";
+                },
+                noResults: function() {
+                    return "هیچ ئەنجامێک نەدۆزرایەوە";
+                }
+            },
             ajax: {
                 url: 'api/customers.php',
                 dataType: 'json',
@@ -607,6 +708,12 @@ $(document).ready(function() {
     }
 
     function initializeSupplierSelect(element) {
+        // Check if element exists
+        if (!element.length) {
+            console.error('Supplier select element not found');
+            return;
+        }
+        
         // If already initialized, destroy it first
         if (element.hasClass('select2-hidden-accessible')) {
             try {
@@ -622,6 +729,14 @@ $(document).ready(function() {
             placeholder: 'فرۆشیار هەڵبژێرە',
             allowClear: true,
             width: '100%',
+            language: {
+                searching: function() {
+                    return "گەڕان...";
+                },
+                noResults: function() {
+                    return "هیچ ئەنجامێک نەدۆزرایەوە";
+                }
+            },
             ajax: {
                 url: 'api/suppliers.php',
                 dataType: 'json',
@@ -1068,4 +1183,117 @@ $(document).ready(function() {
             showConfirmButton: false
         });
     });
+
+    // Initialize tab-specific event listeners
+    function initTabEventListeners(tabId, tabType) {
+        console.log(`Setting up event listeners for tab ${tabId}, type: ${tabType}`);
+        
+        // Price type change handler (selling only)
+        if (tabType === 'selling') {
+            $(`#${tabId} .price-type`).on('change', function() {
+                const priceType = $(this).val();
+                const itemsList = $(`#${tabId} .items-list`);
+                
+                // Update all product rows with the new price type
+                itemsList.find('tr').each(function() {
+                    const row = $(this);
+                    const productSelect = row.find('.product-select');
+                    const productData = productSelect.select2('data')[0];
+                    
+                    if (productData && productData.id) {
+                        if (priceType === 'wholesale' && productData.selling_price_wholesale) {
+                            row.find('.unit-price').val(productData.selling_price_wholesale);
+                        } else {
+                            row.find('.unit-price').val(productData.selling_price_single);
+                        }
+                        
+                        // Recalculate totals
+                        calculateRowTotal(row);
+                    }
+                });
+            });
+        }
+        
+        // Set up event handlers for this tab's elements
+        
+        // Product row quantity and price change handlers
+        $(`#${tabId} .quantity, #${tabId} .unit-price, #${tabId} .adjusted-quantity, #${tabId} .price`).on('input', function() {
+            const row = $(this).closest('tr');
+            calculateRowTotal(row);
+        });
+        
+        // Add row button handler
+        $(`#${tabId} .add-row-btn`).on('click', function() {
+            const itemsList = $(`#${tabId} .items-list`);
+            addNewRow(itemsList);
+        });
+        
+        // Remove row button handler
+        $(`#${tabId}`).on('click', '.remove-row', function() {
+            const row = $(this).closest('tr');
+            const itemsList = row.closest('.items-list');
+            
+            // Don't remove if it's the only row
+            if (itemsList.find('tr').length > 1) {
+                row.remove();
+                
+                // Renumber rows
+                itemsList.find('tr').each(function(index) {
+                    $(this).find('td:first').text(index + 1);
+                });
+                
+                // Recalculate totals
+                calculateGrandTotal(tabId);
+            }
+        });
+        
+        // Shipping cost and discount change handlers for selling receipts
+        if (tabType === 'selling') {
+            $(`#${tabId} .shipping-cost, #${tabId} .other-costs, #${tabId} .discount`).on('input', function() {
+                calculateGrandTotal(tabId);
+            });
+        } else {
+            // Just discount for other receipt types
+            $(`#${tabId} .discount`).on('input', function() {
+                calculateGrandTotal(tabId);
+            });
+        }
+        
+        // Save button handler
+        $(`#${tabId} .save-btn`).on('click', function(e) {
+            e.preventDefault();
+            saveReceipt(tabId, tabType);
+        });
+        
+        console.log(`Event listeners set up for tab ${tabId}`);
+    }
+    
+    // Add a new row to a table
+    function addNewRow(itemsList) {
+        const lastRow = itemsList.find('tr:last');
+        const newRow = lastRow.clone();
+        const rowNumber = itemsList.find('tr').length + 1;
+        
+        // Update row number
+        newRow.find('td:first').text(rowNumber);
+        
+        // Clear all inputs
+        newRow.find('input').val('');
+        
+        // Reset the product select - create a new one instead of cloning to avoid duplicate IDs
+        const productCell = newRow.find('td:nth-child(2)');
+        const tabPane = itemsList.closest('.tab-pane');
+        const tabType = tabPane.data('receipt-type');
+        
+        // Create new select element
+        productCell.html('<select class="form-control product-select" style="width: 100%"></select>');
+        
+        // Append the new row
+        newRow.appendTo(itemsList);
+        
+        // Initialize the product select in the new row
+        initializeProductSelect(newRow.find('.product-select'));
+        
+        return newRow;
+    }
 });

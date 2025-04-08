@@ -1,3 +1,7 @@
+<?php
+// Include database connection
+require_once 'config/database.php';
+?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
 <head>
