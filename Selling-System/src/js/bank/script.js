@@ -248,222 +248,357 @@ $(document).ready(function() {
         $.ajax({
             url: apiEndpoint,
             type: 'POST',
-            data: paymentData,
+            data: JSON.stringify(paymentData),
+            contentType: 'application/json',
             success: function(response) {
                 console.log('Payment response:', response);
                 
                 if (response.success) {
-                    $('#addPaymentModal').modal('hide');
-                    
-                    // Reset form
-                    $('#addPaymentForm')[0].reset();
-                    
+                    // Show success message
                     let successMessage = '';
                     if (paymentDirection === 'to_supplier') {
                         successMessage = 'پارەدان بۆ فرۆشیار بە سەرکەوتوویی تۆمارکرا';
                     } else if (paymentDirection === 'from_supplier') {
                         successMessage = 'وەرگرتنی پارە لە فرۆشیار بە سەرکەوتوویی تۆمارکرا';
                     } else {
-                        successMessage = 'ڕێکخستنی باڵانس بە سەرکەوتوویی تۆمارکرا';
+                        successMessage = 'باڵانس بە سەرکەوتوویی ڕێکخرایەوە';
                     }
                     
                     Swal.fire({
                         icon: 'success',
-                        title: 'سەرکەوتوو بوو',
+                        title: 'سەرکەوتوو',
                         text: successMessage,
                         confirmButtonText: 'باشە'
                     }).then(() => {
-                        // Reload balances
+                        // Close modal
+                        $('#addPaymentModal').modal('hide');
+                        
+                        // Reset form
+                        $('#addPaymentForm')[0].reset();
+                        
+                        // Reload supplier balances
                         loadSupplierBalances();
                     });
                 } else {
+                    // Show error message
                     Swal.fire({
                         icon: 'error',
                         title: 'هەڵە',
-                        text: response.message || 'هەڵەیەک ڕوویدا لە کاتی پرۆسەکردنی پارەدان',
+                        text: response.message || 'هەڵەیەک ڕوویدا لە کاتی پارەدان',
                         confirmButtonText: 'باشە'
                     });
                 }
             },
             error: function(xhr, status, error) {
-                console.error('Payment error:', {
-                    status: status,
-                    error: error,
-                    response: xhr.responseText
-                });
-                
-                let errorMsg = 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر';
-                
-                // Try to get more detailed error from response
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    if (response && response.message) {
-                        errorMsg = response.message;
-                    }
-                } catch(e) {
-                    // If parsing fails, use the raw response text if it exists
-                    if (xhr.responseText) {
-                        errorMsg += '<br><br>وردەکاری: ' + xhr.responseText;
-                    }
-                }
-                
+                console.error('Payment error:', error);
                 Swal.fire({
                     icon: 'error',
                     title: 'هەڵە',
-                    html: errorMsg,
+                    text: 'پەیوەندی بە سێرڤەرەوە شکستی هێنا',
                     confirmButtonText: 'باشە'
                 });
             }
         });
     });
     
-    // Function to load supplier balances
-    function loadSupplierBalances() {
-        // Clear existing content
-        $('#supplierCardsContainer').empty();
-        
-        // Show loading indicator
-        $('#supplierCardsContainer').html('<div class="text-center my-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>');
-        
-        // Use AJAX to fetch real data from our API
-        $.ajax({
-            url: 'api/get_suppliers_with_balance.php',
-            type: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                if (response.success) {
-                    // Clear loading indicator
-                    $('#supplierCardsContainer').empty();
-                    
-                    // Calculate total balances
-                    let totalNetBalance = 0;
-                    let totalTheyOweUs = 0;
-                    let totalWeOweThem = 0;
-                    
-                    // Process each supplier
-                    response.suppliers.forEach(function(supplier) {
-                        // Calculate net balance
-                        const debtOnMyself = parseFloat(supplier.debt_on_myself) || 0;
-                        const debtOnSupplier = parseFloat(supplier.debt_on_supplier) || 0;
-                        const netBalance = debtOnSupplier - debtOnMyself;
-                        
-                        console.log('Supplier:', supplier.name, 
-                            'debt_on_myself:', debtOnMyself, 
-                            'debt_on_supplier:', debtOnSupplier, 
-                            'netBalance:', netBalance);
-                        
-                        // Add to totals
-                        if (netBalance > 0) {
-                            totalTheyOweUs += netBalance;
-                        } else if (netBalance < 0) {
-                            totalWeOweThem += Math.abs(netBalance);
-                        }
-                        
-                        totalNetBalance += netBalance;
-                        
-                        // Determine card class based on balance
-                        let cardClass = 'zero';
-                        let balanceStatus = 'balanced';
-                        let badgeClass = 'bg-secondary';
-                        
-                        if (netBalance > 0) {
-                            cardClass = 'positive';
-                            balanceStatus = 'they_owe_us';
-                            badgeClass = 'bg-success';
-                        } else if (netBalance < 0) {
-                            cardClass = 'negative';
-                            balanceStatus = 'we_owe_them';
-                            badgeClass = 'bg-danger';
-                        }
-                        
-                        // Create supplier card
-                        const card = `
-                            <div class="card supplier-card ${cardClass}" data-id="${supplier.id}" data-balance="${netBalance}" data-debt-on-myself="${debtOnMyself}" data-debt-on-supplier="${debtOnSupplier}">
-                                <div class="card-header">
-                                    <h5 class="card-title">${supplier.name}</h5>
-                                    <span class="badge ${badgeClass} card-badge">
-                                        ${balanceStatus === 'they_owe_us' ? 'قەرزداری ئێمەن' : 
-                                          balanceStatus === 'we_owe_them' ? 'قەرزمان لایانە' : 'باڵانس سفرە'}
-                                    </span>
-                                </div>
-                                <div class="card-body">
-                                    <p class="card-text">
-                                        <i class="fas fa-phone card-icons"></i>
-                                        ${supplier.phone1}
-                                    </p>
-                                    ${supplier.phone2 ? `
-                                    <p class="card-text">
-                                        <i class="fas fa-phone card-icons"></i>
-                                        ${supplier.phone2}
-                                    </p>
-                                    ` : ''}
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>قەرزی ئێمە لایان:</span>
-                                        <span class="negative-balance">${formatCurrency(debtOnMyself)}</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>قەرزی ئەوان لە ئێمە:</span>
-                                        <span class="positive-balance">${formatCurrency(debtOnSupplier)}</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-3">
-                                        <span><strong>باڵانسی کۆتایی:</strong></span>
-                                        <span class="card-balance ${netBalance > 0 ? 'positive-balance' : netBalance < 0 ? 'negative-balance' : ''}">
-                                            ${formatCurrency(netBalance)}
-                                        </span>
-                                    </div>
-                                    <div class="card-actions">
-                                        <button class="btn btn-primary add-payment-btn" data-id="${supplier.id}" data-name="${supplier.name}" data-balance="${netBalance}" data-debt-on-myself="${debtOnMyself}" data-debt-on-supplier="${debtOnSupplier}">
-                                            <i class="fas fa-money-bill-wave"></i> پارەدان
-                                        </button>
-                                        <button class="btn btn-outline-secondary view-history-btn" data-id="${supplier.id}">
-                                            <i class="fas fa-history"></i> مێژوو
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        
-                        $('#supplierCardsContainer').append(card);
-                    });
-                    
-                    // Update summary cards
-                    $('#totalBalance').text(formatCurrency(totalNetBalance));
-                    $('#totalTheyOweUs').text(formatCurrency(totalTheyOweUs));
-                    $('#totalWeOweThem').text(formatCurrency(totalWeOweThem));
-                    
-                    // Set balance description
-                    if (totalNetBalance > 0) {
-                        $('#balanceDescription').text('کۆی گشتی فرۆشیارەکان قەرزداری ئێمەن');
-                        $('#balanceDescription').removeClass('negative-balance').addClass('positive-balance');
-                        $('#totalBalance').removeClass('negative-balance').addClass('positive-balance');
-                    } else if (totalNetBalance < 0) {
-                        $('#balanceDescription').text('کۆی گشتی ئێمە قەرزداری فرۆشیارەکانین');
-                        $('#balanceDescription').removeClass('positive-balance').addClass('negative-balance');
-                        $('#totalBalance').removeClass('positive-balance').addClass('negative-balance');
-                    } else {
-                        $('#balanceDescription').text('قەرزەکان هاوسەنگن');
-                        $('#balanceDescription').removeClass('positive-balance negative-balance');
-                        $('#totalBalance').removeClass('positive-balance negative-balance');
-                    }
-                    
-                } else {
-                    // Show error
-                    $('#supplierCardsContainer').html('<div class="alert alert-danger">هەڵەیەک ڕوویدا لە هێنانی زانیاریەکان</div>');
-                }
-            },
-            error: function() {
-                // Show error
-                $('#supplierCardsContainer').html('<div class="alert alert-danger">هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر</div>');
-            }
-        });
-    }
+    // Load supplier balances
+    loadSupplierBalances();
     
-    // Helper function to format currency
-    function formatCurrency(amount) {
-        // Convert to number in case it's a string
-        amount = parseFloat(amount) || 0;
-        
-        // Format with comma separator
-        return amount.toLocaleString() + ' دینار';
-    }
+    // Setup search with auto filter (no button needed)
+    $('#searchInput').on('keyup', function() {
+        const searchValue = $(this).val().toLowerCase();
+        filterSuppliers();
+    });
+    
+    // Setup supplier filter dropdown
+    $('#supplierFilter').on('change', function() {
+        filterSuppliers();
+    });
+    
+    // Setup sort select
+    $('#sortSelect').on('change', function() {
+        sortSuppliers($(this).val());
+    });
+    
+    // Reset all filters
+    $('#resetFilterBtn').on('click', function() {
+        $('#searchInput').val('');
+        $('#supplierFilter').val('');
+        $('#sortSelect').val('name');
+        filterSuppliers();
+        sortSuppliers('name');
+    });
+    
+    // Refresh button click
+    $('#refreshBtn').on('click', function() {
+        loadSupplierBalances();
+    });
 });
+
+// Filter suppliers based on search input and filter dropdown
+function filterSuppliers() {
+    const searchText = $('#searchInput').val().toLowerCase();
+    const selectedSupplier = $('#supplierFilter').val();
+    
+    $('.supplier-card').each(function() {
+        const supplierName = $(this).find('.card-title').text().toLowerCase();
+        const supplierPhone = $(this).find('.supplier-phone').text().toLowerCase();
+        const supplierId = $(this).data('id').toString();
+        
+        // Check if it matches the search text (name or phone)
+        const matchesSearch = supplierName.includes(searchText) || 
+                              supplierPhone.includes(searchText);
+        
+        // Check if it matches the selected supplier
+        const matchesFilter = !selectedSupplier || supplierId === selectedSupplier;
+        
+        // Show/hide based on combined filters
+        if (matchesSearch && matchesFilter) {
+            $(this).show();
+        } else {
+            $(this).hide();
+        }
+    });
+}
+
+// Load supplier data and populate the filter dropdown
+function loadSupplierBalances() {
+    // Show loading spinner
+    $('#supplierCardsContainer').html('<div class="text-center my-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+    
+    $.ajax({
+        url: 'api/get_suppliers_with_balance.php',
+        type: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            console.log('API response:', response); // Debug log
+            
+            // Handle both response formats (status or success)
+            if (response.status === 'success' || response.success === true) {
+                const suppliers = response.suppliers;
+                let totalBalance = 0;
+                let totalTheyOweUs = 0;
+                let totalWeOweThem = 0;
+                
+                // Clear existing cards
+                $('#supplierCardsContainer').empty();
+                
+                // Process each supplier
+                suppliers.forEach(supplier => {
+                    const netBalance = supplier.debt_on_supplier - supplier.debt_on_myself;
+                    
+                    // Update totals
+                    if (netBalance > 0) {
+                        totalTheyOweUs += netBalance;
+                    } else if (netBalance < 0) {
+                        totalWeOweThem += Math.abs(netBalance);
+                    }
+                    totalBalance += netBalance;
+                    
+                    // Create card
+                    const card = createSupplierCard(supplier, netBalance);
+                    $('#supplierCardsContainer').append(card);
+                });
+                
+                // Update summary cards
+                $('#totalBalance').text(formatCurrency(totalBalance));
+                $('#totalTheyOweUs').text(formatCurrency(totalTheyOweUs));
+                $('#totalWeOweThem').text(formatCurrency(totalWeOweThem));
+                
+                // Update balance description
+                let balanceDescription = '';
+                if (totalBalance > 0) {
+                    balanceDescription = 'کۆی قەرزی فرۆشیارەکان لە ئێمە';
+                } else if (totalBalance < 0) {
+                    balanceDescription = 'کۆی قەرزی ئێمە لە فرۆشیارەکان';
+                } else {
+                    balanceDescription = 'باڵانسەکان هاوسەنگن';
+                }
+                $('#balanceDescription').text(balanceDescription);
+                
+                // Populate the supplier filter dropdown
+                populateSupplierFilter(suppliers);
+                
+                // Apply any existing filters
+                filterSuppliers();
+                
+                // Apply the current sort
+                const currentSort = $('#sortSelect').val();
+                sortSuppliers(currentSort);
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: response.message || 'هەڵەیەک ڕوویدا لە کاتی بارکردنی زانیاریەکان',
+                    confirmButtonText: 'باشە'
+                });
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading data:', error); // Debug log
+            console.error('XHR Status:', xhr.status); // Debug log
+            console.error('XHR Response:', xhr.responseText); // Debug log
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'هەڵە',
+                text: 'پەیوەندی بە سێرڤەرەوە شکستی هێنا',
+                confirmButtonText: 'باشە'
+            });
+        }
+    });
+}
+
+// Populate the supplier filter dropdown
+function populateSupplierFilter(suppliers) {
+    const $filterSelect = $('#supplierFilter');
+    // Keep the first option (All Suppliers)
+    $filterSelect.find('option:not(:first)').remove();
+    
+    // Sort suppliers by name for the dropdown
+    suppliers.sort((a, b) => a.name.localeCompare(b.name));
+    
+    // Add each supplier to the dropdown
+    suppliers.forEach(supplier => {
+        $filterSelect.append(`<option value="${supplier.id}">${supplier.name}</option>`);
+    });
+}
+
+function createSupplierCard(supplier, netBalance) {
+    const cardClass = netBalance > 0 ? 'positive' : (netBalance < 0 ? 'negative' : 'zero');
+    const balanceText = formatCurrency(Math.abs(netBalance));
+    const balanceType = netBalance > 0 ? 'قەرزی ئەوان لە ئێمە' : (netBalance < 0 ? 'قەرزی ئێمە لە ئەوان' : 'باڵانس هاوسەنگە');
+    
+    // Ensure numeric types for data attributes
+    const safeId = parseInt(supplier.id) || 0;
+    const safeDebtOnMyself = parseFloat(supplier.debt_on_myself) || 0;
+    const safeDebtOnSupplier = parseFloat(supplier.debt_on_supplier) || 0;
+    
+    // Log debug information
+    console.log('Creating card for supplier:', {
+        id: safeId,
+        name: supplier.name,
+        debt_on_myself: safeDebtOnMyself,
+        debt_on_supplier: safeDebtOnSupplier,
+        netBalance: netBalance
+    });
+    
+    return `
+        <div class="card supplier-card ${cardClass}" data-id="${safeId}" data-balance="${netBalance}">
+                    <div class="card-header">
+                        <h5 class="card-title">${supplier.name}</h5>
+                <span class="badge ${cardClass === 'positive' ? 'bg-success' : (cardClass === 'negative' ? 'bg-danger' : 'bg-secondary')}">${balanceType}</span>
+                    </div>
+                    <div class="card-body">
+                <div class="card-text supplier-phone">
+                            <i class="fas fa-phone card-icons"></i>
+                    ${supplier.phone1 || 'بێ ژمارە'}
+                        </div>
+                <div class="debt-info mt-3">
+                    <p><strong>قەرزی ئەوان لە ئێمە:</strong> <span class="positive-balance">${formatCurrency(safeDebtOnSupplier)}</span></p>
+                    <p><strong>قەرزی ئێمە لە ئەوان:</strong> <span class="negative-balance">${formatCurrency(safeDebtOnMyself)}</span></p>
+                    <p><strong>باڵانسی کۆتایی:</strong> <span class="card-balance ${cardClass}">${balanceText}</span></p>
+                        </div>
+                        <div class="card-actions">
+                    <button class="btn btn-primary add-payment-btn" 
+                            data-id="${safeId}"
+                                data-name="${supplier.name}" 
+                            data-balance="${netBalance}"
+                            data-debt-on-myself="${safeDebtOnMyself}"
+                            data-debt-on-supplier="${safeDebtOnSupplier}">
+                        <i class="fas fa-money-bill-wave"></i> پارەدان
+                            </button>
+                    <button class="btn btn-info view-history-btn" data-id="${safeId}">
+                                <i class="fas fa-history"></i> مێژوو
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+}
+
+// Helper function to format currency
+function formatCurrency(amount) {
+    // Convert to number in case it's a string
+    amount = parseFloat(amount) || 0;
+    
+    // Format with comma separator
+    return amount.toLocaleString() + ' دینار';
+}
+
+// Sort suppliers based on selected sort option
+function sortSuppliers(sortOption) {
+    const $container = $('#supplierCardsContainer');
+    const $cards = $container.children('.supplier-card').get();
+    
+    $cards.sort(function(a, b) {
+        let valueA, valueB;
+        
+        if (sortOption === 'name') {
+            valueA = $(a).find('.card-title').text().trim();
+            valueB = $(b).find('.card-title').text().trim();
+            return valueA.localeCompare(valueB);
+        } else if (sortOption === 'balance-high') {
+            valueA = parseFloat($(a).data('balance'));
+            valueB = parseFloat($(b).data('balance'));
+            return valueB - valueA;
+        } else if (sortOption === 'balance-low') {
+            valueA = parseFloat($(a).data('balance'));
+            valueB = parseFloat($(b).data('balance'));
+            return valueA - valueB;
+        } else if (sortOption === 'they-owe-us') {
+            valueA = parseFloat($(a).data('balance'));
+            valueB = parseFloat($(b).data('balance'));
+            return valueB - valueA;
+        } else if (sortOption === 'we-owe-them') {
+            valueA = parseFloat($(a).data('balance'));
+            valueB = parseFloat($(b).data('balance'));
+            return valueA - valueB;
+        }
+        
+        return 0;
+    });
+    
+    $.each($cards, function(_, card) {
+        $container.append(card);
+    });
+}
+
+// Add these helper functions
+function getBadgeClass(transactionType) {
+    switch(transactionType) {
+        case 'purchase':
+            return 'bg-primary';
+        case 'payment':
+            return 'bg-success';
+        case 'return':
+            return 'bg-warning text-dark';
+        case 'supplier_payment':
+            return 'bg-info';
+        case 'supplier_return':
+            return 'bg-secondary';
+        case 'manual_adjustment':
+            return 'bg-dark';
+        default:
+            return 'bg-secondary';
+    }
+}
+
+function getAmountClass(amount) {
+    return amount >= 0 ? 'text-success fw-bold' : 'text-danger fw-bold';
+}
+
+function getEffectBadgeClass(effect) {
+    switch(effect) {
+        case 'increase_debt_on_myself':
+            return 'bg-danger';
+        case 'decrease_debt_on_myself':
+            return 'bg-success';
+        case 'increase_debt_on_supplier':
+            return 'bg-primary';
+        case 'decrease_debt_on_supplier':
+            return 'bg-info';
+        default:
+            return 'bg-secondary';
+    }
+}

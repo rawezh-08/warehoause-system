@@ -11,7 +11,6 @@
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/global.css">
     <style>
@@ -105,6 +104,7 @@
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            margin-top: 10px;
         }
         
         .card-actions .btn {
@@ -118,17 +118,21 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 10px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
         }
         
         .card-title {
             margin: 0;
             font-size: 1.1rem;
             flex: 1;
+            font-weight: bold;
         }
         
         .card-badge {
             font-size: 0.8rem;
             padding: 5px 10px;
+            border-radius: 5px;
         }
         
         .card-body {
@@ -144,7 +148,23 @@
         .card-balance {
             font-size: 1.2rem;
             font-weight: bold;
-            margin: 10px 0;
+        }
+        
+        .debt-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .debt-info p {
+            margin-bottom: 8px;
+        }
+        
+        .debt-info p:last-child {
+            margin-bottom: 0;
+            padding-top: 8px;
+            border-top: 1px dashed #dee2e6;
         }
         
         @media (max-width: 768px) {
@@ -192,17 +212,17 @@
 </head>
 <body>
     <!-- Main Content -->
-    <div class="main-content" style="margin-top: 60px;">
-        <div class="container">
-            <!-- Navbar -->
-            <div id="navbar-container"></div>
+    <div id="content">
+        <!-- Navbar -->
+        <div id="navbar-container"></div>
 
-            <!-- Page Header -->
-            <div class="top-nav">
-                <!-- Sidebar container -->
-                <div id="sidebar-container"></div>
-                
-                <div class="d-flex justify-content-between align-items-center">
+        <!-- Sidebar container -->
+        <div id="sidebar-container"></div>
+
+        <!-- Main Content Area -->
+        <div class="main-content mt-5">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4 class="mb-0">باڵانسی ئێمە لەگەڵ فرۆشیارەکان</h4>
                     <div class="d-flex">
                         <button class="btn btn-outline-secondary" id="refreshBtn">
@@ -210,90 +230,77 @@
                         </button>
                     </div>
                 </div>
-            </div>
 
-            <!-- Summary Cards -->
-            <div class="row mb-4">
-                <div class="col-md-4">
-                    <div class="card bg-light total-balances">
-                        <div class="card-body text-center">
-                            <h5 class="card-title">باڵانسی گشتی</h5>
-                            <h2 class="mt-3" id="totalBalance">0 دینار</h2>
-                            <p id="balanceDescription" class="mb-0"></p>
+                <!-- Summary Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card bg-light total-balances">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">باڵانسی گشتی</h5>
+                                <h2 class="mt-3" id="totalBalance">0 دینار</h2>
+                                <p id="balanceDescription" class="mb-0"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light total-balances">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">کۆی قەرزی ئەوان لە ئێمە</h5>
+                                <h2 class="mt-3 positive-balance" id="totalTheyOweUs">0 دینار</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light total-balances">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">کۆی قەرزی ئێمە لە ئەوان</h5>
+                                <h2 class="mt-3 negative-balance" id="totalWeOweThem">0 دینار</h2>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card bg-light total-balances">
-                        <div class="card-body text-center">
-                            <h5 class="card-title">کۆی قەرزی ئەوان لە ئێمە</h5>
-                            <h2 class="mt-3 positive-balance" id="totalTheyOweUs">0 دینار</h2>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card bg-light total-balances">
-                        <div class="card-body text-center">
-                            <h5 class="card-title">کۆی قەرزی ئێمە لە ئەوان</h5>
-                            <h2 class="mt-3 negative-balance" id="totalWeOweThem">0 دینار</h2>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Search and Filter Section -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="searchInput" placeholder="گەڕان بە ناوی فرۆشیار، ژمارە تەلەفۆن...">
-                                <button class="btn btn-outline-secondary" type="button" id="searchBtn">
-                                    <i class="fas fa-search"></i> گەڕان
+                <!-- Search and Filter Section -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control" id="searchInput" placeholder="گەڕان بە ناوی فرۆشیار، ژمارە تەلەفۆن...">
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select mb-2" id="supplierFilter">
+                                    <option value="">هەموو دابینکەرەکان</option>
+                                    <!-- دابینکەرەکان بە دینامیکی زیاد دەکرێن -->
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select mb-2" id="sortSelect">
+                                    <option value="name">ڕیزکردن بە ناو</option>
+                                    <option value="balance-high">زۆرترین باڵانس</option>
+                                    <option value="balance-low">کەمترین باڵانس</option>
+                                    <option value="they-owe-us">ئەوانەی قەرزداری ئێمەن</option>
+                                    <option value="we-owe-them">ئەوانەی قەرزمان لایانە</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-secondary w-100 mb-2" id="resetFilterBtn">
+                                    <i class="fas fa-undo"></i> ڕیسێت
                                 </button>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <select class="form-select" id="sortSelect">
-                                <option value="name">ڕیزکردن بە ناو</option>
-                                <option value="balance-high">زۆرترین باڵانس</option>
-                                <option value="balance-low">کەمترین باڵانس</option>
-                                <option value="they-owe-us">ئەوانەی قەرزداری ئێمەن</option>
-                                <option value="we-owe-them">ئەوانەی قەرزمان لایانە</option>
-                            </select>
-                        </div>
+                    </div>
+                </div>
+
+                <!-- Card View for supplier balances -->
+                <div id="supplierCardsView" class="mb-4">
+                    <div class="supplier-cards-container" id="supplierCardsContainer">
+                        <!-- Supplier cards will be loaded dynamically -->
                     </div>
                 </div>
             </div>
-
-            <!-- Card View for supplier balances -->
-            <div id="supplierCardsView" class="mb-4">
-                <div class="supplier-cards-container" id="supplierCardsContainer">
-                    <!-- Supplier cards will be loaded dynamically -->
-                </div>
-            </div>
-
-            <!-- Table View for supplier balances -->
-            <!-- <div id="supplierTableView" class="card mb-4">
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="balanceTable">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>ناوی فرۆشیار</th>
-                                    <th>ژمارەی مۆبایل</th>
-                                    <th>باڵانس</th>
-                                    <th>بارودۆخ</th>
-                                    <th>کردارەکان</th>
-                                </tr>
-                            </thead>
-                            <tbody id="balanceTableBody">
-                             </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div> -->
         </div>
     </div>
 
@@ -326,6 +333,7 @@
                             <select class="form-select" id="paymentDirection" required>
                                 <option value="to_supplier">پارەدان بۆ فرۆشیار (ئێمە دەدەین بەوان)</option>
                                 <option value="from_supplier">وەرگرتنی پارە لە فرۆشیار (ئەوان دەدەن بە ئێمە)</option>
+                                <option value="adjust_balance">ڕێکخستنی باڵانس (دەستکاری دەستی)</option>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -370,6 +378,6 @@
             });
         });
     </script>
-    
 </body>
+</html> 
 </html> 

@@ -34,14 +34,14 @@ try {
     
     // Return success response with suppliers data
     echo json_encode([
-        'success' => true,
+        'status' => 'success',
         'suppliers' => $suppliers
     ]);
     
 } catch (Exception $e) {
     // Return error response
     echo json_encode([
-        'success' => false,
+        'status' => 'error',
         'message' => $e->getMessage()
     ]);
 }

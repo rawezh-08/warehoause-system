@@ -86,7 +86,8 @@
                 type: 'GET',
                 dataType: 'json',
                 success: function(response) {
-                    if (response.success) {
+                    // Handle both response formats
+                    if (response.status === 'success' || response.success === true) {
                         const $supplierSelect = $('#supplier');
                         $supplierSelect.empty();
                         

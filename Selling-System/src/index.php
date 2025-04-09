@@ -223,10 +223,19 @@ try {
     $salesValues = array_values($chartSales);
     $purchasesValues = array_values($chartPurchases);
 
-    // JSON encode for JavaScript use
-    $chartMonthsJson = json_encode(array_values($chartMonths));
-    $salesValuesJson = json_encode($salesValues);
-    $purchasesValuesJson = json_encode($purchasesValues);
+    // JSON encode for JavaScript use with proper error handling
+    $chartMonthsJson = json_encode(array_values($chartMonths)) ?: '[]';
+    $salesValuesJson = json_encode($salesValues) ?: '[]';
+    $purchasesValuesJson = json_encode($purchasesValues) ?: '[]';
+    
+    // Check if JSON encoding failed and provide fallback values
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        $chartMonthsJson = '[]';
+        $salesValuesJson = '[]';
+        $purchasesValuesJson = '[]';
+        $jsonError = json_last_error_msg();
+        error_log("JSON encoding error: " . $jsonError);
+    }
 } catch (PDOException $e) {
     die("Connection failed: " . $e->getMessage());
 }
@@ -865,26 +874,84 @@ try {
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js - Using a specific version for compatibility -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <!-- Component loading script -->
     <script src="js/include-components.js"></script>
+    <!-- Load dashboard.js first -->
+    <script src="js/dashboard.js"></script>
     <!-- Pass PHP data to JavaScript -->
     <script>
         // Make sure the data is properly formatted
-        window.chartMonths = <?php echo $chartMonthsJson; ?>;
-        window.salesData = <?php echo $salesValuesJson; ?>;
-        window.purchasesData = <?php echo $purchasesValuesJson; ?>;
-        window.salesPercentage = <?php echo $salesPercentage; ?>;
-        window.purchasesPercentage = <?php echo $purchasesPercentage; ?>;
+        try {
+            window.chartMonths = <?php echo $chartMonthsJson; ?>;
+            window.salesData = <?php echo $salesValuesJson; ?>;
+            window.purchasesData = <?php echo $purchasesValuesJson; ?>;
+            window.salesPercentage = <?php echo (int)$salesPercentage; ?>;
+            window.purchasesPercentage = <?php echo (int)$purchasesPercentage; ?>;
 
-        // Debug data
-        console.log('Chart Months:', window.chartMonths);
-        console.log('Sales Data:', window.salesData);
-        console.log('Purchases Data:', window.purchasesData);
+            // Debug data
+            console.log('Chart Months:', window.chartMonths);
+            console.log('Sales Data:', window.salesData);
+            console.log('Purchases Data:', window.purchasesData);
+            
+            // Reset chart instances to ensure proper initialization
+            window.salesChart = null;
+            window.inventoryChart = null;
+            
+            // If Chart.js is available, run any deferred initializations
+            if (typeof Chart !== 'undefined' && typeof runDeferredInit === 'function') {
+                setTimeout(runDeferredInit, 100);
+            }
+        } catch (e) {
+            console.error('Error parsing chart data:', e);
+            // Provide fallback data
+            window.chartMonths = [];
+            window.salesData = [];
+            window.purchasesData = [];
+            window.salesPercentage = 0;
+            window.purchasesPercentage = 0;
+        }
     </script>
-    <!-- Other custom scripts -->
-    <script src="js/dashboard.js"></script>
+    <!-- Debugging script to help troubleshoot chart issues -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.info('DOMContentLoaded fired');
+            
+            // Check if Chart.js is loaded
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js is not loaded. Adding it dynamically.');
+                
+                // Create fallback indicators for charts
+                const charts = ['salesChart', 'inventoryChart'];
+                charts.forEach(chartId => {
+                    const chartEl = document.getElementById(chartId);
+                    if (chartEl) {
+                        chartEl.insertAdjacentHTML('afterend', 
+                            '<div class="text-center text-danger my-3">چارتەکە نەتوانرا بارکرێت - Chart.js نەدۆزرایەوە</div>');
+                    }
+                });
+                
+                // Try to load Chart.js again
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js';
+                script.onload = function() {
+                    console.info('Chart.js loaded successfully via fallback');
+                    
+                    // Run deferred initialization
+                    if (typeof runDeferredInit === 'function') {
+                        runDeferredInit();
+                    }
+                };
+                script.onerror = function() {
+                    console.error('Failed to load Chart.js via fallback');
+                };
+                document.head.appendChild(script);
+            } else {
+                console.info('Chart.js is loaded correctly');
+            }
+        });
+    </script>
 </body>
 
 </html>

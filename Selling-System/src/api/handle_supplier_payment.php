@@ -13,10 +13,24 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Get posted data
-$supplier_id = isset($_POST['supplier_id']) ? intval($_POST['supplier_id']) : 0;
-$amount = isset($_POST['amount']) ? floatval($_POST['amount']) : 0;
-$notes = isset($_POST['notes']) ? $_POST['notes'] : '';
+// Get posted JSON data
+$json_data = file_get_contents('php://input');
+$data = json_decode($json_data, true);
+
+if (!$data) {
+    // Fallback to regular POST data if JSON parsing fails
+    $supplier_id = isset($_POST['supplier_id']) ? intval($_POST['supplier_id']) : 0;
+    $amount = isset($_POST['amount']) ? floatval($_POST['amount']) : 0;
+    $notes = isset($_POST['notes']) ? $_POST['notes'] : '';
+} else {
+    // Use JSON data
+    $supplier_id = isset($data['supplier_id']) ? intval($data['supplier_id']) : 0;
+    $amount = isset($data['amount']) ? floatval($data['amount']) : 0;
+    $notes = isset($data['notes']) ? $data['notes'] : '';
+}
+
+// Debug logging
+error_log("Received payment from supplier request - supplier_id: $supplier_id, amount: $amount");
 
 // Validate data
 if ($supplier_id <= 0) {
@@ -70,9 +84,9 @@ try {
         throw new Exception("Failed to record transaction");
     }
     
-    // Update supplier balance
+    // Update supplier balance - REDUCE debt_on_supplier when a supplier pays us
     $stmt = $conn->prepare("UPDATE suppliers 
-                          SET debt_on_supplier = debt_on_supplier + ? 
+                          SET debt_on_supplier = debt_on_supplier - ? 
                           WHERE id = ?");
     $result = $stmt->execute([$amount, $supplier_id]);
     

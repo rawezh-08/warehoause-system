@@ -2,27 +2,167 @@ $(document).ready(function() {
     const urlParams = new URLSearchParams(window.location.search);
     const supplierId = urlParams.get('id');
     
-    // Initialize DataTable for transactions
-    const transactionsTable = $('#transactionsTable').DataTable({
-        responsive: true,
-        searching: false, // We'll use our own filter
-        ordering: true,
-        language: {
-            emptyTable: "هیچ مامەڵەیەک نەدۆزرایەوە",
-            info: "پیشاندانی _START_ تا _END_ لە کۆی _TOTAL_ مامەڵە",
-            infoEmpty: "هیچ مامەڵەیەک نییە",
-            lengthMenu: "پیشاندانی _MENU_ مامەڵە",
-            loadingRecords: "لە چاوەڕوانیدایە...",
-            processing: "کارکردن...",
-            zeroRecords: "هیچ مامەڵەیەک نەدۆزرایەوە",
-            paginate: {
-                first: "یەکەم",
-                last: "کۆتایی",
-                next: "دواتر",
-                previous: "پێشتر"
+    // Table variables
+    let transactionsData = [];
+    let filteredTransactionsData = [];
+    let currentPage = 1;
+    let recordsPerPage = 10;
+    let totalPages = 1;
+    
+    // Initialize table
+    initializeTransactionsTable();
+    
+    // Load initial data
+    loadSupplierDetails();
+    loadSupplierTransactions();
+    
+    // Refresh button
+    $('#refreshBtn').on('click', function() {
+        loadSupplierDetails();
+        loadSupplierTransactions();
+    });
+    
+    // Filter button
+    $('#filterBtn').on('click', function() {
+        loadSupplierTransactions();
+    });
+
+    // Pagination controls
+    $(document).on('click', '.pagination .page-link', function(e) {
+        e.preventDefault();
+        const action = $(this).data('action');
+        
+        if (action === 'prev' && currentPage > 1) {
+            currentPage--;
+        } else if (action === 'next' && currentPage < totalPages) {
+            currentPage++;
+        } else if (action === 'page') {
+            const page = parseInt($(this).text());
+            if (!isNaN(page)) {
+                currentPage = page;
             }
         }
+        
+        renderTransactionsTable();
     });
+    
+    function initializeTransactionsTable() {
+        // Setup table structure
+        const table = $('#transactionsTable');
+        if (!table.find('tbody').length) {
+            table.append('<tbody></tbody>');
+        }
+        if (!table.find('tfoot').length) {
+            table.append(`
+                <tfoot>
+                    <tr>
+                        <td colspan="7">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="pagination-info"></div>
+                                <ul class="pagination mb-0"></ul>
+                            </div>
+                        </td>
+                    </tr>
+                </tfoot>
+            `);
+        }
+    }
+    
+    function renderTransactionsTable() {
+        const tableBody = $('#transactionsTable tbody');
+        tableBody.empty();
+        
+        // Calculate pagination
+        updatePaginationInfo();
+        
+        // Get current page data
+        const startIndex = (currentPage - 1) * recordsPerPage;
+        const endIndex = Math.min(startIndex + recordsPerPage, filteredTransactionsData.length);
+        const currentPageData = filteredTransactionsData.slice(startIndex, endIndex);
+        
+        // No results message
+        if (currentPageData.length === 0) {
+            tableBody.append('<tr><td colspan="7" class="text-center">هیچ مامەڵەیەک نەدۆزرایەوە</td></tr>');
+        } else {
+            // Add rows to table
+            currentPageData.forEach((transaction, index) => {
+                const actualIndex = startIndex + index + 1;
+                
+                // Format date
+                const date = new Date(transaction.created_at);
+                const formattedDate = date.toLocaleDateString('ku-IQ') + ' ' + 
+                                    date.toLocaleTimeString('ku-IQ', { hour: '2-digit', minute: '2-digit' });
+                
+                tableBody.append(`
+                    <tr data-id="${transaction.id}">
+                        <td>${actualIndex}</td>
+                        <td>${formattedDate}</td>
+                        <td><span class="badge rounded-pill ${getBadgeClass(transaction.transaction_type)}">${getTransactionTypeText(transaction.transaction_type)}</span></td>
+                        <td><span class="${getAmountClass(transaction.amount)}">${formatCurrency(transaction.amount)} دینار</span></td>
+                        <td><span class="badge rounded-pill ${getEffectBadgeClass(transaction.effect_on_balance)}">${getEffectText(transaction.effect_on_balance)}</span></td>
+                        <td>${transaction.notes || '-'}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-sm btn-outline-info rounded-circle view-transaction-btn" 
+                                        title="بینین" data-id="${transaction.id}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger rounded-circle delete-transaction-btn" 
+                                        title="سڕینەوە" data-id="${transaction.id}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+        
+        // Update pagination controls
+        updatePaginationControls();
+    }
+    
+    function updatePaginationInfo() {
+        totalPages = Math.ceil(filteredTransactionsData.length / recordsPerPage);
+        const startIndex = (currentPage - 1) * recordsPerPage + 1;
+        const endIndex = Math.min(startIndex + recordsPerPage - 1, filteredTransactionsData.length);
+        
+        $('.pagination-info').text(
+            `پیشاندانی ${startIndex} تا ${endIndex} لە کۆی ${filteredTransactionsData.length} مامەڵە`
+        );
+    }
+    
+    function updatePaginationControls() {
+        const pagination = $('.pagination');
+        pagination.empty();
+        
+        // Previous button
+        pagination.append(`
+            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-action="prev">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        `);
+        
+        // Page numbers
+        for (let i = 1; i <= totalPages; i++) {
+            pagination.append(`
+                <li class="page-item ${currentPage === i ? 'active' : ''}">
+                    <a class="page-link" href="#" data-action="page">${i}</a>
+                </li>
+            `);
+        }
+        
+        // Next button
+        pagination.append(`
+            <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-action="next">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+        `);
+    }
     
     if (!supplierId) {
         Swal.fire({
@@ -41,17 +181,6 @@ $(document).ready(function() {
     
     // Load supplier transactions
     loadSupplierTransactions();
-    
-    // Refresh button
-    $('#refreshBtn').on('click', function() {
-        loadSupplierDetails();
-        loadSupplierTransactions();
-    });
-    
-    // Filter button
-    $('#filterBtn').on('click', function() {
-        loadSupplierTransactions();
-    });
     
     // Add payment button
     $('#add-payment-btn').on('click', function() {
@@ -268,35 +397,15 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    // Clear existing data
-                    transactionsTable.clear();
+                    // Update data arrays
+                    transactionsData = response.transactions;
+                    filteredTransactionsData = [...transactionsData];
                     
-                    // Add new data
-                    response.transactions.forEach(function(transaction, index) {
-                        // Format date
-                        const date = new Date(transaction.created_at);
-                        const formattedDate = date.toLocaleDateString('ku-IQ') + ' ' + 
-                                            date.toLocaleTimeString('ku-IQ', { hour: '2-digit', minute: '2-digit' });
-                        
-                        // Get transaction type in Kurdish
-                        const transactionTypeText = getTransactionTypeText(transaction.transaction_type);
-                        
-                        // Get effect text
-                        const effectText = getEffectText(transaction.effect_on_balance);
-                        
-                        // Add to table
-                        transactionsTable.row.add([
-                            index + 1,
-                            formattedDate,
-                            transactionTypeText,
-                            formatCurrency(transaction.amount),
-                            effectText,
-                            transaction.notes || '-'
-                        ]);
-                    });
+                    // Reset to first page
+                    currentPage = 1;
                     
-                    // Draw table
-                    transactionsTable.draw();
+                    // Render table
+                    renderTransactionsTable();
                     
                     // Show message if no transactions
                     if (response.transactions.length === 0) {
@@ -370,5 +479,44 @@ $(document).ready(function() {
         
         // Format with comma separator
         return amount.toLocaleString() + ' دینار';
+    }
+
+    // Add these helper functions if they don't exist
+    function getBadgeClass(transactionType) {
+        switch(transactionType) {
+            case 'purchase':
+                return 'bg-primary';
+            case 'payment':
+                return 'bg-success';
+            case 'return':
+                return 'bg-warning text-dark';
+            case 'supplier_payment':
+                return 'bg-info';
+            case 'supplier_return':
+                return 'bg-secondary';
+            case 'manual_adjustment':
+                return 'bg-dark';
+            default:
+                return 'bg-secondary';
+        }
+    }
+
+    function getAmountClass(amount) {
+        return amount >= 0 ? 'text-success fw-bold' : 'text-danger fw-bold';
+    }
+
+    function getEffectBadgeClass(effect) {
+        switch(effect) {
+            case 'increase_debt_on_myself':
+                return 'bg-danger';
+            case 'decrease_debt_on_myself':
+                return 'bg-success';
+            case 'increase_debt_on_supplier':
+                return 'bg-primary';
+            case 'decrease_debt_on_supplier':
+                return 'bg-info';
+            default:
+                return 'bg-secondary';
+        }
     }
 }); 

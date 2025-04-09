@@ -11,74 +11,188 @@
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
-    <!-- Custom CSS -->
+  <!-- Global CSS -->
+  <link rel="stylesheet" href="assets/css/custom.css">
+    <!-- Page CSS -->
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/employeePayment/style.css">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
+    <!-- Custom styles for this page -->
     <style>
-        .positive-balance {
-            color: #198754; /* Bootstrap success green */
-            font-weight: bold;
+        /* Transparent search input */
+        .table-search-input {
+            background-color: transparent !important;
+            border: 1px solid #dee2e6;
         }
         
-        .negative-balance {
-            color: #dc3545; /* Bootstrap danger red */
-            font-weight: bold;
+        #transactionsTable td,
+        th {
+            white-space: normal;
+            word-wrap: break-word;
+            vertical-align: middle;
+            padding: 0.75rem;
         }
+
+        #transactionsTable td {
+
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+
+        #transactionsTable th {
+
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+     
         
-        .transaction-card {
-            margin-bottom: 15px;
-            border-radius: 10px;
+        /* Adjust pagination display for many pages */
+        .pagination-numbers {
+            flex-wrap: wrap;
+            max-width: 300px;
             overflow: hidden;
         }
         
-        .transaction-card.purchase,
-        .transaction-card.manual-increase-debt {
-            border-left: 5px solid #dc3545;
-        }
-        
-        .transaction-card.payment,
-        .transaction-card.return,
-        .transaction-card.manual-decrease-debt {
-            border-left: 5px solid #6c757d;
-        }
-        
-        .transaction-card.supplier-payment,
-        .transaction-card.manual-increase-supplier-debt {
-            border-left: 5px solid #198754;
-        }
-        
-        .transaction-card.supplier-return,
-        .transaction-card.manual-decrease-supplier-debt {
-            border-left: 5px solid #6c757d;
-        }
-        
-        .summary-box {
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.05);
-        }
-        
-        .summary-box h5 {
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .transaction-detail {
+        .pagination-numbers .btn {
             margin-bottom: 5px;
         }
-        
-        .transaction-amount {
-            font-weight: bold;
-            font-size: 1.1rem;
+
+        /* RTL Toast Container Styles */
+        .toast-container-rtl {
+            right: 0 !important;
+            left: auto !important;
+        }
+
+        .toast-container-rtl .swal2-toast {
+            margin-right: 1em !important;
+            margin-left: 0 !important;
+        }
+
+        .toast-container-rtl .swal2-toast .swal2-title {
+            text-align: right !important;
+        }
+
+        .toast-container-rtl .swal2-toast .swal2-icon {
+            margin-right: 0 !important;
+            margin-left: 0.5em !important;
+        }
+
+        /* Table styles */
+        .custom-table {
+            border-collapse: separate;
+            border-spacing: 0;
         }
         
-        .transaction-notes {
+        .custom-table th {
             background-color: #f8f9fa;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
+            font-weight: 600;
+            text-align: center;
+            padding: 12px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .custom-table td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+        
+        .custom-table tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.075);
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .action-buttons .btn {
+            padding: 4px 8px;
+            font-size: 14px;
+        }
+        
+        .badge {
+            font-size: 12px;
+            padding: 6px 10px;
+            font-weight: 500;
+        }
+        
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+            padding: 1rem;
+        }
+        
+        .refresh-btn {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .pagination {
+            margin-bottom: 0;
+        }
+        
+        .pagination .page-item .page-link {
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+        
+        .pagination-info {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .amount-positive {
+            color: #198754;
+            font-weight: 500;
+        }
+        
+        .amount-negative {
+            color: #dc3545;
+            font-weight: 500;
+        }
+        
+        .badge-payment {
+            background-color: #0d6efd;
+            color: white;
+        }
+        
+        .badge-debt {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .badge-adjustment {
+            background-color: #ffc107;
+            color: black;
+        }
+        
+        .badge-effect-increase {
+            background-color: #198754;
+            color: white;
+        }
+        
+        .badge-effect-decrease {
+            background-color: #dc3545;
+            color: white;
         }
     </style>
 </head>
@@ -189,14 +303,19 @@
             </div>
 
             <!-- Transactions Section -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">مێژووی مامەڵەکان</h5>
+            <div class="card shadow-sm">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">مێژووی مامەڵەکان</h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary refresh-btn me-2">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-striped" id="transactionsTable">
-                            <thead>
+                        <table id="transactionsTable" class="table table-bordered custom-table table-hover">
+                            <thead class="table-light">
                                 <tr>
                                     <th>#</th>
                                     <th>بەروار</th>
@@ -204,11 +323,22 @@
                                     <th>بڕی پارە</th>
                                     <th>کاریگەری</th>
                                     <th>تێبینی</th>
+                                    <th>کردارەکان</th>
                                 </tr>
                             </thead>
-                            <tbody id="transactionsTableBody">
+                            <tbody>
                                 <!-- Transactions will be loaded here -->
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="7">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="pagination-info"></div>
+                                            <ul class="pagination mb-0"></ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
