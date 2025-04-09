@@ -68,7 +68,7 @@
                     <div class="tab-pane fade show active" id="employee-content" role="tabpanel" aria-labelledby="employee-tab">
                         <div class="row">
                             <div class="col-md-8 mx-auto">
-                                <div class="card shadow-sm">
+                                <div class="card shadow-sm" style="border: 1px solid var(--blue-border-color); border-radius: 18px;">
                                     <div class="card-header bg-transparent">
                                         <h5 class="card-title mb-0">زانیاری کارمەند</h5>
                                     </div>
@@ -109,11 +109,11 @@
                                                     <textarea class="form-control" id="employeeNotes" name="employeeNotes" rows="2"></textarea>
                                                 </div>
                                                 <div class="col-12 text-end">
-                                                    <button type="button" class="btn btn-outline-secondary me-2" id="resetEmployeeForm">
-                                                        <i class="fas fa-redo me-2"></i>ڕیسێت
+                                                    <button type="button" class="btn btn-outline-secondary me-2" id="resetEmployeeForm" style="border-radius: 24px;">
+                                                    ڕیسێت <i class="fas fa-redo me-2"></i>
                                                     </button>
-                                                    <button type="submit" class="btn btn-primary">
-                                                        <i class="fas fa-save me-2"></i>پاشەکەوتکردن
+                                                    <button type="submit" class="btn btn-primary cta-btn">
+                                                    پاشەکەوتکردن  <i class="fas fa-save me-2"></i>
                                                     </button>
                                                 </div>
                                             </div>
@@ -128,7 +128,7 @@
                     <div class="tab-pane fade" id="customer-content" role="tabpanel" aria-labelledby="customer-tab">
                         <div class="row">
                             <div class="col-md-10 mx-auto">
-                                <div class="card shadow-sm">
+                                <div class="card shadow-sm" style="border: 1px solid var(--blue-border-color); border-radius: 18px;">
                                     <div class="card-header bg-transparent">
                                         <h5 class="card-title mb-0">زانیاری بازرگان</h5>
                                     </div>
@@ -186,8 +186,8 @@
                                                     <button type="button" class="btn btn-outline-secondary me-2" id="resetCustomerForm">
                                                         <i class="fas fa-redo me-2"></i>ڕیسێت
                                                     </button>
-                                                    <button type="submit" class="btn btn-primary">
-                                                        <i class="fas fa-save me-2"></i>پاشەکەوتکردن
+                                                    <button type="submit" class="btn btn-primary cta-btn">
+                                                    پاشەکەوتکردن  <i class="fas fa-save me-2"></i>
                                                     </button>
                                                 </div>
                                             </div>
@@ -202,7 +202,7 @@
                     <div class="tab-pane fade" id="supplier-content" role="tabpanel" aria-labelledby="supplier-tab">
                         <div class="row">
                             <div class="col-md-8 mx-auto">
-                                <div class="card shadow-sm">
+                                <div class="card shadow-sm" style="border: 1px solid var(--blue-border-color); border-radius: 18px;">
                                     <div class="card-header bg-transparent">
                                         <h5 class="card-title mb-0">زانیاری دابینکەر</h5>
                                     </div>
@@ -243,8 +243,8 @@
                                                     <button type="button" class="btn btn-outline-secondary me-2" id="resetSupplierForm">
                                                         <i class="fas fa-redo me-2"></i>ڕیسێت
                                                     </button>
-                                                    <button type="submit" class="btn btn-primary">
-                                                        <i class="fas fa-save me-2"></i>پاشەکەوتکردن
+                                                    <button type="submit" class="btn btn-primary cta-btn">
+                                                    پاشەکەوتکردن  <i class="fas fa-save me-2"></i>
                                                     </button>
                                                 </div>
                                             </div>

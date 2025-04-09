@@ -42,6 +42,7 @@ $suppliers = $supplierModel->getAll();
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/employeePayment/style.css">
     <link rel="stylesheet" href="css/staff.css">
+    <link rel="stylesheet" href="css/input.css">
 </head>
 
 <body>
@@ -99,7 +100,7 @@ $suppliers = $supplierModel->getAll();
                         <!-- Employees Filter -->
                         <div class="row mb-4">
                             <div class="col-12">
-                                <div class="card shadow-sm">
+                                <div class="card shadow-sm card-qiuck-style">
                                     <div class="card-body">
                                         <h5 class="card-title mb-4">فلتەر بەپێی ناو</h5>
                                         <form id="employeeFilterForm" class="row g-3">
@@ -136,7 +137,7 @@ $suppliers = $supplierModel->getAll();
                         <!-- Employee Table -->
                         <div class="row">
                             <div class="col-12">
-                                <div class="card shadow-sm">
+                                <div class="card shadow-sm card-qiuck-style" >
                                     <div
                                         class="card-header bg-transparent d-flex justify-content-between align-items-center">
                                         <h5 class="card-title mb-0">لیستی کارمەندەکان</h5>
@@ -173,8 +174,7 @@ $suppliers = $supplierModel->getAll();
                                                                     placeholder="گەڕان لە تەیبڵدا...">
                                                                 <span
                                                                     class="input-group-text rounded-pill-end bg-light">
-                                                                    <i class="fas fa-search"></i>
-                                                                </span>
+<img src="assets/icons/search-purple.svg" alt="">                                                                </span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -187,13 +187,13 @@ $suppliers = $supplierModel->getAll();
                                                     class="table table-bordered custom-table table-hover">
                                                     <thead class="table-light">
                                                         <tr>
-                                                            <th>#</th>
-                                                            <th>ناوی کارمەند</th>
-                                                            <th>ژمارەی مۆبایل</th>
-                                                            <th>پۆست</th>
-                                                            <th>مووچە</th>
-                                                            <th>ناونیشان</th>
-                                                            <th>کردارەکان</th>
+                                                            <th class="tbl-header">#</th>
+                                                            <th class="tbl-header" >ناوی کارمەند</th>
+                                                            <th class="tbl-header">ژمارەی مۆبایل</th>
+                                                            <th class="tbl-header">پۆست</th>
+                                                            <th class="tbl-header">مووچە</th>
+                                                            <th class="tbl-header">ناونیشان</th>
+                                                            <th class="tbl-header">کردارەکان</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -329,7 +329,7 @@ $suppliers = $supplierModel->getAll();
                         <!-- Customers Filter -->
                         <div class="row mb-4">
                             <div class="col-12">
-                                <div class="card shadow-sm">
+                                <div class="card shadow-sm card-qiuck-style">
                                     <div class="card-body">
                                         <h5 class="card-title mb-4">فلتەر بەپێی ناو</h5>
                                         <form id="customerFilterForm" class="row g-3">
@@ -364,7 +364,7 @@ $suppliers = $supplierModel->getAll();
                         <!-- Customer Table -->
                         <div class="row">
                             <div class="col-12">
-                                <div class="card shadow-sm">
+                                <div class="card shadow-sm card-qiuck-style">
                                     <div
                                         class="card-header bg-transparent d-flex justify-content-between align-items-center">
                                         <h5 class="card-title mb-0">لیستی کڕیارەکان</h5>
@@ -494,7 +494,7 @@ $suppliers = $supplierModel->getAll();
                         <!-- Suppliers Filter -->
                         <div class="row mb-4">
                             <div class="col-12">
-                                <div class="card shadow-sm">
+                                <div class="card shadow-sm card-qiuck-style">
                                     <div class="card-body">
                                         <h5 class="card-title mb-4">فلتەر بەپێی ناو</h5>
                                         <form id="supplierFilterForm" class="row g-3">
@@ -526,7 +526,7 @@ $suppliers = $supplierModel->getAll();
                         <!-- Supplier Table -->
                         <div class="row">
                             <div class="col-12">
-                                <div class="card shadow-sm">
+                                <div class="card shadow-sm card-qiuck-style">
                                     <div
                                         class="card-header bg-transparent d-flex justify-content-between align-items-center">
                                         <h5 class="card-title mb-0">لیستی دابینکەرەکان</h5>

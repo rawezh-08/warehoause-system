@@ -51,3 +51,34 @@ select:focus::placeholder,
 textarea:focus::placeholder {
     color: var(--primary-color);
 }
+
+.cta-btn{
+    padding: 10px;
+
+    padding-right: 16px;
+    padding-left: 16px;
+    border-radius: 24px;
+    /* display: flex; */
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.cta-btn:hover{
+    background-color: #0b5ed7;
+    color: white;
+    transform: translateY(-2px);
+    border: 3px solid #9ec5ff;
+    animation: fadeInUp 0.4s forwards;
+
+}
+
+ .tbl-header{
+    background-color: #cde1ff !important;
+ }
+ 
+
+ .card-qiuck-style{
+    border: 1px solid var(--blue-border-color);
+    border-radius: 18px;
+ }
