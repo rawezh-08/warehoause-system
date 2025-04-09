@@ -20,129 +20,8 @@ require_once 'config/database.php';
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/addReceipt.css">
-    <style>
-        /* زیادکردنی CSS بۆ ئینپووتەکانی ژمارە */
-        input[type="text"].form-control {
-            text-align: right;
-            direction: rtl;
-        }
-        
-        /* ستایلی تایبەت بۆ ئینپوتی ژمارەی پسوڵە */
-        .receipt-number[readonly] {
-            background-color: #f8f9fa;
-            border-color: #dee2e6;
-            color: #495057;
-            cursor: default;
-            font-weight: 500;
-        }
-        
-        .receipt-number[readonly]:focus {
-            background-color: #f8f9fa;
-            border-color: #dee2e6;
-            box-shadow: none;
-        }
-        
-        /* SweetAlert2 Custom Styles */
-        .swal2-popup {
-            font-family: 'NRTRabar', sans-serif !important;
-        }
-
-        .swal2-title, .swal2-content {
-            text-align: center !important;
-            font-family: 'NRTRabar', sans-serif !important;
-        }
-
-        .swal2-html-container {
-            text-align: center !important;
-            font-family: 'NRTRabar', sans-serif !important;
-        }
-
-        .swal2-confirm, .swal2-cancel {
-            font-family: 'NRTRabar', sans-serif !important;
-        }
-
-        /* Fix for RTL support in SweetAlert2 */
-        .swal2-actions {
-            flex-direction: row-reverse;
-        }
-
-        /* Center the toast notifications */
-        .swal2-toast {
-            direction: rtl !important;
-            text-align: center !important;
-        }
-
-        .swal2-toast .swal2-title {
-            margin: 0 auto !important;
-            text-align: center !important;
-        }
-        
-        /* Product Image Styles */
-        .product-image-container {
-            width: 40px;
-            height: 40px;
-            margin: 0 auto;
-            border-radius: 4px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .product-image-container:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-        }
-
-        .product-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .product-image-cell {
-            text-align: center;
-            vertical-align: middle;
-            width: 50px;
-        }
-
-        /* Image Modal Styles */
-        .image-modal .modal-dialog {
-            max-width: 90%;
-            margin: 1.75rem auto;
-        }
-
-        .image-modal .modal-content {
-            background: transparent;
-            border: none;
-        }
-
-        .image-modal .modal-body {
-            padding: 0;
-            text-align: center;
-        }
-
-        .image-modal img {
-            max-width: 100%;
-            max-height: 80vh;
-            object-fit: contain;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-
-        .image-modal .modal-header {
-            border: none;
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1;
-        }
-
-        .image-modal .btn-close {
-            background-color: rgba(255,255,255,0.8);
-            border-radius: 50%;
-            padding: 8px;
-        }
-    </style>
+    <link rel="stylesheet" href="css/input.css">
+     
 </head>
 <body>
     <!-- Top Navigation -->
@@ -189,10 +68,10 @@ require_once 'config/database.php';
         </ul>
 
         <!-- Tabs Content -->
-        <div class="tab-content" id="receiptTabsContent">
+        <div class="tab-content " id="receiptTabsContent" >
             <!-- SELLING RECEIPT TEMPLATE -->
             <div class="tab-pane fade show active" id="selling-1" role="tabpanel" data-receipt-type="selling">
-                <div class="receipt-container">
+                <div class="receipt-container card-qiuck-style">
                     <!-- Header Section -->
                     <div class="row mb-4">
                         <div class="col-md-4">
@@ -274,14 +153,14 @@ require_once 'config/database.php';
                         <table class="table table-bordered">
                             <thead>
                                 <tr>
-                                    <th style="width: 50px">#</th>
-                                    <th>کاڵا</th>
-                                    <th>وێنە</th>
-                                    <th>جۆری یەکە</th>
-                                    <th>نرخی یەکە</th>
-                                    <th>بڕی یەکە</th>
-                                    <th>کۆی گشتی</th>
-                                    <th style="width: 100px">کردار</th>
+                                    <th style="width: 50px" class="tbl-header">#</th>
+                                    <th class="tbl-header">کاڵا</th>
+                                    <th class="tbl-header">وێنە</th>
+                                    <th class="tbl-header">جۆری یەکە</th>
+                                    <th class="tbl-header">نرخی یەکە</th>
+                                    <th class="tbl-header">بڕی یەکە</th>
+                                    <th class="tbl-header">کۆی گشتی</th>
+                                    <th class="tbl-header" style="width: 100px">کردار</th>
                                 </tr>
                             </thead>
                             <tbody class="items-list">
@@ -338,8 +217,8 @@ require_once 'config/database.php';
 
                     <!-- Submit Button -->
                     <div class="mt-4 text-start">
-                        <button type="submit" class="btn btn-primary save-btn">
-                            <i class="fas fa-save"></i> پاشەکەوتکردن
+                        <button type="submit" class="btn btn-primary save-btn cta-btn ">
+                            پاشەکەوتکردن <i class="fas fa-save"></i>
                         </button>
                     </div>
                 </div>
@@ -349,7 +228,7 @@ require_once 'config/database.php';
 
     <!-- Template for Buying Receipt Tab (Hidden) -->
     <div id="buying-template" class="d-none">
-        <div class="receipt-container">
+        <div class="receipt-container card-qiuck-style">
             <!-- Header Section -->
             <div class="row mb-4">
                 <div class="col-md-4 col-sm-12">
@@ -412,13 +291,13 @@ require_once 'config/database.php';
                 <table class="table table-bordered">
                     <thead>
                         <tr>
-                            <th style="width: 50px">#</th>
-                            <th>کاڵا</th>
-                            <th>وێنە</th>
-                            <th>نرخی یەکە</th>
-                            <th>بڕی یەکە</th>
-                            <th>کۆی گشتی</th>
-                            <th style="width: 100px">کردار</th>
+                            <th style="width: 50px" class="tbl-header">#</th>
+                            <th class="tbl-header">کاڵا</th>
+                            <th class="tbl-header">وێنە</th>
+                            <th class="tbl-header">نرخی یەکە</th>
+                            <th class="tbl-header">بڕی یەکە</th>
+                            <th class="tbl-header">کۆی گشتی</th>
+                            <th class="tbl-header" style="width: 100px">کردار</th>
                         </tr>
                     </thead>
                     <tbody class="items-list">
@@ -464,8 +343,8 @@ require_once 'config/database.php';
 
             <!-- Submit Button -->
             <div class="mt-4 text-start">
-                <button type="submit" class="btn btn-primary save-btn">
-                    <i class="fas fa-save"></i> پاشەکەوتکردن
+                <button type="submit" class="btn btn-primary save-btn cta-btn">
+                پاشەکەوتکردن   <i class="fas fa-save"></i> 
                 </button>
             </div>
         </div>
@@ -473,7 +352,7 @@ require_once 'config/database.php';
 
     <!-- Template for Wasting Receipt Tab (Hidden) -->
     <div id="wasting-template" class="d-none">
-        <div class="receipt-container">
+        <div class="receipt-container card-qiuck-style">
             <!-- Header Section -->
             <div class="row mb-4">
                 <div class="col-md-4 col-sm-12">
@@ -597,7 +476,7 @@ require_once 'config/database.php';
 
     <!-- Template for Selling Receipt Tab (Hidden) -->
     <div id="selling-template" class="d-none">
-        <div class="receipt-container">
+        <div class="receipt-container card-qiuck-style">
             <!-- Header Section -->
             <div class="row mb-4">
                 <div class="col-md-4 col-sm-12">

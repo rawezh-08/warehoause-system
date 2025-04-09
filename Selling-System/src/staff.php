@@ -137,7 +137,7 @@ $suppliers = $supplierModel->getAll();
                         <!-- Employee Table -->
                         <div class="row">
                             <div class="col-12">
-                                <div class="card shadow-sm card-qiuck-style" >
+                                <div class="card shadow-sm card-qiuck-style">
                                     <div
                                         class="card-header bg-transparent d-flex justify-content-between align-items-center">
                                         <h5 class="card-title mb-0">لیستی کارمەندەکان</h5>
@@ -174,7 +174,7 @@ $suppliers = $supplierModel->getAll();
                                                                     placeholder="گەڕان لە تەیبڵدا...">
                                                                 <span
                                                                     class="input-group-text rounded-pill-end bg-light">
-<img src="assets/icons/search-purple.svg" alt="">                                                                </span>
+                                                                    <img src="assets/icons/search-purple.svg" alt=""> </span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -188,7 +188,7 @@ $suppliers = $supplierModel->getAll();
                                                     <thead class="table-light">
                                                         <tr>
                                                             <th class="tbl-header">#</th>
-                                                            <th class="tbl-header" >ناوی کارمەند</th>
+                                                            <th class="tbl-header">ناوی کارمەند</th>
                                                             <th class="tbl-header">ژمارەی مۆبایل</th>
                                                             <th class="tbl-header">پۆست</th>
                                                             <th class="tbl-header">مووچە</th>
@@ -401,7 +401,8 @@ $suppliers = $supplierModel->getAll();
                                                                     placeholder="گەڕان لە تەیبڵدا...">
                                                                 <span
                                                                     class="input-group-text rounded-pill-end bg-light">
-                                                                    <i class="fas fa-search"></i>
+                                                                    <img src="assets/icons/search-purple.svg" alt=""> </span>
+
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -428,32 +429,32 @@ $suppliers = $supplierModel->getAll();
                                                     </thead>
                                                     <tbody>
                                                         <?php foreach ($customers as $index => $customer): ?>
-                                                        <tr data-id="<?php echo $customer['id']; ?>">
-                                                            <td><?php echo $index + 1; ?></td>
-                                                            <td><?php echo htmlspecialchars($customer['name']); ?></td>
-                                                            <td><?php echo htmlspecialchars($customer['phone1']); ?></td>
-                                                            <td><?php echo htmlspecialchars($customer['phone2'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($customer['guarantor_name'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($customer['guarantor_phone'] ?? ''); ?></td>
-                                                            <td><?php echo htmlspecialchars($customer['address'] ?? ''); ?></td>
-                                                            <td><?php echo number_format($customer['debit_on_business'], 0); ?></td>
-                                                            <td>
-                                                                <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="<?php echo $customer['id']; ?>">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                  
-                                                                    <button type="button" class="btn btn-sm btn-outline-warning rounded-circle notes-btn" 
+                                                            <tr data-id="<?php echo $customer['id']; ?>">
+                                                                <td><?php echo $index + 1; ?></td>
+                                                                <td><?php echo htmlspecialchars($customer['name']); ?></td>
+                                                                <td><?php echo htmlspecialchars($customer['phone1']); ?></td>
+                                                                <td><?php echo htmlspecialchars($customer['phone2'] ?? ''); ?></td>
+                                                                <td><?php echo htmlspecialchars($customer['guarantor_name'] ?? ''); ?></td>
+                                                                <td><?php echo htmlspecialchars($customer['guarantor_phone'] ?? ''); ?></td>
+                                                                <td><?php echo htmlspecialchars($customer['address'] ?? ''); ?></td>
+                                                                <td><?php echo number_format($customer['debit_on_business'], 0); ?></td>
+                                                                <td>
+                                                                    <div class="action-buttons">
+                                                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="<?php echo $customer['id']; ?>">
+                                                                            <i class="fas fa-edit"></i>
+                                                                        </button>
+
+                                                                        <button type="button" class="btn btn-sm btn-outline-warning rounded-circle notes-btn"
                                                                             data-notes="<?php echo htmlspecialchars($customer['notes'] ?? ''); ?>"
                                                                             data-customer-name="<?php echo htmlspecialchars($customer['name']); ?>">
-                                                                        <i class="fas fa-sticky-note"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="<?php echo $customer['id']; ?>">
-                                                                        <i class="fas fa-trash-alt"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
+                                                                            <i class="fas fa-sticky-note"></i>
+                                                                        </button>
+                                                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="<?php echo $customer['id']; ?>">
+                                                                            <i class="fas fa-trash-alt"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
                                                         <?php endforeach; ?>
                                                     </tbody>
                                                 </table>
@@ -563,7 +564,7 @@ $suppliers = $supplierModel->getAll();
                                                                     placeholder="گەڕان لە تەیبڵدا...">
                                                                 <span
                                                                     class="input-group-text rounded-pill-end bg-light">
-                                                                    <i class="fas fa-search"></i>
+                                                                    <img src="assets/icons/search-purple.svg" alt=""> </span>
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -587,44 +588,44 @@ $suppliers = $supplierModel->getAll();
                                                     </thead>
                                                     <tbody>
                                                         <?php if (empty($suppliers)): ?>
-                                                        <tr>
-                                                            <td colspan="6" class="text-center">هیچ دابینکەرێک نەدۆزرایەوە</td>
-                                                        </tr>
+                                                            <tr>
+                                                                <td colspan="6" class="text-center">هیچ دابینکەرێک نەدۆزرایەوە</td>
+                                                            </tr>
                                                         <?php else: ?>
                                                             <?php foreach ($suppliers as $index => $supplier): ?>
-                                                            <tr data-id="<?php echo $supplier['id']; ?>">
-                                                                <td><?php echo $index + 1; ?></td>
-                                                                <td><?php echo htmlspecialchars($supplier['name']); ?></td>
-                                                                <td><?php echo htmlspecialchars($supplier['phone1']); ?></td>
-                                                                <td><?php echo htmlspecialchars($supplier['phone2'] ? $supplier['phone2'] : '-'); ?></td>
-                                                                <td><?php echo number_format($supplier['debt_on_myself'], 0, '.', ','); ?> دینار</td>
-                                                                <td>
-                                                                    <div class="action-buttons">
-                                                                        <button type="button"
-                                                                            class="btn btn-sm btn-outline-primary rounded-circle edit-btn"
-                                                                            data-id="<?php echo $supplier['id']; ?>" data-bs-toggle="modal"
-                                                                            data-bs-target="#editSupplierModal">
-                                                                            <i class="fas fa-edit"></i>
-                                                                        </button>
-                                                                        <button type="button"
-                                                                            class="btn btn-sm btn-outline-info rounded-circle view-btn"
-                                                                            data-id="<?php echo $supplier['id']; ?>">
-                                                                            <i class="fas fa-eye"></i>
-                                                                        </button>
-                                                                        <button type="button"
-                                                                            class="btn btn-sm btn-outline-warning rounded-circle notes-btn"
-                                                                            data-notes="<?php echo htmlspecialchars($supplier['notes'] ?? ''); ?>"
-                                                                            data-supplier-name="<?php echo htmlspecialchars($supplier['name']); ?>">
-                                                                            <i class="fas fa-sticky-note"></i>
-                                                                        </button>
-                                                                        <button type="button"
-                                                                            class="btn btn-sm btn-outline-danger rounded-circle delete-btn"
-                                                                            data-id="<?php echo $supplier['id']; ?>">
-                                                                            <i class="fas fa-trash-alt"></i>
-                                                                        </button>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
+                                                                <tr data-id="<?php echo $supplier['id']; ?>">
+                                                                    <td><?php echo $index + 1; ?></td>
+                                                                    <td><?php echo htmlspecialchars($supplier['name']); ?></td>
+                                                                    <td><?php echo htmlspecialchars($supplier['phone1']); ?></td>
+                                                                    <td><?php echo htmlspecialchars($supplier['phone2'] ? $supplier['phone2'] : '-'); ?></td>
+                                                                    <td><?php echo number_format($supplier['debt_on_myself'], 0, '.', ','); ?> دینار</td>
+                                                                    <td>
+                                                                        <div class="action-buttons">
+                                                                            <button type="button"
+                                                                                class="btn btn-sm btn-outline-primary rounded-circle edit-btn"
+                                                                                data-id="<?php echo $supplier['id']; ?>" data-bs-toggle="modal"
+                                                                                data-bs-target="#editSupplierModal">
+                                                                                <i class="fas fa-edit"></i>
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="btn btn-sm btn-outline-info rounded-circle view-btn"
+                                                                                data-id="<?php echo $supplier['id']; ?>">
+                                                                                <i class="fas fa-eye"></i>
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="btn btn-sm btn-outline-warning rounded-circle notes-btn"
+                                                                                data-notes="<?php echo htmlspecialchars($supplier['notes'] ?? ''); ?>"
+                                                                                data-supplier-name="<?php echo htmlspecialchars($supplier['name']); ?>">
+                                                                                <i class="fas fa-sticky-note"></i>
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="btn btn-sm btn-outline-danger rounded-circle delete-btn"
+                                                                                data-id="<?php echo $supplier['id']; ?>">
+                                                                                <i class="fas fa-trash-alt"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
                                                             <?php endforeach; ?>
                                                         <?php endif; ?>
                                                     </tbody>
@@ -796,12 +797,12 @@ $suppliers = $supplierModel->getAll();
                         <div class="mb-3">
                             <label for="editSupplierPhone1" class="form-label">ژمارەی پەیوەندی</label>
                             <input type="tel" class="form-control" id="editSupplierPhone1" required pattern="[0-9]{4} [0-9]{3} [0-9]{4}">
-                          
+
                         </div>
                         <div class="mb-3">
                             <label for="editSupplierPhone2" class="form-label">ژمارەی پەیوەندی ٢</label>
                             <input type="tel" class="form-control" id="editSupplierPhone2" pattern="[0-9]{4} [0-9]{3} [0-9]{4}">
-                           
+
                         </div>
                         <div class="mb-3">
                             <label for="editSupplierDebt" class="form-label">قەرز لەسەر خۆم</label>
