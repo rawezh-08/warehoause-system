@@ -42,8 +42,9 @@ try {
     <link rel="stylesheet" href="assets/css/custom.css">
     <!-- Page CSS -->
     <!-- <link rel="stylesheet" href="css/dashboard.css"> -->
-    <link rel="stylesheet" href="css/addProduct.css">
     <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/addProduct.css">
+
 
 
    
@@ -70,8 +71,8 @@ try {
 
                     <div class="row">
                         <!-- Left column - Product form -->
-                        <div class="col-lg-8 col-md-12 mb-4">
-                            <div class="card shadow-sm">
+                        <div class="col-lg-8 col-md-12 mb-4" >
+                            <div class="card " style="border: 1px solid var(--blue-border-color);">
                                 <div class="card-body">
                                     
                                     <div class="tab-header d-flex flex-wrap mb-4">
@@ -234,10 +235,11 @@ try {
                         
                         <!-- Right column - Product list -->
                         <div class="col-lg-4 col-md-12">
-                            <div class="card shadow-sm mb-4">
+    
+                            <div class="card  mb-4" style="border: 1px solid var(--blue-border-color);">
                                 <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
                                     <h5 class="card-title mb-0">کاڵا نوێکان</h5>
-                                    <button class="btn btn-sm btn-outline-primary refresh-products">
+                                    <button class="btn btn-sm btn-outline-primary refresh-products" style="padding: 4px 18px ;">
                                         <i class="fas fa-sync-alt"></i>
                                     </button>
                                 </div>
@@ -258,12 +260,11 @@ try {
                                                         </div>
                                                         <div class="product-info flex-grow-1">
                                                             <h6 class="mb-0"><?php echo htmlspecialchars($product['name']); ?></h6>
-                                                            <small class="text-muted">
+                                                            <small class="" style="color: grey">
                                                                 کۆد: <?php echo htmlspecialchars($product['code']); ?> | 
                                                                 زیادکرا: <?php echo date('Y/m/d H:i', strtotime($product['created_at'])); ?>
                                                             </small>
                                                         </div>
-                                                        <span class="badge bg-success">نوێ</span>
                                                     </div>
                                                 </li>
                                             <?php endforeach; ?>
@@ -279,34 +280,7 @@ try {
                                 </div>
                             </div>
                             
-                            <!-- Instructions Card -->
-                            <div class="card shadow-sm">
-                                <div class="card-header bg-transparent">
-                                    <h5 class="card-title mb-0">ڕێنماییەکان</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="instructions">
-                                        <div class="instruction-item mb-3">
-                                            <div class="d-flex align-items-center mb-2">
-                                                <div class="instruction-icon me-2 rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
-                                                    <small>1</small>
-                                                </div>
-                                                <h6 class="mb-0">زانیاری بنەڕەتی</h6>
-                                            </div>
-                                            <p class="text-muted small mb-0">ناو، جۆر، کۆد و زانیاری بنەڕەتی کاڵاکە بنووسە.</p>
-                                        </div>
-                                        <div class="instruction-item mb-3">
-                                            <div class="d-flex align-items-center mb-2">
-                                                <div class="instruction-icon me-2 rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
-                                                    <small>2</small>
-                                                </div>
-                                                <h6 class="mb-0">نرخ و باج</h6>
-                                            </div>
-                                            <p class="text-muted small mb-0">نرخی کڕین، فرۆشتن، بەکۆمەڵ و ڕێژەی باج دیاری بکە.</p>
-                                        </div>
-                                     </div>
-                                </div>
-                            </div>
+                        
                         </div>
                     </div>
                 </div>

@@ -33,6 +33,7 @@
     
     /* UI elements */
     --border-color: #dce1eb;
+    --blue-border-color: #b3cdff;
     --border-radius: 10px;
     --border-radius-sm: 6px;
     --border-radius-lg: 15px;
@@ -222,7 +223,7 @@ body.sidebar-active .main-content {
 .form-control, .form-select {
     border: 1px solid var(--border-color);
     padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--border-radius);
+    border-radius: 24px;
     transition: all var(--transition-fast);
     direction: rtl; /* Add RTL support */
 }
@@ -948,4 +949,3 @@ textarea:focus::placeholder {
     color: var(--primary-color);
 }
 
- 

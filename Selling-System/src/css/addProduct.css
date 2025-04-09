@@ -195,6 +195,10 @@
     transition: all var(--transition-fast);
 }
 
+.text-muted{
+    color: var(--primary-color);
+}
+
 .product-actions button:hover {
     color: var(--primary-color);
 }

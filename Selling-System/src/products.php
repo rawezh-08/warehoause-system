@@ -96,301 +96,13 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/employeePayment/style.css">
+    <link rel="stylesheet" href="css/products.css">
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <!-- Custom styles for this page -->
-    <style>
-        /* Transparent search input */
-        .table-search-input {
-            background-color: transparent !important;
-            border: 1px solid #dee2e6;
-        }
-        
-        .custom-table td,
-        th {
-            white-space: normal;
-            word-wrap: break-word;
-            vertical-align: middle;
-            padding: 0.75rem;
-        }
-
-        .custom-table td {
-
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-
-
-        .custom-table th {
-
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
     
-
-        
-        /* Adjust pagination display for many pages */
-        .pagination-numbers {
-            flex-wrap: wrap;
-            max-width: 300px;
-            overflow: hidden;
-        }
-        
-        .pagination-numbers .btn {
-            margin-bottom: 5px;
-        }
-
-        /* RTL Toast Container Styles */
-        .toast-container-rtl {
-            right: 0 !important;
-            left: auto !important;
-        }
-
-        .toast-container-rtl .swal2-toast {
-            margin-right: 1em !important;
-            margin-left: 0 !important;
-        }
-
-        .toast-container-rtl .swal2-toast .swal2-title {
-            text-align: right !important;
-        }
-
-        .toast-container-rtl .swal2-toast .swal2-icon {
-            margin-right: 0 !important;
-            margin-left: 0.5em !important;
-        }
-
-        .table th, .table td {
-            text-align: center;
-            vertical-align: middle;
-        }
-        .product-image {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-        }
-        .filter-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .select2-container--bootstrap-5 .select2-selection {
-            min-height: 38px;
-        }
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-            padding-top: 4px;
-        }
-        
-        /* Fix Select2 clear button (X) styling */
-        .select2-container--bootstrap-5 .select2-selection--single {
-            padding-left: 2rem !important;
-        }
-        
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__clear {
-            left: 0.5rem !important;
-            right: auto !important;
-            top: 50% !important;
-            transform: translateY(-50%) !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            background: none !important;
-            border: none !important;
-            color: #6c757d !important;
-            font-size: 1rem !important;
-            line-height: 1 !important;
-            z-index: 2;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__clear:hover {
-            color: #dc3545 !important;
-        }
-
-        .filter-section .form-label {
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-        }
-
-        /* Pagination Styles */
-        .pagination-circle .page-link {
-            width: 36px;
-            height: 36px;
-            padding: 0;
-            border-radius: 50% !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
-            margin: 0 3px;
-        }
-
-        .pagination-circle .page-item.active .page-link {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
-            color: white;
-        }
-
-        .pagination-circle .page-link:hover {
-            background-color: #e9ecef;
-            border-color: #dee2e6;
-            color: #0d6efd;
-        }
-
-        .pagination-circle .page-item.active .page-link:hover {
-            background-color: #0d6efd;
-            color: white;
-        }
-
-        .pagination-circle .page-item.disabled .page-link {
-            background-color: #e9ecef;
-            border-color: #dee2e6;
-            color: #6c757d;
-        }
-
-        @media (max-width: 768px) {
-            .pagination-circle .page-link {
-                width: 32px;
-                height: 32px;
-                font-size: 0.8rem;
-                margin: 0 2px;
-            }
-            
-            .pagination-container {
-                overflow-x: auto;
-                padding-bottom: 1rem;
-            }
-            
-            .pagination {
-                flex-wrap: nowrap;
-                margin-bottom: 0;
-            }
-        }
-
-        /* Action Buttons Style */
-        .btn-group .btn {
-            width: 32px;
-            height: 32px;
-            padding: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 2px;
-            border-radius: 50% !important;
-        }
-
-        .btn-group .btn i {
-            font-size: 14px;
-            line-height: 1;
-        }
-
-        /* Hover effects */
-        .btn-group .btn:hover {
-            transform: translateY(-2px);
-            transition: all 0.2s;
-        }
-
-        .btn-group .btn-outline-primary:hover {
-            background-color: #0d6efd;
-            color: white;
-        }
-
-        .btn-group .btn-outline-info:hover {
-            background-color: #0dcaf0;
-            color: white;
-        }
-
-        .btn-group .btn-outline-danger:hover {
-            background-color: #dc3545;
-            color: white;
-        }
-
-        /* Active state */
-        .btn-group .btn:active {
-            transform: translateY(0);
-        }
-
-        /* Product Image Styles */
-        .product-image-container {
-            width: 50px;
-            height: 50px;
-            margin: 0 auto;
-            border-radius: 4px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .product-image-container:hover {
-            transform: scale(1.05);
-        }
-
-        .product-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .no-image-placeholder {
-            width: 50px;
-            height: 50px;
-            margin: 0 auto;
-            background: #f8f9fa;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #6c757d;
-        }
-
-        .no-image-placeholder i {
-            font-size: 20px;
-        }
-
-        /* Image Modal Styles */
-        .image-modal .modal-dialog {
-            max-width: 90%;
-            margin: 1.75rem auto;
-        }
-
-        .image-modal .modal-content {
-            background: transparent;
-            border: none;
-        }
-
-        .image-modal .modal-body {
-            padding: 0;
-            text-align: center;
-        }
-
-        .image-modal img {
-            max-width: 100%;
-            max-height: 80vh;
-            object-fit: contain;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-
-        .image-modal .modal-header {
-            border: none;
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1;
-        }
-
-        .image-modal .btn-close {
-            background-color: rgba(255,255,255,0.8);
-            border-radius: 50%;
-            padding: 8px;
-        }
-    </style>
 </head>
+
 <body>
     <!-- Main Content Wrapper -->
     <div id="content">
@@ -410,31 +122,40 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
 
                 <!-- Filter Section -->
-                <div class="filter-section">
+                <div class="filter-section" style="border-radius: 24px;">
                     <form id="filterForm" class="row g-3">
-                                            <div class="col-md-4">
-                            <label for="search" class="form-label">گەڕان بە ناو/کۆد/بارکۆد</label>
-                            <select class="form-select select2" id="search" name="search">
-                                <option value="">هەموو کاڵاکان</option>
-                                <?php foreach ($products_list as $product): ?>
-                                    <option value="<?php echo htmlspecialchars($product['id']); ?>" <?php echo $search == $product['id'] ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($product['name'] . ' - ' . $product['code'] . ' - ' . $product['barcode']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-3">
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">گەڕان بە ناو ، کۆد، بارکۆد</label>
+                            <div class="search-wrapper">
+                                <div class="input-group">
+                                    <input type="text" class="form-control search-input" id="search" name="search" style="border-radius: 24px;"
+                                           placeholder="ناوی کاڵا، کۆد یان بارکۆد..." 
+                                           value="<?php echo htmlspecialchars($search); ?>">
+                                    <button type="button" class="btn btn-primary search-btn" style="border-radius: 24px; margin-right: 8px;">
+                                        <img src="assets/icons/search.svg" alt="">
+                                    </button>
+                                </div>
+                                <div class="search-suggestions" style="display: none;">
+                                    <div class="suggestion-header">
+                                        <i class="fas fa-clock"></i>
+                                        <span>دواترین کاڵاکان</span>
+                                    </div>
+                                    <div class="suggestions-list"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3" >
                             <label for="category" class="form-label">جۆری کاڵا</label>
-                            <select class="form-select select2" id="category" name="category">
+                            <select class="form-select select2" id="category" name="category" style="border-radius: 24px;  display: flex; justify-content: center; align-items: center;">
                                 <option value="">هەموو جۆرەکان</option>
                                 <?php foreach ($categories as $cat): ?>
                                     <option value="<?php echo htmlspecialchars($cat['id']); ?>" <?php echo $category_id == $cat['id'] ? 'selected' : ''; ?>>
                                         <?php echo htmlspecialchars($cat['name']); ?>
                                     </option>
                                 <?php endforeach; ?>
-                                                                </select>
-                                            </div>
-                                            <div class="col-md-3">
+                            </select>
+                        </div>
+                        <div class="col-md-3">
                             <label for="unit" class="form-label">یەکە</label>
                             <select class="form-select select2" id="unit" name="unit">
                                 <option value="">هەموو یەکەکان</option>
@@ -443,22 +164,22 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <?php echo htmlspecialchars($unit['name']); ?>
                                     </option>
                                 <?php endforeach; ?>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-2 d-flex align-items-end">
-                            <button type="button" class="btn btn-outline-secondary w-100" id="resetFilter">
-                                                    <i class="fas fa-redo me-2"></i> ڕیسێت
-                                                </button>
-                                            </div>
-                                        </form>
+                            </select>
                         </div>
+                        <!-- <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-secondary w-100" id="resetFilter">
+                                <i class="fas fa-redo me-2"></i> ڕیسێت
+                            </button>
+                        </div> -->
+                    </form>
+                </div>
 
                 <!-- Products Table -->
-                                <div class="card shadow-sm">
+                                <div class="card shadow-sm" style="border-radius: 24px; border: 1px solid #9ec5ff;">
                                     <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0">لیستی کاڵاکان</h5>
-                        <a href="addProduct.php" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> زیادکردنی کاڵای نوێ
+                        <a href="addProduct.php" class="btn btn-primary add-product-btn">
+                           زیادکردنی کاڵای نوێ  <img src="assets/icons/add-square.svg" alt="">
                         </a>
                                     </div>
                                     <div class="card-body">
@@ -484,25 +205,25 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             
                                             <!-- Table Content -->
                                             <div class="table-responsive">
-                                <table class="table table-bordered custom-table table-hover">
+                                <table class="table table-bordered custom-table table-hover" style="border-radius: 16px;">
                                                     <thead class="table-light">
                                                         <tr>
-                                                            <th>#</th>
-                                            <th>وێنە</th>
-                                            <th>کۆد</th>
-                                            <th>بارکۆد</th>
-                                            <th>ناو</th>
-                                            <th>جۆر</th>
-                                            <th>یەکە</th>
+                                                            <th style="background-color: #cde1ff; border: none;">#</th>
+                                            <th style="background-color:#cde1ff; border: none;">وێنە</th>
+                                            <th style="background-color: #cde1ff; border: none;">کۆد</th>
+                                            <th style="background-color: #cde1ff; border: none;">بارکۆد</th>
+                                            <th style="background-color: #cde1ff; border: none;">ناو</th>
+                                                <th style="background-color: #cde1ff; border: none;">جۆر</th>
+                                            <th style="background-color: #cde1ff; border: none;">یەکە</th>
                                 
-                                            <th>دانە لە کارتۆن</th>
-                                            <th>کارتۆن لە سێت</th>
-                                            <th>نرخی کڕین</th>
-                                            <th>نرخی فرۆشتن</th>
-                                            <th>نرخی فرۆشتن (کۆمەڵ)</th>
+                                            <th style="background-color: #cde1ff; border: none;">دانە لە کارتۆن</th>
+                                            <th style="background-color: #cde1ff; border: none;">کارتۆن لە سێت</th>
+                                            <th style="background-color: #cde1ff; border: none;">نرخی کڕین</th>
+                                            <th style="background-color: #cde1ff; border: none;">نرخی فرۆشتن</th>
+                                            <th style="background-color: #cde1ff; border: none;">نرخی فرۆشتن (کۆمەڵ)</th>
                                       
-                                            <th>بڕی کەمترین</th>
-                                                            <th>کردارەکان</th>
+                                                    <th style="background-color: #cde1ff; border: none;">بڕی کەمترین</th>
+                                                            <th style="background-color: #cde1ff; border: none;">کردارەکان</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -737,8 +458,8 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $(document).ready(function() {
-            // Initialize Select2
-            $('.select2').select2({
+            // Initialize other Select2 dropdowns
+            $('#category, #unit').select2({
                 theme: 'bootstrap-5',
                 width: '100%',
                 placeholder: 'هەڵبژاردن بکە',
@@ -750,8 +471,101 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 }
             });
 
-            // Auto filter on change
-            $('#search, #category, #unit').on('change', function() {
+            // Debounce function
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            // Handle search functionality
+            const $searchWrapper = $('.search-wrapper');
+            const $searchInput = $('.search-input');
+            const $searchBtn = $('.search-btn');
+            const $suggestions = $('.search-suggestions');
+            const $suggestionsList = $('.suggestions-list');
+
+            // Load initial suggestions when input is focused
+            $searchInput.on('focus', function() {
+                if (!$searchInput.val()) {
+                    loadSuggestions('', true);
+                }
+                $suggestions.show();
+            });
+
+            // Hide suggestions when clicking outside
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.search-wrapper').length) {
+                    $suggestions.hide();
+                }
+            });
+
+            // Handle search input
+            $searchInput.on('input', debounce(function() {
+                const query = $(this).val();
+                if (query) {
+                    loadSuggestions(query, false);
+                } else {
+                    loadSuggestions('', true);
+                }
+            }, 300));
+
+            // Handle search button click
+            $searchBtn.on('click', function() {
+                const query = $searchInput.val();
+                if (query) {
+                    $('#filterForm').submit();
+                }
+            });
+
+            // Load suggestions from server
+            function loadSuggestions(query, showInitial) {
+                $searchWrapper.addClass('loading');
+                
+                $.ajax({
+                    url: 'process/search_products.php',
+                    data: {
+                        term: query,
+                        show_initial: showInitial ? '1' : '0'
+                    },
+                    success: function(response) {
+                        $suggestionsList.empty();
+                        
+                        if (response.results && response.results.length > 0) {
+                            response.results.forEach(function(product) {
+                                const $item = $('<div class="suggestion-item">')
+                                    .html(`
+                                        <div class="product-name">${product.name}</div>
+                                        <div class="product-details">
+                                            <span><i class="fas fa-barcode"></i>${product.code}</span>
+                                            <span><i class="fas fa-folder"></i>${product.category}</span>
+                                            <span><i class="fas fa-tag"></i>${product.selling_price}</span>
+                                        </div>
+                                    `)
+                                    .on('click', function() {
+                                        $searchInput.val(product.name);
+                                        $suggestions.hide();
+                                        $('#filterForm').submit();
+                                    });
+                                
+                                $suggestionsList.append($item);
+                            });
+                        }
+                    },
+                    complete: function() {
+                        $searchWrapper.removeClass('loading');
+                    }
+                });
+            }
+
+            // Handle category and unit changes
+            $('#category, #unit').on('change', function() {
                 $('#filterForm').submit();
             });
 
@@ -765,10 +579,18 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Reset filter
             $('#resetFilter').on('click', function() {
-                $('#search').val('').trigger('change');
-                $('#category').val('').trigger('change');
-                $('#unit').val('').trigger('change');
+                $searchInput.val('');
+                $('#category').val(null).trigger('change');
+                $('#unit').val(null).trigger('change');
                 window.location.href = 'products.php';
+            });
+
+            // Handle Enter key in search input
+            $searchInput.on('keypress', function(e) {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    $('#filterForm').submit();
+                }
             });
 
             // Initialize view notes buttons

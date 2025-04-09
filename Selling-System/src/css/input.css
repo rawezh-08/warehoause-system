@@ -1,0 +1,53 @@
+
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="time"],
+input[type="week"],
+select,
+textarea {
+    color: var(--primary-color);
+    border-radius: 10px;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="email"]:focus, 
+input[type="password"]:focus,
+input[type="search"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+input[type="date"]:focus,
+input[type="datetime-local"]:focus,
+input[type="month"]:focus,
+input[type="time"]:focus,
+input[type="week"]:focus,
+select:focus,
+textarea:focus {
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+}
+
+input[type="text"]:focus::placeholder,
+input[type="number"]:focus::placeholder,
+input[type="email"]:focus::placeholder,
+input[type="password"]:focus::placeholder,
+input[type="search"]:focus::placeholder,
+input[type="tel"]:focus::placeholder,
+input[type="url"]:focus::placeholder,
+input[type="date"]:focus::placeholder,
+input[type="datetime-local"]:focus::placeholder,
+input[type="month"]:focus::placeholder,
+input[type="time"]:focus::placeholder,
+input[type="week"]:focus::placeholder,
+select:focus::placeholder,
+textarea:focus::placeholder {
+    color: var(--primary-color);
+}
