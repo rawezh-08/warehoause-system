@@ -220,6 +220,26 @@ $(document).ready(function() {
         
         tabPane.find('.subtotal').val(subtotal);
         tabPane.find('.grand-total').val(grandTotal);
+        
+        // Update the remaining amount if payment type is credit
+        if (tabPane.find('.payment-type').val() === 'credit') {
+            updateRemainingAmount(tabPane);
+        }
+    }
+
+    // Update remaining amount based on paid amount
+    function updateRemainingAmount(tabPane) {
+        const grandTotal = parseFloat(tabPane.find('.grand-total').val()) || 0;
+        const paidAmount = parseFloat(tabPane.find('.paid-amount').val()) || 0;
+        const remainingAmount = Math.max(0, grandTotal - paidAmount);
+        
+        tabPane.find('.remaining-amount').val(remainingAmount);
+        
+        // Ensure paid amount doesn't exceed grand total
+        if (paidAmount > grandTotal) {
+            tabPane.find('.paid-amount').val(grandTotal);
+            tabPane.find('.remaining-amount').val(0);
+        }
     }
 
     // Format the selected item
@@ -266,8 +286,8 @@ $(document).ready(function() {
         const receiptType = tabPane.data('receipt-type');
         
         if (productData && productData.id) {
-            console.log("Product selected:", productData); // Debug log
-            console.log("Receipt type:", receiptType); // Debug log
+            console.log("Product selected:", productData);
+            console.log("Receipt type:", receiptType);
             console.log("Unit properties:", {
                 unit_id: productData.unit_id,
                 is_piece: productData.is_piece,
@@ -278,25 +298,16 @@ $(document).ready(function() {
             // Update unit type dropdown based on product's unit
             updateUnitTypeOptions(row, productData);
             
-            // Set appropriate values based on receipt type
-            if (receiptType === 'selling') {
-                // For selling, use wholesale or single price based on selection
-                const priceType = tabPane.find('.price-type').val();
-                const price = priceType === 'wholesale' && productData.selling_price_wholesale ? 
-                    productData.selling_price_wholesale : productData.selling_price_single;
-                    
-                row.find('.unit-price').val(parseFloat(price));
-            } else if (receiptType === 'buying') {
-                // For buying, use purchase price
-                console.log("Setting buying price to:", productData.purchase_price); // Debug log
-                row.find('.unit-price').val(parseFloat(productData.purchase_price));
-            } else if (receiptType === 'wasting') {
-                // For wasting, use purchase price and set current quantity
-                row.find('.price').val(parseFloat(productData.purchase_price));
-                row.find('.current-quantity').val(productData.current_quantity);
-            }
+            // The price will be updated by the unit type change handler
+            // No need to set price here as it will be handled by the unit type change event
             
-            // Update the row total
+            // Display product image
+            fetchProductImage(productData.id, row);
+            
+            // Update quantity to 1 by default
+            row.find('.quantity').val(1);
+            
+            // Calculate row total
             calculateRowTotal(row);
         }
     });
@@ -330,31 +341,37 @@ $(document).ready(function() {
         }
     }
 
-    // Handle unit type change - update pricing
+    // Add unit type change handler
     $(document).on('change', '.unit-type', function() {
         const row = $(this).closest('tr');
         const productSelect = row.find('.product-select');
-        
-        if (productSelect.val()) {
             const productData = productSelect.select2('data')[0];
-            const unitType = $(this).val();
             const tabPane = row.closest('.tab-pane');
             const priceType = tabPane.find('.price-type').val();
             
-            let price = productData.selling_price_single;
-            
-            // Adjust price based on unit type and price type
+        if (productData) {
+            let basePrice;
+            // Get base price based on price type (wholesale/single)
             if (priceType === 'wholesale' && productData.selling_price_wholesale) {
-                price = productData.selling_price_wholesale;
+                basePrice = parseFloat(productData.selling_price_wholesale);
+            } else {
+                basePrice = parseFloat(productData.selling_price_single);
             }
             
+            const unitType = $(this).val();
+            let finalPrice = basePrice;
+            
+            // Calculate price based on unit type
             if (unitType === 'box' && productData.pieces_per_box) {
-                price = price * productData.pieces_per_box;
+                finalPrice = basePrice * productData.pieces_per_box;
             } else if (unitType === 'set' && productData.pieces_per_box && productData.boxes_per_set) {
-                price = price * productData.pieces_per_box * productData.boxes_per_set;
+                finalPrice = basePrice * productData.pieces_per_box * productData.boxes_per_set;
             }
             
-            row.find('.unit-price').val(parseFloat(price));
+            // Update the unit price
+            row.find('.unit-price').val(finalPrice);
+            
+            // Recalculate row total
             calculateRowTotal(row);
         }
     });
@@ -823,133 +840,21 @@ $(document).ready(function() {
         }
     });
 
-    // Save receipt
-    $(document).on('click', '.save-btn', function() {
-        const tabPane = $(this).closest('.tab-pane');
-        const receiptType = tabPane.data('receipt-type');
-        const invoiceNumber = tabPane.find('.receipt-number').val();
+    // Save receipt function
+    function saveReceipt(tabId, tabType) {
+        const tab = $(`#${tabId}`);
+        let formData;
         
-        // Validate the form
-        let isValid = true;
-        
-        // Check if invoice number exists
-        if (!invoiceNumber && receiptType === 'selling') {
-            // Fetch new invoice number if not set
-            $.ajax({
-                url: 'api/get_next_invoice.php',
-                type: 'GET',
-                data: { type: 'selling' },
-                async: false,
-                success: function(response) {
-                    if (response.success) {
-                        tabPane.find('.receipt-number').val(response.invoice_number);
-                    } else {
-                        Swal.fire('هەڵە', 'کێشەیەک هەیە لە دروستکردنی ژمارەی پسوڵە', 'error');
-                        isValid = false;
-                    }
-                },
-                error: function() {
-                    Swal.fire('هەڵە', 'کێشەیەک هەیە لە دروستکردنی ژمارەی پسوڵە', 'error');
-                    isValid = false;
-                }
-            });
+        // Collect data based on receipt type
+        if (tabType === 'selling') {
+            formData = collectSellingReceiptData(tab);
+        } else if (tabType === 'buying') {
+            formData = collectBuyingReceiptData(tab);
+        } else if (tabType === 'wasting') {
+            formData = collectWastingReceiptData(tab);
         }
         
-        // Check required fields specific to each receipt type
-        if (isValid) {
-            if (receiptType === 'selling' && !tabPane.find('.customer-select').val()) {
-                Swal.fire('هەڵە', 'تکایە کڕیار هەڵبژێرە', 'error');
-                isValid = false;
-            } else if (receiptType === 'buying' && !tabPane.find('.supplier-select').val()) {
-                Swal.fire('هەڵە', 'تکایە فرۆشیار هەڵبژێرە', 'error');
-                isValid = false;
-            } else if (receiptType === 'wasting' && !tabPane.find('.responsible-select').val()) {
-                Swal.fire('هەڵە', 'تکایە بەرپرسیار هەڵبژێرە', 'error');
-                isValid = false;
-            }
-        }
-        
-        // If form is valid, submit it
-        if (isValid) {
-            // Get the final invoice number
-            const finalInvoiceNumber = tabPane.find('.receipt-number').val();
-            
-            // Collect form data
-            const formData = {
-                receipt_type: receiptType,
-                invoice_number: finalInvoiceNumber,
-                items: []
-            };
-            
-            // Common fields
-            formData.notes = tabPane.find('.notes').val();
-            formData.discount = tabPane.find('.discount').val() || 0;
-            
-            // Receipt type specific fields
-            if (receiptType === 'selling') {
-                formData.customer_id = tabPane.find('.customer-select').val();
-                formData.payment_type = tabPane.find('.payment-type').val();
-                formData.price_type = tabPane.find('.price-type').val();
-                formData.shipping_cost = tabPane.find('.shipping-cost').val() || 0;
-                formData.other_costs = tabPane.find('.other-costs').val() || 0;
-                formData.date = tabPane.find('.sale-date').val();
-                
-                // Collect selling items
-                tabPane.find('.items-list tr').each(function() {
-                    const product_id = $(this).find('.product-select').val();
-                    const quantity = $(this).find('.quantity').val();
-                    
-                    if (product_id && quantity && parseFloat(quantity) > 0) {
-                        const unit_type = $(this).find('.unit-type').val() || 'piece'; // Default to 'piece' if not found
-                        formData.items.push({
-                            product_id: product_id,
-                            quantity: quantity,
-                            unit_type: unit_type,
-                            unit_price: $(this).find('.unit-price').val(),
-                            total_price: $(this).find('.total').val()
-                        });
-                    }
-                });
-            } else if (receiptType === 'buying') {
-                formData.supplier_id = tabPane.find('.supplier-select').val();
-                formData.payment_type = tabPane.find('.payment-type').val();
-                formData.date = tabPane.find('.purchase-date').val();
-                
-                // Collect buying items
-                tabPane.find('.items-list tr').each(function() {
-                    const product_id = $(this).find('.product-select').val();
-                    const quantity = $(this).find('.quantity').val();
-                    
-                    if (product_id && quantity && parseFloat(quantity) > 0) {
-                        formData.items.push({
-                            product_id: product_id,
-                            quantity: quantity,
-                            unit_price: $(this).find('.unit-price').val(),
-                            total_price: $(this).find('.total').val()
-                        });
-                    }
-                });
-            } else if (receiptType === 'wasting') {
-                formData.responsible_id = tabPane.find('.responsible-select').val();
-                formData.adjustment_reason = tabPane.find('.adjustment-reason').val();
-                formData.date = tabPane.find('.adjustment-date').val();
-                
-                // Collect adjustment items
-                tabPane.find('.items-list tr').each(function() {
-                    const product_id = $(this).find('.product-select').val();
-                    const adjusted_quantity = $(this).find('.adjusted-quantity').val();
-                    
-                    if (product_id && adjusted_quantity && parseFloat(adjusted_quantity) > 0) {
-                        formData.items.push({
-                            product_id: product_id,
-                            expected_quantity: $(this).find('.current-quantity').val(),
-                            actual_quantity: adjusted_quantity,
-                            price: $(this).find('.price').val(),
-                            total_price: $(this).find('.total').val()
-                        });
-                    }
-                });
-            }
+        if (!formData) return; // Data collection failed or validation failed
             
             // Submit the form data
             $.ajax({
@@ -960,7 +865,7 @@ $(document).ready(function() {
                 dataType: 'json',
                 success: function(response) {
                     if (response.success) {
-                        // Show success message with custom styling
+                    // Show success message
                         Swal.fire({
                             title: 'سەرکەوتوو',
                             text: 'پسوڵە بە سەرکەوتوویی پاشەکەوت کرا',
@@ -974,48 +879,7 @@ $(document).ready(function() {
                             }
                         }).then((result) => {
                             // Reset form after success
-                            const currentTab = $('.tab-pane.active');
-                            const receiptType = currentTab.data('receipt-type');
-                            
-                            // Save current selection data
-                            let savedData = {};
-                            if (receiptType === 'selling') {
-                                savedData.customer_id = currentTab.find('.customer-select').val();
-                                savedData.payment_type = currentTab.find('.payment-type').val();
-                                savedData.price_type = currentTab.find('.price-type').val();
-                            } else if (receiptType === 'buying') {
-                                savedData.supplier_id = currentTab.find('.supplier-select').val();
-                                savedData.payment_type = currentTab.find('.payment-type').val();
-                            }
-                            
-                            // Reset items
-                            currentTab.find('.items-list tr:not(:first)').remove();
-                            currentTab.find('.items-list tr:first').find('input').val('');
-                            currentTab.find('.items-list tr:first').find('.product-select').val(null).trigger('change');
-                            
-                            // Reset totals
-                            currentTab.find('.subtotal').val('0.00');
-                            currentTab.find('.discount').val('0');
-                            currentTab.find('.shipping-cost').val('0');
-                            currentTab.find('.other-costs').val('0');
-                            currentTab.find('.grand-total').val('0.00');
-                            
-                            // Reset invoice number
-                            currentTab.find('.receipt-number').val('');
-                            
-                            // Set date to today
-                            const today = new Date().toISOString().split('T')[0];
-                            currentTab.find('.sale-date, .purchase-date, .adjustment-date').val(today);
-                            
-                            // Restore saved selections
-                            if (receiptType === 'selling') {
-                                if (savedData.customer_id) currentTab.find('.customer-select').val(savedData.customer_id).trigger('change');
-                                if (savedData.payment_type) currentTab.find('.payment-type').val(savedData.payment_type);
-                                if (savedData.price_type) currentTab.find('.price-type').val(savedData.price_type);
-                            } else if (receiptType === 'buying') {
-                                if (savedData.supplier_id) currentTab.find('.supplier-select').val(savedData.supplier_id).trigger('change');
-                                if (savedData.payment_type) currentTab.find('.payment-type').val(savedData.payment_type);
-                            }
+                        resetForm(tab, tabType);
                         });
                     } else {
                         Swal.fire({
@@ -1048,8 +912,66 @@ $(document).ready(function() {
                     });
                 }
             });
+    }
+
+    // Reset form after successful save
+    function resetForm(tab, receiptType) {
+        // Save current selection data
+        let savedData = {};
+        if (receiptType === 'selling') {
+            savedData.customer_id = tab.find('.customer-select').val();
+            savedData.payment_type = tab.find('.payment-type').val();
+            savedData.price_type = tab.find('.price-type').val();
+        } else if (receiptType === 'buying') {
+            savedData.supplier_id = tab.find('.supplier-select').val();
+            savedData.payment_type = tab.find('.payment-type').val();
         }
-    });
+        
+        // Reset items
+        tab.find('.items-list tr:not(:first)').remove();
+        tab.find('.items-list tr:first').find('input').val('');
+        tab.find('.items-list tr:first').find('.product-select').val(null).trigger('change');
+        
+        // Reset totals
+        tab.find('.subtotal').val('0.00');
+        tab.find('.discount').val('0');
+        tab.find('.shipping-cost').val('0');
+        tab.find('.other-costs').val('0');
+        tab.find('.grand-total').val('0.00');
+        tab.find('.paid-amount').val('0');
+        tab.find('.remaining-amount').val('0');
+        
+        // Reset invoice number
+        tab.find('.receipt-number').val('');
+        
+        // Set date to today
+        const today = new Date().toISOString().split('T')[0];
+        tab.find('.sale-date, .purchase-date, .adjustment-date').val(today);
+        
+        // Restore saved selections
+        if (receiptType === 'selling') {
+            if (savedData.customer_id) tab.find('.customer-select').val(savedData.customer_id).trigger('change');
+            if (savedData.payment_type) tab.find('.payment-type').val(savedData.payment_type).trigger('change');
+            if (savedData.price_type) tab.find('.price-type').val(savedData.price_type);
+        } else if (receiptType === 'buying') {
+            if (savedData.supplier_id) tab.find('.supplier-select').val(savedData.supplier_id).trigger('change');
+            if (savedData.payment_type) tab.find('.payment-type').val(savedData.payment_type).trigger('change');
+        }
+        
+        // If it's a selling receipt, fetch new invoice number
+        if (receiptType === 'selling') {
+            $.ajax({
+                url: 'api/get_next_invoice.php',
+                type: 'GET',
+                data: { type: 'selling' },
+                success: function(response) {
+                    if (response.success) {
+                        tab.find('.receipt-number').val(response.invoice_number);
+                    }
+                }
+            });
+        }
+    }
 
     // Mobile view adjustments
     function adjustForMobileView() {
@@ -1326,6 +1248,34 @@ $(document).ready(function() {
             saveReceipt(tabId, tabType);
         });
         
+        // Add payment type change event
+        $(`#${tabId} .payment-type`).on('change', function() {
+            const paymentType = $(this).val();
+            const tabPane = $(this).closest('.tab-pane');
+            const creditFields = tabPane.find('.credit-payment-fields');
+            const grandTotal = parseFloat(tabPane.find('.grand-total').val()) || 0;
+            
+            if (paymentType === 'credit') {
+                creditFields.show();
+                // Reset paid amount to 0 when switching to credit
+                tabPane.find('.paid-amount').val(0);
+                // Set remaining amount to grand total
+                tabPane.find('.remaining-amount').val(grandTotal);
+            } else {
+                creditFields.hide();
+                // Set paid amount to grand total for cash payments
+                tabPane.find('.paid-amount').val(grandTotal);
+                tabPane.find('.remaining-amount').val(0);
+            }
+            
+            updateRemainingAmount(tabPane);
+        });
+        
+        // Add paid amount change event
+        $(`#${tabId} .paid-amount`).on('input', function() {
+            updateRemainingAmount($(this).closest('.tab-pane'));
+        });
+        
         console.log(`Event listeners set up for tab ${tabId}`);
     }
     
@@ -1420,4 +1370,153 @@ $(document).ready(function() {
             }
         });
     }
+
+    // Gather data for selling receipt
+    function collectSellingReceiptData(tab) {
+        const products = [];
+        let valid = true;
+        
+        tab.find('.items-list tr').each(function() {
+            const row = $(this);
+            const productSelect = row.find('.product-select');
+            const productId = productSelect.val();
+            
+            if (!productId) {
+                Swal.fire('خەتا', 'تکایە کاڵا هەڵبژێرە', 'error');
+                valid = false;
+                return false;
+            }
+            
+            const unitType = row.find('.unit-type').val();
+            const unitPrice = parseFloat(row.find('.unit-price').val());
+            const quantity = parseFloat(row.find('.quantity').val());
+            
+            if (isNaN(unitPrice) || unitPrice <= 0) {
+                Swal.fire('خەتا', 'تکایە نرخی دروست بنووسە', 'error');
+                valid = false;
+                return false;
+            }
+            
+            if (isNaN(quantity) || quantity <= 0) {
+                Swal.fire('خەتا', 'تکایە بڕی دروست بنووسە', 'error');
+                valid = false;
+                return false;
+            }
+            
+            products.push({
+                product_id: productId,
+                unit_type: unitType,
+                unit_price: unitPrice,
+                quantity: quantity
+            });
+        });
+        
+        if (!valid) return null;
+        
+        const customerId = tab.find('.customer-select').val();
+        if (!customerId) {
+            Swal.fire('خەتا', 'تکایە کڕیار هەڵبژێرە', 'error');
+            return null;
+        }
+        
+        const paymentType = tab.find('.payment-type').val();
+        const priceType = tab.find('.price-type').val();
+        const receiptNumber = tab.find('.receipt-number').val();
+        const saleDate = tab.find('.sale-date').val();
+        const discount = parseFloat(tab.find('.discount').val()) || 0;
+        const shippingCost = parseFloat(tab.find('.shipping-cost').val()) || 0;
+        const otherCosts = parseFloat(tab.find('.other-costs').val()) || 0;
+        const notes = tab.find('.notes').val();
+        const paidAmount = paymentType === 'credit' ? parseFloat(tab.find('.paid-amount').val()) || 0 : 0;
+        
+        return {
+            receipt_type: 'selling',
+            invoice_number: receiptNumber,
+            customer_id: customerId,
+            payment_type: paymentType,
+            price_type: priceType,
+            date: saleDate,
+            discount: discount,
+            shipping_cost: shippingCost,
+            other_costs: otherCosts,
+            notes: notes,
+            paid_amount: paidAmount,
+            products: products
+        };
+    }
+
+    // Gather data for buying receipt
+    function collectBuyingReceiptData(tab) {
+        const products = [];
+        let valid = true;
+        
+        tab.find('.items-list tr').each(function() {
+            const row = $(this);
+            const productSelect = row.find('.product-select');
+            const productId = productSelect.val();
+            
+            if (!productId) {
+                Swal.fire('خەتا', 'تکایە کاڵا هەڵبژێرە', 'error');
+                valid = false;
+                return false;
+            }
+            
+            const unitPrice = parseFloat(row.find('.unit-price').val());
+            const quantity = parseFloat(row.find('.quantity').val());
+            
+            if (isNaN(unitPrice) || unitPrice <= 0) {
+                Swal.fire('خەتا', 'تکایە نرخی دروست بنووسە', 'error');
+                valid = false;
+                return false;
+            }
+            
+            if (isNaN(quantity) || quantity <= 0) {
+                Swal.fire('خەتا', 'تکایە بڕی دروست بنووسە', 'error');
+                valid = false;
+                return false;
+            }
+            
+            products.push({
+                product_id: productId,
+                unit_price: unitPrice,
+                quantity: quantity
+            });
+        });
+        
+        if (!valid) return null;
+        
+        const supplierId = tab.find('.supplier-select').val();
+        if (!supplierId) {
+            Swal.fire('خەتا', 'تکایە فرۆشیار هەڵبژێرە', 'error');
+            return null;
+        }
+        
+        const paymentType = tab.find('.payment-type').val();
+        const receiptNumber = tab.find('.receipt-number').val();
+        const purchaseDate = tab.find('.purchase-date').val();
+        const discount = parseFloat(tab.find('.discount').val()) || 0;
+        const notes = tab.find('.notes').val();
+        const paidAmount = paymentType === 'credit' ? parseFloat(tab.find('.paid-amount').val()) || 0 : 0;
+        
+        return {
+            receipt_type: 'buying',
+            invoice_number: receiptNumber,
+            supplier_id: supplierId,
+            payment_type: paymentType,
+            date: purchaseDate,
+            discount: discount,
+            notes: notes,
+            paid_amount: paidAmount,
+            products: products
+        };
+    }
+
+    // Save button handler
+    $(document).on('click', '.save-btn', function(e) {
+        e.preventDefault();
+        const tabPane = $(this).closest('.tab-pane');
+        const tabId = tabPane.attr('id');
+        const tabType = tabPane.data('receipt-type');
+        saveReceipt(tabId, tabType);
+    });
 });

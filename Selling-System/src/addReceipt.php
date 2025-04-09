@@ -214,6 +214,18 @@ require_once 'config/database.php';
                         </div>
                     </div>
 
+                    <!-- Credit Payment Fields (initially hidden) -->
+                    <div class="row mb-4 credit-payment-fields" style="display: none;">
+                        <div class="col-md-6">
+                            <label class="form-label">بڕی پارەی دراو</label>
+                            <input type="number" class="form-control paid-amount" value="0" min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">بڕی ماوە</label>
+                            <input type="number" class="form-control remaining-amount" value="0" readonly>
+                        </div>
+                    </div>
+
                     <!-- Additional Sale Fields -->
                     <div class="row mb-4">
                         <div class="col-md-3">
@@ -356,6 +368,18 @@ require_once 'config/database.php';
                         <option value="cash">پارە</option>
                         <option value="credit">قەرز</option>
                     </select>
+                </div>
+            </div>
+
+            <!-- Credit Payment Fields (initially hidden) -->
+            <div class="row mb-4 credit-payment-fields" style="display: none;">
+                <div class="col-md-6">
+                    <label class="form-label">بڕی پارەی دراو</label>
+                    <input type="number" class="form-control paid-amount" value="0" min="0">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">بڕی ماوە</label>
+                    <input type="number" class="form-control remaining-amount" value="0" readonly>
                 </div>
             </div>
 
@@ -592,6 +616,18 @@ require_once 'config/database.php';
                         <option value="cash">پارە</option>
                         <option value="credit">قەرز</option>
                     </select>
+                </div>
+            </div>
+
+            <!-- Credit Payment Fields (initially hidden) -->
+            <div class="row mb-4 credit-payment-fields" style="display: none;">
+                <div class="col-md-6">
+                    <label class="form-label">بڕی پارەی دراو</label>
+                    <input type="number" class="form-control paid-amount" value="0" min="0">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">بڕی ماوە</label>
+                    <input type="number" class="form-control remaining-amount" value="0" readonly>
                 </div>
             </div>
 

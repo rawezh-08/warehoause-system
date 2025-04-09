@@ -1,6 +1,6 @@
 <?php
 // Include database connection
-require_once '../config/db_connection.php';
+require_once '../config/database.php';
 
 // Set Content-Type header to JSON
 header('Content-Type: application/json');
@@ -9,17 +9,23 @@ header('Content-Type: application/json');
 $json_data = file_get_contents('php://input');
 $data = json_decode($json_data, true);
 
+// Debug: Log received data
+error_log("Received data: " . print_r($data, true));
+
 // Validate input data
-if (!$data || !isset($data['receipt_type'])) {
-    echo json_encode(['success' => false, 'message' => 'داتای نادروست']);
+if (!$data) {
+    echo json_encode([
+        'success' => false, 
+        'message' => 'داتای نادروست',
+        'debug' => [
+            'received_data' => $json_data,
+            'json_error' => json_last_error_msg()
+        ]
+    ]);
     exit;
 }
 
 try {
-    $conn = new PDO("mysql:host=".DB_HOST.";dbname=".DB_NAME, DB_USER, DB_PASS);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $conn->exec("set names utf8");
-    
     // Start transaction
     $conn->beginTransaction();
     
@@ -28,26 +34,21 @@ try {
     
     if ($data['receipt_type'] === 'selling') {
         // Validate selling data
-        if (empty($data['customer_id']) || empty($data['items'])) {
-            echo json_encode(['success' => false, 'message' => 'کڕیار و کاڵاکان پێویستن']);
+        if (empty($data['customer_id']) || empty($data['products'])) {
+            echo json_encode([
+                'success' => false, 
+                'message' => 'کڕیار و کاڵاکان پێویستن',
+                'debug' => [
+                    'customer_id' => $data['customer_id'] ?? 'missing',
+                    'products' => $data['products'] ?? 'missing'
+                ]
+            ]);
             exit;
         }
         
-        // Prepare data for stored procedure
-        $invoice_number = $data['invoice_number'] ?? '';
-        $customer_id = $data['customer_id'];
-        $date = !empty($data['date']) ? $data['date'] : date('Y-m-d H:i:s');
-        $payment_type = $data['payment_type'] ?? 'cash';
-        $discount = floatval($data['discount'] ?? 0);
-        $price_type = $data['price_type'] ?? 'single';
-        $shipping_cost = floatval($data['shipping_cost'] ?? 0);
-        $other_costs = floatval($data['other_costs'] ?? 0);
-        $notes = $data['notes'] ?? '';
-        $created_by = 1; // Replace with actual user ID when authentication is implemented
-        
         // Format products data for the stored procedure
         $products_json = [];
-        foreach ($data['items'] as $item) {
+        foreach ($data['products'] as $item) {
             $products_json[] = [
                 'product_id' => (int)$item['product_id'],
                 'quantity' => (int)$item['quantity'],
@@ -58,67 +59,63 @@ try {
         
         $products_json_string = json_encode($products_json);
         
+        // Debug: Log the prepared data
+        error_log("Prepared sale data: " . print_r([
+            'invoice_number' => $data['invoice_number'],
+            'customer_id' => $data['customer_id'],
+            'date' => $data['date'],
+            'payment_type' => $data['payment_type'],
+            'discount' => floatval($data['discount']),
+            'paid_amount' => floatval($data['paid_amount']),
+            'price_type' => $data['price_type'],
+            'shipping_cost' => floatval($data['shipping_cost']),
+            'other_costs' => floatval($data['other_costs']),
+            'notes' => $data['notes'],
+            'products' => $products_json
+        ], true));
+        
         // Call the stored procedure to add sale
-        $stmt = $conn->prepare("CALL add_sale(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bindParam(1, $invoice_number, PDO::PARAM_STR);
-        $stmt->bindParam(2, $customer_id, PDO::PARAM_INT);
-        $stmt->bindParam(3, $date, PDO::PARAM_STR);
-        $stmt->bindParam(4, $payment_type, PDO::PARAM_STR);
-        $stmt->bindParam(5, $discount, PDO::PARAM_STR);
-        $stmt->bindParam(6, $price_type, PDO::PARAM_STR);
-        $stmt->bindParam(7, $shipping_cost, PDO::PARAM_STR);
-        $stmt->bindParam(8, $other_costs, PDO::PARAM_STR);
-        $stmt->bindParam(9, $notes, PDO::PARAM_STR);
-        $stmt->bindParam(10, $created_by, PDO::PARAM_INT);
-        $stmt->bindParam(11, $products_json_string, PDO::PARAM_STR);
+        $stmt = $conn->prepare("CALL add_sale(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bindParam(1, $data['invoice_number'], PDO::PARAM_STR);
+        $stmt->bindParam(2, $data['customer_id'], PDO::PARAM_INT);
+        $stmt->bindParam(3, $data['date'], PDO::PARAM_STR);
+        $stmt->bindParam(4, $data['payment_type'], PDO::PARAM_STR);
+        $stmt->bindParam(5, $data['discount'], PDO::PARAM_STR);
+        $stmt->bindParam(6, $data['paid_amount'], PDO::PARAM_STR);
+        $stmt->bindParam(7, $data['price_type'], PDO::PARAM_STR);
+        $stmt->bindParam(8, $data['shipping_cost'], PDO::PARAM_STR);
+        $stmt->bindParam(9, $data['other_costs'], PDO::PARAM_STR);
+        $stmt->bindParam(10, $data['notes'], PDO::PARAM_STR);
+        $created_by = 1; // Replace with actual user ID when authentication is implemented
+        $stmt->bindParam(11, $created_by, PDO::PARAM_INT);
+        $stmt->bindParam(12, $products_json_string, PDO::PARAM_STR);
+        
         $stmt->execute();
         
         // Get the result
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $receipt_id = $result['result'];
-        // Close the cursor to release the connection for next query
-        $stmt->closeCursor();
         
-        // Add debt transaction if payment type is credit
-        if ($payment_type === 'credit') {
-            // Calculate total amount
-            $total_amount = 0;
-            foreach ($data['items'] as $item) {
-                $total_amount += floatval($item['total_price']);
-            }
-            $total_amount = $total_amount - $discount + $shipping_cost + $other_costs;
-            
-            // Add debt transaction
-            $stmt2 = $conn->prepare("CALL add_debt_transaction(?, ?, 'sale', ?, ?, ?)");
-            $stmt2->bindParam(1, $customer_id, PDO::PARAM_INT);
-            $stmt2->bindParam(2, $total_amount, PDO::PARAM_STR);
-            $stmt2->bindParam(3, $receipt_id, PDO::PARAM_INT);
-            $stmt2->bindParam(4, $notes, PDO::PARAM_STR);
-            $stmt2->bindParam(5, $created_by, PDO::PARAM_INT);
-            $stmt2->execute();
-            // Close this cursor too
-            $stmt2->closeCursor();
-        }
+        // Close the cursor to prevent "Cannot execute queries while there are pending result sets" error
+        $stmt->closeCursor();
         
     } elseif ($data['receipt_type'] === 'buying') {
         // Validate buying data
-        if (empty($data['supplier_id']) || empty($data['items'])) {
-            echo json_encode(['success' => false, 'message' => 'فرۆشیار و کاڵاکان پێویستن']);
+        if (empty($data['supplier_id']) || empty($data['products'])) {
+            echo json_encode([
+                'success' => false, 
+                'message' => 'فرۆشیار و کاڵاکان پێویستن',
+                'debug' => [
+                    'supplier_id' => $data['supplier_id'] ?? 'missing',
+                    'products' => $data['products'] ?? 'missing'
+                ]
+            ]);
             exit;
         }
         
-        // Prepare data for stored procedure
-        $invoice_number = $data['invoice_number'] ?? '';
-        $supplier_id = $data['supplier_id'];
-        $date = !empty($data['date']) ? $data['date'] : date('Y-m-d H:i:s');
-        $payment_type = $data['payment_type'] ?? 'cash';
-        $discount = floatval($data['discount'] ?? 0);
-        $notes = $data['notes'] ?? '';
-        $created_by = 1; // Replace with actual user ID when authentication is implemented
-        
         // Format products data for the stored procedure
         $products_json = [];
-        foreach ($data['items'] as $item) {
+        foreach ($data['products'] as $item) {
             $products_json[] = [
                 'product_id' => (int)$item['product_id'],
                 'quantity' => (int)$item['quantity'],
@@ -128,79 +125,68 @@ try {
         
         $products_json_string = json_encode($products_json);
         
+        // Debug: Log the prepared data
+        error_log("Prepared purchase data: " . print_r([
+            'invoice_number' => $data['invoice_number'],
+            'supplier_id' => $data['supplier_id'],
+            'date' => $data['date'],
+            'payment_type' => $data['payment_type'],
+            'discount' => floatval($data['discount']),
+            'paid_amount' => floatval($data['paid_amount']),
+            'notes' => $data['notes'],
+            'products' => $products_json
+        ], true));
+        
         // Call the stored procedure to add purchase
-        $stmt = $conn->prepare("CALL add_purchase(?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bindParam(1, $invoice_number, PDO::PARAM_STR);
-        $stmt->bindParam(2, $supplier_id, PDO::PARAM_INT);
-        $stmt->bindParam(3, $date, PDO::PARAM_STR);
-        $stmt->bindParam(4, $payment_type, PDO::PARAM_STR);
-        $stmt->bindParam(5, $discount, PDO::PARAM_STR);
-        $stmt->bindParam(6, $notes, PDO::PARAM_STR);
-        $stmt->bindParam(7, $created_by, PDO::PARAM_INT);
-        $stmt->bindParam(8, $products_json_string, PDO::PARAM_STR);
-        $stmt->execute();
-        
-        // Get the result
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        $receipt_id = $result['result'];
-        // Close the cursor to release the connection
-        $stmt->closeCursor();
-        
-    } elseif ($data['receipt_type'] === 'wasting') {
-        // Validate inventory adjustment data
-        if (empty($data['items'])) {
-            echo json_encode(['success' => false, 'message' => 'کاڵاکان پێویستن']);
-            exit;
-        }
-        
-        // Prepare data for stored procedure
-        $notes = $data['notes'] ?? '';
+        $stmt = $conn->prepare("CALL add_purchase(?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bindParam(1, $data['invoice_number'], PDO::PARAM_STR);
+        $stmt->bindParam(2, $data['supplier_id'], PDO::PARAM_INT);
+        $stmt->bindParam(3, $data['date'], PDO::PARAM_STR);
+        $stmt->bindParam(4, $data['payment_type'], PDO::PARAM_STR);
+        $stmt->bindParam(5, $data['discount'], PDO::PARAM_STR);
+        $stmt->bindParam(6, $data['paid_amount'], PDO::PARAM_STR);
+        $stmt->bindParam(7, $data['notes'], PDO::PARAM_STR);
         $created_by = 1; // Replace with actual user ID when authentication is implemented
+        $stmt->bindParam(8, $created_by, PDO::PARAM_INT);
+        $stmt->bindParam(9, $products_json_string, PDO::PARAM_STR);
         
-        // Format count items data for the stored procedure
-        $count_items_json = [];
-        foreach ($data['items'] as $item) {
-            $count_items_json[] = [
-                'product_id' => (int)$item['product_id'],
-                'actual_quantity' => (int)$item['actual_quantity']
-            ];
-        }
-        
-        $count_items_json_string = json_encode($count_items_json);
-        
-        // Call the stored procedure to create inventory count
-        $stmt = $conn->prepare("CALL create_inventory_count(?, ?, ?)");
-        $stmt->bindParam(1, $notes, PDO::PARAM_STR);
-        $stmt->bindParam(2, $created_by, PDO::PARAM_INT);
-        $stmt->bindParam(3, $count_items_json_string, PDO::PARAM_STR);
         $stmt->execute();
         
         // Get the result
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $receipt_id = $result['result'];
-        // Close the cursor to release the connection
+        
+        // Close the cursor to prevent "Cannot execute queries while there are pending result sets" error
         $stmt->closeCursor();
     }
     
     // Commit transaction
     $conn->commit();
     
-    // Return success response
     echo json_encode([
         'success' => true,
-        'message' => 'پسوڵە بەسەرکەوتوویی پاشەکەوتکرا',
-        'receipt_id' => $receipt_id
+        'receipt_id' => $receipt_id,
+        'message' => 'پسووڵە بە سەرکەوتوویی پاشەکەوت کرا'
     ]);
     
-} catch(PDOException $e) {
-    // Rollback transaction in case of error
+} catch (PDOException $e) {
+    // Rollback transaction on error if it's active
     if ($conn->inTransaction()) {
-        $conn->rollback();
+        $conn->rollBack();
     }
+    
+    error_log("Database error: " . $e->getMessage());
     
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage()
+        'message' => 'هەڵەیەک ڕوویدا لە کاتی پاشەکەوتکردن',
+        'debug' => [
+            'error_code' => $e->getCode(),
+            'error_message' => $e->getMessage(),
+            'sql_state' => $e->errorInfo[0] ?? null,
+            'driver_code' => $e->errorInfo[1] ?? null,
+            'driver_message' => $e->errorInfo[2] ?? null
+        ]
     ]);
 }
 ?> 
