@@ -1,0 +1,49 @@
+Employee delete - Received request: {"id":"10"}
+Employee delete - Decoded data: Array
+(
+    [id] => 10
+)
+
+Employee delete error: کارمەند نەدۆزرایەوە
+Employee delete - Received request: {"id":"9"}
+Employee delete - Decoded data: Array
+(
+    [id] => 9
+)
+
+Employee delete error: کارمەند نەدۆزرایەوە
+Employee delete - Received request: {"id":"11"}
+Employee delete - Decoded data: Array
+(
+    [id] => 11
+)
+
+Employee delete error: کارمەند نەدۆزرایەوە
+Employee delete - Received request: {"id":"2"}
+Employee delete - Decoded data: Array
+(
+    [id] => 2
+)
+
+Employee delete error: کارمەند نەدۆزرایەوە
+Received request: {"id":"11"}
+Decoded data: Array
+(
+    [id] => 11
+)
+
+Successfully deleted customer ID: 11
+Received request: {"id":"9"}
+Decoded data: Array
+(
+    [id] => 9
+)
+
+Error: ناتوانرێت ئەم کڕیارە بسڕێتەوە چونکە قەرزی هەیە یان فرۆشتنی بۆ تۆمارکراوە
+Received request: {"id":"10"}
+Decoded data: Array
+(
+    [id] => 10
+)
+
+Successfully deleted customer ID: 10

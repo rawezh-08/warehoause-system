@@ -73,37 +73,31 @@
                                         <h5 class="card-title mb-0">زانیاری کارمەند</h5>
                                     </div>
                                     <div class="card-body">
-                                        <form id="employeeForm" class="needs-validation" novalidate>
+                                        <form id="employeeForm" action="process/add_employee.php" method="POST" class="needs-validation" novalidate>
                                             <div class="row g-3">
-                                                <div class="col-md-6">
+                                                <div class="col-md-4">
                                                     <label for="employeeName" class="form-label">ناوی کارمەند</label>
                                                     <input type="text" class="form-control" id="employeeName" name="employeeName" required>
                                                     <div class="invalid-feedback">
                                                         تکایە ناوی کارمەند داخل بکە
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6">
+                                                <div class="col-md-4">
                                                     <label for="employeePhone" class="form-label">ژمارەی مۆبایل</label>
                                                     <input type="tel" class="form-control" id="employeePhone" name="employeePhone" required>
                                                     <div class="invalid-feedback">
                                                         تکایە ژمارەی مۆبایل داخل بکە
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <label for="employeePosition" class="form-label">پۆست</label>
-                                                    <input type="text" class="form-control" id="employeePosition" name="employeePosition">
-                                                </div>
-                                                <div class="col-md-6">
+                                         
+                                                <div class="col-md-4">
                                                     <label for="employeeSalary" class="form-label">مووچە</label>
                                                     <div class="input-group">
                                                         <input type="number" class="form-control" id="employeeSalary" name="employeeSalary">
                                                         <span class="input-group-text">$</span>
                                                     </div>
                                                 </div>
-                                                <div class="col-12">
-                                                    <label for="employeeAddress" class="form-label">ناونیشان</label>
-                                                    <textarea class="form-control" id="employeeAddress" name="employeeAddress" rows="2"></textarea>
-                                                </div>
+                                              
                                                 <div class="col-12">
                                                     <label for="employeeNotes" class="form-label">تێبینی</label>
                                                     <textarea class="form-control" id="employeeNotes" name="employeeNotes" rows="2"></textarea>

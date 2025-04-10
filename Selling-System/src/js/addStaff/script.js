@@ -9,6 +9,11 @@ $(document).ready(function() {
     
     // Setup tab click handlers
     setupTabHandlers();
+    
+    // Fetch employees if on staff page
+    if (window.location.pathname.includes('staff.php')) {
+        fetchEmployees();
+    }
 });
 
 /**
@@ -99,16 +104,49 @@ function initializeEmployeeForm() {
     
     // Initialize form validation
     if (employeeForm) {
+        // Set up salary input with formatter
+        const salaryInput = document.getElementById('salary');
+        if (salaryInput) {
+            salaryInput.addEventListener('input', function() {
+                formatNumber(this);
+            });
+        }
+
+        // Add phone number validation
+        const phoneInput = document.getElementById('employeePhone');
+        if (phoneInput) {
+            // Validate on input
+            phoneInput.addEventListener('input', function() {
+                handlePhoneInput(this);
+            });
+            
+            // Validate on blur
+            phoneInput.addEventListener('blur', function() {
+                handlePhoneInput(this);
+            });
+        }
+
         employeeForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Add employee form submission handler
-            if (!employeeForm.checkValidity()) {
+            // Validate form
+            if (!this.checkValidity()) {
                 e.stopPropagation();
-                employeeForm.classList.add('was-validated');
+                this.classList.add('was-validated');
                 return;
             }
-            
+
+            // Validate phone number format
+            if (phoneInput && !validatePhoneNumber(phoneInput.value)) {
+                phoneInput.classList.add('is-invalid');
+                return;
+            }
+
+            // Clean salary input (remove commas)
+            if (salaryInput) {
+                salaryInput.value = salaryInput.value.replace(/,/g, '');
+            }
+
             // Show loading state
             Swal.fire({
                 title: 'تکایە چاوەڕێ بکە...',
@@ -118,31 +156,36 @@ function initializeEmployeeForm() {
                     Swal.showLoading();
                 }
             });
-            
-            // Create FormData object
-            const formData = new FormData(employeeForm);
-            
-            // Send form data using fetch API
+
+            // Submit form using fetch
             fetch('process/add_employee.php', {
                 method: 'POST',
-                body: formData
+                body: new FormData(this)
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
+                    // Show success message
                     Swal.fire({
                         icon: 'success',
-                        title: 'سەرکەوتوو',
+                        title: 'سەرکەوتوو بوو!',
                         text: data.message,
                         confirmButtonText: 'باشە'
                     }).then(() => {
+                        // Reset form
                         employeeForm.reset();
                         employeeForm.classList.remove('was-validated');
                     });
                 } else {
+                    // Show error message
                     Swal.fire({
                         icon: 'error',
-                        title: 'هەڵە',
+                        title: 'هەڵە!',
                         text: data.message,
                         confirmButtonText: 'باشە'
                     });
@@ -152,8 +195,8 @@ function initializeEmployeeForm() {
                 console.error('Error:', error);
                 Swal.fire({
                     icon: 'error',
-                    title: 'هەڵە',
-                    text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە',
+                    title: 'هەڵە!',
+                    text: 'هەڵەیەک ڕوویدا لە کاتی ناردنی زانیاریەکان',
                     confirmButtonText: 'باشە'
                 });
             });
@@ -393,6 +436,10 @@ function initializeSupplierForm() {
 
 // Function to format numbers with commas
 function formatNumber(input) {
+    // Store cursor position
+    let cursorPos = input.selectionStart;
+    let oldLength = input.value.length;
+    
     // Remove all non-digit characters
     let value = input.value.replace(/[^\d]/g, '');
     
@@ -401,10 +448,50 @@ function formatNumber(input) {
     
     // Update the input value
     input.value = value;
-} 
+    
+    // Adjust cursor position based on length change
+    let newLength = input.value.length;
+    cursorPos = cursorPos + (newLength - oldLength);
+    
+    // Ensure cursor position is valid
+    cursorPos = Math.max(0, Math.min(cursorPos, input.value.length));
+    
+    // Restore cursor position
+    input.setSelectionRange(cursorPos, cursorPos);
+}
 
-  // Function to get URL parameter by name
-  function getUrlParameter(name) {
+// Function to validate phone number format
+function validatePhoneNumber(phone) {
+    return /^07\d{9}$/.test(phone);
+}
+
+// Function to handle phone number input
+function handlePhoneInput(input) {
+    // Remove any non-digit characters
+    let value = input.value.replace(/\D/g, '');
+    
+    // Limit to 11 digits
+    value = value.substring(0, 11);
+    
+    // Update input value
+    input.value = value;
+    
+    // Validate and show feedback
+    if (value.length > 0) {
+        if (value.length < 11 || !value.startsWith('07')) {
+            input.classList.add('is-invalid');
+            input.nextElementSibling.textContent = 'ژمارە مۆبایل دەبێت بە 07 دەست پێبکات و 11 ژمارە بێت';
+        } else {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+        }
+    } else {
+        input.classList.remove('is-invalid', 'is-valid');
+    }
+}
+
+// Function to get URL parameter by name
+function getUrlParameter(name) {
     name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
     var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
     var results = regex.exec(location.search);
@@ -466,3 +553,169 @@ function formatNumber(input) {
             }
         }
     });
+
+// Function to fetch and display employees
+function fetchEmployees() {
+    // Show loading state
+    Swal.fire({
+        title: 'تکایە چاوەڕێ بکە...',
+        text: 'زانیاری کارمەندان بار دەکرێت',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // Fetch employees from server
+    fetch('process/get_employees.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Hide loading
+                Swal.close();
+                
+                // Get table body
+                const tbody = document.querySelector('#employeesTable tbody');
+                if (!tbody) return;
+                
+                // Clear existing rows
+                tbody.innerHTML = '';
+                
+                // Add each employee to table
+                data.employees.forEach((employee, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${employee.name}</td>
+                        <td>${employee.phone}</td>
+                        <td>${formatNumberWithCommas(employee.salary)}</td>
+                        <td>${employee.notes || ''}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary edit-employee" data-id="${employee.id}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-employee" data-id="${employee.id}" data-type="employee">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+                // Add event listeners for edit and delete buttons
+                addEmployeeActionListeners();
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە!',
+                    text: data.message || 'هەڵەیەک ڕوویدا لە کاتی گەڕانەوەی زانیاری کارمەندان',
+                    confirmButtonText: 'باشە'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'هەڵە!',
+                text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە',
+                confirmButtonText: 'باشە'
+            });
+        });
+}
+
+// Function to add event listeners for employee actions
+function addEmployeeActionListeners() {
+    // Edit employee action
+    document.querySelectorAll('.edit-employee').forEach(button => {
+        button.addEventListener('click', function() {
+            const employeeId = this.getAttribute('data-id');
+            window.location.href = `addStaff.php?id=${employeeId}`;
+        });
+    });
+
+    // Delete employee action
+    document.querySelectorAll('.delete-employee').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const type = this.getAttribute('data-type') || 'employee'; // Default to 'employee' if not set
+            
+            if (!id) {
+                alert('Missing required data for deletion');
+                return;
+            }
+            
+            console.log('Deleting record:', { id, type });
+            
+            if (confirm('Are you sure you want to delete this record?')) {
+                // Get the base URL (domain and application path)
+                const baseUrl = window.location.href.split('/pages/')[0];
+                const deleteUrl = `${baseUrl}/process/delete_employee.php`;
+                
+                console.log('Delete URL:', deleteUrl);
+                
+                fetch(deleteUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: parseInt(id, 10),
+                        type: type
+                    })
+                })
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.message || 'Server error');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Response data:', data);
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: data.message,
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            // Refresh the appropriate list based on type
+                            if (type === 'employee') {
+                                fetchEmployees();
+                            } else if (type === 'customer') {
+                                fetchCustomers();
+                            } else if (type === 'supplier') {
+                                fetchSuppliers();
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message,
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message || 'An error occurred while deleting the record',
+                        confirmButtonText: 'OK'
+                    });
+                });
+            }
+        });
+    });
+}
+
+// Function to format number with commas
+function formatNumberWithCommas(number) {
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
