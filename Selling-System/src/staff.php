@@ -195,74 +195,13 @@ $suppliers = $supplierModel->getAll();
                                                             <th class="tbl-header">ناوی کارمەند</th>
                                                             <th class="tbl-header">ژمارەی مۆبایل</th>
                                                             <th class="tbl-header">مووچە</th>
+                                                       
                                                             <th class="tbl-header">کردارەکان</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         <!-- Sample data - will be replaced with real data from database -->
-                                                        <tr data-id="1">
-                                                            <td>1</td>
-                                                            <td>ئاری محمد</td>
-                                                            <td>0750 123 4567</td>
-                                                            <td>$500</td>
-                                                            <td>
-                                                                <div class="action-buttons">
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-primary rounded-circle edit-btn"
-                                                                        data-id="1" data-bs-toggle="modal"
-                                                                        data-bs-target="#editEmployeeModal">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-danger rounded-circle delete-btn"
-                                                                        data-id="1">
-                                                                        <i class="fas fa-trash-alt"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr data-id="2">
-                                                            <td>2</td>
-                                                            <td>شیلان عمر</td>
-                                                            <td>0750 876 5432</td>
-                                                            <td>$600</td>
-                                                            <td>
-                                                                <div class="action-buttons">
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-primary rounded-circle edit-btn"
-                                                                        data-id="2" data-bs-toggle="modal"
-                                                                        data-bs-target="#editEmployeeModal">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-danger rounded-circle delete-btn"
-                                                                        data-id="2">
-                                                                        <i class="fas fa-trash-alt"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr data-id="3">
-                                                            <td>3</td>
-                                                            <td>هاوڕێ ئەحمەد</td>
-                                                            <td>0750 555 7777</td>
-                                                            <td>$1200</td>
-                                                            <td>
-                                                                <div class="action-buttons">
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-primary rounded-circle edit-btn"
-                                                                        data-id="3" data-bs-toggle="modal"
-                                                                        data-bs-target="#editEmployeeModal">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-danger rounded-circle delete-btn"
-                                                                        data-id="3">
-                                                                        <i class="fas fa-trash-alt"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
+                                                        
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -677,6 +616,10 @@ $suppliers = $supplierModel->getAll();
                             <label for="editEmployeeSalary" class="form-label">مووچە</label>
                             <input type="text" class="form-control" id="editEmployeeSalary" required>
                         </div>
+                        <div class="mb-3">
+                            <label for="editEmployeeNotes" class="form-label">تێبینی</label>
+                            <textarea class="form-control" id="editEmployeeNotes" rows="3"></textarea>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -853,10 +796,15 @@ $suppliers = $supplierModel->getAll();
                                 <td>${employee.name}</td>
                                 <td>${employee.phone}</td>
                                 <td>${formatNumberWithCommas(employee.salary)}</td>
+                              
                                 <td>
                                     <div class="action-buttons">
                                         <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${employee.id}" data-bs-toggle="modal" data-bs-target="#editEmployeeModal">
                                             <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-warning rounded-circle notes-btn" 
+                                            data-notes="${employee.notes || ''}" data-employee-name="${employee.name}">
+                                            <i class="fas fa-sticky-note"></i>
                                         </button>
                                         <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${employee.id}">
                                             <i class="fas fa-trash-alt"></i>
@@ -911,6 +859,7 @@ $suppliers = $supplierModel->getAll();
                                 document.getElementById('editEmployeeName').value = data.employee.name;
                                 document.getElementById('editEmployeePhone').value = data.employee.phone;
                                 document.getElementById('editEmployeeSalary').value = data.employee.salary;
+                                document.getElementById('editEmployeeNotes').value = data.employee.notes;
                             } else {
                                 Swal.fire({
                                     icon: 'error',
@@ -1017,6 +966,7 @@ $suppliers = $supplierModel->getAll();
             const name = document.getElementById('editEmployeeName').value;
             const phone = document.getElementById('editEmployeePhone').value;
             const salary = document.getElementById('editEmployeeSalary').value;
+            const notes = document.getElementById('editEmployeeNotes').value;
 
             // Show loading
             Swal.fire({
@@ -1038,7 +988,8 @@ $suppliers = $supplierModel->getAll();
                     id: employeeId,
                     name: name,
                     phone: phone,
-                    salary: salary
+                    salary: salary,
+                    notes: notes
                 })
             })
             .then(response => response.json())
@@ -1079,6 +1030,22 @@ $suppliers = $supplierModel->getAll();
 
         // Initialize when document is ready
         document.addEventListener('DOMContentLoaded', function() {
+            // Add notes button click handlers for employees
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.closest('#employeeTable .notes-btn')) {
+                    const button = e.target.closest('.notes-btn');
+                    const notes = button.getAttribute('data-notes');
+                    const employeeName = button.getAttribute('data-employee-name');
+                    
+                    Swal.fire({
+                        title: `تێبینیەکانی ${employeeName}`,
+                        text: notes || 'هیچ تێبینیەک نییە',
+                        icon: 'info',
+                        confirmButtonText: 'داخستن'
+                    });
+                }
+            });
+
             // Add notes button click handlers for customers
             document.querySelectorAll('#customerTable .notes-btn').forEach(button => {
                 button.addEventListener('click', function() {

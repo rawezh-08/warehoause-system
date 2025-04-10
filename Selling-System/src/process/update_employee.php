@@ -17,6 +17,7 @@ $id = $data['id'];
 $name = $data['name'];
 $phone = $data['phone'];
 $salary = $data['salary'];
+$notes = $data['notes'] ?? '';
 
 try {
     // Check if employee with this phone number already exists (except for the current employee)
@@ -33,9 +34,9 @@ try {
     }
     
     // Update employee
-    $query = "UPDATE employees SET name = ?, phone = ?, salary = ?, updated_at = NOW() WHERE id = ?";
+    $query = "UPDATE employees SET name = ?, phone = ?, salary = ?, notes = ?, updated_at = NOW() WHERE id = ?";
     $stmt = $conn->prepare($query);
-    $stmt->execute([$name, $phone, $salary, $id]);
+    $stmt->execute([$name, $phone, $salary, $notes, $id]);
     
     // Check if employee was updated
     if ($stmt->rowCount() > 0) {
