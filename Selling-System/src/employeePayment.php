@@ -1,4 +1,19 @@
 <?php
+require_once __DIR__ . '/config/database.php';
+
+// Create a database connection
+$db = new Database();
+$conn = $db->getConnection();
+
+// Fetch all employees
+try {
+    $stmt = $conn->prepare("SELECT id, name FROM employees ORDER BY name ASC");
+    $stmt->execute();
+    $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch(PDOException $e) {
+    $employees = [];
+}
+
 // You can add PHP logic here if needed
 ?>
 <!DOCTYPE html>
@@ -18,20 +33,49 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/employeePayment/style.css">
+    <style>
+        #content {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            width: 100%;
+        }
+        
+        .main-content {
+            position: relative;
+            margin-right: 0;
+            padding: 2rem;
+            transition: margin-right 0.3s ease;
+            width: 100%;
+        }
+        
+        body.sidebar-active .main-content {
+            margin-right: 260px;
+            width: calc(100% - 260px);
+        }
+        
+        @media (max-width: 992px) {
+            body.sidebar-active .main-content {
+                margin-right: 0;
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Main Content Wrapper -->
+    <!-- Navbar container - will be populated by JavaScript -->
     <div id="content">
-        <!-- Navbar container - will be populated by JavaScript -->
-        <div id="navbar-container"></div>
+    <div id="navbar-container"></div>
 
-        <!-- Sidebar container - will be populated by JavaScript -->
-        <div id="sidebar-container"></div>
-            
+    <!-- Sidebar container - will be populated by JavaScript -->
+    <div id="sidebar-container"></div>
+    
+    <!-- Main Content Wrapper -->
+
         <!-- Main content -->
-        <div class="main-content p-3" id="main-content">
+        <div class="main-content" id="main-content">
             <div class="container-fluid">
-                <div class="row mb-4">
+                <div class="row mb-4" style="margin-top: 80px;">
                     <div class="col-12">
                         <h3 class="page-title">مەسروفات</h3>
                     </div>
@@ -71,17 +115,18 @@
                                             <div class="row mb-4">
                                                 <div class="col-md-6 mb-3">
                                                     <label for="employeeName" class="form-label">ناوی کارمەند</label>
-                                                    <select id="employeeName" class="form-select" required>
+                                                    <select id="employeeName" name="employeeId" class="form-select" required>
                                                         <option value="" selected disabled>کارمەند هەڵبژێرە</option>
-                                                        <!-- Options will be loaded dynamically from database -->
-                                                        <option value="1">ئاری محمد</option>
-                                                        <option value="2">شیلان عمر</option>
-                                                        <option value="3">هاوڕێ ئەحمەد</option>
+                                                        <?php foreach ($employees as $employee): ?>
+                                                            <option value="<?php echo htmlspecialchars($employee['id']); ?>">
+                                                                <?php echo htmlspecialchars($employee['name']); ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
                                                     </select>
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label for="paymentDate" class="form-label">بەروار</label>
-                                                    <input type="date" id="paymentDate" class="form-control" required>
+                                                    <input type="date" id="paymentDate" name="paymentDate" class="form-control" required>
                                                 </div>
                                             </div>
                                             
@@ -89,18 +134,18 @@
                                                 <div class="col-md-6 mb-3">
                                                     <label for="paymentAmount" class="form-label">بڕی پارە</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="paymentAmount" class="form-control" placeholder="بڕی پارە" required>
+                                                        <input type="number" id="paymentAmount" name="amount" class="form-control" placeholder="بڕی پارە" required>
                                                         <span class="input-group-text">$</span>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label for="paymentType" class="form-label">جۆری پارەدان</label>
-                                                    <select id="paymentType" class="form-select">
+                                                    <select id="paymentType" name="paymentType" class="form-select" required>
                                                         <option value="" selected disabled>جۆری پارەدان</option>
                                                         <option value="salary">مووچە</option>
                                                         <option value="bonus">پاداشت</option>
-                                                        <option value="advance">پێشەکی</option>
-                                                        <option value="other">جۆری تر</option>
+                                                        <option value="overtime">ئۆڤەرتایم</option>
+                                                      
                                                     </select>
                                                 </div>
                                             </div>
@@ -108,7 +153,7 @@
                                             <div class="row mb-4">
                                                 <div class="col-md-12 mb-3">
                                                     <label for="paymentNotes" class="form-label">تێبینی</label>
-                                                    <textarea id="paymentNotes" class="form-control" rows="3" placeholder="تێبینی لێرە بنووسە..."></textarea>
+                                                    <textarea id="paymentNotes" name="notes" class="form-control" rows="3" placeholder="تێبینی لێرە بنووسە..."></textarea>
                                                 </div>
                                             </div>
                                             
@@ -179,20 +224,20 @@
                                         <form id="addWithdrawalForm">
                                         <div class="row mb-4">
                                                 <div class="col-md-12 mb-3">
-                                                    <label for="withdrawalNotes" class="form-label">هۆکاری دەرکردنی پارە</label>
-                                                    <textarea id="withdrawalNotes" class="form-control" rows="3" placeholder="هۆکاری دەرکردنی پارە لە دەخیلە بنووسە..."></textarea>
+                                                    <label for="withdrawalNotes" class="form-label">هۆکاری دەرکردنی پارە <span class="text-danger">*</span></label>
+                                                    <textarea id="withdrawalNotes" name="withdrawalNotes" class="form-control" rows="3" placeholder="هۆکاری دەرکردنی پارە لە دەخیلە بنووسە..." required></textarea>
                                                 </div>
                                             </div>
                                             <div class="row mb-4">
                                                 
                                                 <div class="col-md-6 mb-3">
-                                                    <label for="withdrawalDate" class="form-label">بەروار</label>
-                                                    <input type="date" id="withdrawalDate" class="form-control" required>
+                                                    <label for="withdrawalDate" class="form-label">بەروار <span class="text-danger">*</span></label>
+                                                    <input type="date" id="withdrawalDate" name="withdrawalDate" class="form-control" required>
                                                 </div>
                                                 <div class="col-md-6 mb-3">
-                                                    <label for="withdrawalAmount" class="form-label">بڕی پارە</label>
+                                                    <label for="withdrawalAmount" class="form-label">بڕی پارە <span class="text-danger">*</span></label>
                                                     <div class="input-group">
-                                                        <input type="number" id="withdrawalAmount" class="form-control" placeholder="بڕی پارە" required>
+                                                        <input type="number" id="withdrawalAmount" name="withdrawalAmount" class="form-control" placeholder="بڕی پارە" required>
                                                         <span class="input-group-text">$</span>
                                                     </div>
                                                 </div>

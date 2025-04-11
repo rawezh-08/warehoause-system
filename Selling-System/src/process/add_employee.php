@@ -15,8 +15,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $salary = $_POST['employeeSalary'] ?? null;
     $notes = $_POST['employeeNotes'] ?? '';
 
+    // Log the received phone number
+    error_log("Received phone number: " . $phone);
+
     // Clean phone number (remove any non-digit characters)
     $phone = preg_replace('/[^0-9]/', '', $phone);
+    
+    // Log the cleaned phone number
+    error_log("Cleaned phone number: " . $phone);
 
     // Validate required fields
     if (empty($name) || empty($phone)) {
@@ -40,8 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Check if phone number already exists in employees table
         $checkStmt = $conn->prepare("SELECT id FROM employees WHERE phone = ?");
         $checkStmt->execute([$phone]);
+        $employeeRows = $checkStmt->rowCount();
+        error_log("Employee check result: " . $employeeRows . " rows found");
         
-        if ($checkStmt->rowCount() > 0) {
+        if ($employeeRows > 0) {
             echo json_encode([
                 'success' => false,
                 'message' => 'ژمارەی مۆبایل پێشتر تۆمار کراوە لە لیستی کارمەندەکان'
@@ -52,11 +60,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Check if phone number exists in customers table
         $checkCustomerStmt = $conn->prepare("SELECT id FROM customers WHERE phone1 = ? OR phone2 = ?");
         $checkCustomerStmt->execute([$phone, $phone]);
+        $customerRows = $checkCustomerStmt->rowCount();
+        error_log("Customer check result: " . $customerRows . " rows found");
         
-        if ($checkCustomerStmt->rowCount() > 0) {
+        if ($customerRows > 0) {
             echo json_encode([
                 'success' => false,
                 'message' => 'ژمارەی مۆبایل پێشتر تۆمار کراوە لە لیستی کڕیارەکان'
+            ]);
+            exit;
+        }
+        
+        // Check if phone number exists in suppliers table
+        $checkSupplierStmt = $conn->prepare("SELECT id FROM suppliers WHERE phone1 = ? OR phone2 = ?");
+        $checkSupplierStmt->execute([$phone, $phone]);
+        $supplierRows = $checkSupplierStmt->rowCount();
+        error_log("Supplier check result: " . $supplierRows . " rows found");
+        
+        if ($supplierRows > 0) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'ژمارەی مۆبایل پێشتر تۆمار کراوە لە لیستی دابینکەرەکان'
             ]);
             exit;
         }
@@ -80,11 +104,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("هەڵەیەک ڕوویدا لە کاتی زیادکردنی کارمەند");
         }
     } catch (PDOException $e) {
+        error_log("PDO Exception: " . $e->getMessage());
         echo json_encode([
             'success' => false,
             'message' => 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی کارمەند: ' . $e->getMessage()
         ]);
     } catch (Exception $e) {
+        error_log("General Exception: " . $e->getMessage());
         echo json_encode([
             'success' => false,
             'message' => $e->getMessage()

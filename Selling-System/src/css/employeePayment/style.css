@@ -269,4 +269,85 @@
 
 .tab-content {
     animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Employee Payment Page Specific Styles */
+
+/* Fix for main content layout */
+.content-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.main-content {
+    padding: 1.5rem;
+    margin-right: 0;
+    transition: margin-right 0.3s ease;
+    flex: 1;
+}
+
+body.sidebar-active .main-content {
+    margin-right: 260px;
+}
+
+/* Tab navigation styling */
+.expenses-tabs .nav-link {
+    color: var(--text-secondary);
+    border: none;
+    font-weight: 500;
+    padding: 0.75rem 1.25rem;
+    position: relative;
+    background-color: transparent;
+    transition: all 0.3s ease;
+}
+
+.expenses-tabs .nav-link.active {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+    background-color: transparent;
+}
+
+/* Form styling */
+.form-control, .form-select {
+    border-radius: var(--border-radius);
+    padding: 0.625rem 0.875rem;
+}
+
+.input-group .form-control {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+}
+
+.input-group-text {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Card adjustments */
+.card {
+    box-shadow: var(--shadow-sm);
+}
+
+.card-title {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Fix for instruction section */
+.instruction-icon {
+    min-width: 24px;
+}
+
+/* Media queries for responsive design */
+@media (max-width: 992px) {
+    .main-content {
+        padding: 1rem;
+    }
+    
+    body.sidebar-active .main-content {
+        margin-right: 0;
+    }
 } 

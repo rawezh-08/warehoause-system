@@ -1,4 +1,248 @@
 <?php
+require_once __DIR__ . '/config/database.php';
+
+// Create a database connection
+$db = new Database();
+$conn = $db->getConnection();
+
+// Fetch all employees
+try {
+    $stmt = $conn->prepare("SELECT id, name FROM employees ORDER BY name ASC");
+    $stmt->execute();
+    $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch(PDOException $e) {
+    $employees = [];
+}
+
+// Function to get employee payments data
+function getEmployeePaymentsData($limit = 10, $offset = 0, $filters = []) {
+    global $conn;
+    
+    // Base query to get employee payments
+    $sql = "SELECT 
+                ep.*,
+                e.name as employee_name
+            FROM employee_payments ep
+            LEFT JOIN employees e ON ep.employee_id = e.id
+            WHERE 1=1";
+    
+    $params = [];
+    
+    // Apply filters if any
+    if (!empty($filters['start_date'])) {
+        $sql .= " AND DATE(ep.payment_date) >= :start_date";
+        $params[':start_date'] = $filters['start_date'];
+    }
+    if (!empty($filters['end_date'])) {
+        $sql .= " AND DATE(ep.payment_date) <= :end_date";
+        $params[':end_date'] = $filters['end_date'];
+    }
+    if (!empty($filters['employee_name'])) {
+        $sql .= " AND e.name LIKE :employee_name";
+        $params[':employee_name'] = '%' . $filters['employee_name'] . '%';
+    }
+    
+    $sql .= " ORDER BY ep.payment_date DESC";
+    
+    if ($limit > 0) {
+        $sql .= " LIMIT :offset, :limit";
+        $params[':offset'] = (int)$offset;
+        $params[':limit'] = (int)$limit;
+    }
+    
+    try {
+        $stmt = $conn->prepare($sql);
+        foreach ($params as $key => $val) {
+            if ($key == ':offset' || $key == ':limit') {
+                $stmt->bindValue($key, $val, PDO::PARAM_INT);
+            } else {
+                $stmt->bindValue($key, $val);
+            }
+        }
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Database error: " . $e->getMessage());
+        return [];
+    }
+}
+
+// Function to get employee payments statistics
+function getEmployeePaymentsStats($filters = []) {
+    global $conn;
+    
+    // Base query to get employee payments stats
+    $sql = "SELECT 
+                COUNT(*) as total_payments,
+                SUM(ep.amount) as total_amount,
+                SUM(CASE WHEN ep.payment_type = 'salary' THEN ep.amount ELSE 0 END) as total_salary,
+                SUM(CASE WHEN ep.payment_type = 'bonus' THEN ep.amount ELSE 0 END) as total_bonus,
+                SUM(CASE WHEN ep.payment_type = 'overtime' THEN ep.amount ELSE 0 END) as total_overtime
+            FROM employee_payments ep
+            LEFT JOIN employees e ON ep.employee_id = e.id
+            WHERE 1=1";
+    
+    $params = [];
+    
+    // Apply filters if any
+    if (!empty($filters['start_date'])) {
+        $sql .= " AND DATE(ep.payment_date) >= :start_date";
+        $params[':start_date'] = $filters['start_date'];
+    }
+    if (!empty($filters['end_date'])) {
+        $sql .= " AND DATE(ep.payment_date) <= :end_date";
+        $params[':end_date'] = $filters['end_date'];
+    }
+    if (!empty($filters['employee_name'])) {
+        $sql .= " AND e.name LIKE :employee_name";
+        $params[':employee_name'] = '%' . $filters['employee_name'] . '%';
+    }
+    
+    try {
+        $stmt = $conn->prepare($sql);
+        foreach ($params as $key => $val) {
+            $stmt->bindValue($key, $val);
+        }
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Database error: " . $e->getMessage());
+        return [
+            'total_payments' => 0,
+            'total_amount' => 0,
+            'total_salary' => 0,
+            'total_bonus' => 0,
+            'total_overtime' => 0
+        ];
+    }
+}
+
+// Function to get withdrawal data
+function getWithdrawalsData($limit = 10, $offset = 0, $filters = []) {
+    global $conn;
+    
+    // Base query to get expenses
+    $sql = "SELECT * FROM expenses WHERE 1=1";
+    
+    $params = [];
+    
+    // Apply filters if any
+    if (!empty($filters['start_date'])) {
+        $sql .= " AND DATE(expense_date) >= :start_date";
+        $params[':start_date'] = $filters['start_date'];
+    }
+    if (!empty($filters['end_date'])) {
+        $sql .= " AND DATE(expense_date) <= :end_date";
+        $params[':end_date'] = $filters['end_date'];
+    }
+    
+    $sql .= " ORDER BY expense_date DESC";
+    
+    if ($limit > 0) {
+        $sql .= " LIMIT :offset, :limit";
+        $params[':offset'] = (int)$offset;
+        $params[':limit'] = (int)$limit;
+    }
+    
+    try {
+        $stmt = $conn->prepare($sql);
+        foreach ($params as $key => $val) {
+            if ($key == ':offset' || $key == ':limit') {
+                $stmt->bindValue($key, $val, PDO::PARAM_INT);
+            } else {
+                $stmt->bindValue($key, $val);
+            }
+        }
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Database error: " . $e->getMessage());
+        return [];
+    }
+}
+
+// Default filter values
+$today = date('Y-m-d');
+$startOfMonth = date('Y-m-01');
+
+// Get initial data
+$defaultFilters = [
+    'start_date' => $startOfMonth,
+    'end_date' => $today
+];
+
+// Get data with default filters
+$employeePaymentsData = getEmployeePaymentsData(10, 0, $defaultFilters);
+$employeePaymentsStats = getEmployeePaymentsStats($defaultFilters);
+$withdrawalsData = getWithdrawalsData(10, 0, $defaultFilters);
+
+// Handle AJAX filter requests
+if (isset($_POST['action']) && $_POST['action'] == 'filter') {
+    header('Content-Type: application/json');
+    
+    $filters = [
+        'start_date' => $_POST['start_date'] ?? null,
+        'end_date' => $_POST['end_date'] ?? null
+    ];
+    
+    if ($_POST['type'] == 'employee_payments') {
+        if (!empty($_POST['employee_name'])) {
+            $filters['employee_name'] = $_POST['employee_name'];
+        }
+        $employeePaymentsData = getEmployeePaymentsData(10, 0, $filters);
+        $employeePaymentsStats = getEmployeePaymentsStats($filters);
+        echo json_encode([
+            'success' => true, 
+            'data' => $employeePaymentsData,
+            'stats' => $employeePaymentsStats
+        ]);
+        exit;
+    } else if ($_POST['type'] == 'withdrawals') {
+        if (!empty($_POST['name'])) {
+            $filters['name'] = $_POST['name'];
+        }
+        $withdrawalsData = getWithdrawalsData(10, 0, $filters);
+        echo json_encode(['success' => true, 'data' => $withdrawalsData]);
+        exit;
+    }
+    
+    echo json_encode(['success' => false, 'message' => 'Invalid request']);
+    exit;
+}
+
+// Handle delete requests
+if (isset($_POST['action'])) {
+    header('Content-Type: application/json');
+    
+    if ($_POST['action'] == 'delete_employee_payment' && isset($_POST['id'])) {
+        try {
+            $stmt = $conn->prepare("DELETE FROM employee_payments WHERE id = :id");
+            $stmt->bindParam(':id', $_POST['id']);
+            $stmt->execute();
+            
+            echo json_encode(['success' => true]);
+        } catch (PDOException $e) {
+            error_log("Database error: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا']);
+        }
+        exit;
+    }
+    
+    if ($_POST['action'] == 'delete_withdrawal' && isset($_POST['id'])) {
+        try {
+            $stmt = $conn->prepare("DELETE FROM expenses WHERE id = :id");
+            $stmt->bindParam(':id', $_POST['id']);
+            $stmt->execute();
+            
+            echo json_encode(['success' => true]);
+        } catch (PDOException $e) {
+            error_log("Database error: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا']);
+        }
+        exit;
+    }
+}
+
 // You can add PHP logic here if needed
 ?>
 <!DOCTYPE html>
@@ -144,11 +388,7 @@
                                     <i class="fas fa-user-tie me-2"></i>پارەدان بە کارمەند
                                 </button>
                             </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="shipping-tab" data-bs-toggle="tab" data-bs-target="#shipping-content" type="button" role="tab" aria-controls="shipping-content" aria-selected="false">
-                                    <i class="fas fa-truck me-2"></i>کرێی بار
-                                </button>
-                            </li>
+                         
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="withdrawal-tab" data-bs-toggle="tab" data-bs-target="#withdrawal-content" type="button" role="tab" aria-controls="withdrawal-content" aria-selected="false">
                                     <i class="fas fa-money-bill-wave me-2"></i>دەرکردنی پارە
@@ -171,21 +411,21 @@
                                         <form id="employeePaymentFilterForm" class="row g-3">
                                             <div class="col-md-3">
                                                 <label for="employeePaymentStartDate" class="form-label">بەرواری دەستپێک</label>
-                                                <input type="date" class="form-control auto-filter" id="employeePaymentStartDate">
+                                                <input type="date" class="form-control auto-filter" id="employeePaymentStartDate" value="<?php echo $startOfMonth; ?>">
                                             </div>
                                             <div class="col-md-3">
                                                 <label for="employeePaymentEndDate" class="form-label">بەرواری کۆتایی</label>
-                                                <input type="date" class="form-control auto-filter" id="employeePaymentEndDate">
+                                                <input type="date" class="form-control auto-filter" id="employeePaymentEndDate" value="<?php echo $today; ?>">
                                             </div>
                                             <div class="col-md-4">
                                                 <label for="employeePaymentName" class="form-label">ناوی کارمەند</label>
                                                 <select class="form-select auto-filter" id="employeePaymentName">
                                                     <option value="">هەموو کارمەندەکان</option>
-                                                    <option value="ئاری محمد">ئاری محمد</option>
-                                                    <option value="شیلان عمر">شیلان عمر</option>
-                                                    <option value="هاوڕێ ئەحمەد">هاوڕێ ئەحمەد</option>
-                                                    <option value="سارا عەلی">سارا عەلی</option>
-                                                    <option value="کارزان محمود">کارزان محمود</option>
+                                                    <?php foreach ($employees as $employee): ?>
+                                                        <option value="<?php echo htmlspecialchars($employee['name']); ?>">
+                                                            <?php echo htmlspecialchars($employee['name']); ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
                                                 </select>
                                             </div>
                                             <div class="col-md-2 d-flex align-items-end">
@@ -194,6 +434,55 @@
                                                 </button>
                                             </div>
                                         </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Employee Payments Summary -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card shadow-sm">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-4">پوختەی پارەدان لەم ماوەیەدا</h5>
+                                        <div class="row">
+                                            <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+                                                <div class="card bg-light h-100">
+                                                    <div class="card-body text-center">
+                                                        <h6 class="card-subtitle mb-2 text-muted">کۆی پارەدان</h6>
+                                                        <h3 class="card-title"><?php echo number_format($employeePaymentsStats['total_amount'] ?? 0); ?> د.ع</h3>
+                                                        <p class="card-text"><?php echo $employeePaymentsStats['total_payments'] ?? 0; ?> پارەدان</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+                                                <div class="card bg-light h-100">
+                                                    <div class="card-body text-center">
+                                                        <h6 class="card-subtitle mb-2 text-muted">مووچە</h6>
+                                                        <h3 class="card-title"><?php echo number_format($employeePaymentsStats['total_salary'] ?? 0); ?> د.ع</h3>
+                                                        <p class="card-text"><span class="badge bg-success">مووچە</span></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+                                                <div class="card bg-light h-100">
+                                                    <div class="card-body text-center">
+                                                        <h6 class="card-subtitle mb-2 text-muted">پاداشت</h6>
+                                                        <h3 class="card-title"><?php echo number_format($employeePaymentsStats['total_bonus'] ?? 0); ?> د.ع</h3>
+                                                        <p class="card-text"><span class="badge bg-warning">پاداشت</span></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+                                                <div class="card bg-light h-100">
+                                                    <div class="card-body text-center">
+                                                        <h6 class="card-subtitle mb-2 text-muted">کاتژمێری زیادە</h6>
+                                                        <h3 class="card-title"><?php echo number_format($employeePaymentsStats['total_overtime'] ?? 0); ?> د.ع</h3>
+                                                        <p class="card-text"><span class="badge bg-info">کاتژمێری زیادە</span></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -257,70 +546,43 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <!-- Sample data - will be replaced with real data from database -->
-                                                        <tr data-id="1">
-                                                            <td>1</td>
-                                                            <td>ئاری محمد</td>
-                                                            <td>2023/04/15</td>
-                                                            <td>$500</td>
-                                                            <td><span class="badge rounded-pill bg-success">مووچە</span></td>
-                                                            <td>مووچەی مانگی نیسان</td>
+                                                        <?php foreach ($employeePaymentsData as $index => $payment): ?>
+                                                        <tr data-id="<?php echo $payment['id']; ?>">
+                                                            <td><?php echo $index + 1; ?></td>
+                                                            <td><?php echo htmlspecialchars($payment['employee_name'] ?? 'N/A'); ?></td>
+                                                            <td><?php echo date('Y/m/d', strtotime($payment['payment_date'])); ?></td>
+                                                            <td><?php echo number_format($payment['amount']) . ' د.ع'; ?></td>
+                                                            <td>
+                                                                <span class="badge rounded-pill <?php 
+                                                                    echo $payment['payment_type'] == 'salary' ? 'bg-success' : 
+                                                                        ($payment['payment_type'] == 'bonus' ? 'bg-warning' : 
+                                                                        ($payment['payment_type'] == 'overtime' ? 'bg-info' : 'bg-secondary')); 
+                                                                ?>">
+                                                                    <?php 
+                                                                    echo $payment['payment_type'] == 'salary' ? 'مووچە' : 
+                                                                        ($payment['payment_type'] == 'bonus' ? 'پاداشت' : 
+                                                                        ($payment['payment_type'] == 'overtime' ? 'کاتژمێری زیادە' : 'جۆری تر')); 
+                                                                    ?>
+                                                                </span>
+                                                            </td>
+                                                            <td><?php echo htmlspecialchars($payment['notes'] ?? ''); ?></td>
                                                             <td>
                                                                 <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="1" data-bs-toggle="modal" data-bs-target="#editEmployeePaymentModal">
+                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="<?php echo $payment['id']; ?>" data-bs-toggle="modal" data-bs-target="#editEmployeePaymentModal">
                                                                         <i class="fas fa-edit"></i>
                                                                     </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="1">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="1">
-                                                                        <i class="fas fa-print"></i>
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="<?php echo $payment['id']; ?>">
+                                                                        <i class="fas fa-trash"></i>
                                                                     </button>
                                                                 </div>
                                                             </td>
                                                         </tr>
-                                                        <tr data-id="2">
-                                                            <td>2</td>
-                                                            <td>شیلان عمر</td>
-                                                            <td>2023/04/15</td>
-                                                            <td>$450</td>
-                                                            <td><span class="badge rounded-pill bg-success">مووچە</span></td>
-                                                            <td>مووچەی مانگی نیسان</td>
-                                                            <td>
-                                                                <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="2" data-bs-toggle="modal" data-bs-target="#editEmployeePaymentModal">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="2">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="2">
-                                                                        <i class="fas fa-print"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
+                                                        <?php endforeach; ?>
+                                                        <?php if (empty($employeePaymentsData)): ?>
+                                                        <tr>
+                                                            <td colspan="7" class="text-center">هیچ پارەدانێک نەدۆزرایەوە</td>
                                                         </tr>
-                                                        <tr data-id="3">
-                                                            <td>3</td>
-                                                            <td>هاوڕێ ئەحمەد</td>
-                                                            <td>2023/04/17</td>
-                                                            <td>$100</td>
-                                                            <td><span class="badge rounded-pill bg-info">پێشەکی</span></td>
-                                                            <td>پێشەکی پارە</td>
-                                                            <td>
-                                                                <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="3" data-bs-toggle="modal" data-bs-target="#editEmployeePaymentModal">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="3">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="3">
-                                                                        <i class="fas fa-print"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
+                                                        <?php endif; ?>
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -357,178 +619,7 @@
                     </div>
                     
                     <!-- Shipping Cost Tab -->
-                    <div class="tab-pane fade" id="shipping-content" role="tabpanel" aria-labelledby="shipping-tab">
-                        <!-- Date Filter for Shipping Costs -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <div class="card shadow-sm">
-                                    <div class="card-body">
-                                        <h5 class="card-title mb-4">فلتەر بەپێی بەروار و ناو</h5>
-                                        <form id="shippingFilterForm" class="row g-3">
-                                            <div class="col-md-3">
-                                                <label for="shippingStartDate" class="form-label">بەرواری دەستپێک</label>
-                                                <input type="date" class="form-control auto-filter" id="shippingStartDate">
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label for="shippingEndDate" class="form-label">بەرواری کۆتایی</label>
-                                                <input type="date" class="form-control auto-filter" id="shippingEndDate">
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label for="shippingProvider" class="form-label">دابینکەر</label>
-                                                <select class="form-select auto-filter" id="shippingProvider">
-                                                    <option value="">هەموو دابینکەرەکان</option>
-                                                    <option value="کۆمپانیای تیوان">کۆمپانیای تیوان</option>
-                                                    <option value="کۆمپانیای ئارەزوو">کۆمپانیای ئارەزوو</option>
-                                                    <option value="کۆمپانیای هێمن">کۆمپانیای هێمن</option>
-                                                    <option value="کۆمپانیای سارا">کۆمپانیای سارا</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-2 d-flex align-items-end">
-                                                <button type="button" class="btn btn-outline-secondary w-100" id="shippingResetFilter">
-                                                    <i class="fas fa-redo me-2"></i> ڕیسێت
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Shipping Cost History Table -->
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="card shadow-sm">
-                                    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                                        <h5 class="card-title mb-0">مێژووی کرێی بار</h5>
-                                        <div>
-                                            <button class="btn btn-sm btn-outline-primary refresh-btn me-2">
-                                                <i class="fas fa-sync-alt"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="table-container">
-                                            <!-- Table Controls -->
-                                            <div class="table-controls mb-3">
-                                                <div class="row align-items-center">
-                                                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
-                                                        <div class="records-per-page">
-                                                            <label class="me-2">نیشاندان:</label>
-                                                            <div class="custom-select-wrapper">
-                                                                <select id="shippingRecordsPerPage" class="form-select form-select-sm rounded-pill">
-                                                                    <option value="5">5</option>
-                                                                    <option value="10" selected>10</option>
-                                                                    <option value="25">25</option>
-                                                                    <option value="50">50</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-8 col-sm-6">
-                                                        <div class="search-container">
-                                                            <div class="input-group">
-                                                                <input type="text" id="shippingTableSearch" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
-                                                                <span class="input-group-text rounded-pill-end bg-light">
-                                                                    <i class="fas fa-search"></i>
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Table Content -->
-                                            <div class="table-responsive">
-                                                <table id="shippingHistoryTable" class="table table-bordered custom-table table-hover">
-                                                    <thead class="table-light">
-                                                        <tr>
-                                                            <th>#</th>
-                                                            <th>دابینکەر</th>
-                                                            <th>بەروار</th>
-                                                            <th>بڕی پارە</th>
-                                                            <th>جۆری بار</th>
-                                                            <th>تێبینی</th>
-                                                            <th>کردارەکان</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <!-- Sample data - will be replaced with real data from database -->
-                                                        <tr data-id="1">
-                                                            <td>1</td>
-                                                            <td>کۆمپانیای تیوان</td>
-                                                            <td>2023/04/10</td>
-                                                            <td>$800</td>
-                                                            <td><span class="badge rounded-pill bg-info">وشکانی</span></td>
-                                                            <td>بار لە تورکیاوە</td>
-                                                            <td>
-                                                                <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="1" data-bs-toggle="modal" data-bs-target="#editShippingModal">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="1">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="1">
-                                                                        <i class="fas fa-print"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr data-id="2">
-                                                            <td>2</td>
-                                                            <td>کۆمپانیای ئارەزوو</td>
-                                                            <td>2023/04/15</td>
-                                                            <td>$1200</td>
-                                                            <td><span class="badge rounded-pill bg-success">دەریایی</span></td>
-                                                            <td>بار لە چینەوە</td>
-                                                            <td>
-                                                                <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="2" data-bs-toggle="modal" data-bs-target="#editShippingModal">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="2">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="2">
-                                                                        <i class="fas fa-print"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            
-                                            <!-- Table Pagination -->
-                                            <div class="table-pagination mt-3">
-                                                <div class="row align-items-center">
-                                                    <div class="col-md-6 mb-2 mb-md-0">
-                                                        <div class="pagination-info">
-                                                            نیشاندانی <span id="shippingStartRecord">1</span> تا <span id="shippingEndRecord">2</span> لە کۆی <span id="shippingTotalRecords">2</span> تۆمار
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="pagination-controls d-flex justify-content-md-end">
-                                                            <button id="shippingPrevPageBtn" class="btn btn-sm btn-outline-primary rounded-circle me-2" disabled>
-                                                                <i class="fas fa-chevron-right"></i>
-                                                            </button>
-                                                            <div id="shippingPaginationNumbers" class="pagination-numbers d-flex">
-                                                                <!-- Pagination numbers will be generated by JavaScript -->
-                                                                <button class="btn btn-sm btn-primary rounded-circle me-2 active">1</button>
-                                                            </div>
-                                                            <button id="shippingNextPageBtn" class="btn btn-sm btn-outline-primary rounded-circle">
-                                                                <i class="fas fa-chevron-left"></i>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                  
                     
                     <!-- Money Withdrawal Tab -->
                     <div class="tab-pane fade" id="withdrawal-content" role="tabpanel" aria-labelledby="withdrawal-tab">
@@ -539,25 +630,15 @@
                                     <div class="card-body">
                                         <h5 class="card-title mb-4">فلتەر بەپێی بەروار و ناو</h5>
                                         <form id="withdrawalFilterForm" class="row g-3">
-                                            <div class="col-md-3">
+                                            <div class="col-md-4">
                                                 <label for="withdrawalStartDate" class="form-label">بەرواری دەستپێک</label>
                                                 <input type="date" class="form-control auto-filter" id="withdrawalStartDate">
                                             </div>
-                                            <div class="col-md-3">
+                                            <div class="col-md-4">
                                                 <label for="withdrawalEndDate" class="form-label">بەرواری کۆتایی</label>
                                                 <input type="date" class="form-control auto-filter" id="withdrawalEndDate">
                                             </div>
-                                            <div class="col-md-4">
-                                                <label for="withdrawalName" class="form-label">ناو</label>
-                                                <select class="form-select auto-filter" id="withdrawalName">
-                                                    <option value="">هەموو ناوەکان</option>
-                                                    <option value="کارزان عومەر">کارزان عومەر</option>
-                                                    <option value="ئاکۆ سەعید">ئاکۆ سەعید</option>
-                                                    <option value="هێڤیدار ئەحمەد">هێڤیدار ئەحمەد</option>
-                                                    <option value="ئارام مستەفا">ئارام مستەفا</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-2 d-flex align-items-end">
+                                            <div class="col-md-4 d-flex align-items-end">
                                                 <button type="button" class="btn btn-outline-secondary w-100" id="withdrawalResetFilter">
                                                     <i class="fas fa-redo me-2"></i> ڕیسێت
                                                 </button>
@@ -617,79 +698,39 @@
                                                     <thead class="table-light">
                                                         <tr>
                                                             <th>#</th>
-                                                            <th>ناو</th>
                                                             <th>بەروار</th>
                                                             <th>بڕی پارە</th>
-                                                            <th>جۆری دەرکردن</th>
                                                             <th>تێبینی</th>
                                                             <th>کردارەکان</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <!-- Sample data - will be replaced with real data from database -->
-                                                        <tr data-id="1">
-                                                            <td>1</td>
-                                                            <td>کارزان عومەر</td>
-                                                            <td>2023/04/05</td>
-                                                            <td>$150</td>
-                                                            <td><span class="badge rounded-pill bg-warning text-dark">خەرجی ڕۆژانە</span></td>
-                                                            <td>کڕینی پێداویستی بۆ ئۆفیس</td>
+                                                        <?php foreach ($withdrawalsData as $index => $withdrawal): ?>
+                                                        <tr data-id="<?php echo $withdrawal['id']; ?>">
+                                                            <td><?php echo $index + 1; ?></td>
+                                                            <td><?php echo date('Y/m/d', strtotime($withdrawal['expense_date'])); ?></td>
+                                                            <td><?php echo number_format($withdrawal['amount']) . ' د.ع'; ?></td>
+                                                            <td><?php echo htmlspecialchars($withdrawal['notes'] ?? ''); ?></td>
                                                             <td>
                                                                 <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="1" data-bs-toggle="modal" data-bs-target="#editWithdrawalModal">
+                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="<?php echo $withdrawal['id']; ?>" data-bs-toggle="modal" data-bs-target="#editWithdrawalModal">
                                                                         <i class="fas fa-edit"></i>
                                                                     </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="1">
+                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="<?php echo $withdrawal['id']; ?>">
                                                                         <i class="fas fa-eye"></i>
                                                                     </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="1">
+                                                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="<?php echo $withdrawal['id']; ?>">
                                                                         <i class="fas fa-print"></i>
                                                                     </button>
                                                                 </div>
                                                             </td>
                                                         </tr>
-                                                        <tr data-id="2">
-                                                            <td>2</td>
-                                                            <td>ئاکۆ سەعید</td>
-                                                            <td>2023/04/10</td>
-                                                            <td>$500</td>
-                                                            <td><span class="badge rounded-pill bg-danger">کرێ</span></td>
-                                                            <td>کرێی مانگانەی ئۆفیس</td>
-                                                            <td>
-                                                                <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="2" data-bs-toggle="modal" data-bs-target="#editWithdrawalModal">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="2">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="2">
-                                                                        <i class="fas fa-print"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
+                                                        <?php endforeach; ?>
+                                                        <?php if (empty($withdrawalsData)): ?>
+                                                        <tr>
+                                                            <td colspan="5" class="text-center">هیچ دەرکردنێکی پارە نەدۆزرایەوە</td>
                                                         </tr>
-                                                        <tr data-id="3">
-                                                            <td>3</td>
-                                                            <td>هێڤیدار ئەحمەد</td>
-                                                            <td>2023/04/12</td>
-                                                            <td>$75</td>
-                                                            <td><span class="badge rounded-pill bg-info">خزمەتگوزاری</span></td>
-                                                            <td>پارەی کارەبا</td>
-                                                            <td>
-                                                                <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="3" data-bs-toggle="modal" data-bs-target="#editWithdrawalModal">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="3">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="3">
-                                                                        <i class="fas fa-print"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
+                                                        <?php endif; ?>
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -754,9 +795,9 @@
                             <label for="editEmployeePaymentName" class="form-label">ناوی کارمەند</label>
                             <select id="editEmployeePaymentName" class="form-select" required>
                                 <option value="" selected disabled>کارمەند هەڵبژێرە</option>
-                                <option value="ئاری محمد">ئاری محمد</option>
-                                <option value="شیلان عمر">شیلان عمر</option>
-                                <option value="هاوڕێ ئەحمەد">هاوڕێ ئەحمەد</option>
+                                <?php foreach ($employees as $employee): ?>
+                                    <option value="<?php echo $employee['id']; ?>"><?php echo htmlspecialchars($employee['name']); ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -767,7 +808,7 @@
                             <label for="editEmployeePaymentAmount" class="form-label">بڕی پارە</label>
                             <div class="input-group">
                                 <input type="number" id="editEmployeePaymentAmount" class="form-control" required>
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">د.ع</span>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -776,8 +817,7 @@
                                 <option value="" selected disabled>جۆری پارەدان</option>
                                 <option value="salary">مووچە</option>
                                 <option value="bonus">پاداشت</option>
-                                <option value="advance">پێشەکی</option>
-                                <option value="other">جۆری تر</option>
+                                <option value="overtime">کاتژمێری زیادە</option>
                             </select>
                         </div>
                         <div class="mb-3">

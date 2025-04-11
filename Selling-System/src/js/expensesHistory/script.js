@@ -1,1137 +1,519 @@
+// Wait for the DOM to be ready
 $(document).ready(function() {
-    // Load components (sidebar, navbar)
-    loadComponents();
-    
-    // Tab related variables
-    let activeTab = "employee-payment";
-    
-    // Initialize all tables
-    initializeEmployeeHistoryTable();
-    initializeShippingHistoryTable();
-    initializeWithdrawalHistoryTable();
-    
-    // Set default dates to one month range
-    setDefaultDateRanges();
-    
-    // Setup auto filter handlers
-    setupAutoFilterHandlers();
-    
-    // Setup tab click handlers
-    setupTabHandlers();
-    
-    // Setup action button handlers
-    setupActionButtons();
-});
-
-/**
- * Safe toast function to show notifications
- */
-function showToast(message, type) {
-    if (typeof Swal !== 'undefined') {
-        const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-            didOpen: (toast) => {
-                toast.addEventListener('mouseenter', Swal.stopTimer)
-                toast.addEventListener('mouseleave', Swal.resumeTimer)
-            }
-        });
-
-        // Configure toast based on type
-        const config = {
-            icon: type,
-            title: message,
-            rtl: true,
-            customClass: {
-                container: 'toast-container-rtl'
-            }
-        };
-
-        // Show the toast
-        Toast.fire(config);
-    } else {
-        console.log(type + ': ' + message);
-    }
-}
-
-/**
- * Load the navbar and sidebar components
- */
-function loadComponents() {
-    // This function is located in the include-components.js file
-    try {
-        $("#navbar-container").load("components/navbar.php");
-        $("#sidebar-container").load("components/sidebar.php", function() {
-            // Activate the current menu item
-            activateSidebarItem();
-        });
-    } catch (error) {
-        console.error("Error loading components:", error);
-    }
-}
-
-/**
- * Activate the current sidebar menu item
- */
-function activateSidebarItem() {
-    // Find and activate the expenses menu item
-    const expensesMenuItem = $('[href="#expensesSubmenu"]');
-    expensesMenuItem.parent().addClass('active');
-    expensesMenuItem.attr('aria-expanded', 'true');
-    
-    // Show the submenu
-    const submenu = $('#expensesSubmenu');
-    submenu.addClass('show');
-    
-    // Highlight the expenses history menu item (assuming it exists)
-    const expensesHistoryItem = submenu.find('a[href="expensesHistory.php"]');
-    expensesHistoryItem.parent().addClass('active');
-}
-
-/**
- * Set default date ranges to last 30 days for all filters
- */
-function setDefaultDateRanges() {
+    // Initialize date inputs with default values
     const today = new Date();
-    const lastMonth = new Date();
-    lastMonth.setDate(today.getDate() - 30);
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
     
-    const todayFormatted = today.toISOString().substring(0, 10);
-    const lastMonthFormatted = lastMonth.toISOString().substring(0, 10);
-    
-    // Set employee payment date range
-    $('#employeePaymentStartDate').val(lastMonthFormatted);
-    $('#employeePaymentEndDate').val(todayFormatted);
-    
-    // Set shipping date range
-    $('#shippingStartDate').val(lastMonthFormatted);
-    $('#shippingEndDate').val(todayFormatted);
-    
-    // Set withdrawal date range
-    $('#withdrawalStartDate').val(lastMonthFormatted);
-    $('#withdrawalEndDate').val(todayFormatted);
-}
-
-/**
- * Setup tab click handlers
- */
-function setupTabHandlers() {
-    // Tab click event
-    $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
-        const tabId = $(e.target).attr('id');
-        activeTab = tabId.replace('-tab', '');
-    });
-}
-
-/**
- * Setup automatic filter handlers
- */
-function setupAutoFilterHandlers() {
-    // Employee payment auto filters
-    $('#employeePaymentStartDate, #employeePaymentEndDate, #employeePaymentName').on('change input', function() {
-        applyEmployeePaymentFilter();
-    });
-    
-    // Shipping auto filters
-    $('#shippingStartDate, #shippingEndDate, #shippingProvider').on('change input', function() {
-        applyShippingFilter();
-    });
-    
-    // Withdrawal auto filters
-    $('#withdrawalStartDate, #withdrawalEndDate, #withdrawalName').on('change input', function() {
-        applyWithdrawalFilter();
-    });
-    
-    // Reset filter buttons
-    $('#employeePaymentResetFilter').on('click', function() {
-        resetEmployeePaymentFilter();
-    });
-    
-    $('#shippingResetFilter').on('click', function() {
-        resetShippingFilter();
-    });
-    
-    $('#withdrawalResetFilter').on('click', function() {
-        resetWithdrawalFilter();
-    });
-}
-
-/**
- * Apply employee payment filter
- */
-function applyEmployeePaymentFilter() {
-    const startDate = $('#employeePaymentStartDate').val();
-    const endDate = $('#employeePaymentEndDate').val();
-    const name = $('#employeePaymentName').val();
-    
-    if (!startDate && !endDate && !name) {
-        // No filters, reset to original data
-        filteredEmployeeHistoryData = [...employeeHistoryData];
-    } else {
-        // Apply filters
-        filteredEmployeeHistoryData = employeeHistoryData.filter(item => {
-            // Date filtering
-            let dateMatches = true;
-            if (startDate && endDate) {
-                const itemDate = new Date(item.paymentDate.replace(/(\d{4})\/(\d{2})\/(\d{2})/, '$1-$2-$3'));
-                const filterStartDate = new Date(startDate);
-                const filterEndDate = new Date(endDate);
-                dateMatches = itemDate >= filterStartDate && itemDate <= filterEndDate;
-            }
-            
-            // Name filtering
-            let nameMatches = true;
-            if (name) {
-                nameMatches = item.employeeName === name;
-            }
-            
-            return dateMatches && nameMatches;
-        });
+    if (!$('#employeePaymentStartDate').val()) {
+        $('#employeePaymentStartDate').val(formatDate(firstDay));
     }
     
-    // Reset to first page and render
-    employeeHistoryCurrentPage = 1;
-    renderEmployeeHistoryTable();
-    
-    // Show toast notification
-    showToast('داتاکان فلتەر کران', 'info');
-}
-
-/**
- * Apply shipping filter
- */
-function applyShippingFilter() {
-    const startDate = $('#shippingStartDate').val();
-    const endDate = $('#shippingEndDate').val();
-    const provider = $('#shippingProvider').val();
-    
-    // Similar implementation to employee payment filter but for shipping data
-    if (!startDate && !endDate && !provider) {
-        // No filters, reset to original data
-        filteredShippingData = [...shippingData];
-    } else {
-        // Apply filters
-        filteredShippingData = shippingData.filter(item => {
-            // Date filtering
-            let dateMatches = true;
-            if (startDate && endDate) {
-                const itemDate = new Date(item.shippingDate.replace(/(\d{4})\/(\d{2})\/(\d{2})/, '$1-$2-$3'));
-                const filterStartDate = new Date(startDate);
-                const filterEndDate = new Date(endDate);
-                dateMatches = itemDate >= filterStartDate && itemDate <= filterEndDate;
-            }
-            
-            // Provider filtering
-            let providerMatches = true;
-            if (provider) {
-                providerMatches = item.provider === provider;
-            }
-            
-            return dateMatches && providerMatches;
-        });
+    if (!$('#employeePaymentEndDate').val()) {
+        $('#employeePaymentEndDate').val(formatDate(today));
     }
     
-    // Reset to first page and render
-    shippingCurrentPage = 1;
-    renderShippingTable();
-    
-    // Show toast notification
-    showToast('داتاکان فلتەر کران', 'info');
-}
-
-/**
- * Apply withdrawal filter
- */
-function applyWithdrawalFilter() {
-    const startDate = $('#withdrawalStartDate').val();
-    const endDate = $('#withdrawalEndDate').val();
-    const name = $('#withdrawalName').val();
-    
-    // Similar implementation to employee payment filter but for withdrawal data
-    if (!startDate && !endDate && !name) {
-        // No filters, reset to original data
-        filteredWithdrawalData = [...withdrawalData];
-    } else {
-        // Apply filters
-        filteredWithdrawalData = withdrawalData.filter(item => {
-            // Date filtering
-            let dateMatches = true;
-            if (startDate && endDate) {
-                const itemDate = new Date(item.withdrawalDate.replace(/(\d{4})\/(\d{2})\/(\d{2})/, '$1-$2-$3'));
-                const filterStartDate = new Date(startDate);
-                const filterEndDate = new Date(endDate);
-                dateMatches = itemDate >= filterStartDate && itemDate <= filterEndDate;
-            }
-            
-            // Name filtering
-            let nameMatches = true;
-            if (name) {
-                nameMatches = item.name === name;
-            }
-            
-            return dateMatches && nameMatches;
-        });
+    if (!$('#withdrawalStartDate').val()) {
+        $('#withdrawalStartDate').val(formatDate(firstDay));
     }
     
-    // Reset to first page and render
-    withdrawalCurrentPage = 1;
-    renderWithdrawalTable();
+    if (!$('#withdrawalEndDate').val()) {
+        $('#withdrawalEndDate').val(formatDate(today));
+    }
     
-    // Show toast notification
-    showToast('داتاکان فلتەر کران', 'info');
-}
-
-/**
- * Reset employee payment filter
- */
-function resetEmployeePaymentFilter() {
-    // Reset date inputs to default range
-    const today = new Date();
-    const lastMonth = new Date();
-    lastMonth.setDate(today.getDate() - 30);
+    // Helper function to format date as YYYY-MM-DD
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
     
-    const todayFormatted = today.toISOString().substring(0, 10);
-    const lastMonthFormatted = lastMonth.toISOString().substring(0, 10);
-    
-    $('#employeePaymentStartDate').val(lastMonthFormatted);
-    $('#employeePaymentEndDate').val(todayFormatted);
-    $('#employeePaymentName').val('');
-    
-    // Reset data to original
-    filteredEmployeeHistoryData = [...employeeHistoryData];
-    employeeHistoryCurrentPage = 1;
-    renderEmployeeHistoryTable();
-    
-    // Show toast notification
-    showToast('فلتەرەکان ڕیسێت کران', 'success');
-}
-
-/**
- * Reset shipping filter
- */
-function resetShippingFilter() {
-    // Reset date inputs to default range
-    const today = new Date();
-    const lastMonth = new Date();
-    lastMonth.setDate(today.getDate() - 30);
-    
-    const todayFormatted = today.toISOString().substring(0, 10);
-    const lastMonthFormatted = lastMonth.toISOString().substring(0, 10);
-    
-    $('#shippingStartDate').val(lastMonthFormatted);
-    $('#shippingEndDate').val(todayFormatted);
-    $('#shippingProvider').val('');
-    
-    // For demo purposes, show a toast notification
-    showToast('فلتەرەکان ڕیسێت کران', 'success');
-}
-
-/**
- * Reset withdrawal filter
- */
-function resetWithdrawalFilter() {
-    // Reset date inputs to default range
-    const today = new Date();
-    const lastMonth = new Date();
-    lastMonth.setDate(today.getDate() - 30);
-    
-    const todayFormatted = today.toISOString().substring(0, 10);
-    const lastMonthFormatted = lastMonth.toISOString().substring(0, 10);
-    
-    $('#withdrawalStartDate').val(lastMonthFormatted);
-    $('#withdrawalEndDate').val(todayFormatted);
-    $('#withdrawalName').val('');
-    
-    // For demo purposes, show a toast notification
-    showToast('فلتەرەکان ڕیسێت کران', 'success');
-}
-
-// EMPLOYEE PAYMENT HISTORY FUNCTIONS
-
-/**
- * Employee Payment history table variables
- */
-let employeeHistoryData = [];
-let filteredEmployeeHistoryData = [];
-let employeeHistoryCurrentPage = 1;
-let employeeHistoryRecordsPerPage = 10;
-let employeeHistoryTotalPages = 1;
-
-/**
- * Initialize the employee payment history table
- */
-function initializeEmployeeHistoryTable() {
-    // Collect data from the table
-    collectEmployeeHistoryData();
-    
-    // Initial table render
-    renderEmployeeHistoryTable();
-    
-    // Setup table event listeners
-    setupEmployeeHistoryTableEventListeners();
-}
-
-/**
- * Collect data from the employee payment history table's initial HTML
- */
-function collectEmployeeHistoryData() {
-    const rows = $('#employeeHistoryTable tbody tr');
-    
-    rows.each(function() {
-        const $row = $(this);
-        const id = $row.data('id');
+    // Apply filter for employee payments
+    function applyEmployeePaymentFilter() {
+        const startDate = $('#employeePaymentStartDate').val();
+        const endDate = $('#employeePaymentEndDate').val();
+        const employeeName = $('#employeePaymentName').val();
         
-        const rowData = {
-            id: id,
-            employeeId: id,
-            employeeName: $row.find('td:eq(1)').text(),
-            paymentDate: $row.find('td:eq(2)').text(),
-            paymentAmount: $row.find('td:eq(3)').text(),
-            paymentType: $row.find('td:eq(4)').find('span').text(),
-            notes: $row.find('td:eq(5)').text()
-        };
+        $.ajax({
+            url: 'expensesHistory.php',
+            method: 'POST',
+            data: {
+                action: 'filter',
+                type: 'employee_payments',
+                start_date: startDate,
+                end_date: endDate,
+                employee_name: employeeName
+            },
+            dataType: 'json',
+            beforeSend: function() {
+                // Show loading state
+                $('#employeeHistoryTable tbody').html('<tr><td colspan="7" class="text-center">جاوەڕێ بکە...</td></tr>');
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Update table with filtered data
+                    updateEmployeePaymentsTable(response.data);
+                    
+                    // Update statistics
+                    updateEmployeePaymentsStats(response.stats);
+                } else {
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: response.message || 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردندا',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    title: 'هەڵە!',
+                    text: 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردندا',
+                    icon: 'error',
+                    confirmButtonText: 'باشە'
+                });
+            }
+        });
+    }
+    
+    // Update employee payments table
+    function updateEmployeePaymentsTable(data) {
+        let html = '';
         
-        employeeHistoryData.push(rowData);
-    });
-    
-    // Initialize filtered data
-    filteredEmployeeHistoryData = [...employeeHistoryData];
-    
-    // Update pagination info
-    updateEmployeeHistoryPaginationInfo();
-}
-
-/**
- * Setup employee payment history table event listeners
- */
-function setupEmployeeHistoryTableEventListeners() {
-    // Pagination controls
-    $('#employeePrevPageBtn').on('click', function() {
-        if (employeeHistoryCurrentPage > 1) {
-            employeeHistoryCurrentPage--;
-            renderEmployeeHistoryTable();
-        }
-    });
-    
-    $('#employeeNextPageBtn').on('click', function() {
-        if (employeeHistoryCurrentPage < employeeHistoryTotalPages) {
-            employeeHistoryCurrentPage++;
-            renderEmployeeHistoryTable();
-        }
-    });
-    
-    // Records per page change
-    $('#employeeRecordsPerPage').on('change', function() {
-        employeeHistoryRecordsPerPage = parseInt($(this).val());
-        employeeHistoryCurrentPage = 1; // Reset to first page
-        renderEmployeeHistoryTable();
-    });
-    
-    // Search functionality
-    $('#employeeTableSearch').on('input', function() {
-        const searchQuery = $(this).val().toLowerCase();
-        
-        if (searchQuery.length === 0) {
-            filteredEmployeeHistoryData = [...employeeHistoryData];
+        if (data.length === 0) {
+            html = '<tr><td colspan="7" class="text-center">هیچ پارەدانێک نەدۆزرایەوە</td></tr>';
         } else {
-            filteredEmployeeHistoryData = employeeHistoryData.filter(item => {
-                return (
-                    item.employeeName.toLowerCase().includes(searchQuery) ||
-                    item.paymentDate.toLowerCase().includes(searchQuery) ||
-                    item.paymentAmount.toLowerCase().includes(searchQuery) ||
-                    item.paymentType.toLowerCase().includes(searchQuery) ||
-                    item.notes.toLowerCase().includes(searchQuery)
-                );
+            data.forEach(function(payment, index) {
+                const paymentTypeClass = payment.payment_type === 'salary' ? 'bg-success' : 
+                                        (payment.payment_type === 'bonus' ? 'bg-warning' : 
+                                        (payment.payment_type === 'overtime' ? 'bg-info' : 'bg-secondary'));
+                
+                const paymentTypeText = payment.payment_type === 'salary' ? 'مووچە' : 
+                                       (payment.payment_type === 'bonus' ? 'پاداشت' : 
+                                       (payment.payment_type === 'overtime' ? 'کاتژمێری زیادە' : 'جۆری تر'));
+                
+                // Format date to Y/m/d
+                const dateObj = new Date(payment.payment_date);
+                const formattedDate = dateObj.getFullYear() + '/' + 
+                                     String(dateObj.getMonth() + 1).padStart(2, '0') + '/' + 
+                                     String(dateObj.getDate()).padStart(2, '0');
+                
+                // Format amount with thousand separators
+                const formattedAmount = new Intl.NumberFormat().format(payment.amount) + ' د.ع';
+                
+                html += `
+                    <tr data-id="${payment.id}" data-employee-id="${payment.employee_id}">
+                        <td>${index + 1}</td>
+                        <td>${payment.employee_name || 'N/A'}</td>
+                        <td>${formattedDate}</td>
+                        <td>${formattedAmount}</td>
+                        <td>
+                            <span class="badge rounded-pill ${paymentTypeClass}">
+                                ${paymentTypeText}
+                            </span>
+                        </td>
+                        <td>${payment.notes || ''}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${payment.id}" data-bs-toggle="modal" data-bs-target="#editEmployeePaymentModal">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${payment.id}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
             });
         }
         
-        employeeHistoryCurrentPage = 1; // Reset to first page
-        renderEmployeeHistoryTable();
-    });
-    
-    // Number pagination clicks
-    $(document).on('click', '.pagination-number', function() {
-        employeeHistoryCurrentPage = parseInt($(this).text());
-        renderEmployeeHistoryTable();
-    });
-}
-
-/**
- * Render the employee payment history table with current data and pagination
- */
-function renderEmployeeHistoryTable() {
-    const tableBody = $('#employeeHistoryTable tbody');
-    tableBody.empty();
-    
-    // Calculate pagination
-    updateEmployeeHistoryPaginationInfo();
-    
-    // Get current page data
-    const startIndex = (employeeHistoryCurrentPage - 1) * employeeHistoryRecordsPerPage;
-    const endIndex = Math.min(startIndex + employeeHistoryRecordsPerPage, filteredEmployeeHistoryData.length);
-    const currentPageData = filteredEmployeeHistoryData.slice(startIndex, endIndex);
-    
-    // No results message
-    if (currentPageData.length === 0) {
-        tableBody.append('<tr><td colspan="7" class="text-center">هیچ داتایەک نەدۆزرایەوە</td></tr>');
-    } else {
-        // Add rows to table
-        currentPageData.forEach(item => {
-            tableBody.append(`
-                <tr data-id="${item.id}">
-                    <td>${item.id}</td>
-                    <td>${item.employeeName}</td>
-                    <td>${item.paymentDate}</td>
-                    <td>${item.paymentAmount}</td>
-                    <td><span class="badge rounded-pill ${getBadgeClass(item.paymentType)}">${item.paymentType}</span></td>
-                    <td>${item.notes}</td>
-                    <td>
-                        <div class="action-buttons">
-                            <button type="button" class="btn btn-sm btn-outline-primary rounded-circle view-btn" data-id="${item.id}">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${item.id}">
-                                <i class="fas fa-print"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `);
-        });
+        $('#employeeHistoryTable tbody').html(html);
+        
+        // Update pagination info
+        updatePaginationInfo('employee', data.length, 1, data.length, data.length);
     }
     
-    // Update pagination controls
-    updateEmployeeHistoryPaginationControls();
-    
-    // Update pagination info text
-    updateEmployeeHistoryPaginationText();
-}
-
-/**
- * Update employee payment history pagination info
- */
-function updateEmployeeHistoryPaginationInfo() {
-    employeeHistoryTotalPages = Math.ceil(filteredEmployeeHistoryData.length / employeeHistoryRecordsPerPage);
-    if (employeeHistoryTotalPages === 0) employeeHistoryTotalPages = 1;
-    
-    // Ensure current page is in valid range
-    if (employeeHistoryCurrentPage > employeeHistoryTotalPages) {
-        employeeHistoryCurrentPage = employeeHistoryTotalPages;
-    }
-}
-
-/**
- * Update employee payment history pagination info text
- */
-function updateEmployeeHistoryPaginationText() {
-    const startRecord = filteredEmployeeHistoryData.length > 0 ? (employeeHistoryCurrentPage - 1) * employeeHistoryRecordsPerPage + 1 : 0;
-    const endRecord = Math.min(startRecord + employeeHistoryRecordsPerPage - 1, filteredEmployeeHistoryData.length);
-    const totalRecords = filteredEmployeeHistoryData.length;
-    
-    $('#employeeStartRecord').text(startRecord);
-    $('#employeeEndRecord').text(endRecord);
-    $('#employeeTotalRecords').text(totalRecords);
-}
-
-/**
- * Update employee payment history pagination controls with limits
- */
-function updateEmployeeHistoryPaginationControls() {
-    // Update prev/next buttons
-    $('#employeePrevPageBtn').prop('disabled', employeeHistoryCurrentPage === 1);
-    $('#employeeNextPageBtn').prop('disabled', employeeHistoryCurrentPage === employeeHistoryTotalPages);
-    
-    // Update pagination numbers
-    const paginationContainer = $('#employeePaginationNumbers');
-    paginationContainer.empty();
-    
-    // Limit the number of pagination buttons shown
-    const maxPaginationButtons = 5;
-    let startPage = Math.max(1, employeeHistoryCurrentPage - Math.floor(maxPaginationButtons / 2));
-    let endPage = Math.min(employeeHistoryTotalPages, startPage + maxPaginationButtons - 1);
-    
-    // Adjust if we're at the end
-    if (endPage - startPage + 1 < maxPaginationButtons && startPage > 1) {
-        startPage = Math.max(1, endPage - maxPaginationButtons + 1);
+    // Update employee payments statistics
+    function updateEmployeePaymentsStats(stats) {
+        // Format numbers with thousand separators
+        const totalAmount = new Intl.NumberFormat().format(stats.total_amount || 0) + ' د.ع';
+        const totalSalary = new Intl.NumberFormat().format(stats.total_salary || 0) + ' د.ع';
+        const totalBonus = new Intl.NumberFormat().format(stats.total_bonus || 0) + ' د.ع';
+        const totalOvertime = new Intl.NumberFormat().format(stats.total_overtime || 0) + ' د.ع';
+        
+        // Update statistics in the UI
+        $('.card-title:contains("کۆی پارەدان")').text(totalAmount);
+        $('.card-text:contains("پارەدان")').text(stats.total_payments + ' پارەدان');
+        
+        $('.card-title:contains("مووچە")').text(totalSalary);
+        $('.card-title:contains("پاداشت")').text(totalBonus);
+        $('.card-title:contains("کاتژمێری زیادە")').text(totalOvertime);
     }
     
-    // Add first page button if not visible
-    if (startPage > 1) {
-        paginationContainer.append(`
-            <button class="btn btn-sm btn-outline-primary rounded-circle me-1 pagination-number">1</button>
-        `);
+    // Apply filter for withdrawals
+    function applyWithdrawalFilter() {
+        const startDate = $('#withdrawalStartDate').val();
+        const endDate = $('#withdrawalEndDate').val();
         
-        // Add ellipsis if needed
-        if (startPage > 2) {
-            paginationContainer.append('<span class="pagination-ellipsis me-1">...</span>');
-        }
-    }
-    
-    // Add pagination numbers
-    for (let i = startPage; i <= endPage; i++) {
-        const isActive = i === employeeHistoryCurrentPage;
-        const buttonClass = isActive ? 'btn-primary active' : 'btn-outline-primary';
-        paginationContainer.append(`
-            <button class="btn btn-sm ${buttonClass} rounded-circle me-1 pagination-number">${i}</button>
-        `);
-    }
-    
-    // Add last page button if not visible
-    if (endPage < employeeHistoryTotalPages) {
-        // Add ellipsis if needed
-        if (endPage < employeeHistoryTotalPages - 1) {
-            paginationContainer.append('<span class="pagination-ellipsis me-1">...</span>');
-        }
-        
-        paginationContainer.append(`
-            <button class="btn btn-sm btn-outline-primary rounded-circle me-1 pagination-number">${employeeHistoryTotalPages}</button>
-        `);
-    }
-}
-
-/**
- * Get badge class based on payment type
- */
-function getBadgeClass(paymentType) {
-    switch (paymentType) {
-        case 'مووچە':
-            return 'bg-success';
-        case 'پێشەکی':
-            return 'bg-info';
-        case 'وشکانی':
-            return 'bg-info';
-        case 'دەریایی':
-            return 'bg-success';
-        case 'خەرجی ڕۆژانە':
-            return 'bg-warning text-dark';
-        case 'کرێ':
-            return 'bg-danger';
-        case 'خزمەتگوزاری':
-            return 'bg-info';
-        default:
-            return 'bg-secondary';
-    }
-}
-
-// SHIPPING COST HISTORY FUNCTIONS
-// Similar implementations to employee payment history functions but for shipping costs
-function initializeShippingHistoryTable() {
-    // Implementation similar to employee payment history table initialization
-}
-
-// WITHDRAWAL HISTORY FUNCTIONS
-// Similar implementations to employee payment history functions but for withdrawals
-function initializeWithdrawalHistoryTable() {
-    // Implementation similar to employee payment history table initialization
-}
-
-/**
- * Setup action buttons (view, print, etc.)
- */
-function setupActionButtons() {
-    // View button click handler
-    $(document).on('click', '.view-btn', function() {
-        const id = $(this).data('id');
-        const tabContainer = $(this).closest('.tab-pane');
-        const tabId = tabContainer.attr('id');
-        
-        // Here you would normally fetch details from the server and show them in a modal
-        // For demo purposes, we'll just show a toast notification
-        let message = '';
-        
-        if (tabId === 'employee-payment-content') {
-            message = 'پیشاندانی پارەدانی کارمەند - تۆماری ژمارە: ' + id;
-        } else if (tabId === 'shipping-content') {
-            message = 'پیشاندانی کرێی بار - تۆماری ژمارە: ' + id;
-        } else if (tabId === 'withdrawal-content') {
-            message = 'پیشاندانی دەرکردنی پارە - تۆماری ژمارە: ' + id;
-        }
-        
-        showToast(message, 'info');
-    });
-    
-    // Print button click handler
-    $(document).on('click', '.print-btn', function() {
-        const id = $(this).data('id');
-        const tabContainer = $(this).closest('.tab-pane');
-        const tabId = tabContainer.attr('id');
-        
-        // Here you would normally generate a printable view and open it
-        // For demo purposes, we'll just show a toast notification
-        let message = '';
-        
-        if (tabId === 'employee-payment-content') {
-            message = 'چاپکردنی پارەدانی کارمەند - تۆماری ژمارە: ' + id;
-        } else if (tabId === 'shipping-content') {
-            message = 'چاپکردنی کرێی بار - تۆماری ژمارە: ' + id;
-        } else if (tabId === 'withdrawal-content') {
-            message = 'چاپکردنی دەرکردنی پارە - تۆماری ژمارە: ' + id;
-        }
-        
-        showToast(message, 'success');
-    });
-    
-    // Refresh button click handler
-    $('.refresh-btn').on('click', function() {
-        const tabContainer = $(this).closest('.tab-pane');
-        const tabId = tabContainer.attr('id');
-        
-        // Here you would normally reload data from the server
-        // For demo purposes, we'll just show a toast notification
-        let message = 'داتاکان نوێکرانەوە';
-        
-        showToast(message, 'info');
-    });
-}
-
-// Initialize edit functionality for all tables
-document.addEventListener('DOMContentLoaded', function() {
-    // Employee Payment Edit
-    document.querySelectorAll('#employeeHistoryTable .edit-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const id = this.dataset.id;
-            const row = this.closest('tr');
-            
-            // Get data from the row
-            const name = row.cells[1].textContent;
-            const date = row.cells[2].textContent;
-            const amount = row.cells[3].textContent.replace('$', '');
-            const type = row.cells[4].querySelector('.badge').textContent;
-            const notes = row.cells[5].textContent;
-            
-            // Populate the modal
-            document.getElementById('editEmployeePaymentId').value = id;
-            document.getElementById('editEmployeePaymentName').value = name;
-            document.getElementById('editEmployeePaymentDate').value = formatDateForInput(date);
-            document.getElementById('editEmployeePaymentAmount').value = amount;
-            document.getElementById('editEmployeePaymentType').value = getPaymentTypeValue(type);
-            document.getElementById('editEmployeePaymentNotes').value = notes;
-        });
-    });
-
-    // Shipping Edit
-    document.querySelectorAll('#shippingHistoryTable .edit-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const id = this.dataset.id;
-            const row = this.closest('tr');
-            
-            // Get data from the row
-            const provider = row.cells[1].textContent;
-            const date = row.cells[2].textContent;
-            const amount = row.cells[3].textContent.replace('$', '');
-            const type = row.cells[4].querySelector('.badge').textContent;
-            const notes = row.cells[5].textContent;
-            
-            // Populate the modal
-            document.getElementById('editShippingId').value = id;
-            document.getElementById('editShippingProvider').value = provider;
-            document.getElementById('editShippingDate').value = formatDateForInput(date);
-            document.getElementById('editShippingAmount').value = amount;
-            document.getElementById('editShippingType').value = getShippingTypeValue(type);
-            document.getElementById('editShippingNotes').value = notes;
-        });
-    });
-
-    // Withdrawal Edit
-    document.querySelectorAll('#withdrawalHistoryTable .edit-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const id = this.dataset.id;
-            const row = this.closest('tr');
-            
-            // Get data from the row
-            const name = row.cells[1].textContent;
-            const date = row.cells[2].textContent;
-            const amount = row.cells[3].textContent.replace('$', '');
-            const category = row.cells[4].querySelector('.badge').textContent;
-            const notes = row.cells[5].textContent;
-            
-            // Populate the modal
-            document.getElementById('editWithdrawalId').value = id;
-            document.getElementById('editWithdrawalName').value = name;
-            document.getElementById('editWithdrawalDate').value = formatDateForInput(date);
-            document.getElementById('editWithdrawalAmount').value = amount;
-            document.getElementById('editWithdrawalCategory').value = getWithdrawalCategoryValue(category);
-            document.getElementById('editWithdrawalNotes').value = notes;
-        });
-    });
-
-    // Save Employee Payment Edit
-    document.getElementById('saveEmployeePaymentEdit').addEventListener('click', function() {
-        const id = document.getElementById('editEmployeePaymentId').value;
-        const name = document.getElementById('editEmployeePaymentName').value;
-        const date = document.getElementById('editEmployeePaymentDate').value;
-        const amount = document.getElementById('editEmployeePaymentAmount').value;
-        const type = document.getElementById('editEmployeePaymentType').value;
-        const notes = document.getElementById('editEmployeePaymentNotes').value;
-
-        // Here you would typically make an AJAX call to update the database
-        // For now, we'll just show a success message
-        Swal.fire({
-            title: 'سەرکەوتوو بوو!',
-            text: 'گۆڕانکاریەکان پاشەکەوت کران',
-            icon: 'success',
-            confirmButtonText: 'باشە'
-        }).then(() => {
-            // Close the modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('editEmployeePaymentModal'));
-            modal.hide();
-            
-            // Refresh the table or update the row
-            // You would typically reload the data here
-        });
-    });
-
-    // Save Shipping Edit
-    document.getElementById('saveShippingEdit').addEventListener('click', function() {
-        const id = document.getElementById('editShippingId').value;
-        const provider = document.getElementById('editShippingProvider').value;
-        const date = document.getElementById('editShippingDate').value;
-        const amount = document.getElementById('editShippingAmount').value;
-        const type = document.getElementById('editShippingType').value;
-        const notes = document.getElementById('editShippingNotes').value;
-
-        // Here you would typically make an AJAX call to update the database
-        Swal.fire({
-            title: 'سەرکەوتوو بوو!',
-            text: 'گۆڕانکاریەکان پاشەکەوت کران',
-            icon: 'success',
-            confirmButtonText: 'باشە'
-        }).then(() => {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('editShippingModal'));
-            modal.hide();
-        });
-    });
-
-    // Save Withdrawal Edit
-    document.getElementById('saveWithdrawalEdit').addEventListener('click', function() {
-        const id = document.getElementById('editWithdrawalId').value;
-        const name = document.getElementById('editWithdrawalName').value;
-        const date = document.getElementById('editWithdrawalDate').value;
-        const amount = document.getElementById('editWithdrawalAmount').value;
-        const category = document.getElementById('editWithdrawalCategory').value;
-        const notes = document.getElementById('editWithdrawalNotes').value;
-
-        // Here you would typically make an AJAX call to update the database
-        Swal.fire({
-            title: 'سەرکەوتوو بوو!',
-            text: 'گۆڕانکاریەکان پاشەکەوت کران',
-            icon: 'success',
-            confirmButtonText: 'باشە'
-        }).then(() => {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('editWithdrawalModal'));
-            modal.hide();
-        });
-    });
-});
-
-// Helper function to format date for input field
-function formatDateForInput(dateStr) {
-    const date = new Date(dateStr);
-    return date.toISOString().split('T')[0];
-}
-
-// Helper function to get payment type value
-function getPaymentTypeValue(type) {
-    const typeMap = {
-        'مووچە': 'salary',
-        'پاداشت': 'bonus',
-        'پێشەکی': 'advance',
-        'جۆری تر': 'other'
-    };
-    return typeMap[type] || 'other';
-}
-
-// Helper function to get shipping type value
-function getShippingTypeValue(type) {
-    const typeMap = {
-        'وشکانی': 'land',
-        'دەریایی': 'sea',
-        'ئاسمانی': 'air',
-        'جۆری تر': 'other'
-    };
-    return typeMap[type] || 'other';
-}
-
-// Helper function to get withdrawal category value
-function getWithdrawalCategoryValue(category) {
-    const categoryMap = {
-        'خەرجی ڕۆژانە': 'expense',
-        'پێداویستی': 'supplies',
-        'کرێ': 'rent',
-        'خزمەتگوزاری': 'utility',
-        'جۆری تر': 'other'
-    };
-    return categoryMap[category] || 'other';
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize date pickers with default values
-    const today = new Date();
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    
-    // Sales filters
-    const salesStartDate = document.getElementById('employeePaymentStartDate');
-    const salesEndDate = document.getElementById('employeePaymentEndDate');
-    const salesCustomerName = document.getElementById('employeePaymentName');
-    
-    // Purchases filters
-    const purchasesStartDate = document.getElementById('shippingStartDate');
-    const purchasesEndDate = document.getElementById('shippingEndDate');
-    const purchasesSupplierName = document.getElementById('shippingProvider');
-    
-    // Set default dates
-    if (salesStartDate) salesStartDate.valueAsDate = firstDayOfMonth;
-    if (salesEndDate) salesEndDate.valueAsDate = today;
-    if (purchasesStartDate) purchasesStartDate.valueAsDate = firstDayOfMonth;
-    if (purchasesEndDate) purchasesEndDate.valueAsDate = today;
-    
-    // Auto filter on change
-    const autoFilterElements = document.querySelectorAll('.auto-filter');
-    autoFilterElements.forEach(element => {
-        element.addEventListener('change', function() {
-            const tabContent = this.closest('.tab-pane');
-            if (tabContent.id === 'employee-payment-content') {
-                filterSales();
-            } else if (tabContent.id === 'shipping-content') {
-                filterPurchases();
+        $.ajax({
+            url: 'expensesHistory.php',
+            method: 'POST',
+            data: {
+                action: 'filter',
+                type: 'withdrawals',
+                start_date: startDate,
+                end_date: endDate
+            },
+            dataType: 'json',
+            beforeSend: function() {
+                // Show loading state
+                $('#withdrawalHistoryTable tbody').html('<tr><td colspan="5" class="text-center">جاوەڕێ بکە...</td></tr>');
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Update table with filtered data
+                    updateWithdrawalsTable(response.data);
+                } else {
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: response.message || 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردندا',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    title: 'هەڵە!',
+                    text: 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردندا',
+                    icon: 'error',
+                    confirmButtonText: 'باشە'
+                });
             }
         });
+    }
+    
+    // Update withdrawals table
+    function updateWithdrawalsTable(data) {
+        let html = '';
+        
+        if (data.length === 0) {
+            html = '<tr><td colspan="5" class="text-center">هیچ دەرکردنێکی پارە نەدۆزرایەوە</td></tr>';
+        } else {
+            data.forEach(function(expense, index) {
+                // Format date to Y/m/d
+                const dateObj = new Date(expense.expense_date);
+                const formattedDate = dateObj.getFullYear() + '/' + 
+                                     String(dateObj.getMonth() + 1).padStart(2, '0') + '/' + 
+                                     String(dateObj.getDate()).padStart(2, '0');
+                
+                // Format amount with thousand separators
+                const formattedAmount = new Intl.NumberFormat().format(expense.amount) + ' د.ع';
+                
+                html += `
+                    <tr data-id="${expense.id}">
+                        <td>${index + 1}</td>
+                        <td>${formattedDate}</td>
+                        <td>${formattedAmount}</td>
+                        <td>${expense.notes || ''}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${expense.id}" data-bs-toggle="modal" data-bs-target="#editWithdrawalModal">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                               
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${expense.id}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+        
+        $('#withdrawalHistoryTable tbody').html(html);
+        
+        // Update pagination info
+        updatePaginationInfo('withdrawal', data.length, 1, data.length, data.length);
+    }
+    
+    // Helper function to update pagination info
+    function updatePaginationInfo(prefix, totalRecords, currentPage, recordsPerPage, filteredRecords) {
+        const startRecord = filteredRecords > 0 ? (currentPage - 1) * recordsPerPage + 1 : 0;
+        const endRecord = Math.min(startRecord + recordsPerPage - 1, filteredRecords);
+        
+        $(`#${prefix}StartRecord`).text(startRecord);
+        $(`#${prefix}EndRecord`).text(endRecord);
+        $(`#${prefix}TotalRecords`).text(filteredRecords);
+    }
+    
+    // Event listeners for filters
+    $('.auto-filter').on('change', function() {
+        // Determine which tab is active
+        const activeTab = $('.expenses-tabs .nav-link.active').attr('id');
+        
+        if (activeTab === 'employee-payment-tab') {
+            applyEmployeePaymentFilter();
+        } else if (activeTab === 'withdrawal-tab') {
+            applyWithdrawalFilter();
+        }
     });
     
     // Reset filters
-    document.getElementById('employeePaymentResetFilter')?.addEventListener('click', function() {
-        salesStartDate.valueAsDate = firstDayOfMonth;
-        salesEndDate.valueAsDate = today;
-        salesCustomerName.value = '';
-        filterSales();
+    $('#employeePaymentResetFilter').on('click', function() {
+        $('#employeePaymentStartDate').val(formatDate(firstDay));
+        $('#employeePaymentEndDate').val(formatDate(today));
+        $('#employeePaymentName').val('').trigger('change');
+        
+        // Apply default filters
+        applyEmployeePaymentFilter();
     });
     
-    document.getElementById('shippingResetFilter')?.addEventListener('click', function() {
-        purchasesStartDate.valueAsDate = firstDayOfMonth;
-        purchasesEndDate.valueAsDate = today;
-        purchasesSupplierName.value = '';
-        filterPurchases();
+    $('#withdrawalResetFilter').on('click', function() {
+        $('#withdrawalStartDate').val(formatDate(firstDay));
+        $('#withdrawalEndDate').val(formatDate(today));
+        
+        // Apply default filters
+        applyWithdrawalFilter();
     });
     
-    // Filter functions
-    function filterSales() {
-        const filters = {
-            action: 'filter',
-            type: 'sales',
-            start_date: salesStartDate.value,
-            end_date: salesEndDate.value,
-            customer_name: salesCustomerName.value
-        };
+    // Tab change event
+    $('#expensesTabs button').on('shown.bs.tab', function (e) {
+        const targetId = $(e.target).attr('id');
         
-        fetch('receiptList.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams(filters)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                updateSalesTable(data.data);
-            } else {
-                console.error('Error:', data.message);
-                showToast('error', 'هەڵە', data.message || 'هەڵەیەک ڕوویدا');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast('error', 'هەڵە', 'هەڵەیەک ڕوویدا لە کاتی گەڕاندنەوەی زانیارییەکان');
-        });
-    }
+        // If switching to employee payments tab, refresh data
+        if (targetId === 'employee-payment-tab') {
+            applyEmployeePaymentFilter();
+        } 
+        // If switching to withdrawals tab, refresh data
+        else if (targetId === 'withdrawal-tab') {
+            applyWithdrawalFilter();
+        }
+    });
     
-    function filterPurchases() {
-        const filters = {
-            action: 'filter',
-            type: 'purchases',
-            start_date: purchasesStartDate.value,
-            end_date: purchasesEndDate.value,
-            supplier_name: purchasesSupplierName.value
-        };
+    // Refresh button click events
+    $('.refresh-btn').on('click', function() {
+        const activeTab = $('.expenses-tabs .nav-link.active').attr('id');
         
-        fetch('receiptList.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams(filters)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                updatePurchasesTable(data.data);
-            } else {
-                console.error('Error:', data.message);
-                showToast('error', 'هەڵە', data.message || 'هەڵەیەک ڕوویدا');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast('error', 'هەڵە', 'هەڵەیەک ڕوویدا لە کاتی گەڕاندنەوەی زانیارییەکان');
-        });
-    }
+        if (activeTab === 'employee-payment-tab') {
+            applyEmployeePaymentFilter();
+        } else if (activeTab === 'withdrawal-tab') {
+            applyWithdrawalFilter();
+        }
+    });
+
+    // Handle edit button click for employee payments
+    $(document).on('click', '#employeeHistoryTable .edit-btn', function() {
+        const id = $(this).data('id');
+        const row = $(this).closest('tr');
+        
+        // Get data from row
+        const employeeId = row.data('employee-id');
+        const employeeName = row.find('td:eq(1)').text().trim();
+        const paymentDate = row.find('td:eq(2)').text().trim();
+        const amount = row.find('td:eq(3)').text().trim().replace(/[^\d]/g, '');
+        const paymentType = row.find('td:eq(4) .badge').text().trim();
+        const notes = row.find('td:eq(5)').text().trim();
+        
+        // Populate modal fields
+        $('#editEmployeePaymentId').val(id);
+        $('#editEmployeePaymentName').val(employeeId);
+        
+        // Convert date from Y/m/d to Y-m-d format
+        const dateParts = paymentDate.split('/');
+        const formattedDate = `${dateParts[0]}-${dateParts[1].padStart(2, '0')}-${dateParts[2].padStart(2, '0')}`;
+        $('#editEmployeePaymentDate').val(formattedDate);
+        
+        $('#editEmployeePaymentAmount').val(amount);
+        
+        // Set payment type based on the badge text
+        let paymentTypeValue = '';
+        if (paymentType === 'مووچە') paymentTypeValue = 'salary';
+        else if (paymentType === 'پاداشت') paymentTypeValue = 'bonus';
+        else if (paymentType === 'کاتژمێری زیادە') paymentTypeValue = 'overtime';
+        $('#editEmployeePaymentType').val(paymentTypeValue);
+        
+        $('#editEmployeePaymentNotes').val(notes);
+    });
     
-    // Update table functions
-    function updateSalesTable(sales) {
-        const tbody = document.querySelector('#employeeHistoryTable tbody');
-        if (!tbody) return;
+    // Handle save button click for employee payment edit
+    $('#saveEmployeePaymentEdit').on('click', function() {
+        // Get form data
+        const id = $('#editEmployeePaymentId').val();
+        const employeeId = $('#editEmployeePaymentName').val();
+        const paymentDate = $('#editEmployeePaymentDate').val();
+        const amount = $('#editEmployeePaymentAmount').val();
+        const paymentType = $('#editEmployeePaymentType').val();
+        const notes = $('#editEmployeePaymentNotes').val();
         
-        if (sales.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="13" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td>
-                </tr>
-            `;
+        // Validate form
+        if (!employeeId || !paymentDate || !amount || !paymentType) {
+            Swal.fire({
+                title: 'هەڵە!',
+                text: 'تکایە هەموو خانە پێویستەکان پڕبکەوە',
+                icon: 'error',
+                confirmButtonText: 'باشە'
+            });
             return;
         }
         
-        tbody.innerHTML = sales.map((sale, index) => `
-            <tr data-id="${sale.id}">
-                <td>${index + 1}</td>
-                <td>${escapeHtml(sale.invoice_number)}</td>
-                <td>${escapeHtml(sale.customer_name || 'N/A')}</td>
-                <td>${formatDate(sale.date)}</td>
-                <td>${escapeHtml(sale.products_list || '')}</td>
-                <td>${formatMoney(sale.subtotal)}</td>
-                <td>${formatMoney(sale.shipping_cost)}</td>
-                <td>${formatMoney(sale.other_costs)}</td>
-                <td>${formatMoney(sale.discount)}</td>
-                <td>${formatMoney(sale.total_amount)}</td>
-                <td>
-                    <span class="badge rounded-pill ${getPaymentTypeBadgeClass(sale.payment_type)}">
-                        ${getPaymentTypeText(sale.payment_type)}
-                    </span>
-                </td>
-                <td>${escapeHtml(sale.notes || '')}</td>
-                <td>
-                    <div class="action-buttons">
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${sale.id}">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${sale.id}">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${sale.id}">
-                            <i class="fas fa-print"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
-        
-        // Update pagination info
-        updatePaginationInfo('employee', sales.length);
-    }
-    
-    function updatePurchasesTable(purchases) {
-        const tbody = document.querySelector('#shippingHistoryTable tbody');
-        if (!tbody) return;
-        
-        if (purchases.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="11" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td>
-                </tr>
-            `;
-            return;
-        }
-        
-        tbody.innerHTML = purchases.map((purchase, index) => `
-            <tr data-id="${purchase.id}">
-                <td>${index + 1}</td>
-                <td>${escapeHtml(purchase.invoice_number)}</td>
-                <td>${escapeHtml(purchase.supplier_name || 'N/A')}</td>
-                <td>${formatDate(purchase.date)}</td>
-                <td>${escapeHtml(purchase.products_list || '')}</td>
-                <td>${formatMoney(purchase.subtotal)}</td>
-                <td>${formatMoney(purchase.discount)}</td>
-                <td>${formatMoney(purchase.total_amount)}</td>
-                <td>
-                    <span class="badge rounded-pill ${getPaymentTypeBadgeClass(purchase.payment_type)}">
-                        ${getPaymentTypeText(purchase.payment_type)}
-                    </span>
-                </td>
-                <td>${escapeHtml(purchase.notes || '')}</td>
-                <td>
-                    <div class="action-buttons">
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${purchase.id}">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${purchase.id}">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${purchase.id}">
-                            <i class="fas fa-print"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
-        
-        // Update pagination info
-        updatePaginationInfo('shipping', purchases.length);
-    }
-    
-    // Utility functions
-    function escapeHtml(str) {
-        if (!str) return '';
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
-    
-    function formatDate(dateStr) {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('ku-IQ', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
+        // Send AJAX request to update payment
+        $.ajax({
+            url: 'expensesHistory.php',
+            method: 'POST',
+            data: {
+                action: 'update_employee_payment',
+                id: id,
+                employee_id: employeeId,
+                payment_date: paymentDate,
+                amount: amount,
+                payment_type: paymentType,
+                notes: notes
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire({
+                        title: 'سەرکەوتوو بوو!',
+                        text: 'زانیاری پارەدان نوێکرایەوە',
+                        icon: 'success',
+                        confirmButtonText: 'باشە'
+                    }).then(() => {
+                        // Close the modal
+                        $('#editEmployeePaymentModal').modal('hide');
+                        
+                        // Refresh the table
+                        applyEmployeePaymentFilter();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: response.message || 'هەڵەیەک ڕوویدا لە کاتی نوێکردنەوەدا',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    title: 'هەڵە!',
+                    text: 'هەڵەیەک ڕوویدا لە کاتی نوێکردنەوەدا',
+                    icon: 'error',
+                    confirmButtonText: 'باشە'
+                });
+            }
         });
-    }
-    
-    function formatMoney(amount) {
-        return new Intl.NumberFormat('ku-IQ', {
-            style: 'decimal',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        }).format(amount) + ' د.ع';
-    }
-    
-    function getPaymentTypeBadgeClass(type) {
-        switch (type) {
-            case 'cash': return 'bg-success';
-            case 'credit': return 'bg-warning';
-            default: return 'bg-info';
-        }
-    }
-    
-    function getPaymentTypeText(type) {
-        switch (type) {
-            case 'cash': return 'نەقد';
-            case 'credit': return 'قەرز';
-            default: return 'چەک';
-        }
-    }
-    
-    function updatePaginationInfo(prefix, totalRecords) {
-        const startEl = document.getElementById(`${prefix}StartRecord`);
-        const endEl = document.getElementById(`${prefix}EndRecord`);
-        const totalEl = document.getElementById(`${prefix}TotalRecords`);
+    });
+
+    // Handle delete button click for employee payments
+    $(document).on('click', '#employeeHistoryTable .delete-btn', function() {
+        const id = $(this).data('id');
         
-        if (startEl) startEl.textContent = totalRecords > 0 ? '1' : '0';
-        if (endEl) endEl.textContent = totalRecords.toString();
-        if (totalEl) totalEl.textContent = totalRecords.toString();
-    }
-    
-    // Initialize tables with default filters
-    filterSales();
-    filterPurchases();
+        Swal.fire({
+            title: 'دڵنیای لە سڕینەوەی ئەم پارەدانە؟',
+            text: 'ئەم کردارە ناتوانرێت پاشگەز بکرێتەوە',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'بەڵێ، بسڕەوە',
+            cancelButtonText: 'نەخێر'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: 'expensesHistory.php',
+                    method: 'POST',
+                    data: {
+                        action: 'delete_employee_payment',
+                        id: id
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                title: 'سەرکەوتوو بوو!',
+                                text: 'پارەدانەکە سڕایەوە',
+                                icon: 'success',
+                                confirmButtonText: 'باشە'
+                            }).then(() => {
+                                applyEmployeePaymentFilter();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: response.message || 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا',
+                                icon: 'error',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                });
+            }
+        });
+    });
+
+    // Handle delete button click for withdrawals
+    $(document).on('click', '#withdrawalHistoryTable .delete-btn', function() {
+        const id = $(this).data('id');
+        
+        Swal.fire({
+            title: 'دڵنیای لە سڕینەوەی ئەم دەرکردنە؟',
+            text: 'ئەم کردارە ناتوانرێت پاشگەز بکرێتەوە',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'بەڵێ، بسڕەوە',
+            cancelButtonText: 'نەخێر'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: 'expensesHistory.php',
+                    method: 'POST',
+                    data: {
+                        action: 'delete_withdrawal',
+                        id: id
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                title: 'سەرکەوتوو بوو!',
+                                text: 'دەرکردنەکە سڕایەوە',
+                                icon: 'success',
+                                confirmButtonText: 'باشە'
+                            }).then(() => {
+                                applyWithdrawalFilter();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: response.message || 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا',
+                                icon: 'error',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                });
+            }
+        });
+    });
 }); 
