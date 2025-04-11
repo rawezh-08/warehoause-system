@@ -231,11 +231,11 @@ $(document).ready(function() {
         };
         
         if (paymentDirection === 'to_supplier') {
-            apiEndpoint = 'api/business_pay_supplier.php';
+            apiEndpoint = '../../api/business_pay_supplier.php';
         } else if (paymentDirection === 'from_supplier') {
-            apiEndpoint = 'api/handle_supplier_payment.php';
+            apiEndpoint = '../../api/handle_supplier_payment.php';
         } else if (paymentDirection === 'adjust_balance') {
-            apiEndpoint = 'api/adjust_supplier_balance.php';
+            apiEndpoint = '../../api/adjust_supplier_balance.php';
         }
         
         console.log('Sending payment request:', {
@@ -367,7 +367,7 @@ function loadSupplierBalances() {
     $('#supplierCardsContainer').html('<div class="text-center my-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>');
     
     $.ajax({
-        url: 'api/get_suppliers_with_balance.php',
+        url: '../../api/get_suppliers_with_balance.php',
         type: 'GET',
         dataType: 'json',
         success: function(response) {

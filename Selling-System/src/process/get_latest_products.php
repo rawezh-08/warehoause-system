@@ -1,33 +1,28 @@
 <?php
+// Include database connection
 require_once '../config/database.php';
-require_once '../models/Product.php';
-
-// Add proper namespace use statement
-use App\Models\Product;
 
 header('Content-Type: application/json');
 
 try {
-    // Removed $conn parameter as it's handled in constructor
-    $productModel = new Product();
-    $latestProducts = $productModel->getLatest(5);
+    // Get latest 5 products 
+    $query = "SELECT p.id, p.name, p.code, p.image, p.created_at 
+              FROM products p 
+              ORDER BY p.created_at DESC 
+              LIMIT 5";
     
-    // Format dates and clean up data for JSON response
-    $formattedProducts = array_map(function($product) {
-        return [
-            'id' => $product['id'],
-            'name' => htmlspecialchars_decode($product['name']),
-            'code' => htmlspecialchars_decode($product['code']),
-            'image' => $product['image'] ? htmlspecialchars_decode($product['image']) : null,
-            'created_at' => $product['created_at']
-        ];
-    }, $latestProducts);
+    $stmt = $conn->prepare($query);
+    $stmt->execute();
+    $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    echo json_encode($formattedProducts);
+    // Return products as JSON
+    echo json_encode($products);
+    
 } catch (Exception $e) {
+    // Return error response
     http_response_code(500);
     echo json_encode([
-        'error' => true,
-        'message' => 'Error fetching latest products: ' . $e->getMessage()
+        'success' => false,
+        'message' => $e->getMessage()
     ]);
 } 

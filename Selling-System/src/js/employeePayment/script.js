@@ -12,7 +12,7 @@ document.getElementById('addEmployeePaymentForm').addEventListener('submit', fun
     submitBtn.disabled = true;
     
     // Send data to server
-    fetch('process/add_employee_payment.php', {
+    fetch('../../process/add_employee_payment.php', {
         method: 'POST',
         body: formData
     })
@@ -69,7 +69,7 @@ document.getElementById('addWithdrawalForm').addEventListener('submit', function
     submitBtn.disabled = true;
     
     // Send data to server
-    fetch('process/add_withdrawal.php', {
+    fetch('../../process/add_withdrawal.php', {
         method: 'POST',
         body: formData
     })

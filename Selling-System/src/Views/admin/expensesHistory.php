@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/../../config/database.php';
 
 // Create a database connection
 $db = new Database();
@@ -259,9 +259,9 @@ if (isset($_POST['action'])) {
     <!-- Global CSS -->
     <link rel="stylesheet" href="../../assets/css/custom.css">
     <!-- Page CSS -->
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/employeePayment/style.css">
+    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/employeePayment/style.css">
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <!-- Custom styles for this page -->
@@ -777,8 +777,8 @@ if (isset($_POST['action'])) {
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <!-- Custom JavaScript -->
-    <script src="js/include-components.js"></script>
-    <script src="js/expensesHistory/script.js"></script>
+    <script src="../../js/include-components.js"></script>
+    <script src="../../js/expensesHistory/script.js"></script>
 
     <!-- Employee Payment Edit Modal -->
     <div class="modal fade" id="editEmployeePaymentModal" tabindex="-1" aria-labelledby="editEmployeePaymentModalLabel" aria-hidden="true">

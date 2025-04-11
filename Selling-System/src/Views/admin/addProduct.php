@@ -1,41 +1,34 @@
 <?php
-require_once dirname(__DIR__, 3) . '/vendor/autoload.php';
-
-use Dotenv\Dotenv;
-use App\Core\Application;
-use App\Models\Product;
-use App\Models\Category;
-use App\Models\Unit;
-
-// Load environment variables
-$dotenv = Dotenv::createImmutable(dirname(__DIR__, 3));
-$dotenv->load();
-
-// Initialize the application
-$app = new Application([
-    'debug' => true,
-    'root_path' => dirname(__DIR__, 3),
-]);
-
-// Initialize models
-$categoryModel = new Category();
-$unitModel = new Unit();
-$productModel = new Product();
+require_once '../../config/database.php';
 
 // Get categories and units
-$categories = $categoryModel->getAll();
-$units = $unitModel->getAll();
+$categoriesQuery = "SELECT * FROM categories ORDER BY name";
+$unitsQuery = "SELECT * FROM units ORDER BY name";
+$latestProductsQuery = "SELECT p.*, c.name as category_name, u.name as unit_name 
+                     FROM products p 
+                     LEFT JOIN categories c ON p.category_id = c.id 
+                     LEFT JOIN units u ON p.unit_id = u.id 
+                     ORDER BY p.created_at DESC 
+                     LIMIT 5";
 
-// Get latest products (last 5)
 try {
-    $latestProducts = $productModel->getLatest(5);
-    if ($latestProducts === null) {
-        $latestProducts = [];
-    }
+    // Get categories
+    $stmt = $conn->query($categoriesQuery);
+    $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Get units
+    $stmt = $conn->query($unitsQuery);
+    $units = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Get latest products
+    $stmt = $conn->query($latestProductsQuery);
+    $latestProducts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
-    // If there's an error, set an empty array
+    // If there's an error, set empty arrays
+    $categories = [];
+    $units = [];
     $latestProducts = [];
-    error_log("Error loading latest products: " . $e->getMessage());
+    error_log("Error loading data: " . $e->getMessage());
 }
 ?>
 <!DOCTYPE html>
@@ -93,7 +86,7 @@ try {
                                         <div class="tab-item me-3 mb-2" data-tab="price-info">نرخ و بڕی کاڵا</div>
                                     </div>
                                     
-                                    <form id="addProductForm" action="../../process/add_product.php" method="POST" enctype="multipart/form-data">
+                                    <form id="addProductForm" action="#" method="POST" enctype="multipart/form-data">
                                         <!-- Tab Content: Basic Info -->
                                         <div class="tab-content" id="basic-info-content">
                                             <div class="row mb-4">
@@ -352,7 +345,7 @@ try {
         
         // نوێکردنەوەی لیستی کاڵاکان
         document.querySelector('.refresh-products').addEventListener('click', function() {
-            window.location.reload();
+            updateLatestProducts();
         });
     });
     </script>

@@ -1102,7 +1102,7 @@ foreach ($debtTransactions as $debtTransaction) {
                 const formData = new FormData($('#addPaymentForm')[0]);
                 
                 $.ajax({
-                    url: 'ajax/save_debt_transaction.php',
+                    url: '../../ajax/save_debt_transaction.php',
                     type: 'POST',
                     data: formData,
                     processData: false,
@@ -1144,7 +1144,7 @@ foreach ($debtTransactions as $debtTransaction) {
                 
                 // Get transaction details
                 $.ajax({
-                    url: 'ajax/get_debt_transaction.php',
+                    url: '../../ajax/get_debt_transaction.php',
                     type: 'GET',
                     data: { id: transactionId },
                     success: function(response) {
@@ -1234,7 +1234,7 @@ foreach ($debtTransactions as $debtTransaction) {
                 
                 // Send AJAX request
                 $.ajax({
-                    url: 'ajax/update_debt_transaction.php',
+                    url: '../../ajax/update_debt_transaction.php',
                     type: 'POST',
                     data: formData,
                     processData: false,
@@ -1556,7 +1556,7 @@ foreach ($debtTransactions as $debtTransaction) {
                 
                 // Send AJAX request
                 $.ajax({
-                    url: 'ajax/save_debt_transaction.php',
+                    url: '../../ajax/save_debt_transaction.php',
                     type: 'POST',
                     data: formData,
                     processData: false,

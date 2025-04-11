@@ -621,7 +621,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form submission handler
     if (addProductForm) {
         addProductForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
+            e.preventDefault(); // Prevent the form from submitting normally
             
             // Validate all tabs before submission
             if (!validateAllTabs()) {
@@ -651,7 +651,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     body: formData
                 });
                 
-                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+                
+                let data;
+                try {
+                    data = await response.json();
+                } catch (parseError) {
+                    console.error('Error parsing JSON response:', await response.text());
+                    throw new Error('Invalid JSON response from server');
+                }
                 
                 if (data.success) {
                     await Swal.fire({
@@ -669,9 +679,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     switchToTab('basic-info');
                     
                     // Refresh the latest products list
-                    if (document.querySelector('.refresh-products')) {
-                        document.querySelector('.refresh-products').click();
-                    }
+                    updateLatestProducts();
                     
                     // Clear any validation errors
                     clearAllValidationErrors();
@@ -731,14 +739,21 @@ async function updateLatestProducts() {
     try {
         const response = await fetch('../../process/get_latest_products.php');
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error(`Server responded with status: ${response.status}`);
         }
         
-        const data = await response.json();
+        let data;
+        try {
+            data = await response.json();
+        } catch (parseError) {
+            console.error('Error parsing JSON response:', await response.text());
+            throw new Error('Invalid JSON response from server');
+        }
+        
         const productsList = document.querySelector('.list-group');
         
         if (productsList) {
-            if (data.length > 0) {
+            if (data && data.length > 0) {
                 let html = '';
                 data.forEach(product => {
                     html += `
@@ -772,6 +787,15 @@ async function updateLatestProducts() {
         }
     } catch (error) {
         console.error('Error updating latest products:', error);
+        const productsList = document.querySelector('.list-group');
+        if (productsList) {
+            productsList.innerHTML = `
+                <li class="list-group-item text-center text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    هەڵە لە وەرگرتنی زانیاریەکان: ${error.message}
+                </li>
+            `;
+        }
     }
 }
 

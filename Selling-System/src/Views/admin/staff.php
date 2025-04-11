@@ -770,7 +770,7 @@ $suppliers = $supplierModel->getAll();
             if (phoneSearch) params.append('phone', phoneSearch);
 
             // Fetch employees from server
-            fetch(`process/get_employees.php?${params.toString()}`)
+            fetch(`../../process/get_employees.php?${params.toString()}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -850,7 +850,7 @@ $suppliers = $supplierModel->getAll();
                 button.addEventListener('click', function() {
                     const employeeId = this.dataset.id;
                     // Get employee data
-                    fetch(`process/get_employee.php?id=${employeeId}`)
+                    fetch(`../../process/get_employee.php?id=${employeeId}`)
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
@@ -914,7 +914,7 @@ $suppliers = $supplierModel->getAll();
                     });
                     
                     // Send delete request
-                    fetch('process/delete_employee.php', {
+                    fetch('../../process/delete_employee.php', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -979,7 +979,7 @@ $suppliers = $supplierModel->getAll();
             });
 
             // Send update request
-            fetch('process/update_employee.php', {
+            fetch('../../process/update_employee.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1112,7 +1112,7 @@ $suppliers = $supplierModel->getAll();
                     });
 
                     // Fetch customer data
-                    fetch(`process/get_customer.php?id=${customerId}`)
+                    fetch(`../../process/get_customer.php?id=${customerId}`)
                         .then(response => response.json())
                         .then(data => {
                             Swal.close();
@@ -1179,7 +1179,7 @@ $suppliers = $supplierModel->getAll();
                 });
 
                 // Send update request
-                fetch('process/update_customer.php', {
+                fetch('../../process/update_customer.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1726,7 +1726,7 @@ $suppliers = $supplierModel->getAll();
                     });
 
                     // Fetch supplier data
-                    fetch(`process/get_supplier.php?id=${supplierId}`)
+                    fetch(`../../process/get_supplier.php?id=${supplierId}`)
                         .then(response => response.json())
                         .then(data => {
                             Swal.close();
@@ -1787,7 +1787,7 @@ $suppliers = $supplierModel->getAll();
                 });
 
                 // Send update request
-                fetch('process/update_supplier.php', {
+                fetch('../../process/update_supplier.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1857,7 +1857,7 @@ $suppliers = $supplierModel->getAll();
                             });
                             
                             // Send delete request
-                            fetch('process/delete_customer.php', {
+                            fetch('../../process/delete_customer.php', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -1926,7 +1926,7 @@ $suppliers = $supplierModel->getAll();
                             });
                             
                             // Send delete request
-                            fetch('process/delete_supplier.php', {
+                            fetch('../../process/delete_supplier.php', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
