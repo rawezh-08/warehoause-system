@@ -1,11 +1,17 @@
 <?php
-require_once __DIR__ . '/../config/database.php';
+
+namespace App\Models;
+
+use App\Core\Database\Connection;
+use App\Core\Application;
+use PDO;
+use PDOException;
 
 class Category {
     private $conn;
     
-    public function __construct($conn) {
-        $this->conn = $conn;
+    public function __construct() {
+        $this->conn = Application::container()->get(Connection::class)->getPdo();
     }
     
     public function getAll() {

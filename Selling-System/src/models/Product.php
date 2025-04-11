@@ -1,83 +1,42 @@
 <?php
-require_once __DIR__ . '/../config/database.php';
+
+namespace App\Models;
+
+use App\Core\Database\Connection;
+use App\Core\Application;
+use PDO;
+use PDOException;
+use Exception;
 
 class Product {
-    private $conn;
+    private $db;
+    private $table = 'products';
     private $uploadDir = __DIR__ . '/../uploads/products/';
     
-    public function __construct($conn) {
-        $this->conn = $conn;
+    public function __construct() {
+        $this->db = Application::container()->get(Connection::class);
         // دروستکردنی فۆڵدەری وێنەکان ئەگەر بوونی نییە
         if (!file_exists($this->uploadDir)) {
             mkdir($this->uploadDir, 0777, true);
         }
     }
     
-    private function checkDuplicateCodeOrBarcode($code, $barcode) {
+    public function checkDuplicate($code, $barcode) {
         try {
-            $sql = "SELECT COUNT(*) as count FROM products WHERE code = :code OR barcode = :barcode";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([
-                ':code' => $code,
-                ':barcode' => $barcode
-            ]);
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $result['count'] > 0;
+            return $this->db->fetch(
+                "SELECT COUNT(*) as count FROM {$this->table} WHERE code = ? OR barcode = ?",
+                [$code, $barcode]
+            );
         } catch(PDOException $e) {
-            throw new Exception('هەڵە لە پشتڕاستکردنەوەی کۆد و بارکۆد');
+            throw new Exception("Error checking duplicate: " . $e->getMessage());
         }
     }
     
-    public function add($data) {
+    public function create($data) {
         try {
-            // پشتڕاستکردنەوەی کۆد و بارکۆدی دووبارە
-            if ($this->checkDuplicateCodeOrBarcode($data['code'], $data['barcode'])) {
-                throw new Exception('کۆد یان بارکۆد پێشتر تۆمار کراوە');
-            }
-
-            // هەڵبژاردنی وێنە
-            $imagePath = null;
-            if (isset($data['image']) && $data['image']['error'] === UPLOAD_ERR_OK) {
-                $imagePath = $this->uploadImage($data['image']);
-            }
-            
-            $sql = "INSERT INTO products (
-                name, code, barcode, category_id, unit_id, 
-                pieces_per_box, boxes_per_set, purchase_price, 
-                selling_price_single, selling_price_wholesale, 
-                min_quantity, current_quantity, notes, image
-            ) VALUES (
-                :name, :code, :barcode, :category_id, :unit_id, 
-                :pieces_per_box, :boxes_per_set, :purchase_price, 
-                :selling_price_single, :selling_price_wholesale, 
-                :min_quantity, :current_quantity, :notes, :image
-            )";
-            
-            $stmt = $this->conn->prepare($sql);
-            $result = $stmt->execute([
-                ':name' => $data['name'],
-                ':code' => $data['code'],
-                ':barcode' => $data['barcode'],
-                ':category_id' => $data['category_id'],
-                ':unit_id' => $data['unit_id'],
-                ':pieces_per_box' => $data['pieces_per_box'] ?? null,
-                ':boxes_per_set' => $data['boxes_per_set'] ?? null,
-                ':purchase_price' => $data['purchase_price'],
-                ':selling_price_single' => $data['selling_price_single'],
-                ':selling_price_wholesale' => $data['selling_price_wholesale'],
-                ':min_quantity' => $data['min_quantity'],
-                ':current_quantity' => $data['current_quantity'],
-                ':notes' => $data['notes'] ?? null,
-                ':image' => $imagePath
-            ]);
-            
-            return $result;
+            return $this->db->insert($this->table, $data);
         } catch(PDOException $e) {
-            error_log("Error in add product: " . $e->getMessage());
-            return false;
-        } catch(Exception $e) {
-            error_log("Error in add product: " . $e->getMessage());
-            throw $e;
+            throw new Exception("Error creating product: " . $e->getMessage());
         }
     }
     
@@ -109,131 +68,104 @@ class Product {
     
     public function getAll() {
         try {
-            $sql = "SELECT p.*, c.name as category_name, u.name as unit_name 
-                    FROM products p 
-                    LEFT JOIN categories c ON p.category_id = c.id 
-                    LEFT JOIN units u ON p.unit_id = u.id 
-                    ORDER BY p.created_at DESC";
-            $stmt = $this->conn->query($sql);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $this->db->fetchAll(
+                "SELECT p.*, c.name as category_name, u.name as unit_name 
+                FROM {$this->table} p 
+                LEFT JOIN categories c ON p.category_id = c.id 
+                LEFT JOIN units u ON p.unit_id = u.id 
+                ORDER BY p.created_at DESC"
+            );
         } catch(PDOException $e) {
-            echo "Error: " . $e->getMessage();
-            return [];
+            throw new Exception("Error fetching products: " . $e->getMessage());
         }
     }
     
     public function getById($id) {
         try {
-            $sql = "SELECT p.*, c.name as category_name, u.name as unit_name 
-                    FROM products p 
-                    LEFT JOIN categories c ON p.category_id = c.id 
-                    LEFT JOIN units u ON p.unit_id = u.id 
-                    WHERE p.id = :id";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([':id' => $id]);
-            return $stmt->fetch(PDO::FETCH_ASSOC);
+            return $this->db->fetch(
+                "SELECT p.*, c.name as category_name, u.name as unit_name 
+                FROM {$this->table} p 
+                LEFT JOIN categories c ON p.category_id = c.id 
+                LEFT JOIN units u ON p.unit_id = u.id 
+                WHERE p.id = ?",
+                [$id]
+            );
         } catch(PDOException $e) {
-            echo "Error: " . $e->getMessage();
-            return null;
+            throw new Exception("Error fetching product: " . $e->getMessage());
         }
     }
     
     public function update($id, $data) {
         try {
-            // هەڵبژاردنی وێنە
-            $imagePath = null;
-            if (isset($data['image']) && $data['image']['error'] === UPLOAD_ERR_OK) {
-                $imagePath = $this->uploadImage($data['image']);
-                
-                // سڕینەوەی وێنەی کۆن
-                $oldProduct = $this->getById($id);
-                if ($oldProduct && $oldProduct['image']) {
-                    $oldImagePath = __DIR__ . '/../' . $oldProduct['image'];
-                    if (file_exists($oldImagePath)) {
-                        unlink($oldImagePath);
-                    }
-                }
-            }
-            
-            $sql = "UPDATE products SET 
-                    name = :name,
-                    code = :code,
-                    barcode = :barcode,
-                    category_id = :category_id,
-                    unit_id = :unit_id,
-                    pieces_per_box = :pieces_per_box,
-                    boxes_per_set = :boxes_per_set,
-                    purchase_price = :purchase_price,
-                    selling_price_single = :selling_price_single,
-                    selling_price_wholesale = :selling_price_wholesale,
-                    current_quantity = :current_quantity,
-                    min_quantity = :min_quantity,
-            
-                    notes = :notes,
-                    image = COALESCE(:image, image)
-                    WHERE id = :id";
-            
-            $stmt = $this->conn->prepare($sql);
-            return $stmt->execute([
-                ':id' => $id,
-                ':name' => $data['name'],
-                ':code' => $data['code'],
-                ':barcode' => $data['barcode'],
-                ':category_id' => $data['category_id'],
-                ':unit_id' => $data['unit_id'],
-                ':pieces_per_box' => $data['pieces_per_box'] ?? 1,
-                ':boxes_per_set' => $data['boxes_per_set'] ?? 1,
-                ':purchase_price' => $data['purchase_price'],
-                ':selling_price_single' => $data['selling_price_single'],
-                ':selling_price_wholesale' => $data['selling_price_wholesale'],
-                ':current_quantity' => $data['current_quantity'],
-                ':min_quantity' => $data['min_quantity'],
-            
-                ':notes' => $data['notes'] ?? null,
-                ':image' => $imagePath
-            ]);
+            $this->db->update(
+                $this->table,
+                $data,
+                'id = ?',
+                [$id]
+            );
         } catch(PDOException $e) {
-            echo "Error: " . $e->getMessage();
-            return false;
+            throw new Exception("Error updating product: " . $e->getMessage());
         }
     }
     
     public function delete($id) {
         try {
-            // سڕینەوەی وێنە
-            $product = $this->getById($id);
-            if ($product && $product['image']) {
-                $imagePath = __DIR__ . '/../' . $product['image'];
-                if (file_exists($imagePath)) {
-                    unlink($imagePath);
-                }
-            }
-            
-            $sql = "DELETE FROM products WHERE id = :id";
-            $stmt = $this->conn->prepare($sql);
-            return $stmt->execute([':id' => $id]);
+            $this->db->delete(
+                $this->table,
+                'id = ?',
+                [$id]
+            );
         } catch(PDOException $e) {
-            echo "Error: " . $e->getMessage();
-            return false;
+            throw new Exception("Error deleting product: " . $e->getMessage());
         }
     }
 
     public function getLatest($limit = 5) {
         try {
-            $sql = "SELECT p.*, c.name as category_name, u.name as unit_name 
-                    FROM products p 
-                    LEFT JOIN categories c ON p.category_id = c.id 
-                    LEFT JOIN units u ON p.unit_id = u.id 
-                    ORDER BY p.created_at DESC 
-                    LIMIT :limit";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $this->db->fetchAll(
+                "SELECT p.*, c.name as category_name, u.name as unit_name 
+                FROM products p 
+                LEFT JOIN categories c ON p.category_id = c.id 
+                LEFT JOIN units u ON p.unit_id = u.id 
+                ORDER BY p.created_at DESC 
+                LIMIT ?",
+                [$limit]
+            );
         } catch(PDOException $e) {
-            // Log the error instead of displaying it
-            error_log("Error fetching latest products: " . $e->getMessage());
-            return [];
+            throw new Exception("Error fetching latest products: " . $e->getMessage());
+        }
+    }
+
+    public function search($keyword) {
+        try {
+            return $this->db->fetchAll(
+                "SELECT * FROM {$this->table} WHERE name LIKE ? OR description LIKE ?",
+                ["%{$keyword}%", "%{$keyword}%"]
+            );
+        } catch(PDOException $e) {
+            throw new Exception("Error searching products: " . $e->getMessage());
+        }
+    }
+
+    public function getByCategory($categoryId) {
+        try {
+            return $this->db->fetchAll(
+                "SELECT * FROM {$this->table} WHERE category_id = ?",
+                [$categoryId]
+            );
+        } catch(PDOException $e) {
+            throw new Exception("Error fetching products by category: " . $e->getMessage());
+        }
+    }
+
+    public function updateStock($id, $quantity) {
+        try {
+            $this->db->query(
+                "UPDATE {$this->table} SET stock = stock + ? WHERE id = ?",
+                [$quantity, $id]
+            );
+        } catch(PDOException $e) {
+            throw new Exception("Error updating stock: " . $e->getMessage());
         }
     }
 } 

@@ -1,13 +1,26 @@
 <?php
-require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/models/Category.php';
-require_once __DIR__ . '/models/Unit.php';
-require_once __DIR__ . '/models/Product.php';
+require_once dirname(__DIR__) . '/vendor/autoload.php';
+
+use Dotenv\Dotenv;
+use App\Core\Application;
+use App\Models\Product;
+use App\Models\Category;
+use App\Models\Unit;
+
+// Load environment variables
+$dotenv = Dotenv::createImmutable(dirname(__DIR__));
+$dotenv->load();
+
+// Initialize the application
+$app = new Application([
+    'debug' => true,
+    'root_path' => dirname(__DIR__),
+]);
 
 // Initialize models
-$categoryModel = new Category($conn);
-$unitModel = new Unit($conn);
-$productModel = new Product($conn);
+$categoryModel = new Category();
+$unitModel = new Unit();
+$productModel = new Product();
 
 // Get categories and units
 $categories = $categoryModel->getAll();
