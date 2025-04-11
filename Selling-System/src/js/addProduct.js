@@ -646,7 +646,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 // Submit form using fetch
-                const response = await fetch('process/add_product.php', {
+                const response = await fetch('../../process/add_product.php', {
                     method: 'POST',
                     body: formData
                 });
@@ -729,7 +729,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function updateLatestProducts() {
     try {
-        const response = await fetch('process/get_latest_products.php');
+        const response = await fetch('../../process/get_latest_products.php');
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }

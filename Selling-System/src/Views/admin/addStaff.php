@@ -15,8 +15,8 @@
     <!-- Global CSS -->
     <!-- Page CSS -->
     <!-- <link rel="stylesheet" href="css/dashboard.css"> -->
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/input.css">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/input.css">
 
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
@@ -73,7 +73,7 @@
                                         <h5 class="card-title mb-0">زانیاری کارمەند</h5>
                                     </div>
                                     <div class="card-body">
-                                        <form id="employeeForm" action="process/add_employee.php" method="POST" class="needs-validation" novalidate>
+                                        <form id="employeeForm" action="../../process/add_employee.php" method="POST" class="needs-validation" novalidate>
                                             <div class="row g-3">
                                                 <div class="col-md-4">
                                                     <label for="employeeName" class="form-label">ناوی کارمەند</label>
@@ -127,7 +127,7 @@
                                         <h5 class="card-title mb-0">زانیاری بازرگان</h5>
                                     </div>
                                     <div class="card-body">
-                                        <form id="customerForm" action="process/add_customer.php" method="POST" class="needs-validation" novalidate>
+                                        <form id="customerForm" action="../../process/add_customer.php" method="POST" class="needs-validation" novalidate>
                                             <div class="row g-3">
                                                 <div class="col-md-6">
                                                     <label for="businessMan" class="form-label">ناوی کڕیار</label>
@@ -201,7 +201,7 @@
                                         <h5 class="card-title mb-0">زانیاری دابینکەر</h5>
                                     </div>
                                     <div class="card-body">
-                                        <form id="supplierForm" action="process/add_supplier.php" method="POST" class="needs-validation" novalidate>
+                                        <form id="supplierForm" action="../../process/add_supplier.php" method="POST" class="needs-validation" novalidate>
                                             <div class="row g-3">
                                                 <div class="col-md-6">
                                                     <label for="supplierName" class="form-label">ناوی دابینکەر</label>
@@ -260,8 +260,8 @@
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <!-- Custom JavaScript -->
-    <script src="js/addStaff/script.js"></script>
-    <script src="js/include-components.js"></script>
+    <script src="../../js/addStaff/script.js"></script>
+    <script src="../../js/include-components.js"></script>
     
     <script>
         // Select the appropriate tab based on URL parameter

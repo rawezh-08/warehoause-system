@@ -148,7 +148,7 @@ switch($paymentMethod) {
                     <p class="receipt-number">ژمارەی پسووڵە: <?php echo str_pad($transaction['id'], 5, '0', STR_PAD_LEFT); ?></p>
                 </div>
                 <div class="col-4 text-end">
-                    <img src="assets/img/logo.png" alt="Logo" class="logo">
+                    <img src="../../assets/img/logo.png" alt="Logo" class="logo">
                 </div>
             </div>
             

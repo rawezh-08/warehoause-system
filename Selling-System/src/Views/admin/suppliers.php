@@ -1,6 +1,6 @@
 <?php
 // Include database connection
-require_once 'config/database.php';
+require_once '../../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
 
@@ -34,10 +34,10 @@ foreach ($suppliers as $supplier) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
    <!-- Page CSS -->
-   <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/employeePayment/style.css">
-    <link rel="stylesheet" href="css/staff.css">
+   <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/employeePayment/style.css">
+    <link rel="stylesheet" href="../../css/staff.css">
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <!-- Custom styles for this page -->
@@ -344,7 +344,7 @@ foreach ($suppliers as $supplier) {
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <!-- Initialize common elements -->
-    <script src="js/include-components.js"></script>
+    <script src="../../js/include-components.js"></script>
     
     <script>
         $(document).ready(function() {

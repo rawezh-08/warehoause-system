@@ -4,9 +4,9 @@
                     <div class="d-flex align-items-center justify-content-between small">
                         <div class="text-muted">Copyright &copy; Warehouse Management System <?= date('Y') ?></div>
                         <div>
-                            <a href="/privacy">Privacy Policy</a>
+                            <a href="/admin/privacy">Privacy Policy</a>
                             &middot;
-                            <a href="/terms">Terms &amp; Conditions</a>
+                            <a href="/admin/terms">Terms &amp; Conditions</a>
                         </div>
                     </div>
                 </div>
@@ -22,6 +22,6 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <!-- Custom scripts -->
-    <script src="/assets/js/scripts.js"></script>
+    <script src="/admin/assets/js/scripts.js"></script>
 </body>
 </html> 

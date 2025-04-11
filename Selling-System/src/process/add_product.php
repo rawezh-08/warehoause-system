@@ -2,6 +2,9 @@
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/Product.php';
 
+// Add proper namespace use statement
+use App\Models\Product;
+
 header('Content-Type: application/json');
 
 try {
@@ -25,8 +28,8 @@ try {
         throw new Exception('تکایە ئەم خانانە پڕبکەوە: ' . implode('، ', $missing_fields));
     }
 
-    // Create product model instance
-    $productModel = new Product($conn);
+    // Create product model instance - removed $conn parameter as it's handled in constructor
+    $productModel = new Product();
 
     // Clean number inputs
     $purchasePrice = isset($_POST['purchase_price']) ? str_replace(',', '', $_POST['purchase_price']) : null;
@@ -56,12 +59,33 @@ try {
         'selling_price_wholesale' => $sellingPriceWholesale,
         'min_quantity' => $minQuantity,
         'current_quantity' => $currentQuantity,
-        'notes' => $_POST['notes'] ?? null,
-        'image' => isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK ? $_FILES['image'] : null
+        'notes' => $_POST['notes'] ?? null
     ];
+    
+    // Handle image upload
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+        $image = $_FILES['image'];
+        // Upload directory is handled in the Product class
+        $uploadDir = __DIR__ . '/../uploads/products/';
+        
+        // Generate unique filename
+        $extension = pathinfo($image['name'], PATHINFO_EXTENSION);
+        $filename = uniqid() . '_' . time() . '.' . $extension;
+        $filepath = $uploadDir . $filename;
+        
+        // Create directory if it doesn't exist
+        if (!file_exists($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+        
+        // Move uploaded file
+        if (move_uploaded_file($image['tmp_name'], $filepath)) {
+            $data['image'] = 'uploads/products/' . $filename;
+        }
+    }
 
     // Add product
-    if ($productModel->add($data)) {
+    if ($productModel->create($data)) {
         echo json_encode([
             'success' => true,
             'message' => 'کاڵاکە بە سەرکەوتوویی زیاد کرا'

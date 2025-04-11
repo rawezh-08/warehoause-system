@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/models/Customer.php';
-require_once __DIR__ . '/models/Supplier.php';
+require_once '../../config/database.php';
+require_once '../../models/Customer.php';
+require_once '../../models/Supplier.php';
 
 // Create a database connection
 $db = new Database();
@@ -36,13 +36,13 @@ $suppliers = $supplierModel->getAll();
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <!-- Global CSS -->
-    <link rel="stylesheet" href="assets/css/custom.css">
+    <link rel="stylesheet" href="../../assets/css/custom.css">
     <!-- Page CSS -->
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/employeePayment/style.css">
-    <link rel="stylesheet" href="css/staff.css">
-    <link rel="stylesheet" href="css/input.css">
+    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/employeePayment/style.css">
+    <link rel="stylesheet" href="../../css/staff.css">
+    <link rel="stylesheet" href="../../css/input.css">
 </head>
 
 <body>
@@ -178,7 +178,7 @@ $suppliers = $supplierModel->getAll();
                                                                     placeholder="گەڕان لە تەیبڵدا...">
                                                                 <span
                                                                     class="input-group-text rounded-pill-end bg-light">
-                                                                    <img src="assets/icons/search-purple.svg" alt=""> </span>
+                                                                    <img src="../../assets/icons/search-purple.svg" alt=""> </span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -323,7 +323,7 @@ $suppliers = $supplierModel->getAll();
                                                                     placeholder="گەڕان لە تەیبڵدا...">
                                                                 <span
                                                                     class="input-group-text rounded-pill-end bg-light">
-                                                                    <img src="assets/icons/search-purple.svg" alt=""> </span>
+                                                                    <img src="../../assets/icons/search-purple.svg" alt=""> </span>
 
                                                                 </span>
                                                             </div>
@@ -490,7 +490,7 @@ $suppliers = $supplierModel->getAll();
                                                                     placeholder="گەڕان لە تەیبڵدا...">
                                                                 <span
                                                                     class="input-group-text rounded-pill-end bg-light">
-                                                                    <img src="assets/icons/search-purple.svg" alt=""> </span>
+                                                                    <img src="../../assets/icons/search-purple.svg" alt=""> </span>
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -745,7 +745,7 @@ $suppliers = $supplierModel->getAll();
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
-    <script src="./js/include-components.js"></script>
+    <script src="../../js/include-components.js"></script>
 
     <script>
         // Function to fetch and display employees

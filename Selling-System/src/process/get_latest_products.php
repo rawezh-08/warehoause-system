@@ -2,10 +2,14 @@
 require_once '../config/database.php';
 require_once '../models/Product.php';
 
+// Add proper namespace use statement
+use App\Models\Product;
+
 header('Content-Type: application/json');
 
 try {
-    $productModel = new Product($conn);
+    // Removed $conn parameter as it's handled in constructor
+    $productModel = new Product();
     $latestProducts = $productModel->getLatest(5);
     
     // Format dates and clean up data for JSON response

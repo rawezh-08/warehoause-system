@@ -12,11 +12,11 @@
     <!-- DataTables -->
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="/assets/css/style.css" rel="stylesheet">
+    <link href="/admin/assets/css/style.css" rel="stylesheet">
 </head>
 <body class="sb-nav-fixed">
     <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
-        <a class="navbar-brand ps-3" href="/">Warehouse System</a>
+        <a class="navbar-brand ps-3" href="/admin">Warehouse System</a>
         <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!">
             <i class="fas fa-bars"></i>
         </button>
@@ -32,9 +32,9 @@
                     <i class="fas fa-user fa-fw"></i>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="/profile">Profile</a></li>
+                    <li><a class="dropdown-item" href="/admin/profile">Profile</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                    <li><a class="dropdown-item" href="/admin/logout">Logout</a></li>
                 </ul>
             </li>
         </ul>
@@ -46,45 +46,45 @@
                 <div class="sb-sidenav-menu">
                     <div class="nav">
                         <div class="sb-sidenav-menu-heading">Core</div>
-                        <a class="nav-link" href="/dashboard">
+                        <a class="nav-link" href="/admin/dashboard">
                             <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
                             Dashboard
                         </a>
                         
                         <div class="sb-sidenav-menu-heading">Inventory</div>
-                        <a class="nav-link" href="/products">
+                        <a class="nav-link" href="/admin/products">
                             <div class="sb-nav-link-icon"><i class="fas fa-box"></i></div>
                             Products
                         </a>
-                        <a class="nav-link" href="/categories">
+                        <a class="nav-link" href="/admin/categories">
                             <div class="sb-nav-link-icon"><i class="fas fa-tags"></i></div>
                             Categories
                         </a>
-                        <a class="nav-link" href="/suppliers">
+                        <a class="nav-link" href="/admin/suppliers">
                             <div class="sb-nav-link-icon"><i class="fas fa-truck"></i></div>
                             Suppliers
                         </a>
                         
                         <div class="sb-sidenav-menu-heading">Operations</div>
-                        <a class="nav-link" href="/purchases">
+                        <a class="nav-link" href="/admin/purchases">
                             <div class="sb-nav-link-icon"><i class="fas fa-shopping-cart"></i></div>
                             Purchases
                         </a>
-                        <a class="nav-link" href="/sales">
+                        <a class="nav-link" href="/admin/sales">
                             <div class="sb-nav-link-icon"><i class="fas fa-cash-register"></i></div>
                             Sales
                         </a>
-                        <a class="nav-link" href="/returns">
+                        <a class="nav-link" href="/admin/returns">
                             <div class="sb-nav-link-icon"><i class="fas fa-undo"></i></div>
                             Returns
                         </a>
                         
                         <div class="sb-sidenav-menu-heading">Reports</div>
-                        <a class="nav-link" href="/reports/inventory">
+                        <a class="nav-link" href="/admin/reports/inventory">
                             <div class="sb-nav-link-icon"><i class="fas fa-chart-bar"></i></div>
                             Inventory Report
                         </a>
-                        <a class="nav-link" href="/reports/sales">
+                        <a class="nav-link" href="/admin/reports/sales">
                             <div class="sb-nav-link-icon"><i class="fas fa-chart-line"></i></div>
                             Sales Report
                         </a>

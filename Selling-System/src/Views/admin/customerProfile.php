@@ -1,6 +1,6 @@
 <?php
 // Include database connection
-require_once 'config/database.php';
+require_once '../../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
 
@@ -89,10 +89,10 @@ foreach ($debtTransactions as $debtTransaction) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/employeePayment/style.css">
-    <link rel="stylesheet" href="css/staff.css">
+    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/employeePayment/style.css">
+    <link rel="stylesheet" href="../../css/staff.css">
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <!-- Custom styles for this page -->
@@ -1046,7 +1046,7 @@ foreach ($debtTransactions as $debtTransaction) {
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <!-- Custom Scripts -->
-    <script src="js/include-components.js"></script>
+    <script src="../../js/include-components.js"></script>
     <!-- Page Specific Script -->
     <script>
         $(document).ready(function() {

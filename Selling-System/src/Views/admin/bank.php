@@ -11,8 +11,8 @@
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="../../css/global.css">
     <style>
         .positive-balance {
             color: #198754; /* Bootstrap success green */
@@ -358,8 +358,8 @@
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="./js/include-components.js"></script>
-    <script src="js/bank/script.js"></script>
+    <script src="../../js/include-components.js"></script>
+    <script src="../../js/bank/script.js"></script>
     <script>
         $(document).ready(function() {
             // Make the supplier cards clickable to view supplier details

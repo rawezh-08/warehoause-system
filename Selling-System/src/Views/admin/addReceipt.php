@@ -1,6 +1,6 @@
 <?php
 // Include database connection
-require_once 'config/database.php';
+require_once '../../config/database.php';
 ?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
@@ -17,10 +17,10 @@ require_once 'config/database.php';
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css">
     <!-- Custom CSS -->
     <!-- Page CSS -->
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/addReceipt.css">
-    <link rel="stylesheet" href="css/input.css">
+    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/addReceipt.css">
+    <link rel="stylesheet" href="../../css/input.css">
      
 </head>
 <body>
@@ -635,8 +635,8 @@ require_once 'config/database.php';
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="js/addReceipt.js"></script>
-    <script src="js/include-components.js"></script>
+    <script src="../../js/addReceipt.js"></script>
+    <script src="../../js/include-components.js"></script>
     
     <script>
         // Get the last receipt number

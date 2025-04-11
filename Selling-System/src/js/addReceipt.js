@@ -1364,7 +1364,7 @@ $(document).ready(function() {
                 // If error, show default image
                 const imgHtml = `
                     <div class="product-image-container">
-                        <img src="assets/img/pro-1.png" alt="کاڵا" class="product-image">
+                        <img src="../../assets/img/pro-1.png" alt="کاڵا" class="product-image">
                     </div>`;
                 row.find('.product-image-cell').html(imgHtml);
             }

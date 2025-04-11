@@ -2,15 +2,15 @@
 // You can add PHP logic here if needed
 ?>
 <!-- Sidebar -->
-<link rel="stylesheet" href="css/shared/sidebar.css">
+<link rel="stylesheet" href="../../css/shared/sidebar.css">
 <div class="sidebar">
     <div class="sidebar-wrapper">
         <!-- Sidebar Header -->
-        <div class="sidebar-header" onclick="window.location.href='index.php'">
+                    <div class="sidebar-header" onclick="window.location.href='../../views/admin/dashboard.php'">
                        
-        <a href="index.php" class="">
+        <a href="dashboard.php" class="">
                     <div class="dash-cont">
-                        <img src="assets/icons/dashboard.svg" alt="" class="dash-icon">
+                        <img src="../../assets/icons/dashboard.svg" alt="" class="dash-icon">
                     </div>
                     <span>بەشی سەرەکی</span>
                 </a>
@@ -25,7 +25,7 @@
             <li class="menu-item">
                 <a href="#productsSubmenu" class="item-link">
                 <div class="icon-cont">
-                        <img src="assets/icons/product.svg" alt="">
+                        <img src="../../assets/icons/product.svg" alt="">
                     </div>                    <span>کاڵاکان</span>
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
@@ -39,7 +39,7 @@
             <li class="menu-item">
                 <a href="#staffSubmenu" class="item-link">
                 <div class="icon-cont">
-                        <img src="assets/icons/accounts.svg" alt="">
+                        <img src="../../assets/icons/accounts.svg" alt="">
                     </div> 
                     <span>هەژمارەکان</span>
                     <i class="fas fa-chevron-down dropdown-icon"></i>
@@ -54,7 +54,7 @@
             <li class="menu-item" >
                 <a href="#salesSubmenu" class="item-link">
                 <div class="icon-cont">
-                        <img src="assets/icons/owes.svg" alt="">
+                        <img src="../../assets/icons/owes.svg" alt="">
                     </div>                    <span>پسوڵەکان</span>
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
@@ -68,7 +68,7 @@
             <li class="menu-item">
                 <a href="#expensesSubmenu" class="item-link">
                 <div class="icon-cont">
-                        <img src="assets/icons/spending.svg" alt="">
+                        <img src="../../assets/icons/spending.svg" alt="">
                     </div> 
                     <span>خەرجییەکان</span>
                     <i class="fas fa-chevron-down dropdown-icon"></i>
@@ -83,7 +83,7 @@
              <li class="menu-item">
                 <a href="#deptsSubmenu" class="item-link">
                 <div class="icon-cont">
-                        <img src="assets/icons/spending.svg" alt="">
+                        <img src="../../assets/icons/spending.svg" alt="">
                     </div> 
                     <span>قەرزەکان</span>
                     <i class="fas fa-chevron-down dropdown-icon"></i>
@@ -100,7 +100,7 @@
             <li class="menu-item">
                 <a href="reports.php" class="item-link">
                 <div class="icon-cont">
-                        <img src="assets/icons/report.svg" alt="">
+                        <img src="../../assets/icons/report.svg" alt="">
                     </div>                    <span>ڕاپۆرتەکان</span>
                 </a>
             </li>
@@ -109,7 +109,7 @@
             <li class="menu-item">
                 <a href="bank.php" class="item-link">
                 <div class="icon-cont">
-                        <img src="assets/icons/balance.svg" alt="">
+                        <img src="../../assets/icons/balance.svg" alt="">
                     </div>                    <span>باڵانسەکان</span>
                 </a>
             </li>

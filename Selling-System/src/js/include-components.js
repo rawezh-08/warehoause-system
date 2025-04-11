@@ -1,16 +1,86 @@
 // Component Loading and Dynamic Includes
 // For ASHKAN Warehouse Management System
 document.addEventListener('DOMContentLoaded', function() {
+    // Set base paths for use in components
+    window.basePath = '../../';
+    
     // Load components
-    loadComponent('navbar-container', 'components/navbar.php');
-    loadComponent('sidebar-container', 'components/sidebar.php');
+    loadComponent('navbar-container', '../../components/navbar.php');
+    loadComponent('sidebar-container', '../../components/sidebar.php');
     
     // Initialize sidebar
     initSidebar();
     
     // Initialize notifications panel (which is in index.php)
     initNotifications();
+    
+    // Fix CSS paths after components are loaded
+    setTimeout(fixComponentPaths, 200);
 });
+
+/**
+ * Fix paths in components by replacing relative paths with absolute paths
+ */
+function fixComponentPaths() {
+    // Fix sidebar CSS
+    const sidebarCSS = document.querySelector('link[href*="sidebar.css"]');
+    if (sidebarCSS) {
+        sidebarCSS.href = window.location.origin + '/warehouse-system/Selling-System/src/css/shared/sidebar.css';
+    }
+    
+    // Fix navbar CSS
+    const navbarCSS = document.querySelector('link[href*="navbar.css"]');
+    if (navbarCSS) {
+        navbarCSS.href = window.location.origin + '/warehouse-system/Selling-System/src/css/shared/navbar.css';
+    }
+    
+    // Fix image paths in navbar
+    const navbarImages = document.querySelectorAll('.navbar img[src]');
+    navbarImages.forEach(img => {
+        const src = img.getAttribute('src');
+        if (src && src.includes('assets')) {
+            if (src.includes('../assets')) {
+                img.src = window.location.origin + '/warehouse-system/Selling-System/src/assets' + src.split('assets')[1];
+            } else if (src.includes('../../assets')) {
+                img.src = window.location.origin + '/warehouse-system/Selling-System/src/assets' + src.split('assets')[1];
+            } else if (!src.includes('http')) {
+                img.src = window.location.origin + '/warehouse-system/Selling-System/src/' + src;
+            }
+        }
+    });
+    
+    // Fix image paths in sidebar
+    const sidebarImages = document.querySelectorAll('.sidebar img[src]');
+    sidebarImages.forEach(img => {
+        const src = img.getAttribute('src');
+        if (src && src.includes('assets')) {
+            if (src.includes('../assets')) {
+                img.src = window.location.origin + '/warehouse-system/Selling-System/src/assets' + src.split('assets')[1];
+            } else if (src.includes('../../assets')) {
+                img.src = window.location.origin + '/warehouse-system/Selling-System/src/assets' + src.split('assets')[1];
+            } else if (!src.includes('http')) {
+                img.src = window.location.origin + '/warehouse-system/Selling-System/src/' + src;
+            }
+        }
+    });
+    
+    // Fix product image paths
+    const productImages = document.querySelectorAll('img[src]');
+    productImages.forEach(img => {
+        const src = img.getAttribute('src');
+        // Fix product images from the upload directory
+        if (src && (src.includes('.jpg') || src.includes('.png') || src.includes('.jpeg') || src.includes('.gif'))) {
+            // If it's just a filename without a path
+            if (!src.includes('/') && !src.includes('http')) {
+                img.src = window.location.origin + '/warehouse-system/Selling-System/src/uploads/products/' + src;
+            }
+            // If it's a numeric filename like 67f2ab56e219b_1743956822.jpg without proper path
+            else if (src.match(/[0-9a-f]+_\d+\.(jpg|png|jpeg|gif)$/i) && !src.includes('/uploads/')) {
+                img.src = window.location.origin + '/warehouse-system/Selling-System/src/uploads/products/' + src.split('/').pop();
+            }
+        }
+    });
+}
 
 /**
  * Load component into container
@@ -181,7 +251,7 @@ function initSidebar() {
 function initSidebarToggle() {
     const sidebarToggle = document.createElement('button');
     sidebarToggle.className = 'sidebar-toggle';
-    sidebarToggle.innerHTML = '<img src="assets/icons/menu.svg" alt="Menu" class="menu-icon toggle-open">';
+    sidebarToggle.innerHTML = '<img src="' + window.location.origin + '/warehouse-system/Selling-System/src/assets/icons/menu.svg" alt="Menu" class="menu-icon toggle-open">';
     document.body.appendChild(sidebarToggle);
 
     sidebarToggle.addEventListener('click', function(e) {

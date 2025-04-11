@@ -1,5 +1,5 @@
 <?php
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once dirname(__DIR__, 3) . '/vendor/autoload.php';
 
 use Dotenv\Dotenv;
 use App\Core\Application;
@@ -8,13 +8,13 @@ use App\Models\Category;
 use App\Models\Unit;
 
 // Load environment variables
-$dotenv = Dotenv::createImmutable(dirname(__DIR__));
+$dotenv = Dotenv::createImmutable(dirname(__DIR__, 3));
 $dotenv->load();
 
 // Initialize the application
 $app = new Application([
     'debug' => true,
-    'root_path' => dirname(__DIR__),
+    'root_path' => dirname(__DIR__, 3),
 ]);
 
 // Initialize models
@@ -52,11 +52,11 @@ try {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
 
     <!-- Global CSS -->
-    <link rel="stylesheet" href="assets/css/custom.css">
+    <link rel="stylesheet" href="../../assets/css/custom.css">
     <!-- Page CSS -->
     <!-- <link rel="stylesheet" href="css/dashboard.css"> -->
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/addProduct.css">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/addProduct.css">
 
 
 
@@ -93,7 +93,7 @@ try {
                                         <div class="tab-item me-3 mb-2" data-tab="price-info">نرخ و بڕی کاڵا</div>
                                     </div>
                                     
-                                    <form id="addProductForm" action="process/add_product.php" method="POST" enctype="multipart/form-data">
+                                    <form id="addProductForm" action="../../process/add_product.php" method="POST" enctype="multipart/form-data">
                                         <!-- Tab Content: Basic Info -->
                                         <div class="tab-content" id="basic-info-content">
                                             <div class="row mb-4">
@@ -309,8 +309,8 @@ try {
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <!-- Custom JavaScript -->
-    <script src="js/include-components.js"></script>
-    <script src="js/addProduct.js"></script>
+    <script src="../../js/include-components.js"></script>
+    <script src="../../js/addProduct.js"></script>
     <script>
     // زیادکردنی فانکشنی فۆرماتی ژمارەکان
     function formatNumber(input) {

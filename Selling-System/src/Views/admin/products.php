@@ -1,5 +1,5 @@
 <?php
-require_once 'config/database.php';
+require_once '../../config/database.php';
 
 // Pagination settings
 $records_per_page = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 10;
@@ -91,12 +91,12 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
     <!-- Global CSS -->
-    <link rel="stylesheet" href="assets/css/custom.css">
+    <link rel="stylesheet" href="../../assets/css/custom.css">
     <!-- Page CSS -->
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/employeePayment/style.css">
-    <link rel="stylesheet" href="css/products.css">
+    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/employeePayment/style.css">
+    <link rel="stylesheet" href="../../css/products.css">
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <!-- Custom styles for this page -->
@@ -132,7 +132,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                            placeholder="ناوی کاڵا، کۆد یان بارکۆد..." 
                                            value="<?php echo htmlspecialchars($search); ?>">
                                     <button type="button" class="btn btn-primary search-btn" style="border-radius: 24px; margin-right: 8px;">
-                                        <img src="assets/icons/search.svg" alt="">
+                                        <img src="../../assets/icons/search.svg" alt="">
                                     </button>
                                 </div>
                                 <div class="search-suggestions" style="display: none;">
@@ -178,8 +178,8 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <div class="card shadow-sm" style="border-radius: 24px; border: 1px solid #9ec5ff;">
                                     <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0">لیستی کاڵاکان</h5>
-                        <a href="addProduct.php" class="btn btn-primary add-product-btn">
-                           زیادکردنی کاڵای نوێ  <img src="assets/icons/add-square.svg" alt="">
+                        <a href="../../views/admin/addProduct.php" class="btn btn-primary add-product-btn">
+                           زیادکردنی کاڵای نوێ  <img src="../../assets/icons/add-square.svg" alt="">
                         </a>
                                     </div>
                                     <div class="card-body">
@@ -452,8 +452,8 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <!-- Custom JavaScript -->
-    <script src="js/include-components.js"></script>
-    <script src="js/expensesHistory/script.js"></script>
+    <script src="../../js/include-components.js"></script>
+    <script src="../../js/expensesHistory/script.js"></script>
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
@@ -529,7 +529,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 $searchWrapper.addClass('loading');
                 
                 $.ajax({
-                    url: 'process/search_products.php',
+                    url: '../../process/search_products.php',
                     data: {
                         term: query,
                         show_initial: showInitial ? '1' : '0'
@@ -673,7 +673,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     }
                 });
 
-                fetch('process/updateProduct.php', {
+                fetch('../../process/updateProduct.php', {
                     method: 'POST',
                     body: formData
                 })
@@ -726,7 +726,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 }).then((result) => {
                     if (result.isConfirmed) {
                         // Send delete request
-                        fetch('process/deleteProduct.php', {
+                        fetch('../../process/deleteProduct.php', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -778,7 +778,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         document.addEventListener('DOMContentLoaded', function() {
             // Load navbar and sidebar
             if (document.getElementById('navbar-container')) {
-                fetch('components/navbar.php')
+                fetch('/warehouse-system/Selling-System/src/components/navbar.php')
                     .then(response => response.text())
                     .then(data => {
                         document.getElementById('navbar-container').innerHTML = data;
@@ -786,7 +786,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
             }
 
             if (document.getElementById('sidebar-container')) {
-                fetch('components/sidebar.php')
+                fetch('/warehouse-system/Selling-System/src/components/sidebar.php')
                     .then(response => response.text())
                     .then(data => {
                         document.getElementById('sidebar-container').innerHTML = data;

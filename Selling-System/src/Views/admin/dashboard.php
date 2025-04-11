@@ -1,6 +1,6 @@
 <?php
 // Database connection
-require_once 'config/database.php';
+require_once '../../config/database.php';
 
 try {
 
@@ -257,8 +257,8 @@ try {
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="../../css/global.css">
     <style>
         /* Enhanced Color Contrast Styles */
         :root {
@@ -511,25 +511,25 @@ try {
                             <div class="quick-access-section d-flex flex-wrap justify-content-center justify-content-md-start">
                                 <a href="addProduct.php" class="quick-access-item m-2">
                                     <div class="quick-access-icon blue">
-                                        <img src="assets/icons/box.svg" alt="">
+                                        <img src="../../assets/icons/box.svg" alt="">
                                     </div>
                                     <span class="quick-access-text">زیادکردنی کاڵا</span>
                                 </a>
                                 <a href="addReceipt.php" class="quick-access-item m-2">
                                     <div class="quick-access-icon purple">
-                                        <img src="assets/icons/buy.svg" alt="">
+                                        <img src="../../assets/icons/buy.svg" alt="">
                                     </div>
                                     <span class="quick-access-text"> پسوڵەی نوێ</span>
                                 </a>
                                 <a href="customers.php" class="quick-access-item m-2">
                                     <div class="quick-access-icon green">
-                                        <img src="assets/icons/sell.svg" alt="">
+                                        <img src="../../assets/icons/sell.svg" alt="">
                                     </div>
                                     <span class="quick-access-text"> قەرزارەکان</span>
                                 </a>
                                 <a href="staff.php" class="quick-access-item m-2">
                                     <div class="quick-access-icon orange">
-                                        <img src="assets/icons/users.svg" alt="">
+                                        <img src="../../assets/icons/users.svg" alt="">
                                     </div>
                                     <span class="quick-access-text">هەژمارەکان</span>
                                 </a>
@@ -545,7 +545,7 @@ try {
                                 <div class="kpi-icon-wrapper">
                                     <h3 class="kpi-title">کۆی فرۆشتن بە نەقد</h3>
                                     <div class="kpi-icon blue">
-                                    <img src="assets/icons/sell-cash.svg" alt="">   
+                                    <img src="../../assets/icons/sell-cash.svg" alt="">   
                                     </div>
                                 </div>
                                 <div class="kpi-content">
@@ -563,7 +563,7 @@ try {
                                 <div class="kpi-icon-wrapper">
                                     <h3 class="kpi-title">کۆی فرۆشتن بە قەرز</h3>
                                     <div class="kpi-icon purple">
-                                        <img src="assets/icons/sell-owe.svg" alt="">
+                                        <img src="../../assets/icons/sell-owe.svg" alt="">
                                     </div>
                                 </div>
                                 <div class="kpi-content">
@@ -581,7 +581,7 @@ try {
                                 <div class="kpi-icon-wrapper">
                                     <h3 class="kpi-title">کۆی کڕین بە نەقد</h3>
                                     <div class="kpi-icon green">
-                                    <img src="assets/icons/buy-cash.svg" alt="">                                       </div>
+                                    <img src="../../assets/icons/buy-cash.svg" alt="">                                       </div>
                                 </div>
                                 <div class="kpi-content">
                                     <div class="kpi-value"><?php echo number_format($cashPurchases, 0, '.', ','); ?> <span class="currency">د.ع</span></div>
@@ -598,7 +598,7 @@ try {
                                 <div class="kpi-icon-wrapper">
                                     <h3 class="kpi-title">کۆی کڕین بە قەرز</h3>
                                     <div class="kpi-icon purple">
-<img src="assets/icons/buy-owe.svg" alt="">                                       </div>
+<img src="../../assets/icons/buy-owe.svg" alt="">                                       </div>
                                 </div>
                                 <div class="kpi-content">
                                     <div class="kpi-value"><?php echo number_format($creditPurchases, 0, '.', ','); ?> <span class="currency">د.ع</span></div>
@@ -615,7 +615,7 @@ try {
                                 <div class="kpi-icon-wrapper">
                                     <h3 class="kpi-title">کۆی پارە لە قەرزدا</h3>
                                     <div class="kpi-icon purple">
-                                    <img src="assets/icons/money-owe.svg" alt="">   
+                                    <img src="../../assets/icons/money-owe.svg" alt="">   
                                     </div>
                                 </div>
                                 <div class="kpi-content">
@@ -634,7 +634,7 @@ try {
                                 <div class="kpi-icon-wrapper">
                                     <h3 class="kpi-title">قەرزی دابینکەر لەسەر ئێمە</h3>
                                     <div class="kpi-icon purple">
-                                    <img src="assets/icons/seller-money.svg" alt="">                                       </div>
+                                    <img src="../../assets/icons/seller-money.svg" alt="">                                       </div>
                                 </div>
                                 <div class="kpi-content">
                                     <div class="kpi-value"><?php echo number_format($creditPurchases, 0, '.', ','); ?> <span class="currency">د.ع</span></div>
@@ -717,7 +717,7 @@ try {
                                     <div class="product-header">
                                         <h5 class="">کاڵا کەم ماوەکان</h5>
                                         <a href="products.php" class="btn btn-sm btn-light">
-                                             <img src="assets/icons/product-sold-out.svg" alt="">
+                                             <img src="../../assets/icons/product-sold-out.svg" alt="">
                                         </a>
                                     </div>
                                 </div>
@@ -737,7 +737,14 @@ try {
                                                     <tr>
                                                         <td>
                                                             <div class="product-info">
-                                                                <img src="<?php echo $product['image'] ? $product['image'] : 'assets/img/pro-1.png'; ?>"
+                                                                <?php 
+                                                                $imagePath = $product['image'] 
+                                                                    ? (strpos($product['image'], '/') !== false 
+                                                                        ? $product['image'] 
+                                                                        : '/warehouse-system/Selling-System/src/uploads/products/' . $product['image'])
+                                                                    : '../../assets/img/pro-1.png';
+                                                                ?>
+                                                                <img src="<?php echo $imagePath; ?>"
                                                                     class="product-img" alt="Product">
                                                                 <span><?php echo htmlspecialchars($product['name']); ?></span>
                                                             </div>
@@ -770,7 +777,7 @@ try {
                                     <div class="product-header">
                                         <h5 class="">باشترین فرۆشراوەکان</h5>
                                         <a href="products.php" class="btn btn-sm btn-light">
-                                             <img src="assets/icons/best-sell.svg" alt="">
+                                             <img src="../../assets/icons/best-sell.svg" alt="">
                                         </a>
                                     </div>
                                 </div>
@@ -790,7 +797,14 @@ try {
                                                     <tr>
                                                         <td>
                                                             <div class="product-info">
-                                                                <img src="<?php echo $product['image'] ? $product['image'] : 'assets/img/pro-1.png'; ?>"
+                                                                <?php 
+                                                                $imagePath = $product['image'] 
+                                                                    ? (strpos($product['image'], '/') !== false 
+                                                                        ? $product['image'] 
+                                                                        : '/warehouse-system/Selling-System/src/uploads/products/' . $product['image'])
+                                                                    : '../../assets/img/pro-1.png';
+                                                                ?>
+                                                                <img src="<?php echo $imagePath; ?>"
                                                                     class="product-img" alt="Product">
                                                                 <span><?php echo htmlspecialchars($product['name']); ?></span>
                                                             </div>
@@ -877,9 +891,9 @@ try {
     <!-- Chart.js - Using a specific version for compatibility -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <!-- Component loading script -->
-    <script src="js/include-components.js"></script>
+    <script src="../../js/include-components.js"></script>
     <!-- Load dashboard.js first -->
-    <script src="js/dashboard.js"></script>
+    <script src="../../js/dashboard.js"></script>
     <!-- Pass PHP data to JavaScript -->
     <script>
         // Make sure the data is properly formatted

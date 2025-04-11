@@ -158,7 +158,7 @@ function initializeEmployeeForm() {
             });
 
             // Submit form using fetch
-            fetch('process/add_employee.php', {
+            fetch('../../process/add_employee.php', {
                 method: 'POST',
                 body: new FormData(this)
             })
@@ -567,7 +567,7 @@ function fetchEmployees() {
     });
 
     // Fetch employees from server
-    fetch('process/get_employees.php')
+    fetch('../../process/get_employees.php')
         .then(response => response.json())
         .then(data => {
             if (data.success) {
