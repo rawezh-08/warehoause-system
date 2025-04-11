@@ -135,10 +135,6 @@ function getWithdrawalsData($limit = 10, $offset = 0, $filters = []) {
         $sql .= " AND DATE(expense_date) <= :end_date";
         $params[':end_date'] = $filters['end_date'];
     }
-    if (!empty($filters['name'])) {
-        $sql .= " AND notes LIKE :name";
-        $params[':name'] = '%' . $filters['name'] . '%';
-    }
     
     $sql .= " ORDER BY expense_date DESC";
     
@@ -212,6 +208,39 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
     
     echo json_encode(['success' => false, 'message' => 'Invalid request']);
     exit;
+}
+
+// Handle delete requests
+if (isset($_POST['action'])) {
+    header('Content-Type: application/json');
+    
+    if ($_POST['action'] == 'delete_employee_payment' && isset($_POST['id'])) {
+        try {
+            $stmt = $conn->prepare("DELETE FROM employee_payments WHERE id = :id");
+            $stmt->bindParam(':id', $_POST['id']);
+            $stmt->execute();
+            
+            echo json_encode(['success' => true]);
+        } catch (PDOException $e) {
+            error_log("Database error: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا']);
+        }
+        exit;
+    }
+    
+    if ($_POST['action'] == 'delete_withdrawal' && isset($_POST['id'])) {
+        try {
+            $stmt = $conn->prepare("DELETE FROM expenses WHERE id = :id");
+            $stmt->bindParam(':id', $_POST['id']);
+            $stmt->execute();
+            
+            echo json_encode(['success' => true]);
+        } catch (PDOException $e) {
+            error_log("Database error: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا']);
+        }
+        exit;
+    }
 }
 
 // You can add PHP logic here if needed
@@ -542,11 +571,8 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
                                                                     <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="<?php echo $payment['id']; ?>" data-bs-toggle="modal" data-bs-target="#editEmployeePaymentModal">
                                                                         <i class="fas fa-edit"></i>
                                                                     </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="<?php echo $payment['id']; ?>">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="<?php echo $payment['id']; ?>">
-                                                                        <i class="fas fa-print"></i>
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="<?php echo $payment['id']; ?>">
+                                                                        <i class="fas fa-trash"></i>
                                                                     </button>
                                                                 </div>
                                                             </td>
@@ -604,25 +630,15 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
                                     <div class="card-body">
                                         <h5 class="card-title mb-4">فلتەر بەپێی بەروار و ناو</h5>
                                         <form id="withdrawalFilterForm" class="row g-3">
-                                            <div class="col-md-3">
+                                            <div class="col-md-4">
                                                 <label for="withdrawalStartDate" class="form-label">بەرواری دەستپێک</label>
                                                 <input type="date" class="form-control auto-filter" id="withdrawalStartDate">
                                             </div>
-                                            <div class="col-md-3">
+                                            <div class="col-md-4">
                                                 <label for="withdrawalEndDate" class="form-label">بەرواری کۆتایی</label>
                                                 <input type="date" class="form-control auto-filter" id="withdrawalEndDate">
                                             </div>
-                                            <div class="col-md-4">
-                                                <label for="withdrawalName" class="form-label">ناو</label>
-                                                <select class="form-select auto-filter" id="withdrawalName">
-                                                    <option value="">هەموو ناوەکان</option>
-                                                    <option value="کارزان عومەر">کارزان عومەر</option>
-                                                    <option value="ئاکۆ سەعید">ئاکۆ سەعید</option>
-                                                    <option value="هێڤیدار ئەحمەد">هێڤیدار ئەحمەد</option>
-                                                    <option value="ئارام مستەفا">ئارام مستەفا</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-2 d-flex align-items-end">
+                                            <div class="col-md-4 d-flex align-items-end">
                                                 <button type="button" class="btn btn-outline-secondary w-100" id="withdrawalResetFilter">
                                                     <i class="fas fa-redo me-2"></i> ڕیسێت
                                                 </button>

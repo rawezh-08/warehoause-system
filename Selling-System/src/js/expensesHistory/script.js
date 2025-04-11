@@ -118,11 +118,8 @@ $(document).ready(function() {
                                 <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${payment.id}" data-bs-toggle="modal" data-bs-target="#editEmployeePaymentModal">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${payment.id}">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${payment.id}">
-                                    <i class="fas fa-print"></i>
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${payment.id}">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </td>
@@ -158,7 +155,6 @@ $(document).ready(function() {
     function applyWithdrawalFilter() {
         const startDate = $('#withdrawalStartDate').val();
         const endDate = $('#withdrawalEndDate').val();
-        const name = $('#withdrawalName').val();
         
         $.ajax({
             url: 'expensesHistory.php',
@@ -167,13 +163,12 @@ $(document).ready(function() {
                 action: 'filter',
                 type: 'withdrawals',
                 start_date: startDate,
-                end_date: endDate,
-                name: name
+                end_date: endDate
             },
             dataType: 'json',
             beforeSend: function() {
                 // Show loading state
-                $('#withdrawalHistoryTable tbody').html('<tr><td colspan="7" class="text-center">جاوەڕێ بکە...</td></tr>');
+                $('#withdrawalHistoryTable tbody').html('<tr><td colspan="5" class="text-center">جاوەڕێ بکە...</td></tr>');
             },
             success: function(response) {
                 if (response.success) {
@@ -227,11 +222,9 @@ $(document).ready(function() {
                                 <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${expense.id}" data-bs-toggle="modal" data-bs-target="#editWithdrawalModal">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${expense.id}">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${expense.id}">
-                                    <i class="fas fa-print"></i>
+                               
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${expense.id}">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </td>
@@ -281,7 +274,6 @@ $(document).ready(function() {
     $('#withdrawalResetFilter').on('click', function() {
         $('#withdrawalStartDate').val(formatDate(firstDay));
         $('#withdrawalEndDate').val(formatDate(today));
-        $('#withdrawalName').val('').trigger('change');
         
         // Apply default filters
         applyWithdrawalFilter();
@@ -410,6 +402,116 @@ $(document).ready(function() {
                     text: 'هەڵەیەک ڕوویدا لە کاتی نوێکردنەوەدا',
                     icon: 'error',
                     confirmButtonText: 'باشە'
+                });
+            }
+        });
+    });
+
+    // Handle delete button click for employee payments
+    $(document).on('click', '#employeeHistoryTable .delete-btn', function() {
+        const id = $(this).data('id');
+        
+        Swal.fire({
+            title: 'دڵنیای لە سڕینەوەی ئەم پارەدانە؟',
+            text: 'ئەم کردارە ناتوانرێت پاشگەز بکرێتەوە',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'بەڵێ، بسڕەوە',
+            cancelButtonText: 'نەخێر'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: 'expensesHistory.php',
+                    method: 'POST',
+                    data: {
+                        action: 'delete_employee_payment',
+                        id: id
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                title: 'سەرکەوتوو بوو!',
+                                text: 'پارەدانەکە سڕایەوە',
+                                icon: 'success',
+                                confirmButtonText: 'باشە'
+                            }).then(() => {
+                                applyEmployeePaymentFilter();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: response.message || 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا',
+                                icon: 'error',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                });
+            }
+        });
+    });
+
+    // Handle delete button click for withdrawals
+    $(document).on('click', '#withdrawalHistoryTable .delete-btn', function() {
+        const id = $(this).data('id');
+        
+        Swal.fire({
+            title: 'دڵنیای لە سڕینەوەی ئەم دەرکردنە؟',
+            text: 'ئەم کردارە ناتوانرێت پاشگەز بکرێتەوە',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'بەڵێ، بسڕەوە',
+            cancelButtonText: 'نەخێر'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: 'expensesHistory.php',
+                    method: 'POST',
+                    data: {
+                        action: 'delete_withdrawal',
+                        id: id
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                title: 'سەرکەوتوو بوو!',
+                                text: 'دەرکردنەکە سڕایەوە',
+                                icon: 'success',
+                                confirmButtonText: 'باشە'
+                            }).then(() => {
+                                applyWithdrawalFilter();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: response.message || 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا',
+                                icon: 'error',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
                 });
             }
         });
