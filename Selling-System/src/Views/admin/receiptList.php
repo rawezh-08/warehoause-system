@@ -48,6 +48,10 @@ function getSalesData($limit = 10, $offset = 0, $filters = []) {
         $sql .= " AND c.name LIKE :customer_name";
         $params[':customer_name'] = '%' . $filters['customer_name'] . '%';
     }
+    if (!empty($filters['invoice_number'])) {
+        $sql .= " AND s.invoice_number LIKE :invoice_number";
+        $params[':invoice_number'] = '%' . $filters['invoice_number'] . '%';
+    }
     
     $sql .= " GROUP BY s.id ORDER BY s.date DESC";
     
@@ -167,12 +171,18 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
         if (!empty($_POST['customer_name'])) {
             $filters['customer_name'] = $_POST['customer_name'];
         }
+        if (!empty($_POST['invoice_number'])) {
+            $filters['invoice_number'] = $_POST['invoice_number'];
+        }
         $salesData = getSalesData(10, 0, $filters);
         echo json_encode(['success' => true, 'data' => $salesData]);
         exit;
     } else if ($_POST['type'] == 'purchases') {
         if (!empty($_POST['supplier_name'])) {
             $filters['supplier_name'] = $_POST['supplier_name'];
+        }
+        if (!empty($_POST['invoice_number'])) {
+            $filters['invoice_number'] = $_POST['invoice_number'];
         }
         $purchasesData = getPurchasesData(10, 0, $filters);
         echo json_encode(['success' => true, 'data' => $purchasesData]);
@@ -266,6 +276,45 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
             text-overflow: ellipsis;
         }
 
+        /* Products list column style */
+        .products-list-cell {
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+            position: relative;
+        }
+
+        /* Products list popup style */
+        .products-popup {
+            display: none;
+            position: absolute;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+            z-index: 1000;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            max-width: 350px;
+            min-width: 250px;
+            white-space: normal;
+            word-wrap: break-word;
+            right: 0;
+            left: auto;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        /* Product item style */
+        .product-item {
+            padding: 4px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .product-item:last-child {
+            border-bottom: none;
+        }
         
         /* Adjust pagination display for many pages */
         .pagination-numbers {
@@ -298,6 +347,9 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
             margin-left: 0.5em !important;
         }
     </style>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 </head>
 <body>
     <!-- Main Content Wrapper -->
@@ -359,18 +411,24 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
                                                 <label for="employeePaymentEndDate" class="form-label">بەرواری کۆتایی</label>
                                                 <input type="date" class="form-control auto-filter" id="employeePaymentEndDate">
                                             </div>
-                                            <div class="col-md-4">
-                                                <label for="employeePaymentName" class="form-label">ناوی کارمەند</label>
+                                            <div class="col-md-3">
+                                                <label for="employeePaymentName" class="form-label">ناوی کڕیار</label>
                                                 <select class="form-select auto-filter" id="employeePaymentName">
-                                                    <option value="">هەموو کارمەندەکان</option>
-                                                    <option value="ئاری محمد">ئاری محمد</option>
-                                                    <option value="شیلان عمر">شیلان عمر</option>
-                                                    <option value="هاوڕێ ئەحمەد">هاوڕێ ئەحمەد</option>
-                                                    <option value="سارا عەلی">سارا عەلی</option>
-                                                    <option value="کارزان محمود">کارزان محمود</option>
+                                                    <option value="">هەموو کڕیارەکان</option>
+                                                    <?php
+                                                    // Get all customers from database
+                                                    $stmt = $conn->query("SELECT DISTINCT name FROM customers ORDER BY name");
+                                                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                                                        echo '<option value="' . htmlspecialchars($row['name']) . '">' . htmlspecialchars($row['name']) . '</option>';
+                                                    }
+                                                    ?>
                                                 </select>
                                             </div>
-                                            <div class="col-md-2 d-flex align-items-end">
+                                            <div class="col-md-2">
+                                                <label for="invoiceNumber" class="form-label">ژمارەی پسووڵە</label>
+                                                <input type="text" class="form-control auto-filter" id="invoiceNumber" placeholder="ژمارەی پسووڵە">
+                                            </div>
+                                            <div class="col-md-1 d-flex align-items-end">
                                                 <button type="button" class="btn btn-outline-secondary w-100" id="employeePaymentResetFilter">
                                                     <i class="fas fa-redo me-2"></i> ڕیسێت
                                                 </button>
@@ -386,7 +444,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
                             <div class="col-12">
                                 <div class="card shadow-sm">
                                     <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                                        <h5 class="card-title mb-0">مێژووی پارەدان بە کارمەند</h5>
+                                        <h5 class="card-title mb-0">لیستی پسووڵە کڕدراوەکان</h5>
                                         <div>
                                             <button class="btn btn-sm btn-outline-primary refresh-btn me-2">
                                                 <i class="fas fa-sync-alt"></i>
@@ -451,7 +509,10 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
                                                             <td><?php echo htmlspecialchars($sale['invoice_number']); ?></td>
                                                             <td><?php echo htmlspecialchars($sale['customer_name'] ?? 'N/A'); ?></td>
                                                             <td><?php echo date('Y/m/d', strtotime($sale['date'])); ?></td>
-                                                            <td><?php echo htmlspecialchars($sale['products_list'] ?? ''); ?></td>
+                                                            <td class="products-list-cell" data-products="<?php echo htmlspecialchars($sale['products_list'] ?? ''); ?>">
+                                                                <?php echo htmlspecialchars($sale['products_list'] ?? ''); ?>
+                                                                <div class="products-popup"></div>
+                                                            </td>
                                                             <td><?php echo number_format($sale['subtotal']) . ' د.ع'; ?></td>
                                                             <td><?php echo number_format($sale['shipping_cost']) . ' د.ع'; ?></td>
                                                             <td><?php echo number_format($sale['other_costs']) . ' د.ع'; ?></td>
@@ -531,7 +592,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
                             <div class="col-12">
                                 <div class="card shadow-sm">
                                     <div class="card-body">
-                                        <h5 class="card-title mb-4">فلتەر بەپێی بەروار و ناو</h5>
+                                        <h5 class="card-title mb-3">فلتەر بەپێی بەروار و ناو</h5>
                                         <form id="shippingFilterForm" class="row g-3">
                                             <div class="col-md-3">
                                                 <label for="shippingStartDate" class="form-label">بەرواری دەستپێک</label>
@@ -541,15 +602,22 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
                                                 <label for="shippingEndDate" class="form-label">بەرواری کۆتایی</label>
                                                 <input type="date" class="form-control auto-filter" id="shippingEndDate">
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-2">
                                                 <label for="shippingProvider" class="form-label">دابینکەر</label>
                                                 <select class="form-select auto-filter" id="shippingProvider">
                                                     <option value="">هەموو دابینکەرەکان</option>
-                                                    <option value="کۆمپانیای تیوان">کۆمپانیای تیوان</option>
-                                                    <option value="کۆمپانیای ئارەزوو">کۆمپانیای ئارەزوو</option>
-                                                    <option value="کۆمپانیای هێمن">کۆمپانیای هێمن</option>
-                                                    <option value="کۆمپانیای سارا">کۆمپانیای سارا</option>
+                                                    <?php
+                                                    // Get all suppliers from database
+                                                    $stmt = $conn->query("SELECT DISTINCT name FROM suppliers ORDER BY name");
+                                                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                                                        echo '<option value="' . htmlspecialchars($row['name']) . '">' . htmlspecialchars($row['name']) . '</option>';
+                                                    }
+                                                    ?>
                                                 </select>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label for="shippingInvoiceNumber" class="form-label">ژمارەی پسووڵە</label>
+                                                <input type="text" class="form-control auto-filter" id="shippingInvoiceNumber" placeholder="ژمارەی پسووڵە">
                                             </div>
                                             <div class="col-md-2 d-flex align-items-end">
                                                 <button type="button" class="btn btn-outline-secondary w-100" id="shippingResetFilter">
@@ -630,7 +698,10 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
                                                             <td><?php echo htmlspecialchars($purchase['invoice_number']); ?></td>
                                                             <td><?php echo htmlspecialchars($purchase['supplier_name'] ?? 'N/A'); ?></td>
                                                             <td><?php echo date('Y/m/d', strtotime($purchase['date'])); ?></td>
-                                                            <td><?php echo htmlspecialchars($purchase['products_list'] ?? ''); ?></td>
+                                                            <td class="products-list-cell" data-products="<?php echo htmlspecialchars($purchase['products_list'] ?? ''); ?>">
+                                                                <?php echo htmlspecialchars($purchase['products_list'] ?? ''); ?>
+                                                                <div class="products-popup"></div>
+                                                            </td>
                                                             <td><?php echo number_format($purchase['subtotal']) . ' د.ع'; ?></td>
                                                             <td><?php echo number_format($purchase['discount']) . ' د.ع'; ?></td>
                                                             <td><?php echo number_format($purchase['total_amount']) . ' د.ع'; ?></td>
@@ -908,7 +979,708 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <!-- Custom JavaScript -->
     <script src="../../js/include-components.js"></script>
-    <script src="../../js/expensesHistory/script.js"></script>
+    <script src="../../js/receiptList/receipt.js"></script>
+    
+    <script>
+        // Function to handle products list display
+        $(document).ready(function() {
+            // Products list popup functionality
+            $('.products-list-cell').hover(
+                function() {
+                    const products = $(this).data('products');
+                    if (products && products.trim() !== '') {
+                        const $popup = $(this).find('.products-popup');
+                        // Format products list for better readability
+                        const productItems = products.split(', ').map(item => {
+                            return `<div class="product-item">${item}</div>`;
+                        }).join('');
+                        
+                        $popup.html(productItems);
+                        $popup.show();
+                    }
+                },
+                function() {
+                    $(this).find('.products-popup').hide();
+                }
+            );
+            
+            // Click event to keep popup open
+            $('.products-list-cell').click(function() {
+                const products = $(this).data('products');
+                if (products && products.trim() !== '') {
+                    // Use SweetAlert2 for better display on click
+                    Swal.fire({
+                        title: 'کاڵاکان',
+                        html: products.split(', ').map(item => {
+                            return `<div style="text-align: right; padding: 5px 0; border-bottom: 1px solid #eee;">${item}</div>`;
+                        }).join(''),
+                        confirmButtonText: 'داخستن',
+                        customClass: {
+                            container: 'rtl-swal',
+                            popup: 'rtl-swal-popup',
+                            title: 'rtl-swal-title',
+                            htmlContainer: 'rtl-swal-html',
+                            confirmButton: 'rtl-swal-confirm'
+                        }
+                    });
+                }
+            });
+
+            // Handle filter changes for sales
+            $('.auto-filter').on('change input', function() {
+                if ($('#employee-payment-content').hasClass('show')) {
+                    filterSalesData();
+                } else if ($('#shipping-content').hasClass('show')) {
+                    filterPurchasesData();
+                }
+            });
+
+            // Reset filter button for sales
+            $('#employeePaymentResetFilter').click(function() {
+                $('#employeePaymentStartDate').val('');
+                $('#employeePaymentEndDate').val('');
+                $('#employeePaymentName').val('');
+                $('#invoiceNumber').val('');
+                filterSalesData();
+            });
+
+            // Reset filter button for purchases
+            $('#shippingResetFilter').click(function() {
+                $('#shippingStartDate').val('');
+                $('#shippingEndDate').val('');
+                $('#shippingProvider').val('');
+                $('#shippingInvoiceNumber').val('');
+                filterPurchasesData();
+            });
+
+            // Records per page functionality for sales
+            let currentSalesPage = 1;
+            const salesRecordsPerPageSelect = $('#employeeRecordsPerPage');
+            let salesRecordsPerPage = parseInt(salesRecordsPerPageSelect.val());
+            
+            // Update records per page when select changes for sales
+            salesRecordsPerPageSelect.on('change', function() {
+                salesRecordsPerPage = parseInt($(this).val());
+                currentSalesPage = 1; // Reset to first page
+                updateSalesDisplayedRows();
+            });
+            
+            // Records per page functionality for purchases
+            let currentPurchasesPage = 1;
+            const purchasesRecordsPerPageSelect = $('#shippingRecordsPerPage');
+            let purchasesRecordsPerPage = parseInt(purchasesRecordsPerPageSelect.val());
+            
+            // Update records per page when select changes for purchases
+            purchasesRecordsPerPageSelect.on('change', function() {
+                purchasesRecordsPerPage = parseInt($(this).val());
+                currentPurchasesPage = 1; // Reset to first page
+                updatePurchasesDisplayedRows();
+            });
+            
+            // Records per page functionality for waste
+            let currentWastePage = 1;
+            const wasteRecordsPerPageSelect = $('#withdrawalRecordsPerPage');
+            let wasteRecordsPerPage = parseInt(wasteRecordsPerPageSelect.val());
+            
+            // Update records per page when select changes for waste
+            wasteRecordsPerPageSelect.on('change', function() {
+                wasteRecordsPerPage = parseInt($(this).val());
+                currentWastePage = 1; // Reset to first page
+                updateWasteDisplayedRows();
+            });
+            
+            // Pagination navigation for sales
+            $('#employeePrevPageBtn').on('click', function() {
+                if (!$(this).prop('disabled')) {
+                    currentSalesPage--;
+                    updateSalesDisplayedRows();
+                }
+            });
+            
+            $('#employeeNextPageBtn').on('click', function() {
+                if (!$(this).prop('disabled')) {
+                    currentSalesPage++;
+                    updateSalesDisplayedRows();
+                }
+            });
+            
+            // Pagination navigation for purchases
+            $('#shippingPrevPageBtn').on('click', function() {
+                if (!$(this).prop('disabled')) {
+                    currentPurchasesPage--;
+                    updatePurchasesDisplayedRows();
+                }
+            });
+            
+            $('#shippingNextPageBtn').on('click', function() {
+                if (!$(this).prop('disabled')) {
+                    currentPurchasesPage++;
+                    updatePurchasesDisplayedRows();
+                }
+            });
+            
+            // Pagination navigation for waste
+            $('#withdrawalPrevPageBtn').on('click', function() {
+                if (!$(this).prop('disabled')) {
+                    currentWastePage--;
+                    updateWasteDisplayedRows();
+                }
+            });
+            
+            $('#withdrawalNextPageBtn').on('click', function() {
+                if (!$(this).prop('disabled')) {
+                    currentWastePage++;
+                    updateWasteDisplayedRows();
+                }
+            });
+            
+            // Function to update sales table displayed rows
+            function updateSalesDisplayedRows() {
+                const tableRows = $('#employeeHistoryTable tbody tr');
+                const totalRecords = tableRows.length;
+                
+                if (totalRecords === 0) return;
+                
+                const startIndex = (currentSalesPage - 1) * salesRecordsPerPage;
+                const endIndex = startIndex + salesRecordsPerPage;
+                
+                // Hide all rows
+                tableRows.hide();
+                
+                // Show only rows for current page
+                tableRows.slice(startIndex, endIndex).show();
+                
+                // Update pagination info
+                $('#employeeStartRecord').text(totalRecords > 0 ? startIndex + 1 : 0);
+                $('#employeeEndRecord').text(Math.min(endIndex, totalRecords));
+                $('#employeeTotalRecords').text(totalRecords);
+                
+                // Enable/disable pagination buttons
+                $('#employeePrevPageBtn').prop('disabled', currentSalesPage === 1);
+                $('#employeeNextPageBtn').prop('disabled', endIndex >= totalRecords);
+                
+                // Update pagination numbers
+                updateSalesPaginationNumbers();
+            }
+            
+            // Function to update purchases table displayed rows
+            function updatePurchasesDisplayedRows() {
+                const tableRows = $('#shippingHistoryTable tbody tr');
+                const totalRecords = tableRows.length;
+                
+                if (totalRecords === 0) return;
+                
+                const startIndex = (currentPurchasesPage - 1) * purchasesRecordsPerPage;
+                const endIndex = startIndex + purchasesRecordsPerPage;
+                
+                // Hide all rows
+                tableRows.hide();
+                
+                // Show only rows for current page
+                tableRows.slice(startIndex, endIndex).show();
+                
+                // Update pagination info
+                $('#shippingStartRecord').text(totalRecords > 0 ? startIndex + 1 : 0);
+                $('#shippingEndRecord').text(Math.min(endIndex, totalRecords));
+                $('#shippingTotalRecords').text(totalRecords);
+                
+                // Enable/disable pagination buttons
+                $('#shippingPrevPageBtn').prop('disabled', currentPurchasesPage === 1);
+                $('#shippingNextPageBtn').prop('disabled', endIndex >= totalRecords);
+                
+                // Update pagination numbers
+                updatePurchasesPaginationNumbers();
+            }
+            
+            // Function to update waste table displayed rows
+            function updateWasteDisplayedRows() {
+                const tableRows = $('#withdrawalHistoryTable tbody tr');
+                const totalRecords = tableRows.length;
+                
+                if (totalRecords === 0) return;
+                
+                const startIndex = (currentWastePage - 1) * wasteRecordsPerPage;
+                const endIndex = startIndex + wasteRecordsPerPage;
+                
+                // Hide all rows
+                tableRows.hide();
+                
+                // Show only rows for current page
+                tableRows.slice(startIndex, endIndex).show();
+                
+                // Update pagination info
+                $('#withdrawalStartRecord').text(totalRecords > 0 ? startIndex + 1 : 0);
+                $('#withdrawalEndRecord').text(Math.min(endIndex, totalRecords));
+                $('#withdrawalTotalRecords').text(totalRecords);
+                
+                // Enable/disable pagination buttons
+                $('#withdrawalPrevPageBtn').prop('disabled', currentWastePage === 1);
+                $('#withdrawalNextPageBtn').prop('disabled', endIndex >= totalRecords);
+                
+                // Update pagination numbers
+                updateWastePaginationNumbers();
+            }
+            
+            // Function to update sales pagination number buttons
+            function updateSalesPaginationNumbers() {
+                const totalRecords = $('#employeeHistoryTable tbody tr').length;
+                const totalPages = Math.ceil(totalRecords / salesRecordsPerPage);
+                
+                let paginationHTML = '';
+                
+                // Determine range of page numbers to show
+                let startPage = Math.max(1, currentSalesPage - 2);
+                let endPage = Math.min(totalPages, startPage + 4);
+                
+                // Ensure we always show 5 page numbers if possible
+                if (endPage - startPage < 4 && totalPages > 4) {
+                    startPage = Math.max(1, endPage - 4);
+                }
+                
+                for (let i = startPage; i <= endPage; i++) {
+                    paginationHTML += `<button class="btn btn-sm ${i === currentSalesPage ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2" data-page="${i}">${i}</button>`;
+                }
+                
+                $('#employeePaginationNumbers').html(paginationHTML);
+                
+                // Add click event for pagination numbers
+                $('#employeePaginationNumbers button').on('click', function() {
+                    currentSalesPage = parseInt($(this).data('page'));
+                    updateSalesDisplayedRows();
+                });
+            }
+            
+            // Function to update purchases pagination number buttons
+            function updatePurchasesPaginationNumbers() {
+                const totalRecords = $('#shippingHistoryTable tbody tr').length;
+                const totalPages = Math.ceil(totalRecords / purchasesRecordsPerPage);
+                
+                let paginationHTML = '';
+                
+                // Determine range of page numbers to show
+                let startPage = Math.max(1, currentPurchasesPage - 2);
+                let endPage = Math.min(totalPages, startPage + 4);
+                
+                // Ensure we always show 5 page numbers if possible
+                if (endPage - startPage < 4 && totalPages > 4) {
+                    startPage = Math.max(1, endPage - 4);
+                }
+                
+                for (let i = startPage; i <= endPage; i++) {
+                    paginationHTML += `<button class="btn btn-sm ${i === currentPurchasesPage ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2" data-page="${i}">${i}</button>`;
+                }
+                
+                $('#shippingPaginationNumbers').html(paginationHTML);
+                
+                // Add click event for pagination numbers
+                $('#shippingPaginationNumbers button').on('click', function() {
+                    currentPurchasesPage = parseInt($(this).data('page'));
+                    updatePurchasesDisplayedRows();
+                });
+            }
+            
+            // Function to update waste pagination number buttons
+            function updateWastePaginationNumbers() {
+                const totalRecords = $('#withdrawalHistoryTable tbody tr').length;
+                const totalPages = Math.ceil(totalRecords / wasteRecordsPerPage);
+                
+                let paginationHTML = '';
+                
+                // Determine range of page numbers to show
+                let startPage = Math.max(1, currentWastePage - 2);
+                let endPage = Math.min(totalPages, startPage + 4);
+                
+                // Ensure we always show 5 page numbers if possible
+                if (endPage - startPage < 4 && totalPages > 4) {
+                    startPage = Math.max(1, endPage - 4);
+                }
+                
+                for (let i = startPage; i <= endPage; i++) {
+                    paginationHTML += `<button class="btn btn-sm ${i === currentWastePage ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2" data-page="${i}">${i}</button>`;
+                }
+                
+                $('#withdrawalPaginationNumbers').html(paginationHTML);
+                
+                // Add click event for pagination numbers
+                $('#withdrawalPaginationNumbers button').on('click', function() {
+                    currentWastePage = parseInt($(this).data('page'));
+                    updateWasteDisplayedRows();
+                });
+            }
+
+            // Table search functionality for sales
+            $('#employeeTableSearch').on('input', function() {
+                const searchText = $(this).val().toLowerCase();
+                $('#employeeHistoryTable tbody tr').each(function() {
+                    const rowText = $(this).text().toLowerCase();
+                    $(this).toggle(rowText.indexOf(searchText) > -1);
+                });
+                
+                // Reset pagination after search
+                currentSalesPage = 1;
+                updateSalesDisplayedRows();
+            });
+
+            // Table search functionality for purchases
+            $('#shippingTableSearch').on('input', function() {
+                const searchText = $(this).val().toLowerCase();
+                $('#shippingHistoryTable tbody tr').each(function() {
+                    const rowText = $(this).text().toLowerCase();
+                    $(this).toggle(rowText.indexOf(searchText) > -1);
+                });
+                
+                // Reset pagination after search
+                currentPurchasesPage = 1;
+                updatePurchasesDisplayedRows();
+            });
+
+            // Function to filter sales data
+            function filterSalesData() {
+                const filters = {
+                    start_date: $('#employeePaymentStartDate').val(),
+                    end_date: $('#employeePaymentEndDate').val(),
+                    customer_name: $('#employeePaymentName').val(),
+                    invoice_number: $('#invoiceNumber').val()
+                };
+
+                $.ajax({
+                    url: window.location.href,
+                    type: 'POST',
+                    data: {
+                        action: 'filter',
+                        type: 'sales',
+                        ...filters
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            updateSalesTable(response.data);
+                        }
+                    }
+                });
+            }
+
+            // Function to filter purchases data
+            function filterPurchasesData() {
+                const filters = {
+                    start_date: $('#shippingStartDate').val(),
+                    end_date: $('#shippingEndDate').val(),
+                    supplier_name: $('#shippingProvider').val(),
+                    invoice_number: $('#shippingInvoiceNumber').val()
+                };
+
+                $.ajax({
+                    url: window.location.href,
+                    type: 'POST',
+                    data: {
+                        action: 'filter',
+                        type: 'purchases',
+                        ...filters
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            updatePurchasesTable(response.data);
+                        }
+                    }
+                });
+            }
+
+            // Function to update sales table
+            function updateSalesTable(data) {
+                const tbody = $('#employeeHistoryTable tbody');
+                tbody.empty();
+
+                if (data.length === 0) {
+                    tbody.append('<tr><td colspan="13" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td></tr>');
+                    return;
+                }
+
+                data.forEach((sale, index) => {
+                    const row = `
+                        <tr data-id="${sale.id}">
+                            <td>${index + 1}</td>
+                            <td>${sale.invoice_number}</td>
+                            <td>${sale.customer_name || 'N/A'}</td>
+                            <td>${new Date(sale.date).toLocaleDateString('en-US')}</td>
+                            <td class="products-list-cell" data-products="${sale.products_list || ''}">
+                                ${sale.products_list || ''}
+                                <div class="products-popup"></div>
+                            </td>
+                            <td>${sale.subtotal.toLocaleString()} د.ع</td>
+                            <td>${sale.shipping_cost.toLocaleString()} د.ع</td>
+                            <td>${sale.other_costs.toLocaleString()} د.ع</td>
+                            <td>${sale.discount.toLocaleString()} د.ع</td>
+                            <td>${sale.total_amount.toLocaleString()} د.ع</td>
+                            <td>
+                                <span class="badge rounded-pill ${sale.payment_type === 'cash' ? 'bg-success' : (sale.payment_type === 'credit' ? 'bg-warning' : 'bg-info')}">
+                                    ${sale.payment_type === 'cash' ? 'نەقد' : (sale.payment_type === 'credit' ? 'قەرز' : 'چەک')}
+                                </span>
+                            </td>
+                            <td>${sale.notes || ''}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${sale.id}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${sale.id}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${sale.id}">
+                                        <i class="fas fa-print"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.append(row);
+                });
+                
+                // Initialize product popups for new rows
+                initializeProductListPopups();
+                
+                // Reset pagination to first page when loading new data
+                currentSalesPage = 1;
+                updateSalesDisplayedRows();
+            }
+
+            // Function to update purchases table
+            function updatePurchasesTable(data) {
+                const tbody = $('#shippingHistoryTable tbody');
+                tbody.empty();
+
+                if (data.length === 0) {
+                    tbody.append('<tr><td colspan="11" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td></tr>');
+                    return;
+                }
+
+                data.forEach((purchase, index) => {
+                    const row = `
+                        <tr data-id="${purchase.id}">
+                            <td>${index + 1}</td>
+                            <td>${purchase.invoice_number}</td>
+                            <td>${purchase.supplier_name || 'N/A'}</td>
+                            <td>${new Date(purchase.date).toLocaleDateString('en-US')}</td>
+                            <td class="products-list-cell" data-products="${purchase.products_list || ''}">
+                                ${purchase.products_list || ''}
+                                <div class="products-popup"></div>
+                            </td>
+                            <td>${purchase.subtotal.toLocaleString()} د.ع</td>
+                            <td>${purchase.discount.toLocaleString()} د.ع</td>
+                            <td>${purchase.total_amount.toLocaleString()} د.ع</td>
+                            <td>
+                                <span class="badge rounded-pill ${purchase.payment_type === 'cash' ? 'bg-success' : (purchase.payment_type === 'credit' ? 'bg-warning' : 'bg-info')}">
+                                    ${purchase.payment_type === 'cash' ? 'نەقد' : (purchase.payment_type === 'credit' ? 'قەرز' : 'چەک')}
+                                </span>
+                            </td>
+                            <td>${purchase.notes || ''}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${purchase.id}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${purchase.id}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${purchase.id}">
+                                        <i class="fas fa-print"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.append(row);
+                });
+                
+                // Initialize product popups for new rows
+                initializeProductListPopups();
+                
+                // Reset pagination to first page when loading new data
+                currentPurchasesPage = 1;
+                updatePurchasesDisplayedRows();
+            }
+
+            // Initialize date inputs with current month
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            $('#employeePaymentStartDate').val(firstDay.toISOString().split('T')[0]);
+            $('#employeePaymentEndDate').val(today.toISOString().split('T')[0]);
+            $('#shippingStartDate').val(firstDay.toISOString().split('T')[0]);
+            $('#shippingEndDate').val(today.toISOString().split('T')[0]);
+
+            // Load initial data
+            filterSalesData();
+            filterPurchasesData();
+
+            // Initialize table pagination on page load
+            updateSalesDisplayedRows();
+            updatePurchasesDisplayedRows();
+            updateWasteDisplayedRows();
+        });
+
+        // Handle edit button click for sales
+        $(document).on('click', '#employeeHistoryTable .edit-btn', function() {
+            const saleId = $(this).data('id');
+            // Get sale data from the row
+            const row = $(this).closest('tr');
+            const saleData = {
+                id: saleId,
+                invoice_number: row.find('td:eq(1)').text(),
+                customer_name: row.find('td:eq(2)').text(),
+                date: row.find('td:eq(3)').text(),
+                shipping_cost: parseFloat(row.find('td:eq(6)').text().replace(/[^0-9.-]+/g, '')),
+                other_costs: parseFloat(row.find('td:eq(7)').text().replace(/[^0-9.-]+/g, '')),
+                discount: parseFloat(row.find('td:eq(8)').text().replace(/[^0-9.-]+/g, '')),
+                payment_type: row.find('td:eq(10) .badge').text().trim(),
+                notes: row.find('td:eq(11)').text()
+            };
+
+            // Fill the form with sale data
+            $('#editSaleId').val(saleData.id);
+            $('#editSaleInvoiceNumber').val(saleData.invoice_number);
+            
+            // Set customer selection
+            const customerSelect = $('#editSaleCustomer');
+            customerSelect.find('option').each(function() {
+                if ($(this).text().trim() === saleData.customer_name.trim()) {
+                    customerSelect.val($(this).val());
+                    return false;
+                }
+            });
+            
+            // Set payment type
+            const paymentTypeMap = {
+                'نەقد': 'cash',
+                'قەرز': 'credit',
+                'چەک': 'check'
+            };
+            const paymentTypeValue = paymentTypeMap[saleData.payment_type];
+            if (paymentTypeValue) {
+                $('#editSalePaymentType').val(paymentTypeValue);
+            }
+            
+            $('#editSaleDate').val(new Date(saleData.date).toISOString().split('T')[0]);
+            $('#editSaleShippingCost').val(saleData.shipping_cost);
+            $('#editSaleOtherCosts').val(saleData.other_costs);
+            $('#editSaleDiscount').val(saleData.discount);
+            $('#editSaleNotes').val(saleData.notes);
+
+            // Show the modal
+            $('#editSaleModal').modal('show');
+        });
+
+        // Handle edit button click for purchases
+        $(document).on('click', '#shippingHistoryTable .edit-btn', function() {
+            const purchaseId = $(this).data('id');
+            // Get purchase data from the row
+            const row = $(this).closest('tr');
+            const purchaseData = {
+                id: purchaseId,
+                invoice_number: row.find('td:eq(1)').text(),
+                supplier_name: row.find('td:eq(2)').text(),
+                date: row.find('td:eq(3)').text(),
+                discount: parseFloat(row.find('td:eq(6)').text().replace(/[^0-9.-]+/g, '')),
+                payment_type: row.find('td:eq(8) .badge').text().trim(),
+                notes: row.find('td:eq(9)').text()
+            };
+
+            // Fill the form with purchase data
+            $('#editPurchaseId').val(purchaseData.id);
+            $('#editPurchaseInvoiceNumber').val(purchaseData.invoice_number);
+            $('#editPurchaseSupplier').val(purchaseData.supplier_name);
+            $('#editPurchaseDate').val(new Date(purchaseData.date).toISOString().split('T')[0]);
+            $('#editPurchaseDiscount').val(purchaseData.discount);
+            $('#editPurchasePaymentType').val(purchaseData.payment_type);
+            $('#editPurchaseNotes').val(purchaseData.notes);
+
+            // Show the modal
+            $('#editPurchaseModal').modal('show');
+        });
+
+        // Handle save sale edit
+        $('#saveSaleEdit').click(function() {
+            const saleData = {
+                id: $('#editSaleId').val(),
+                invoice_number: $('#editSaleInvoiceNumber').val(),
+                customer_id: $('#editSaleCustomer').val(),
+                date: $('#editSaleDate').val(),
+                shipping_cost: $('#editSaleShippingCost').val(),
+                other_costs: $('#editSaleOtherCosts').val(),
+                discount: $('#editSaleDiscount').val(),
+                payment_type: $('#editSalePaymentType').val(),
+                notes: $('#editSaleNotes').val()
+            };
+
+            $.ajax({
+                url: window.location.href,
+                type: 'POST',
+                data: {
+                    action: 'update_sale',
+                    ...saleData
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#editSaleModal').modal('hide');
+                        // Refresh the table without using DataTable
+                        filterSalesData();
+                        Swal.fire({
+                            title: 'سەرکەوتوو',
+                            text: 'پسووڵە بە سەرکەوتوویی نوێکرایەوە',
+                            icon: 'success',
+                            confirmButtonText: 'باشە'
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'هەڵە',
+                            text: response.message || 'هەڵەیەک ڕوویدا',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                }
+            });
+        });
+
+        // Handle save purchase edit
+        $('#savePurchaseEdit').click(function() {
+            const purchaseData = {
+                id: $('#editPurchaseId').val(),
+                invoice_number: $('#editPurchaseInvoiceNumber').val(),
+                supplier_id: $('#editPurchaseSupplier').val(),
+                date: $('#editPurchaseDate').val(),
+                discount: $('#editPurchaseDiscount').val(),
+                payment_type: $('#editPurchasePaymentType').val(),
+                notes: $('#editPurchaseNotes').val()
+            };
+
+            $.ajax({
+                url: window.location.href,
+                type: 'POST',
+                data: {
+                    action: 'update_purchase',
+                    ...purchaseData
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#editPurchaseModal').modal('hide');
+                        filterPurchasesData();
+                        Swal.fire({
+                            title: 'سەرکەوتوو',
+                            text: 'پسووڵە بە سەرکەوتوویی نوێکرایەوە',
+                            icon: 'success',
+                            confirmButtonText: 'باشە'
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'هەڵە',
+                            text: response.message || 'هەڵەیەک ڕوویدا',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                }
+            });
+        });
+    </script>
 
     <!-- Employee Payment Edit Modal -->
     <div class="modal fade" id="editEmployeePaymentModal" tabindex="-1" aria-labelledby="editEmployeePaymentModalLabel" aria-hidden="true">
@@ -1061,6 +1833,132 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
                     <button type="button" class="btn btn-primary" id="saveWithdrawalEdit">پاشەکەوتکردن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Sale Modal -->
+    <div class="modal fade" id="editSaleModal" tabindex="-1" aria-labelledby="editSaleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editSaleModalLabel">دەستکاری پسووڵەی فرۆشتن</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editSaleForm">
+                        <input type="hidden" id="editSaleId">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="editSaleInvoiceNumber" class="form-label">ژمارەی پسووڵە</label>
+                                <input type="text" class="form-control" id="editSaleInvoiceNumber" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editSaleCustomer" class="form-label">کڕیار</label>
+                                <select class="form-select" id="editSaleCustomer" required>
+                                    <option value="">کڕیار هەڵبژێرە</option>
+                                    <?php
+                                    $stmt = $conn->query("SELECT id, name FROM customers ORDER BY name");
+                                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                                        echo '<option value="' . $row['id'] . '">' . htmlspecialchars($row['name']) . '</option>';
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editSaleDate" class="form-label">بەروار</label>
+                                <input type="date" class="form-control" id="editSaleDate" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editSalePaymentType" class="form-label">جۆری پارەدان</label>
+                                <select class="form-select" id="editSalePaymentType" required>
+                                    <option value="cash">نەقد</option>
+                                    <option value="credit">قەرز</option>
+                                    <option value="check">چەک</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editSaleShippingCost" class="form-label">کرێی گواستنەوە</label>
+                                <input type="number" class="form-control" id="editSaleShippingCost" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editSaleOtherCosts" class="form-label">خەرجی تر</label>
+                                <input type="number" class="form-control" id="editSaleOtherCosts" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editSaleDiscount" class="form-label">داشکاندن</label>
+                                <input type="number" class="form-control" id="editSaleDiscount" required>
+                            </div>
+                            <div class="col-12">
+                                <label for="editSaleNotes" class="form-label">تێبینی</label>
+                                <textarea class="form-control" id="editSaleNotes" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" id="saveSaleEdit">پاشەکەوتکردن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Purchase Modal -->
+    <div class="modal fade" id="editPurchaseModal" tabindex="-1" aria-labelledby="editPurchaseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editPurchaseModalLabel">دەستکاری پسووڵەی کڕین</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editPurchaseForm">
+                        <input type="hidden" id="editPurchaseId">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="editPurchaseInvoiceNumber" class="form-label">ژمارەی پسووڵە</label>
+                                <input type="text" class="form-control" id="editPurchaseInvoiceNumber" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editPurchaseSupplier" class="form-label">دابینکەر</label>
+                                <select class="form-select" id="editPurchaseSupplier" required>
+                                    <option value="">دابینکەر هەڵبژێرە</option>
+                                    <?php
+                                    $stmt = $conn->query("SELECT id, name FROM suppliers ORDER BY name");
+                                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                                        echo '<option value="' . $row['id'] . '">' . htmlspecialchars($row['name']) . '</option>';
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editPurchaseDate" class="form-label">بەروار</label>
+                                <input type="date" class="form-control" id="editPurchaseDate" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editPurchasePaymentType" class="form-label">جۆری پارەدان</label>
+                                <select class="form-select" id="editPurchasePaymentType" required>
+                                    <option value="cash">نەقد</option>
+                                    <option value="credit">قەرز</option>
+                                    <option value="check">چەک</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editPurchaseDiscount" class="form-label">داشکاندن</label>
+                                <input type="number" class="form-control" id="editPurchaseDiscount" required>
+                            </div>
+                            <div class="col-12">
+                                <label for="editPurchaseNotes" class="form-label">تێبینی</label>
+                                <textarea class="form-control" id="editPurchaseNotes" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" id="savePurchaseEdit">پاشەکەوتکردن</button>
                 </div>
             </div>
         </div>

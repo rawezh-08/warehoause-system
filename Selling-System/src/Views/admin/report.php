@@ -62,8 +62,8 @@ $totalProductsSold = array_sum(array_column($topProducts, 'quantity'));
     
     <!-- Global CSS -->
     <link rel="stylesheet" href="../../assets/css/custom.css">
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/dashboard.css">
     
     <style>
         /* Report Page Specific Styles - Enhanced Design */
@@ -1018,7 +1018,7 @@ $totalProductsSold = array_sum(array_column($topProducts, 'quantity'));
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
     
     <!-- Custom JavaScript -->
-    <script src="js/include-components.js"></script>
+    <script src="../../js/include-components.js"></script>
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -1246,7 +1246,7 @@ $totalProductsSold = array_sum(array_column($topProducts, 'quantity'));
             const sidebarContainer = document.getElementById('sidebar-container');
             if (!sidebarContainer) return;
             
-            fetch('components/sidebar.php')
+            fetch('../../components/sidebar.php')
                 .then(response => response.text())
                 .then(data => {
                     sidebarContainer.innerHTML = data;
@@ -1280,7 +1280,7 @@ $totalProductsSold = array_sum(array_column($topProducts, 'quantity'));
             const navbarContainer = document.getElementById('navbar-container');
             if (!navbarContainer) return;
             
-            fetch('components/navbar.php')
+            fetch('../../components/navbar.php')
                 .then(response => response.text())
                 .then(data => {
                     navbarContainer.innerHTML = data;

@@ -641,20 +641,66 @@ require_once '../../config/database.php';
     <script>
         // Get the last receipt number
         <?php
+        // Get the last receipt number from the database
         $stmt = $conn->query("SELECT MAX(CAST(SUBSTRING(receipt_number, 3) AS UNSIGNED)) as max_number FROM sales");
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $nextNumber = ($result['max_number'] ?? 0) + 1;
         $receiptNumber = 'A-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
         ?>
         
-        // Set receipt number to all receipt fields
+        // Initialize the page
         document.addEventListener('DOMContentLoaded', function() {
             // Set the receipt number
             const receiptFields = document.querySelectorAll('.receipt-number');
             receiptFields.forEach(field => {
                 field.value = '<?php echo $receiptNumber; ?>';
             });
+
+            // Initialize Select2 for all select elements
+            $('.customer-select, .supplier-select, .product-select').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+
+            // Set today's date as default
+            const today = new Date().toISOString().split('T')[0];
+            $('.sale-date, .purchase-date, .adjustment-date').val(today);
+
+            // Initialize receipt type buttons
+            $('.receipt-type-btn').on('click', function() {
+                $('.receipt-type-btn').removeClass('active');
+                $(this).addClass('active');
+                const type = $(this).data('type');
+                updateReceiptType(type);
+            });
+
+            // Initialize the first tab
+            updateReceiptType('selling');
         });
+
+        // Function to update receipt type
+        function updateReceiptType(type) {
+            // Hide all tab panes
+            $('.tab-pane').removeClass('show active');
+            
+            // Show the active tab pane
+            $(`#${type}-1`).addClass('show active');
+            
+            // Update the tab button
+            $(`.receipt-tab[data-bs-target="#${type}-1"]`).addClass('active');
+            
+            // Update the receipt number based on type
+            $.ajax({
+                url: '../../api/get_next_invoice.php',
+                type: 'GET',
+                data: { type: type },
+                success: function(response) {
+                    if (response.success) {
+                        $(`#${type}-1 .receipt-number`).val(response.invoice_number);
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html> 

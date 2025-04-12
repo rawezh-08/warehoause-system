@@ -30,7 +30,7 @@ $(document).ready(function() {
         // For selling tab, fetch initial invoice number
         if (firstTab.data('receipt-type') === 'selling') {
             $.ajax({
-                url: 'api/get_next_invoice.php',
+                url: '../../api/get_next_invoice.php',
                 type: 'GET',
                 data: { type: 'selling' },
                 success: function(response) {
@@ -82,7 +82,7 @@ $(document).ready(function() {
     // Function to fetch products from database
     function loadProducts() {
         return $.ajax({
-            url: 'api/products.php',
+            url: '../../api/products.php',
             type: 'GET',
             dataType: 'json'
         });
@@ -101,7 +101,7 @@ $(document).ready(function() {
                     allowClear: true,
                     width: '100%',
                     ajax: {
-                        url: 'api/customers.php',
+                        url: '../../api/customers.php',
                         dataType: 'json',
                         delay: 250,
                         data: function(params) {
@@ -512,7 +512,7 @@ $(document).ready(function() {
             
             // Fetch next invoice number for sales
             $.ajax({
-                url: 'api/get_next_invoice.php',
+                url: '../../api/get_next_invoice.php',
                 type: 'GET',
                 data: { type: 'selling' },
                 success: function(response) {
@@ -603,7 +603,7 @@ $(document).ready(function() {
                 }
             },
             ajax: {
-                url: 'api/products.php',
+                url: '../../api/products.php',
                 dataType: 'json',
                 delay: 250,
                 data: function(params) {
@@ -715,7 +715,7 @@ $(document).ready(function() {
                 }
             },
             ajax: {
-                url: 'api/customers.php',
+                url: '../../api/customers.php',
                 dataType: 'json',
                 delay: 250,
                 data: function(params) {
@@ -777,7 +777,7 @@ $(document).ready(function() {
                 }
             },
             ajax: {
-                url: 'api/suppliers.php',
+                url: '../../api/suppliers.php',
                 dataType: 'json',
                 delay: 250,
                 data: function(params) {
@@ -858,7 +858,7 @@ $(document).ready(function() {
             
             // Submit the form data
             $.ajax({
-                url: 'api/save_receipt.php',
+                url: '../../api/save_receipt.php',
                 type: 'POST',
                 data: JSON.stringify(formData),
                 contentType: 'application/json',
@@ -961,7 +961,7 @@ $(document).ready(function() {
         // If it's a selling receipt, fetch new invoice number
         if (receiptType === 'selling') {
             $.ajax({
-                url: 'api/get_next_invoice.php',
+                url: '../../api/get_next_invoice.php',
                 type: 'GET',
                 data: { type: 'selling' },
                 success: function(response) {
@@ -1311,7 +1311,7 @@ $(document).ready(function() {
     // Function to fetch product image
     function fetchProductImage(productId, row) {
         $.ajax({
-            url: 'api/product_details.php',
+            url: '../../api/product_details.php',
             type: 'GET',
             data: { id: productId },
             dataType: 'json',

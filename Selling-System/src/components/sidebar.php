@@ -98,7 +98,7 @@
 
             <!-- Reports -->
             <li class="menu-item">
-                <a href="reports.php" class="item-link">
+                <a href="report.php" class="item-link">
                 <div class="icon-cont">
                         <img src="../../assets/icons/report.svg" alt="">
                     </div>                    <span>ڕاپۆرتەکان</span>

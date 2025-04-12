@@ -12,6 +12,14 @@ $(document).ready(function() {
         $('#employeePaymentEndDate').val(formatDate(today));
     }
     
+    if (!$('#shippingStartDate').val()) {
+        $('#shippingStartDate').val(formatDate(firstDay));
+    }
+    
+    if (!$('#shippingEndDate').val()) {
+        $('#shippingEndDate').val(formatDate(today));
+    }
+    
     if (!$('#withdrawalStartDate').val()) {
         $('#withdrawalStartDate').val(formatDate(firstDay));
     }
@@ -28,34 +36,31 @@ $(document).ready(function() {
         return `${year}-${month}-${day}`;
     }
     
-    // Apply filter for employee payments
-    function applyEmployeePaymentFilter() {
+    // Apply filter for sales data (previously employeePaymentFilter)
+    function applySalesFilter() {
         const startDate = $('#employeePaymentStartDate').val();
         const endDate = $('#employeePaymentEndDate').val();
-        const employeeName = $('#employeePaymentName').val();
+        const customerName = $('#employeePaymentName').val();
         
         $.ajax({
-            url: 'expensesHistory.php',
+            url: window.location.href,
             method: 'POST',
             data: {
                 action: 'filter',
-                type: 'employee_payments',
+                type: 'sales',
                 start_date: startDate,
                 end_date: endDate,
-                employee_name: employeeName
+                customer_name: customerName
             },
             dataType: 'json',
             beforeSend: function() {
                 // Show loading state
-                $('#employeeHistoryTable tbody').html('<tr><td colspan="7" class="text-center">جاوەڕێ بکە...</td></tr>');
+                $('#employeeHistoryTable tbody').html('<tr><td colspan="13" class="text-center">جاوەڕێ بکە...</td></tr>');
             },
             success: function(response) {
                 if (response.success) {
                     // Update table with filtered data
-                    updateEmployeePaymentsTable(response.data);
-                    
-                    // Update statistics
-                    updateEmployeePaymentsStats(response.stats);
+                    updateSalesTable(response.data);
                 } else {
                     Swal.fire({
                         title: 'هەڵە!',
@@ -76,50 +81,57 @@ $(document).ready(function() {
         });
     }
     
-    // Update employee payments table
-    function updateEmployeePaymentsTable(data) {
+    // Update sales table (previously updateEmployeePaymentsTable)
+    function updateSalesTable(data) {
         let html = '';
         
         if (data.length === 0) {
-            html = '<tr><td colspan="7" class="text-center">هیچ پارەدانێک نەدۆزرایەوە</td></tr>';
+            html = '<tr><td colspan="13" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td></tr>';
         } else {
-            data.forEach(function(payment, index) {
-                const paymentTypeClass = payment.payment_type === 'salary' ? 'bg-success' : 
-                                        (payment.payment_type === 'bonus' ? 'bg-warning' : 
-                                        (payment.payment_type === 'overtime' ? 'bg-info' : 'bg-secondary'));
+            data.forEach(function(sale, index) {
+                const paymentTypeClass = sale.payment_type === 'cash' ? 'bg-success' : 
+                                        (sale.payment_type === 'credit' ? 'bg-warning' : 'bg-info');
                 
-                const paymentTypeText = payment.payment_type === 'salary' ? 'مووچە' : 
-                                       (payment.payment_type === 'bonus' ? 'پاداشت' : 
-                                       (payment.payment_type === 'overtime' ? 'کاتژمێری زیادە' : 'جۆری تر'));
+                const paymentTypeText = sale.payment_type === 'cash' ? 'نەقد' : 
+                                       (sale.payment_type === 'credit' ? 'قەرز' : 'چەک');
                 
                 // Format date to Y/m/d
-                const dateObj = new Date(payment.payment_date);
+                const dateObj = new Date(sale.date);
                 const formattedDate = dateObj.getFullYear() + '/' + 
                                      String(dateObj.getMonth() + 1).padStart(2, '0') + '/' + 
                                      String(dateObj.getDate()).padStart(2, '0');
                 
-                // Format amount with thousand separators
-                const formattedAmount = new Intl.NumberFormat().format(payment.amount) + ' د.ع';
-                
                 html += `
-                    <tr data-id="${payment.id}" data-employee-id="${payment.employee_id}">
+                    <tr data-id="${sale.id}">
                         <td>${index + 1}</td>
-                        <td>${payment.employee_name || 'N/A'}</td>
+                        <td>${sale.invoice_number || 'N/A'}</td>
+                        <td>${sale.customer_name || 'N/A'}</td>
                         <td>${formattedDate}</td>
-                        <td>${formattedAmount}</td>
+                        <td class="products-list-cell" data-products="${sale.products_list || ''}">
+                            ${sale.products_list || ''}
+                            <div class="products-popup"></div>
+                        </td>
+                        <td>${sale.subtotal ? new Intl.NumberFormat().format(sale.subtotal) + ' د.ع' : '0 د.ع'}</td>
+                        <td>${sale.shipping_cost ? new Intl.NumberFormat().format(sale.shipping_cost) + ' د.ع' : '0 د.ع'}</td>
+                        <td>${sale.other_costs ? new Intl.NumberFormat().format(sale.other_costs) + ' د.ع' : '0 د.ع'}</td>
+                        <td>${sale.discount ? new Intl.NumberFormat().format(sale.discount) + ' د.ع' : '0 د.ع'}</td>
+                        <td>${sale.total_amount ? new Intl.NumberFormat().format(sale.total_amount) + ' د.ع' : '0 د.ع'}</td>
                         <td>
                             <span class="badge rounded-pill ${paymentTypeClass}">
                                 ${paymentTypeText}
                             </span>
                         </td>
-                        <td>${payment.notes || ''}</td>
+                        <td>${sale.notes || ''}</td>
                         <td>
                             <div class="action-buttons">
-                                <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${payment.id}" data-bs-toggle="modal" data-bs-target="#editEmployeePaymentModal">
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${sale.id}">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${payment.id}">
-                                    <i class="fas fa-trash"></i>
+                                <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${sale.id}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${sale.id}">
+                                    <i class="fas fa-print"></i>
                                 </button>
                             </div>
                         </td>
@@ -130,50 +142,38 @@ $(document).ready(function() {
         
         $('#employeeHistoryTable tbody').html(html);
         
+        // Initialize product list popups
+        initializeProductListPopups();
+        
         // Update pagination info
         updatePaginationInfo('employee', data.length, 1, data.length, data.length);
     }
     
-    // Update employee payments statistics
-    function updateEmployeePaymentsStats(stats) {
-        // Format numbers with thousand separators
-        const totalAmount = new Intl.NumberFormat().format(stats.total_amount || 0) + ' د.ع';
-        const totalSalary = new Intl.NumberFormat().format(stats.total_salary || 0) + ' د.ع';
-        const totalBonus = new Intl.NumberFormat().format(stats.total_bonus || 0) + ' د.ع';
-        const totalOvertime = new Intl.NumberFormat().format(stats.total_overtime || 0) + ' د.ع';
-        
-        // Update statistics in the UI
-        $('.card-title:contains("کۆی پارەدان")').text(totalAmount);
-        $('.card-text:contains("پارەدان")').text(stats.total_payments + ' پارەدان');
-        
-        $('.card-title:contains("مووچە")').text(totalSalary);
-        $('.card-title:contains("پاداشت")').text(totalBonus);
-        $('.card-title:contains("کاتژمێری زیادە")').text(totalOvertime);
-    }
-    
-    // Apply filter for withdrawals
-    function applyWithdrawalFilter() {
-        const startDate = $('#withdrawalStartDate').val();
-        const endDate = $('#withdrawalEndDate').val();
+    // Apply filter for purchases data (previously withdrawalFilter)
+    function applyPurchasesFilter() {
+        const startDate = $('#shippingStartDate').val();
+        const endDate = $('#shippingEndDate').val();
+        const supplierName = $('#shippingProvider').val();
         
         $.ajax({
-            url: 'expensesHistory.php',
+            url: window.location.href,
             method: 'POST',
             data: {
                 action: 'filter',
-                type: 'withdrawals',
+                type: 'purchases',
                 start_date: startDate,
-                end_date: endDate
+                end_date: endDate,
+                supplier_name: supplierName
             },
             dataType: 'json',
             beforeSend: function() {
                 // Show loading state
-                $('#withdrawalHistoryTable tbody').html('<tr><td colspan="5" class="text-center">جاوەڕێ بکە...</td></tr>');
+                $('#shippingHistoryTable tbody').html('<tr><td colspan="11" class="text-center">جاوەڕێ بکە...</td></tr>');
             },
             success: function(response) {
                 if (response.success) {
                     // Update table with filtered data
-                    updateWithdrawalsTable(response.data);
+                    updatePurchasesTable(response.data);
                 } else {
                     Swal.fire({
                         title: 'هەڵە!',
@@ -194,37 +194,55 @@ $(document).ready(function() {
         });
     }
     
-    // Update withdrawals table
-    function updateWithdrawalsTable(data) {
+    // Update purchases table 
+    function updatePurchasesTable(data) {
         let html = '';
         
         if (data.length === 0) {
-            html = '<tr><td colspan="5" class="text-center">هیچ دەرکردنێکی پارە نەدۆزرایەوە</td></tr>';
+            html = '<tr><td colspan="11" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td></tr>';
         } else {
-            data.forEach(function(expense, index) {
+            data.forEach(function(purchase, index) {
+                const paymentTypeClass = purchase.payment_type === 'cash' ? 'bg-success' : 
+                                        (purchase.payment_type === 'credit' ? 'bg-warning' : 'bg-info');
+                
+                const paymentTypeText = purchase.payment_type === 'cash' ? 'نەقد' : 
+                                       (purchase.payment_type === 'credit' ? 'قەرز' : 'چەک');
+                
                 // Format date to Y/m/d
-                const dateObj = new Date(expense.expense_date);
+                const dateObj = new Date(purchase.date);
                 const formattedDate = dateObj.getFullYear() + '/' + 
                                      String(dateObj.getMonth() + 1).padStart(2, '0') + '/' + 
                                      String(dateObj.getDate()).padStart(2, '0');
                 
-                // Format amount with thousand separators
-                const formattedAmount = new Intl.NumberFormat().format(expense.amount) + ' د.ع';
-                
                 html += `
-                    <tr data-id="${expense.id}">
+                    <tr data-id="${purchase.id}">
                         <td>${index + 1}</td>
+                        <td>${purchase.invoice_number || 'N/A'}</td>
+                        <td>${purchase.supplier_name || 'N/A'}</td>
                         <td>${formattedDate}</td>
-                        <td>${formattedAmount}</td>
-                        <td>${expense.notes || ''}</td>
+                        <td class="products-list-cell" data-products="${purchase.products_list || ''}">
+                            ${purchase.products_list || ''}
+                            <div class="products-popup"></div>
+                        </td>
+                        <td>${purchase.subtotal ? new Intl.NumberFormat().format(purchase.subtotal) + ' د.ع' : '0 د.ع'}</td>
+                        <td>${purchase.discount ? new Intl.NumberFormat().format(purchase.discount) + ' د.ع' : '0 د.ع'}</td>
+                        <td>${purchase.total_amount ? new Intl.NumberFormat().format(purchase.total_amount) + ' د.ع' : '0 د.ع'}</td>
+                        <td>
+                            <span class="badge rounded-pill ${paymentTypeClass}">
+                                ${paymentTypeText}
+                            </span>
+                        </td>
+                        <td>${purchase.notes || ''}</td>
                         <td>
                             <div class="action-buttons">
-                                <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${expense.id}" data-bs-toggle="modal" data-bs-target="#editWithdrawalModal">
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${purchase.id}">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                               
-                                <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${expense.id}">
-                                    <i class="fas fa-trash"></i>
+                                <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${purchase.id}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${purchase.id}">
+                                    <i class="fas fa-print"></i>
                                 </button>
                             </div>
                         </td>
@@ -233,10 +251,58 @@ $(document).ready(function() {
             });
         }
         
-        $('#withdrawalHistoryTable tbody').html(html);
+        $('#shippingHistoryTable tbody').html(html);
+        
+        // Initialize product list popups
+        initializeProductListPopups();
         
         // Update pagination info
-        updatePaginationInfo('withdrawal', data.length, 1, data.length, data.length);
+        updatePaginationInfo('shipping', data.length, 1, data.length, data.length);
+    }
+    
+    // Initialize product list popups
+    function initializeProductListPopups() {
+        // Products list popup functionality
+        $('.products-list-cell').hover(
+            function() {
+                const products = $(this).data('products');
+                if (products && products.trim() !== '') {
+                    const $popup = $(this).find('.products-popup');
+                    // Format products list for better readability
+                    const productItems = products.split(', ').map(item => {
+                        return `<div class="product-item">${item}</div>`;
+                    }).join('');
+                    
+                    $popup.html(productItems);
+                    $popup.show();
+                }
+            },
+            function() {
+                $(this).find('.products-popup').hide();
+            }
+        );
+        
+        // Click event to keep popup open
+        $('.products-list-cell').click(function() {
+            const products = $(this).data('products');
+            if (products && products.trim() !== '') {
+                // Use SweetAlert2 for better display on click
+                Swal.fire({
+                    title: 'کاڵاکان',
+                    html: products.split(', ').map(item => {
+                        return `<div style="text-align: right; padding: 5px 0; border-bottom: 1px solid #eee;">${item}</div>`;
+                    }).join(''),
+                    confirmButtonText: 'داخستن',
+                    customClass: {
+                        container: 'rtl-swal',
+                        popup: 'rtl-swal-popup',
+                        title: 'rtl-swal-title',
+                        htmlContainer: 'rtl-swal-html',
+                        confirmButton: 'rtl-swal-confirm'
+                    }
+                });
+            }
+        });
     }
     
     // Helper function to update pagination info
@@ -255,9 +321,11 @@ $(document).ready(function() {
         const activeTab = $('.expenses-tabs .nav-link.active').attr('id');
         
         if (activeTab === 'employee-payment-tab') {
-            applyEmployeePaymentFilter();
+            applySalesFilter();
+        } else if (activeTab === 'shipping-tab') {
+            applyPurchasesFilter();
         } else if (activeTab === 'withdrawal-tab') {
-            applyWithdrawalFilter();
+            // Handle for waste items if needed
         }
     });
     
@@ -268,28 +336,40 @@ $(document).ready(function() {
         $('#employeePaymentName').val('').trigger('change');
         
         // Apply default filters
-        applyEmployeePaymentFilter();
+        applySalesFilter();
+    });
+    
+    $('#shippingResetFilter').on('click', function() {
+        $('#shippingStartDate').val(formatDate(firstDay));
+        $('#shippingEndDate').val(formatDate(today));
+        $('#shippingProvider').val('').trigger('change');
+        
+        // Apply default filters
+        applyPurchasesFilter();
     });
     
     $('#withdrawalResetFilter').on('click', function() {
         $('#withdrawalStartDate').val(formatDate(firstDay));
         $('#withdrawalEndDate').val(formatDate(today));
         
-        // Apply default filters
-        applyWithdrawalFilter();
+        // Apply default filters for waste items if needed
     });
     
     // Tab change event
     $('#expensesTabs button').on('shown.bs.tab', function (e) {
         const targetId = $(e.target).attr('id');
         
-        // If switching to employee payments tab, refresh data
+        // If switching to sales tab, refresh data
         if (targetId === 'employee-payment-tab') {
-            applyEmployeePaymentFilter();
+            applySalesFilter();
         } 
-        // If switching to withdrawals tab, refresh data
+        // If switching to purchases tab, refresh data
+        else if (targetId === 'shipping-tab') {
+            applyPurchasesFilter();
+        }
+        // If switching to waste tab, refresh data
         else if (targetId === 'withdrawal-tab') {
-            applyWithdrawalFilter();
+            // Handle for waste items if needed
         }
     });
     
@@ -298,222 +378,14 @@ $(document).ready(function() {
         const activeTab = $('.expenses-tabs .nav-link.active').attr('id');
         
         if (activeTab === 'employee-payment-tab') {
-            applyEmployeePaymentFilter();
+            applySalesFilter();
+        } else if (activeTab === 'shipping-tab') {
+            applyPurchasesFilter();
         } else if (activeTab === 'withdrawal-tab') {
-            applyWithdrawalFilter();
+            // Handle for waste items if needed
         }
     });
 
-    // Handle edit button click for employee payments
-    $(document).on('click', '#employeeHistoryTable .edit-btn', function() {
-        const id = $(this).data('id');
-        const row = $(this).closest('tr');
-        
-        // Get data from row
-        const employeeId = row.data('employee-id');
-        const employeeName = row.find('td:eq(1)').text().trim();
-        const paymentDate = row.find('td:eq(2)').text().trim();
-        const amount = row.find('td:eq(3)').text().trim().replace(/[^\d]/g, '');
-        const paymentType = row.find('td:eq(4) .badge').text().trim();
-        const notes = row.find('td:eq(5)').text().trim();
-        
-        // Populate modal fields
-        $('#editEmployeePaymentId').val(id);
-        $('#editEmployeePaymentName').val(employeeId);
-        
-        // Convert date from Y/m/d to Y-m-d format
-        const dateParts = paymentDate.split('/');
-        const formattedDate = `${dateParts[0]}-${dateParts[1].padStart(2, '0')}-${dateParts[2].padStart(2, '0')}`;
-        $('#editEmployeePaymentDate').val(formattedDate);
-        
-        $('#editEmployeePaymentAmount').val(amount);
-        
-        // Set payment type based on the badge text
-        let paymentTypeValue = '';
-        if (paymentType === 'مووچە') paymentTypeValue = 'salary';
-        else if (paymentType === 'پاداشت') paymentTypeValue = 'bonus';
-        else if (paymentType === 'کاتژمێری زیادە') paymentTypeValue = 'overtime';
-        $('#editEmployeePaymentType').val(paymentTypeValue);
-        
-        $('#editEmployeePaymentNotes').val(notes);
-    });
-    
-    // Handle save button click for employee payment edit
-    $('#saveEmployeePaymentEdit').on('click', function() {
-        // Get form data
-        const id = $('#editEmployeePaymentId').val();
-        const employeeId = $('#editEmployeePaymentName').val();
-        const paymentDate = $('#editEmployeePaymentDate').val();
-        const amount = $('#editEmployeePaymentAmount').val();
-        const paymentType = $('#editEmployeePaymentType').val();
-        const notes = $('#editEmployeePaymentNotes').val();
-        
-        // Validate form
-        if (!employeeId || !paymentDate || !amount || !paymentType) {
-            Swal.fire({
-                title: 'هەڵە!',
-                text: 'تکایە هەموو خانە پێویستەکان پڕبکەوە',
-                icon: 'error',
-                confirmButtonText: 'باشە'
-            });
-            return;
-        }
-        
-        // Send AJAX request to update payment
-        $.ajax({
-            url: 'expensesHistory.php',
-            method: 'POST',
-            data: {
-                action: 'update_employee_payment',
-                id: id,
-                employee_id: employeeId,
-                payment_date: paymentDate,
-                amount: amount,
-                payment_type: paymentType,
-                notes: notes
-            },
-            dataType: 'json',
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire({
-                        title: 'سەرکەوتوو بوو!',
-                        text: 'زانیاری پارەدان نوێکرایەوە',
-                        icon: 'success',
-                        confirmButtonText: 'باشە'
-                    }).then(() => {
-                        // Close the modal
-                        $('#editEmployeePaymentModal').modal('hide');
-                        
-                        // Refresh the table
-                        applyEmployeePaymentFilter();
-                    });
-                } else {
-                    Swal.fire({
-                        title: 'هەڵە!',
-                        text: response.message || 'هەڵەیەک ڕوویدا لە کاتی نوێکردنەوەدا',
-                        icon: 'error',
-                        confirmButtonText: 'باشە'
-                    });
-                }
-            },
-            error: function() {
-                Swal.fire({
-                    title: 'هەڵە!',
-                    text: 'هەڵەیەک ڕوویدا لە کاتی نوێکردنەوەدا',
-                    icon: 'error',
-                    confirmButtonText: 'باشە'
-                });
-            }
-        });
-    });
-
-    // Handle delete button click for employee payments
-    $(document).on('click', '#employeeHistoryTable .delete-btn', function() {
-        const id = $(this).data('id');
-        
-        Swal.fire({
-            title: 'دڵنیای لە سڕینەوەی ئەم پارەدانە؟',
-            text: 'ئەم کردارە ناتوانرێت پاشگەز بکرێتەوە',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'بەڵێ، بسڕەوە',
-            cancelButtonText: 'نەخێر'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: 'expensesHistory.php',
-                    method: 'POST',
-                    data: {
-                        action: 'delete_employee_payment',
-                        id: id
-                    },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            Swal.fire({
-                                title: 'سەرکەوتوو بوو!',
-                                text: 'پارەدانەکە سڕایەوە',
-                                icon: 'success',
-                                confirmButtonText: 'باشە'
-                            }).then(() => {
-                                applyEmployeePaymentFilter();
-                            });
-                        } else {
-                            Swal.fire({
-                                title: 'هەڵە!',
-                                text: response.message || 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا',
-                                icon: 'error',
-                                confirmButtonText: 'باشە'
-                            });
-                        }
-                    },
-                    error: function() {
-                        Swal.fire({
-                            title: 'هەڵە!',
-                            text: 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا',
-                            icon: 'error',
-                            confirmButtonText: 'باشە'
-                        });
-                    }
-                });
-            }
-        });
-    });
-
-    // Handle delete button click for withdrawals
-    $(document).on('click', '#withdrawalHistoryTable .delete-btn', function() {
-        const id = $(this).data('id');
-        
-        Swal.fire({
-            title: 'دڵنیای لە سڕینەوەی ئەم دەرکردنە؟',
-            text: 'ئەم کردارە ناتوانرێت پاشگەز بکرێتەوە',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'بەڵێ، بسڕەوە',
-            cancelButtonText: 'نەخێر'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: 'expensesHistory.php',
-                    method: 'POST',
-                    data: {
-                        action: 'delete_withdrawal',
-                        id: id
-                    },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            Swal.fire({
-                                title: 'سەرکەوتوو بوو!',
-                                text: 'دەرکردنەکە سڕایەوە',
-                                icon: 'success',
-                                confirmButtonText: 'باشە'
-                            }).then(() => {
-                                applyWithdrawalFilter();
-                            });
-                        } else {
-                            Swal.fire({
-                                title: 'هەڵە!',
-                                text: response.message || 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا',
-                                icon: 'error',
-                                confirmButtonText: 'باشە'
-                            });
-                        }
-                    },
-                    error: function() {
-                        Swal.fire({
-                            title: 'هەڵە!',
-                            text: 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا',
-                            icon: 'error',
-                            confirmButtonText: 'باشە'
-                        });
-                    }
-                });
-            }
-        });
-    });
+    // Initial load of data
+    applySalesFilter();
 }); 
