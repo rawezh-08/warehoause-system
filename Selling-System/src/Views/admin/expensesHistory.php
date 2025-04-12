@@ -20,7 +20,7 @@ function getEmployeePaymentsData($limit = 0, $offset = 0, $filters = []) {
     
     // Base query to get employee payments
     $sql = "SELECT ep.id, ep.employee_id, ep.amount, ep.payment_type, ep.payment_date, ep.notes, 
-                   e.name as employee_name
+                e.name as employee_name
             FROM employee_payments ep
             LEFT JOIN employees e ON ep.employee_id = e.id
             WHERE 1=1";

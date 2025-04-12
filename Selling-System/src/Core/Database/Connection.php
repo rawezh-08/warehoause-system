@@ -37,7 +37,7 @@ class Connection
             $stmt = $this->getPdo()->prepare($sql);
             $stmt->execute($params);
             return $stmt;
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             die("Query failed: " . $e->getMessage());
         }
     }

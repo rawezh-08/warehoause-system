@@ -7,9 +7,9 @@ header('Content-Type: application/json');
 
 // Get search term if any
 $search = isset($_GET['search']) ? $_GET['search'] : '';
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$per_page = 10; // Number of results per page
-$offset = ($page - 1) * $per_page;
+$page = 1; // Client-side pagination will handle this
+$per_page = 1000; // Setting a high limit to get all records
+$offset = 0;
 
 // Initialize response array
 $response = [
@@ -66,8 +66,8 @@ try {
     $totalCount = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
     $response['total_count'] = (int)$totalCount;
 
-    // Get paginated results
-    $sql .= " ORDER BY name ASC LIMIT $offset, $per_page";
+    // Get all results and sort by name
+    $sql .= " ORDER BY name ASC";
     
     $stmt = $conn->prepare($sql);
     foreach ($params as $i => $param) {

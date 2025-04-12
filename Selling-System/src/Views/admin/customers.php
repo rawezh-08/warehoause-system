@@ -296,11 +296,8 @@ foreach ($customers as $customer) {
                                                                 <a href="customerProfile.php?id=<?php echo $customer['id']; ?>" class="btn btn-sm btn-outline-primary rounded-circle">
                                                                     <i class="fas fa-user-circle"></i>
                                                                 </a>
-                                                                <a href="editCustomer.php?id=<?php echo $customer['id']; ?>" class="btn btn-sm btn-outline-warning rounded-circle">
-                                                                    <i class="fas fa-edit"></i>
-                                                                </a>
-                                                                <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="<?php echo $customer['id']; ?>">
-                                                                    <i class="fas fa-trash-alt"></i>
+                                                                <button type="button" class="btn btn-sm btn-outline-info rounded-circle print-btn" data-id="<?php echo $customer['id']; ?>">
+                                                                    <i class="fas fa-print"></i>
                                                                 </button>
                                                             </div>
                                                         </td>
@@ -401,6 +398,29 @@ foreach ($customers as $customer) {
                 const customerId = $(this).data('id');
                 $('#confirmDeleteBtn').data('id', customerId);
                 $('#deleteCustomerModal').modal('show');
+            });
+            
+            // Print customer button handler
+            $('.print-btn').on('click', function() {
+                const customerId = $(this).data('id');
+                
+                // Open the customer profile in a new window for printing
+                const printWindow = window.open(`customerProfile.php?id=${customerId}&print=true`, '_blank');
+                
+                // Automatically print when the page loads
+                if (printWindow) {
+                    printWindow.addEventListener('load', function() {
+                        printWindow.print();
+                    });
+                } else {
+                    // If popup was blocked
+                    Swal.fire({
+                        title: 'ئاگاداری',
+                        text: 'تکایە ڕێگە بدە بە کردنەوەی پەنجەرەی نوێ بۆ چاپکردن',
+                        icon: 'warning',
+                        confirmButtonText: 'باشە'
+                    });
+                }
             });
             
             // Confirm delete button handler

@@ -2,7 +2,7 @@
 require_once '../../config/database.php';
 
 // Function to get sales data with customer info
-function getSalesData($limit = 10, $offset = 0, $filters = []) {
+function getSalesData($limit = 0, $offset = 0, $filters = []) {
     global $conn;
     
     // Base query to get sales with joined customer info and calculated total amount
@@ -55,6 +55,7 @@ function getSalesData($limit = 10, $offset = 0, $filters = []) {
     
     $sql .= " GROUP BY s.id ORDER BY s.date DESC";
     
+    // Only apply limit if it's greater than 0
     if ($limit > 0) {
         $sql .= " LIMIT :offset, :limit";
         $params[':offset'] = (int)$offset;
@@ -64,7 +65,7 @@ function getSalesData($limit = 10, $offset = 0, $filters = []) {
     try {
         $stmt = $conn->prepare($sql);
         foreach ($params as $key => $val) {
-            if ($key == ':offset' || $key == ':limit') {
+            if (($key == ':offset' || $key == ':limit') && $limit > 0) {
                 $stmt->bindValue($key, $val, PDO::PARAM_INT);
             } else {
                 $stmt->bindValue($key, $val);
@@ -79,7 +80,7 @@ function getSalesData($limit = 10, $offset = 0, $filters = []) {
 }
 
 // Function to get purchases data with supplier info
-function getPurchasesData($limit = 10, $offset = 0, $filters = []) {
+function getPurchasesData($limit = 0, $offset = 0, $filters = []) {
     global $conn;
     
     // Base query to get purchases with joined supplier info and calculated total amount
@@ -121,6 +122,7 @@ function getPurchasesData($limit = 10, $offset = 0, $filters = []) {
     
     $sql .= " GROUP BY p.id ORDER BY p.date DESC";
     
+    // Only apply limit if it's greater than 0
     if ($limit > 0) {
         $sql .= " LIMIT :offset, :limit";
         $params[':offset'] = (int)$offset;
@@ -130,7 +132,7 @@ function getPurchasesData($limit = 10, $offset = 0, $filters = []) {
     try {
         $stmt = $conn->prepare($sql);
         foreach ($params as $key => $val) {
-            if ($key == ':offset' || $key == ':limit') {
+            if (($key == ':offset' || $key == ':limit') && $limit > 0) {
                 $stmt->bindValue($key, $val, PDO::PARAM_INT);
             } else {
                 $stmt->bindValue($key, $val);
@@ -154,9 +156,9 @@ $defaultFilters = [
     'end_date' => $today
 ];
 
-// Get data with default filters
-$salesData = getSalesData(10, 0, $defaultFilters);
-$purchasesData = getPurchasesData(10, 0, $defaultFilters);
+// Get data with default filters - retrieve all records
+$salesData = getSalesData(0, 0, $defaultFilters);
+$purchasesData = getPurchasesData(0, 0, $defaultFilters);
 
 // Handle AJAX filter requests
 if (isset($_POST['action']) && $_POST['action'] == 'filter') {
@@ -174,7 +176,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
         if (!empty($_POST['invoice_number'])) {
             $filters['invoice_number'] = $_POST['invoice_number'];
         }
-        $salesData = getSalesData(10, 0, $filters);
+        $salesData = getSalesData(0, 0, $filters);
         echo json_encode(['success' => true, 'data' => $salesData]);
         exit;
     } else if ($_POST['type'] == 'purchases') {
@@ -184,7 +186,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
         if (!empty($_POST['invoice_number'])) {
             $filters['invoice_number'] = $_POST['invoice_number'];
         }
-        $purchasesData = getPurchasesData(10, 0, $filters);
+        $purchasesData = getPurchasesData(0, 0, $filters);
         echo json_encode(['success' => true, 'data' => $purchasesData]);
         exit;
     }
