@@ -7,18 +7,11 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $records_per_page;
 
 // Get filter parameters
-$search = isset($_GET['search']) ? $_GET['search'] : '';
-$category_id = isset($_GET['category']) ? $_GET['category'] : '';
-$unit_id = isset($_GET['unit']) ? $_GET['unit'] : '';
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$category_id = isset($_GET['category']) ? (int)$_GET['category'] : '';
+$unit_id = isset($_GET['unit']) ? (int)$_GET['unit'] : '';
 
-// Build base query for total count
-$count_query = "SELECT COUNT(*) as total 
-                FROM products p 
-                LEFT JOIN categories c ON p.category_id = c.id 
-                LEFT JOIN units u ON p.unit_id = u.id 
-                WHERE 1=1";
-
-// Build main query
+// Build base query
 $query = "SELECT p.*, c.name as category_name, u.name as unit_name 
           FROM products p 
           LEFT JOIN categories c ON p.category_id = c.id 
@@ -27,36 +20,33 @@ $query = "SELECT p.*, c.name as category_name, u.name as unit_name
 
 $params = array();
 
+// Add search conditions
 if (!empty($search)) {
-    $where_clause = " AND (p.name LIKE ? OR p.code LIKE ? OR p.barcode LIKE ?)";
-    $query .= $where_clause;
-    $count_query .= $where_clause;
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
+    $query .= " AND (p.name LIKE ? OR p.code LIKE ? OR p.barcode LIKE ?)";
+    $searchParam = "%$search%";
+    $params[] = $searchParam;
+    $params[] = $searchParam;
+    $params[] = $searchParam;
 }
 
 if (!empty($category_id)) {
-    $where_clause = " AND p.category_id = ?";
-    $query .= $where_clause;
-    $count_query .= $where_clause;
+    $query .= " AND p.category_id = ?";
     $params[] = $category_id;
 }
 
 if (!empty($unit_id)) {
-    $where_clause = " AND p.unit_id = ?";
-    $query .= $where_clause;
-    $count_query .= $where_clause;
+    $query .= " AND p.unit_id = ?";
     $params[] = $unit_id;
 }
 
-// Get total records count
+// Get total count
+$count_query = str_replace("p.*, c.name as category_name, u.name as unit_name", "COUNT(*) as total", $query);
 $stmt = $conn->prepare($count_query);
 $stmt->execute($params);
 $total_records = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 $total_pages = ceil($total_records / $records_per_page);
 
-// Add pagination to main query
+// Add pagination
 $query .= " ORDER BY p.id DESC LIMIT $offset, $records_per_page";
 
 // Get categories for filter
@@ -87,7 +77,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Select2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
     <!-- Global CSS -->
@@ -99,8 +89,20 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link rel="stylesheet" href="../../css/products.css">
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
-    <!-- Custom styles for this page -->
-    
+    <!-- Custom styles for accessibility and compatibility -->
+    <style>
+        /* Add Safari compatibility */
+        .select2-selection {
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        /* Improve focus visibility for accessibility */
+        input:focus, select:focus, button:focus {
+            outline: 2px solid #0d6efd;
+            outline-offset: 2px;
+        }
+    </style>
 </head>
 
 <body>
@@ -123,16 +125,17 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 <!-- Filter Section -->
                 <div class="filter-section" style="border-radius: 24px;">
-                    <form id="filterForm" class="row g-3">
+                    <form id="filterForm" class="row g-3" method="GET" action="" autocomplete="off" aria-label="بەگەڕانی کاڵاکان">
                         <div class="col-md-4">
                             <label for="search" class="form-label">گەڕان بە ناو ، کۆد، بارکۆد</label>
                             <div class="search-wrapper">
                                 <div class="input-group">
                                     <input type="text" class="form-control search-input" id="search" name="search" style="border-radius: 24px;"
                                            placeholder="ناوی کاڵا، کۆد یان بارکۆد..." 
-                                           value="<?php echo htmlspecialchars($search); ?>">
-                                    <button type="button" class="btn btn-primary search-btn" style="border-radius: 24px; margin-right: 8px;">
-                                        <img src="../../assets/icons/search.svg" alt="">
+                                           value="<?php echo htmlspecialchars($search); ?>"
+                                           aria-label="گەڕان بە ناو ، کۆد، بارکۆد">
+                                    <button type="button" class="btn btn-primary search-btn" style="border-radius: 24px; margin-right: 8px;" aria-label="گەڕان">
+                                        <img src="../../assets/icons/search.svg" alt="گەڕان">
                                     </button>
                                 </div>
                                 <div class="search-suggestions" style="display: none;">
@@ -146,7 +149,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </div>
                         <div class="col-md-3" >
                             <label for="category" class="form-label">جۆری کاڵا</label>
-                            <select class="form-select select2" id="category" name="category" style="border-radius: 24px;  display: flex; justify-content: center; align-items: center;">
+                            <select class="form-select select2" id="category" name="category" style="border-radius: 24px;  display: flex; justify-content: center; align-items: center;" aria-label="هەڵبژاردنی جۆری کاڵا" title="جۆری کاڵا">
                                 <option value="">هەموو جۆرەکان</option>
                                 <?php foreach ($categories as $cat): ?>
                                     <option value="<?php echo htmlspecialchars($cat['id']); ?>" <?php echo $category_id == $cat['id'] ? 'selected' : ''; ?>>
@@ -157,7 +160,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </div>
                         <div class="col-md-3">
                             <label for="unit" class="form-label">یەکە</label>
-                            <select class="form-select select2" id="unit" name="unit">
+                            <select class="form-select select2" id="unit" name="unit" aria-label="هەڵبژاردنی یەکە" title="یەکە">
                                 <option value="">هەموو یەکەکان</option>
                                 <?php foreach ($units as $unit): ?>
                                     <option value="<?php echo htmlspecialchars($unit['id']); ?>" <?php echo $unit_id == $unit['id'] ? 'selected' : ''; ?>>
@@ -166,11 +169,11 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <!-- <div class="col-md-2 d-flex align-items-end">
-                            <button type="button" class="btn btn-outline-secondary w-100" id="resetFilter">
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-primary w-100" id="resetFilter" style="border-radius: 24px;">
                                 <i class="fas fa-redo me-2"></i> ڕیسێت
                             </button>
-                        </div> -->
+                        </div>
                     </form>
                 </div>
 
@@ -191,7 +194,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                         <div class="records-per-page">
                                                             <label class="me-2">نیشاندان:</label>
                                                             <div class="custom-select-wrapper">
-                                                <select id="recordsPerPage" class="form-select form-select-sm rounded-pill">
+                                                <select id="recordsPerPage" class="form-select form-select-sm rounded-pill" aria-label="نیشاندانی تۆمارەکان لە هەر پەڕەیەک" title="نیشاندانی تۆمارەکان">
                                                     <option value="5" <?php echo $records_per_page == 5 ? 'selected' : ''; ?>>5</option>
                                                     <option value="10" <?php echo $records_per_page == 10 ? 'selected' : ''; ?>>10</option>
                                                     <option value="25" <?php echo $records_per_page == 25 ? 'selected' : ''; ?>>25</option>
@@ -232,20 +235,26 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             <td><?php echo ($page - 1) * $records_per_page + $index + 1; ?></td>
                                             <td>
                                                 <?php if (!empty($product['image'])): ?>
-                                                    <div class="product-image-container">
-                                                        <img src="<?php echo htmlspecialchars($product['image']); ?>" 
+                                                    <?php
+                                                    // Extract just the filename from the image path
+                                                    $imagePath = $product['image'];
+                                                    $filename = basename($imagePath);
+                                                    // Use our new API endpoint with absolute path
+                                                    $imageUrl = "../../api/product_image.php?filename=" . urlencode($filename);
+                                                    ?>
+                                                        <img src="<?php echo $imageUrl; ?>" 
                                                              alt="<?php echo htmlspecialchars($product['name']); ?>" 
                                                              class="product-image"
                                                              data-bs-toggle="tooltip"
                                                              data-bs-placement="top"
-                                                             title="<?php echo htmlspecialchars($product['name']); ?>">
-                                                                </div>
+                                                             title="<?php echo htmlspecialchars($product['name']); ?>"
+                                                             aria-label="<?php echo htmlspecialchars($product['name']); ?>">
                                                 <?php else: ?>
                                                     <div class="no-image-placeholder">
                                                         <i class="fas fa-image"></i>
-                                                                </div>
+                                                    </div>
                                                 <?php endif; ?>
-                                                            </td>
+                                            </td>
                                             <td><?php echo htmlspecialchars($product['code']); ?></td>
                                             <td><?php echo htmlspecialchars($product['barcode']); ?></td>
                                             <td><?php echo htmlspecialchars($product['name']); ?></td>
@@ -276,15 +285,22 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                             data-selling-wholesale="<?php echo $product['selling_price_wholesale']; ?>"
                                                          
                                                             data-min-qty="<?php echo $product['min_quantity']; ?>"
-                                                            data-notes="<?php echo htmlspecialchars($product['notes']); ?>">
+                                                            data-notes="<?php echo htmlspecialchars($product['notes']); ?>"
+                                                            aria-label="گۆڕینی <?php echo htmlspecialchars($product['name']); ?>"
+                                                            title="گۆڕین">
                                                                         <i class="fas fa-edit"></i>
                                                                     </button>
                                                     <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-notes" 
                                                             data-name="<?php echo htmlspecialchars($product['name']); ?>"
-                                                            data-notes="<?php echo htmlspecialchars($product['notes'] ?: 'هیچ تێبینیەک نییە'); ?>">
+                                                            data-notes="<?php echo htmlspecialchars($product['notes'] ?: 'هیچ تێبینیەک نییە'); ?>"
+                                                            aria-label="بینینی تێبینیەکانی <?php echo htmlspecialchars($product['name']); ?>"
+                                                            title="بینینی تێبینیەکان">
                                                         <i class="fas fa-sticky-note"></i>
                                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-product" data-id="<?php echo $product['id']; ?>">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-product" 
+                                                            data-id="<?php echo $product['id']; ?>"
+                                                            aria-label="سڕینەوەی <?php echo htmlspecialchars($product['name']); ?>"
+                                                            title="سڕینەوە">
                                                         <i class="fas fa-trash"></i>
                                                                     </button>
                                                                 </div>
@@ -304,20 +320,20 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                         </div>
                                         <div class="modal-body">
-                                            <form id="editProductForm">
+                                            <form id="editProductForm" autocomplete="on">
                                                 <input type="hidden" id="edit_product_id" name="id">
                                                 <div class="row">
                                                     <div class="col-md-4 mb-3">
                                                         <label for="edit_name" class="form-label">ناوی کاڵا</label>
-                                                        <input type="text" class="form-control" id="edit_name" name="name" required>
+                                                        <input type="text" class="form-control" id="edit_name" name="name" required autocomplete="off">
                                                     </div>
                                                     <div class="col-md-4 mb-3">
                                                         <label for="edit_code" class="form-label">کۆدی کاڵا</label>
-                                                        <input type="text" class="form-control" id="edit_code" name="code" required>
+                                                        <input type="text" class="form-control" id="edit_code" name="code" required autocomplete="off">
                                                             </div>
                                                     <div class="col-md-4 mb-3">
                                                         <label for="edit_barcode" class="form-label">بارکۆد</label>
-                                                        <input type="text" class="form-control" id="edit_barcode" name="barcode">
+                                                        <input type="text" class="form-control" id="edit_barcode" name="barcode" autocomplete="off">
                                                         </div>
                                                     </div>
                         <div class="row">
@@ -344,42 +360,39 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             </div>
                                                 <div class="row">
                                                     <div class="col-md-4 mb-3">
-                                                       
-                                    </div>
-                                                    <div class="col-md-4 mb-3">
                                                         <label for="edit_pieces_per_box" class="form-label">دانە لە کارتۆن</label>
-                                                        <input type="number" class="form-control" id="edit_pieces_per_box" name="pieces_per_box" min="0">
+                                                        <input type="number" class="form-control" id="edit_pieces_per_box" name="pieces_per_box" min="0" autocomplete="off">
                                 </div>
                                                     <div class="col-md-4 mb-3">
                                                         <label for="edit_boxes_per_set" class="form-label">کارتۆن لە سێت</label>
-                                                        <input type="number" class="form-control" id="edit_boxes_per_set" name="boxes_per_set" min="0">
+                                                        <input type="number" class="form-control" id="edit_boxes_per_set" name="boxes_per_set" min="0" autocomplete="off">
                             </div>
                         </div>
                         <div class="row">
                                                     <div class="col-md-4 mb-3">
                                                         <label for="edit_purchase_price" class="form-label">نرخی کڕین</label>
-                                                        <input type="number" class="form-control" id="edit_purchase_price" name="purchase_price" required>
+                                                        <input type="number" class="form-control" id="edit_purchase_price" name="purchase_price" required autocomplete="off">
                                         </div>
                                                     <div class="col-md-4 mb-3">
                                                         <label for="edit_selling_price_single" class="form-label">نرخی فرۆشتن (دانە)</label>
-                                                        <input type="number" class="form-control" id="edit_selling_price_single" name="selling_price_single" required>
+                                                        <input type="number" class="form-control" id="edit_selling_price_single" name="selling_price_single" required autocomplete="off">
                                     </div>
                                                     <div class="col-md-4 mb-3">
                                                         <label for="edit_selling_price_wholesale" class="form-label">نرخی فرۆشتن (کۆمەڵ)</label>
-                                                        <input type="number" class="form-control" id="edit_selling_price_wholesale" name="selling_price_wholesale">
+                                                        <input type="number" class="form-control" id="edit_selling_price_wholesale" name="selling_price_wholesale" autocomplete="off">
                                                             </div>
                                                         </div>
                                                 <div class="row">
                                                   
                                                     <div class="col-md-6 mb-3">
                                                         <label for="edit_min_quantity" class="form-label">کەمترین بڕ</label>
-                                                        <input type="number" class="form-control" id="edit_min_quantity" name="min_quantity" required>
+                                                        <input type="number" class="form-control" id="edit_min_quantity" name="min_quantity" required autocomplete="off">
                                                             </div>
                                                         </div>
                                                 <div class="row">
                                                     <div class="col-12 mb-3">
                                                         <label for="edit_notes" class="form-label">تێبینی</label>
-                                                        <textarea class="form-control" id="edit_notes" name="notes" rows="3"></textarea>
+                                                        <textarea class="form-control" id="edit_notes" name="notes" rows="3" autocomplete="off" aria-label="تێبینیەکان"></textarea>
                                                     </div>
                                                 </div>
                                             </form>
@@ -453,9 +466,11 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <!-- Custom JavaScript -->
     <script src="../../js/include-components.js"></script>
-    <script src="../../js/expensesHistory/script.js"></script>
-    <!-- Scripts -->
+    
+    <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- Products JS -->
+    <script src="../../js/products.js"></script>
     <script>
         $(document).ready(function() {
             // Initialize other Select2 dropdowns
@@ -579,9 +594,17 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Reset filter
             $('#resetFilter').on('click', function() {
+                // Reset search input
                 $searchInput.val('');
-                $('#category').val(null).trigger('change');
-                $('#unit').val(null).trigger('change');
+                
+                // Reset Select2 dropdowns - need special handling for Select2
+                $('#category').val('').trigger('change');
+                $('#unit').val('').trigger('change');
+                
+                // Reset records per page to default
+                $('#recordsPerPage').val('10');
+                
+                // Navigate to products page with no query parameters
                 window.location.href = 'products.php';
             });
 
@@ -711,12 +734,17 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 });
             });
 
-            // Initialize delete product buttons
+            // Initialize delete product buttons with improved error handling
             $('.delete-product').on('click', function() {
                 const productId = $(this).data('id');
+                const productName = $(this).closest('tr').find('td:nth-child(5)').text(); // Get product name from the table
+                
                 Swal.fire({
                     title: 'دڵنیای لە سڕینەوەی ئەم کاڵایە؟',
-                    text: "ئەم کردارە ناگەڕێتەوە!",
+                    html: `<div>کاڵای <strong>${productName}</strong> دەسڕدرێتەوە</div>
+                          <div class="text-danger mt-2">
+                            <small>ئاگاداری: ئەگەر ئەم کاڵایە لە پسووڵەی کڕین یان فرۆشتن بەکارهاتبێت، ناتوانرێت بسڕدرێتەوە.</small>
+                          </div>`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#d33',
@@ -725,6 +753,16 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     cancelButtonText: 'پاشگەزبوونەوە'
                 }).then((result) => {
                     if (result.isConfirmed) {
+                        // Show loading state
+                        Swal.fire({
+                            title: 'چاوەڕوان بە...',
+                            text: 'سڕینەوەی کاڵا',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+                        
                         // Send delete request
                         fetch('../../process/deleteProduct.php', {
                             method: 'POST',
@@ -733,7 +771,12 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             },
                             body: 'id=' + productId
                         })
-                        .then(response => response.json())
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('کێشەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە');
+                            }
+                            return response.json();
+                        })
                         .then(data => {
                             if (data.success) {
                                 Swal.fire({
@@ -746,8 +789,8 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 });
                             } else {
                                 Swal.fire({
-                                    title: 'هەڵە!',
-                                    text: data.message || 'کێشەیەک ڕوویدا لە سڕینەوەی کاڵاکە.',
+                                    title: 'نەتوانرا کاڵاکە بسڕدرێتەوە',
+                                    html: `<div class="alert alert-danger">${data.message || 'کێشەیەک ڕوویدا لە سڕینەوەی کاڵاکە.'}</div>`,
                                     icon: 'error',
                                     confirmButtonText: 'باشە'
                                 });
@@ -757,7 +800,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             console.error('Error:', error);
                             Swal.fire({
                                 title: 'هەڵە!',
-                                text: 'کێشەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە.',
+                                text: error.message || 'کێشەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە.',
                                 icon: 'error',
                                 confirmButtonText: 'باشە'
                             });
@@ -765,58 +808,66 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     }
                 });
             });
-        });
 
-        // Pagination functionality
-        function changePage(page) {
-            const params = new URLSearchParams(window.location.search);
-            params.set('page', page);
-            window.location.href = '?' + params.toString();
-        }
+            // Handle form submission
+            $('#filterForm').on('submit', function(e) {
+                e.preventDefault();
+                const formData = $(this).serialize();
+                
+                // Show loading state
+                $('.table-responsive').addClass('loading');
+                
+                // Submit form via AJAX
+                $.ajax({
+                    url: window.location.pathname,
+                    type: 'GET',
+                    data: formData,
+                    success: function(response) {
+                        // Update table content
+                        const newContent = $(response).find('.table-responsive').html();
+                        $('.table-responsive').html(newContent);
+                        
+                        // Update pagination
+                        const newPagination = $(response).find('.table-pagination').html();
+                        $('.table-pagination').html(newPagination);
+                        
+                        // Remove loading state
+                        $('.table-responsive').removeClass('loading');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error:', error);
+                        alert('هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە');
+                        $('.table-responsive').removeClass('loading');
+                    }
+                });
+            });
 
-        // Document ready event for navigation elements
-        document.addEventListener('DOMContentLoaded', function() {
-            // Load navbar and sidebar
-            if (document.getElementById('navbar-container')) {
-                fetch('/warehouse-system/Selling-System/src/components/navbar.php')
-                    .then(response => response.text())
-                    .then(data => {
-                        document.getElementById('navbar-container').innerHTML = data;
+            // Global AJAX error handler
+            $(document).ajaxError(function(event, jqXHR, settings, errorThrown) {
+                console.error('AJAX Error:', errorThrown || jqXHR.statusText);
+                
+                // Don't show the alert if it's just a page reload or navigation
+                if (jqXHR.status !== 0 && errorThrown !== 'abort') {
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'کێشەیەک لە پەیوەندیکردن بە سیستەمەوە ڕوویدا. تکایە دواتر هەوڵ بدەوە.',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
                     });
+                }
+            });
+
+            // Pagination functionality
+            function changePage(page) {
+                const params = new URLSearchParams(window.location.search);
+                params.set('page', page);
+                window.location.href = '?' + params.toString();
             }
 
-            if (document.getElementById('sidebar-container')) {
-                fetch('/warehouse-system/Selling-System/src/components/sidebar.php')
-                    .then(response => response.text())
-                    .then(data => {
-                        document.getElementById('sidebar-container').innerHTML = data;
-                        
-                        // Initialize sidebar dropdowns after loading
-                        const dropdownItems = document.querySelectorAll('.sidebar-menu .menu-item > a');
-                        
-                        dropdownItems.forEach(item => {
-                            if (item.getAttribute('href') && item.getAttribute('href').startsWith('#')) {
-                                item.addEventListener('click', function(e) {
-                                    e.preventDefault();
-                                    
-                                    const submenuId = this.getAttribute('href');
-                                    const submenu = document.querySelector(submenuId);
-                                    
-                                    if (submenu) {
-                                        // Toggle current submenu
-                                        submenu.classList.toggle('show');
-                                        
-                                        // Toggle dropdown icon
-                                        const dropdownIcon = this.querySelector('.dropdown-icon');
-                                        if (dropdownIcon) {
-                                            dropdownIcon.classList.toggle('rotate');
-                                        }
-                                    }
-                                });
-                            }
-                        });
-                    });
-            }
+            // Document ready event for navigation elements
+            document.addEventListener('DOMContentLoaded', function() {
+                // Note: Navbar and sidebar are now loaded by include-components.js automatically
+            });
 
             // Initialize pagination buttons if they exist
             const prevPageBtn = document.getElementById('prevPageBtn');

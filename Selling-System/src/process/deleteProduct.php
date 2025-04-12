@@ -7,31 +7,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
     $id = (int)$_POST['id'];
     
     try {
-        // Start transaction
-        $conn->beginTransaction();
+        // First check if this product is used in purchases or sales
+        $checkPurchases = $conn->prepare("SELECT COUNT(*) FROM purchase_items WHERE product_id = ?");
+        $checkPurchases->execute([$id]);
+        $purchaseCount = $checkPurchases->fetchColumn();
         
-        // First, delete any related records (if any exist)
-        // For example, if you have sales records or other related data
-        // Add those DELETE queries here
+        $checkSales = $conn->prepare("SELECT COUNT(*) FROM sale_items WHERE product_id = ?");
+        $checkSales->execute([$id]);
+        $saleCount = $checkSales->fetchColumn();
         
-        // Delete the product
-        $stmt = $conn->prepare("DELETE FROM products WHERE id = ?");
-        $result = $stmt->execute([$id]);
+        $checkInventory = $conn->prepare("SELECT COUNT(*) FROM inventory WHERE product_id = ?");
+        $checkInventory->execute([$id]);
+        $inventoryCount = $checkInventory->fetchColumn();
         
-        // Commit transaction
-        $conn->commit();
-        
-        if ($result) {
-            echo json_encode(['success' => true]);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Failed to delete product']);
+        // If product is used in other tables, return error
+        if ($purchaseCount > 0 || $saleCount > 0 || $inventoryCount > 0) {
+            echo json_encode([
+                'success' => false, 
+                'message' => 'ناتوانرێت ئەم کاڵایە بسڕدرێتەوە چونکە بەکارهاتووە لە پسووڵەی کڕین، فرۆشتن یان ئینڤێنتۆری. تکایە یەکەم جار پسووڵەکان بسڕەوە پێش سڕینەوەی کاڵاکە.'
+            ]);
+            exit;
         }
         
+        // If product is not used, delete it
+        $stmt = $conn->prepare("DELETE FROM products WHERE id = ?");
+        $stmt->execute([$id]);
+        
+        if ($stmt->rowCount() > 0) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'کاڵاکە نەدۆزرایەوە']);
+        }
     } catch (PDOException $e) {
-        // Rollback transaction on error
-        $conn->rollBack();
-        echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+        // Log the full error for debugging
+        error_log("Product deletion error: " . $e->getMessage());
+        
+        // Return more specific error message
+        if ($e->getCode() == '23000') { // Integrity constraint violation
+            echo json_encode([
+                'success' => false, 
+                'message' => 'ناتوانرێت کاڵاکە بسڕدرێتەوە چونکە بەکارهاتووە لە پسووڵەی کڕین، فرۆشتن یان کارەکانی تر'
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'کێشەیەک ڕوویدا لە سڕینەوەی کاڵاکە: ' . $e->getMessage()]);
+        }
     }
 } else {
-    echo json_encode(['success' => false, 'message' => 'Invalid request']);
+    echo json_encode(['success' => false, 'message' => 'داوایەکی نادروست']);
 } 

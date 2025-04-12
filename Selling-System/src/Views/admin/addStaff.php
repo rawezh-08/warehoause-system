@@ -93,8 +93,11 @@
                                                 <div class="col-md-4">
                                                     <label for="employeeSalary" class="form-label">مووچە</label>
                                                     <div class="input-group">
-                                                        <input type="number" class="form-control" id="employeeSalary" name="employeeSalary">
-                                                        <span class="input-group-text">$</span>
+                                                        <input type="number" class="form-control" id="employeeSalary" name="employeeSalary" required>
+                                                        <span class="input-group-text">د.ع</span>
+                                                        <div class="invalid-feedback">
+                                                            تکایە مووچەی کارمەند داخل بکە
+                                                        </div>
                                                     </div>
                                                 </div>
                                               

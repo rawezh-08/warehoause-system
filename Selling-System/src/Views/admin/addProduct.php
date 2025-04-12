@@ -257,7 +257,13 @@ try {
                                                     <div class="d-flex align-items-center">
                                                         <div class="product-icon me-3">
                                                             <?php if (!empty($product['image'])): ?>
-                                                                <img src="<?php echo htmlspecialchars($product['image']); ?>" 
+                                                                <?php
+                                                                // Extract just the filename from the image path
+                                                                $filename = basename($product['image']);
+                                                                // Use our new API endpoint with absolute path
+                                                                $imageUrl = "../../api/product_image.php?filename=" . urlencode($filename);
+                                                                ?>
+                                                                <img src="<?php echo $imageUrl; ?>" 
                                                                      alt="<?php echo htmlspecialchars($product['name']); ?>" 
                                                                      class="product-thumbnail">
                                                             <?php else: ?>

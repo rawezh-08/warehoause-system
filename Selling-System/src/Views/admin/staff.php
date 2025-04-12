@@ -195,7 +195,7 @@ $suppliers = $supplierModel->getAll();
                                                             <th class="tbl-header">ناوی کارمەند</th>
                                                             <th class="tbl-header">ژمارەی مۆبایل</th>
                                                             <th class="tbl-header">مووچە</th>
-                                                       
+                                                           
                                                             <th class="tbl-header">کردارەکان</th>
                                                         </tr>
                                                     </thead>
@@ -353,13 +353,13 @@ $suppliers = $supplierModel->getAll();
                                                         <?php foreach ($customers as $index => $customer): ?>
                                                             <tr data-id="<?php echo $customer['id']; ?>">
                                                                 <td><?php echo $index + 1; ?></td>
-                                                                <td><?php echo htmlspecialchars($customer['name']); ?></td>
-                                                                <td><?php echo htmlspecialchars($customer['phone1']); ?></td>
-                                                                <td><?php echo htmlspecialchars($customer['phone2'] ?? ''); ?></td>
-                                                                <td><?php echo htmlspecialchars($customer['guarantor_name'] ?? ''); ?></td>
-                                                                <td><?php echo htmlspecialchars($customer['guarantor_phone'] ?? ''); ?></td>
-                                                                <td><?php echo htmlspecialchars($customer['address'] ?? ''); ?></td>
-                                                                <td><?php echo number_format($customer['debit_on_business'], 0); ?></td>
+                                                                <td><?php echo htmlspecialchars($customer['name'] ?? '-'); ?></td>
+                                                                <td><?php echo htmlspecialchars($customer['phone1'] ?? '-'); ?></td>
+                                                                <td><?php echo htmlspecialchars($customer['phone2'] ? $customer['phone2'] : '-'); ?></td>
+                                                                <td><?php echo htmlspecialchars($customer['guarantor_name'] ? $customer['guarantor_name'] : '-'); ?></td>
+                                                                <td><?php echo htmlspecialchars($customer['guarantor_phone'] ? $customer['guarantor_phone'] : '-'); ?></td>
+                                                                <td><?php echo htmlspecialchars($customer['address'] ? $customer['address'] : '-'); ?></td>
+                                                                <td><?php echo $customer['debit_on_business'] ? number_format($customer['debit_on_business'], 0) : '-'; ?></td>
                                                                 <td>
                                                                     <div class="action-buttons">
                                                                         <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="<?php echo $customer['id']; ?>">
@@ -521,10 +521,10 @@ $suppliers = $supplierModel->getAll();
                                                             <?php foreach ($suppliers as $index => $supplier): ?>
                                                                 <tr data-id="<?php echo $supplier['id']; ?>">
                                                                     <td><?php echo $index + 1; ?></td>
-                                                                    <td><?php echo htmlspecialchars($supplier['name']); ?></td>
-                                                                    <td><?php echo htmlspecialchars($supplier['phone1']); ?></td>
+                                                                    <td><?php echo htmlspecialchars($supplier['name'] ?? '-'); ?></td>
+                                                                    <td><?php echo htmlspecialchars($supplier['phone1'] ?? '-'); ?></td>
                                                                     <td><?php echo htmlspecialchars($supplier['phone2'] ? $supplier['phone2'] : '-'); ?></td>
-                                                                    <td><?php echo number_format($supplier['debt_on_myself'], 0, '.', ','); ?> دینار</td>
+                                                                    <td><?php echo $supplier['debt_on_myself'] ? number_format($supplier['debt_on_myself'], 0, '.', ',') . ' دینار' : '-'; ?></td>
                                                                     <td>
                                                                         <div class="action-buttons">
                                                                             <button type="button"
@@ -789,13 +789,13 @@ $suppliers = $supplierModel->getAll();
                         nameFilter.innerHTML = '<option value="">هەموو کارمەندان</option>';
                         
                         // Add each employee to table and name filter
-                        data.employees.forEach(employee => {
+                        data.employees.forEach((employee, index) => {
                             const row = document.createElement('tr');
                             row.innerHTML = `
-                                <td>${employee.id}</td>
-                                <td>${employee.name}</td>
-                                <td>${employee.phone}</td>
-                                <td>${formatNumberWithCommas(employee.salary)}</td>
+                                <td>${index + 1}</td>
+                                <td>${employee.name || '-'}</td>
+                                <td>${employee.phone || '-'}</td>
+                                <td>${employee.salary ? formatNumberWithCommas(employee.salary) : '-'}</td>
                               
                                 <td>
                                     <div class="action-buttons">
@@ -803,7 +803,7 @@ $suppliers = $supplierModel->getAll();
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         <button type="button" class="btn btn-sm btn-outline-warning rounded-circle notes-btn" 
-                                            data-notes="${employee.notes || ''}" data-employee-name="${employee.name}">
+                                            data-notes="${employee.notes || ''}" data-employee-name="${employee.name || ''}">
                                             <i class="fas fa-sticky-note"></i>
                                         </button>
                                         <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${employee.id}">
@@ -1651,11 +1651,7 @@ $suppliers = $supplierModel->getAll();
                         }
                     }
                     
-                    if (found) {
-                        row.dataset.searchMatch = 'true';
-                    } else {
-                        row.dataset.searchMatch = 'false';
-                    }
+                    row.dataset.searchMatch = found ? 'true' : 'false';
                 });
                 
                 applyCustomerPagination(1);
@@ -1676,14 +1672,38 @@ $suppliers = $supplierModel->getAll();
                         }
                     }
                     
-                    if (found) {
-                        row.dataset.searchMatch = 'true';
-                    } else {
-                        row.dataset.searchMatch = 'false';
-                    }
+                    row.dataset.searchMatch = found ? 'true' : 'false';
                 });
                 
                 applySupplierPagination(1);
+            });
+            
+            // Add employee table search functionality
+            document.getElementById('employeeTableSearch').addEventListener('input', function() {
+                const searchValue = this.value.toLowerCase();
+                const rows = document.getElementById('employeeTable').querySelectorAll('tbody tr');
+                
+                rows.forEach(row => {
+                    let found = false;
+                    for (let i = 1; i < row.cells.length - 1; i++) {
+                        if (row.cells[i].textContent.toLowerCase().includes(searchValue)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    
+                    if (found) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                
+                // Update pagination info
+                const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+                document.getElementById('employeeStartRecord').textContent = visibleRows.length > 0 ? '1' : '0';
+                document.getElementById('employeeEndRecord').textContent = visibleRows.length;
+                document.getElementById('employeeTotalRecords').textContent = visibleRows.length;
             });
             
             // Initialize all tables
@@ -1831,7 +1851,7 @@ $suppliers = $supplierModel->getAll();
             });
 
             // Add customer delete button click handlers
-            document.querySelectorAll('.delete-customer, .btn-delete-customer').forEach(button => {
+            document.querySelectorAll('#customerTable .delete-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const customerId = this.getAttribute('data-id');
                     
@@ -1864,7 +1884,12 @@ $suppliers = $supplierModel->getAll();
                                 },
                                 body: JSON.stringify({ id: customerId })
                             })
-                            .then(response => response.json())
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error('Network response was not ok: ' + response.statusText);
+                                }
+                                return response.json();
+                            })
                             .then(data => {
                                 if (data.success) {
                                     Swal.fire({
@@ -1890,7 +1915,7 @@ $suppliers = $supplierModel->getAll();
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'هەڵە!',
-                                    text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە',
+                                    text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە: ' + error.message,
                                     confirmButtonText: 'باشە'
                                 });
                             });
@@ -1900,7 +1925,7 @@ $suppliers = $supplierModel->getAll();
             });
             
             // Add supplier delete button click handlers
-            document.querySelectorAll('.delete-supplier, .btn-delete-supplier').forEach(button => {
+            document.querySelectorAll('#supplierTable .delete-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const supplierId = this.getAttribute('data-id');
                     
@@ -1933,7 +1958,12 @@ $suppliers = $supplierModel->getAll();
                                 },
                                 body: JSON.stringify({ id: supplierId })
                             })
-                            .then(response => response.json())
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error('Network response was not ok: ' + response.statusText);
+                                }
+                                return response.json();
+                            })
                             .then(data => {
                                 if (data.success) {
                                     Swal.fire({
@@ -1959,7 +1989,7 @@ $suppliers = $supplierModel->getAll();
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'هەڵە!',
-                                    text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە',
+                                    text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە: ' + error.message,
                                     confirmButtonText: 'باشە'
                                 });
                             });

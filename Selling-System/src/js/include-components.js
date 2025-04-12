@@ -5,11 +5,13 @@ document.addEventListener('DOMContentLoaded', function() {
     window.basePath = '../../';
     
     // Load components
-    loadComponent('navbar-container', '../../components/navbar.php');
-    loadComponent('sidebar-container', '../../components/sidebar.php');
+    loadNavbarAndSidebar();
     
     // Initialize sidebar
     initSidebar();
+    
+    // Initialize the sidebar toggle button
+    initSidebarToggle();
     
     // Initialize notifications panel (which is in index.php)
     initNotifications();
@@ -68,6 +70,10 @@ function fixComponentPaths() {
     const productImages = document.querySelectorAll('img[src]');
     productImages.forEach(img => {
         const src = img.getAttribute('src');
+        // Skip if it's already using our product_image.php endpoint
+        if (src && src.includes('product_image.php')) {
+            return;
+        }
         // Fix product images from the upload directory
         if (src && (src.includes('.jpg') || src.includes('.png') || src.includes('.jpeg') || src.includes('.gif'))) {
             // If it's just a filename without a path
@@ -83,39 +89,83 @@ function fixComponentPaths() {
 }
 
 /**
- * Load component into container
- * @param {string} containerId - ID of the container element
- * @param {string} componentPath - Path to the component file
+ * Load both navbar and sidebar components with error handling
  */
-function loadComponent(containerId, componentPath) {
-    const container = document.getElementById(containerId);
-    if (!container) {
-        console.warn(`Container ${containerId} not found`);
-        return;
+function loadNavbarAndSidebar() {
+    // Load navbar
+    if (document.getElementById('navbar-container')) {
+        fetch('../../components/navbar.php')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('پەیوەندی بە ناوبارەوە سەرکەوتوو نەبوو');
+                }
+                return response.text();
+            })
+            .then(data => {
+                document.getElementById('navbar-container').innerHTML = data;
+            })
+            .catch(error => {
+                console.error('هەڵە لە بارکردنی ناوبار:', error);
+                document.getElementById('navbar-container').innerHTML = `
+                    <div class="alert alert-danger m-3">
+                        <strong>هەڵە!</strong> ناتوانرێت ناوبار باربکرێت.
+                        <button class="btn btn-sm btn-outline-danger ms-2" onclick="loadNavbarAndSidebar()">
+                            <i class="fas fa-sync-alt"></i> هەوڵدانەوە
+                        </button>
+                    </div>
+                `;
+            });
     }
-    
-    fetch(componentPath)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Failed to load component: ${response.status}`);
-            }
-            return response.text();
-        })
-        .then(html => {
-            container.innerHTML = html;
-            // After loading sidebar, initialize sidebar functionality
-            if (containerId === 'sidebar-container') {
-                initSidebarMenu();
-            }
-            // After loading navbar, initialize navbar functionality
-            if (containerId === 'navbar-container') {
-                initSidebarToggle(); // Ensure toggle is initialized
-            }
-        })
-        .catch(error => {
-            console.error('Error loading component:', error);
-            container.innerHTML = `<div class="alert alert-danger">خطا لە بارکردنی پێکهاتە: ${componentPath}</div>`;
-        });
+
+    // Load sidebar
+    if (document.getElementById('sidebar-container')) {
+        fetch('../../components/sidebar.php')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('پەیوەندی بە سایدبارەوە سەرکەوتوو نەبوو');
+                }
+                return response.text();
+            })
+            .then(data => {
+                document.getElementById('sidebar-container').innerHTML = data;
+                
+                // Initialize sidebar dropdowns after loading
+                const dropdownItems = document.querySelectorAll('.sidebar-menu .menu-item > a');
+                
+                dropdownItems.forEach(item => {
+                    if (item.getAttribute('href') && item.getAttribute('href').startsWith('#')) {
+                        item.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            
+                            const submenuId = this.getAttribute('href');
+                            const submenu = document.querySelector(submenuId);
+                            
+                            if (submenu) {
+                                // Toggle current submenu
+                                submenu.classList.toggle('show');
+                                
+                                // Toggle dropdown icon
+                                const dropdownIcon = this.querySelector('.dropdown-icon');
+                                if (dropdownIcon) {
+                                    dropdownIcon.classList.toggle('rotate');
+                                }
+                            }
+                        });
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('هەڵە لە بارکردنی سایدبار:', error);
+                document.getElementById('sidebar-container').innerHTML = `
+                    <div class="alert alert-danger m-3">
+                        <strong>هەڵە!</strong> ناتوانرێت سایدبار باربکرێت.
+                        <button class="btn btn-sm btn-outline-danger ms-2" onclick="loadNavbarAndSidebar()">
+                            <i class="fas fa-sync-alt"></i> هەوڵدانەوە
+                        </button>
+                    </div>
+                `;
+            });
+    }
 }
 
 /**
@@ -313,4 +363,7 @@ function initNotifications() {
             });
         }
     }, 500);
-} 
+}
+
+// Make functions globally available
+window.loadNavbarAndSidebar = loadNavbarAndSidebar; 

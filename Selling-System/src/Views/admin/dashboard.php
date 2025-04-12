@@ -738,11 +738,14 @@ try {
                                                         <td>
                                                             <div class="product-info">
                                                                 <?php 
-                                                                $imagePath = $product['image'] 
-                                                                    ? (strpos($product['image'], '/') !== false 
-                                                                        ? $product['image'] 
-                                                                        : '/warehouse-system/Selling-System/src/uploads/products/' . $product['image'])
-                                                                    : '../../assets/img/pro-1.png';
+                                                                if (!empty($product['image'])) {
+                                                                    // Extract just the filename from the image path
+                                                                    $filename = basename($product['image']);
+                                                                    // Use our new API endpoint with absolute path
+                                                                    $imagePath = "../../api/product_image.php?filename=" . urlencode($filename);
+                                                                } else {
+                                                                    $imagePath = "../../assets/img/pro-1.png";
+                                                                }
                                                                 ?>
                                                                 <img src="<?php echo $imagePath; ?>"
                                                                     class="product-img" alt="Product">
@@ -798,11 +801,14 @@ try {
                                                         <td>
                                                             <div class="product-info">
                                                                 <?php 
-                                                                $imagePath = $product['image'] 
-                                                                    ? (strpos($product['image'], '/') !== false 
-                                                                        ? $product['image'] 
-                                                                        : '/warehouse-system/Selling-System/src/uploads/products/' . $product['image'])
-                                                                    : '../../assets/img/pro-1.png';
+                                                                if (!empty($product['image'])) {
+                                                                    // Extract just the filename from the image path
+                                                                    $filename = basename($product['image']);
+                                                                    // Use our new API endpoint with absolute path
+                                                                    $imagePath = "/warehouse-system/Selling-System/src/api/product_image.php?filename=" . urlencode($filename);
+                                                                } else {
+                                                                    $imagePath = "../../assets/img/pro-1.png";
+                                                                }
                                                                 ?>
                                                                 <img src="<?php echo $imagePath; ?>"
                                                                     class="product-img" alt="Product">

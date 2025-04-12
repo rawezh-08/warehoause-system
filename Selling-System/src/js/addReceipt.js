@@ -1317,7 +1317,15 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success && response.product) {
-                    const imageUrl = response.product.image || 'assets/img/pro-1.png';
+                    let imageUrl = '../../assets/img/pro-1.png'; // Default image
+                    
+                    if (response.product.image) {
+                        // Extract the filename from the image path
+                        const filename = response.product.image.split('/').pop();
+                        // Use our new image API endpoint with absolute path
+                        imageUrl = `../../api/product_image.php?filename=${encodeURIComponent(filename)}`;
+                    }
+                    
                     const productName = response.product.name || 'کاڵا';
                     const imgHtml = `
                         <div class="product-image-container" data-bs-toggle="tooltip" data-bs-placement="top" title="${productName}">
@@ -1332,41 +1340,7 @@ $(document).ready(function() {
                     tooltips.forEach(function (tooltipTriggerEl) {
                         new bootstrap.Tooltip(tooltipTriggerEl);
                     });
-
-                    // Add click event for zooming
-                    row.find('.product-image-container').on('click', function() {
-                        const img = $(this).find('img');
-                        const modal = document.createElement('div');
-                        modal.className = 'modal fade image-modal';
-                        modal.innerHTML = `
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <img src="${img.attr('src')}" alt="${img.attr('alt')}">
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        document.body.appendChild(modal);
-                        const modalInstance = new bootstrap.Modal(modal);
-                        modalInstance.show();
-                        
-                        $(modal).on('hidden.bs.modal', function () {
-                            modal.remove();
-                        });
-                    });
                 }
-            },
-            error: function() {
-                // If error, show default image
-                const imgHtml = `
-                    <div class="product-image-container">
-                        <img src="../../assets/img/pro-1.png" alt="کاڵا" class="product-image">
-                    </div>`;
-                row.find('.product-image-cell').html(imgHtml);
             }
         });
     }

@@ -212,9 +212,8 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
 
 // Handle delete requests
 if (isset($_POST['action'])) {
-    header('Content-Type: application/json');
-    
     if ($_POST['action'] == 'delete_employee_payment' && isset($_POST['id'])) {
+        header('Content-Type: application/json');
         try {
             $stmt = $conn->prepare("DELETE FROM employee_payments WHERE id = :id");
             $stmt->bindParam(':id', $_POST['id']);
@@ -229,6 +228,7 @@ if (isset($_POST['action'])) {
     }
     
     if ($_POST['action'] == 'delete_withdrawal' && isset($_POST['id'])) {
+        header('Content-Type: application/json');
         try {
             $stmt = $conn->prepare("DELETE FROM expenses WHERE id = :id");
             $stmt->bindParam(':id', $_POST['id']);
@@ -778,7 +778,332 @@ if (isset($_POST['action'])) {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <!-- Custom JavaScript -->
     <script src="../../js/include-components.js"></script>
-    <script src="../../js/expensesHistory/script.js"></script>
+    <script src="../../js/receiptList/receipt.js"></script>
+    <script>
+    // Wait for the DOM to be ready
+    $(document).ready(function() {
+        // Apply filter for employee payments
+        $('.auto-filter').on('change', function() {
+            if ($(this).closest('form').attr('id') === 'employeePaymentFilterForm') {
+                applyEmployeePaymentFilter();
+            } else if ($(this).closest('form').attr('id') === 'withdrawalFilterForm') {
+                applyWithdrawalFilter();
+            }
+        });
+
+        // Reset filters for employee payments
+        $('#employeePaymentResetFilter').on('click', function() {
+            resetEmployeePaymentFilter();
+        });
+
+        // Reset filters for withdrawals
+        $('#withdrawalResetFilter').on('click', function() {
+            resetWithdrawalFilter();
+        });
+
+        // Apply filter for employee payments
+        function applyEmployeePaymentFilter() {
+            const startDate = $('#employeePaymentStartDate').val();
+            const endDate = $('#employeePaymentEndDate').val();
+            const employeeName = $('#employeePaymentName').val();
+            
+            $.ajax({
+                url: window.location.href,
+                method: 'POST',
+                data: {
+                    action: 'filter',
+                    type: 'employee_payments',
+                    start_date: startDate,
+                    end_date: endDate,
+                    employee_name: employeeName
+                },
+                dataType: 'json',
+                beforeSend: function() {
+                    // Show loading state
+                    $('#employeeHistoryTable tbody').html('<tr><td colspan="7" class="text-center">جاوەڕێ بکە...</td></tr>');
+                },
+                success: function(response) {
+                    console.log("Response:", response);
+                    if (response.success) {
+                        // Update table with filtered data
+                        updateEmployeePaymentsTable(response.data);
+                        updateEmployeePaymentsStats(response.stats);
+                    } else {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: response.message || 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردندا',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error:", xhr.responseText);
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردندا',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            });
+        }
+
+        // Update employee payments table
+        function updateEmployeePaymentsTable(data) {
+            let html = '';
+            
+            if (data.length === 0) {
+                html = '<tr><td colspan="7" class="text-center">هیچ پارەدانێک نەدۆزرایەوە</td></tr>';
+            } else {
+                data.forEach(function(payment, index) {
+                    const paymentTypeClass = payment.payment_type === 'salary' ? 'bg-success' : 
+                                           (payment.payment_type === 'bonus' ? 'bg-warning' : 'bg-info');
+                    
+                    const paymentTypeText = payment.payment_type === 'salary' ? 'مووچە' : 
+                                          (payment.payment_type === 'bonus' ? 'پاداشت' : 'کاتژمێری زیادە');
+                    
+                    // Format date to Y/m/d
+                    const dateObj = new Date(payment.payment_date);
+                    const formattedDate = dateObj.getFullYear() + '/' + 
+                                         String(dateObj.getMonth() + 1).padStart(2, '0') + '/' + 
+                                         String(dateObj.getDate()).padStart(2, '0');
+                    
+                    html += `
+                        <tr data-id="${payment.id}">
+                            <td>${index + 1}</td>
+                            <td>${payment.employee_name || 'N/A'}</td>
+                            <td>${formattedDate}</td>
+                            <td>${payment.amount ? new Intl.NumberFormat().format(payment.amount) + ' د.ع' : '0 د.ع'}</td>
+                            <td>
+                                <span class="badge rounded-pill ${paymentTypeClass}">
+                                    ${paymentTypeText}
+                                </span>
+                            </td>
+                            <td>${payment.notes || ''}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${payment.id}" data-bs-toggle="modal" data-bs-target="#editEmployeePaymentModal">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${payment.id}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            $('#employeeHistoryTable tbody').html(html);
+            
+            // Update pagination info
+            updatePaginationInfo('employee', data.length, 1, data.length, data.length);
+        }
+
+        // Update employee payments stats
+        function updateEmployeePaymentsStats(stats) {
+            $('.card-title:contains("کۆی پارەدان")').next().text(new Intl.NumberFormat().format(stats.total_amount || 0) + ' د.ع');
+            $('.card-title:contains("کۆی پارەدان")').next().next().text((stats.total_payments || 0) + ' پارەدان');
+            
+            $('.card-title:contains("مووچە")').next().text(new Intl.NumberFormat().format(stats.total_salary || 0) + ' د.ع');
+            $('.card-title:contains("پاداشت")').next().text(new Intl.NumberFormat().format(stats.total_bonus || 0) + ' د.ع');
+            $('.card-title:contains("کاتژمێری زیادە")').next().text(new Intl.NumberFormat().format(stats.total_overtime || 0) + ' د.ع');
+        }
+
+        // Reset employee payment filter
+        function resetEmployeePaymentFilter() {
+            // Reset form inputs
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            $('#employeePaymentStartDate').val(formatDate(firstDay));
+            $('#employeePaymentEndDate').val(formatDate(today));
+            $('#employeePaymentName').val('');
+            
+            // Apply filter with reset values
+            applyEmployeePaymentFilter();
+        }
+
+        // Apply filter for withdrawals
+        function applyWithdrawalFilter() {
+            const startDate = $('#withdrawalStartDate').val();
+            const endDate = $('#withdrawalEndDate').val();
+            
+            $.ajax({
+                url: window.location.href,
+                method: 'POST',
+                data: {
+                    action: 'filter',
+                    type: 'withdrawals',
+                    start_date: startDate,
+                    end_date: endDate
+                },
+                dataType: 'json',
+                beforeSend: function() {
+                    // Show loading state
+                    $('#withdrawalHistoryTable tbody').html('<tr><td colspan="5" class="text-center">جاوەڕێ بکە...</td></tr>');
+                },
+                success: function(response) {
+                    console.log("Withdrawal Response:", response);
+                    if (response.success) {
+                        // Update table with filtered data
+                        updateWithdrawalsTable(response.data);
+                    } else {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: response.message || 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردندا',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error:", xhr.responseText);
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردندا',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            });
+        }
+
+        // Update withdrawals table
+        function updateWithdrawalsTable(data) {
+            let html = '';
+            
+            if (data.length === 0) {
+                html = '<tr><td colspan="5" class="text-center">هیچ دەرکردنێکی پارە نەدۆزرایەوە</td></tr>';
+            } else {
+                data.forEach(function(withdrawal, index) {
+                    // Format date to Y/m/d
+                    const dateObj = new Date(withdrawal.expense_date);
+                    const formattedDate = dateObj.getFullYear() + '/' + 
+                                         String(dateObj.getMonth() + 1).padStart(2, '0') + '/' + 
+                                         String(dateObj.getDate()).padStart(2, '0');
+                    
+                    html += `
+                        <tr data-id="${withdrawal.id}">
+                            <td>${index + 1}</td>
+                            <td>${formattedDate}</td>
+                            <td>${withdrawal.amount ? new Intl.NumberFormat().format(withdrawal.amount) + ' د.ع' : '0 د.ع'}</td>
+                            <td>${withdrawal.notes || ''}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${withdrawal.id}" data-bs-toggle="modal" data-bs-target="#editWithdrawalModal">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${withdrawal.id}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${withdrawal.id}">
+                                        <i class="fas fa-print"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            $('#withdrawalHistoryTable tbody').html(html);
+            
+            // Update pagination info
+            updatePaginationInfo('withdrawal', data.length, 1, data.length, data.length);
+        }
+
+        // Reset withdrawal filter
+        function resetWithdrawalFilter() {
+            // Reset form inputs
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            $('#withdrawalStartDate').val(formatDate(firstDay));
+            $('#withdrawalEndDate').val(formatDate(today));
+            
+            // Apply filter with reset values
+            applyWithdrawalFilter();
+        }
+
+        // Helper function to format date as YYYY-MM-DD
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Update pagination info
+        function updatePaginationInfo(prefix, totalRecords, currentPage, recordsPerPage, filteredRecords) {
+            const startRecord = totalRecords > 0 ? (currentPage - 1) * recordsPerPage + 1 : 0;
+            const endRecord = Math.min(startRecord + recordsPerPage - 1, filteredRecords);
+            
+            $(`#${prefix}StartRecord`).text(startRecord);
+            $(`#${prefix}EndRecord`).text(endRecord);
+            $(`#${prefix}TotalRecords`).text(filteredRecords);
+        }
+
+        // Delete employee payment
+        $(document).on('click', '#employeeHistoryTable .delete-btn', function() {
+            const paymentId = $(this).data('id');
+            
+            Swal.fire({
+                title: 'دڵنیای؟',
+                text: "ئەم کردارە ناگەڕێتەوە!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'بەڵێ، بیسڕەوە!',
+                cancelButtonText: 'نەخێر، پاشگەزبوونەوە'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Send AJAX request to delete the payment
+                    $.ajax({
+                        url: window.location.href,
+                        method: 'POST',
+                        data: {
+                            action: 'delete_employee_payment',
+                            id: paymentId
+                        },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    title: 'سڕایەوە!',
+                                    text: 'پارەدانەکە بە سەرکەوتوویی سڕایەوە.',
+                                    icon: 'success',
+                                    confirmButtonText: 'باشە'
+                                });
+                                
+                                // Refresh the employee payments table
+                                applyEmployeePaymentFilter();
+                            } else {
+                                Swal.fire({
+                                    title: 'هەڵە!',
+                                    text: response.message || 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا',
+                                    icon: 'error',
+                                    confirmButtonText: 'باشە'
+                                });
+                            }
+                        },
+                        error: function() {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا',
+                                icon: 'error',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+    });
+    </script>
 
     <!-- Employee Payment Edit Modal -->
     <div class="modal fade" id="editEmployeePaymentModal" tabindex="-1" aria-labelledby="editEmployeePaymentModalLabel" aria-hidden="true">

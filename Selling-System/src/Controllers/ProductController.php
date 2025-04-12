@@ -3,7 +3,7 @@
 namespace Controllers;
 
 use Core\Controllers\BaseController;
-use Models\Product;
+use App\Models\Product;
 use Exception;
 
 class ProductController extends BaseController {
