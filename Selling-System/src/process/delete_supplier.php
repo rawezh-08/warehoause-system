@@ -1,6 +1,8 @@
 <?php
 require_once '../config/database.php';
 
+header('Content-Type: application/json');
+
 try {
     // Get JSON data from request body
     $data = json_decode(file_get_contents('php://input'), true);
@@ -23,12 +25,20 @@ try {
         throw new Exception('دابینکەر نەدۆزرایەوە');
     }
     
-    // Check if supplier has associated purchases or debt
+    // Check if supplier has associated debts
     $checkDebtStmt = $conn->prepare("SELECT id FROM supplier_debt_transactions WHERE supplier_id = ? LIMIT 1");
     $checkDebtStmt->execute([$supplierId]);
     
     if ($checkDebtStmt->rowCount() > 0) {
-        throw new Exception('ناتوانرێت ئەم دابینکەرە بسڕێتەوە چونکە قەرزی هەیە یان کڕینی لێکراوە');
+        throw new Exception('ناتوانرێت ئەم دابینکەرە بسڕێتەوە چونکە قەرزی هەیە');
+    }
+    
+    // Check if supplier has associated purchases
+    $checkPurchasesStmt = $conn->prepare("SELECT id FROM purchases WHERE supplier_id = ? LIMIT 1");
+    $checkPurchasesStmt->execute([$supplierId]);
+    
+    if ($checkPurchasesStmt->rowCount() > 0) {
+        throw new Exception('ناتوانرێت ئەم دابینکەرە بسڕێتەوە چونکە کڕینی لێ کراوە، پێویستە سەرەتا کڕینەکان بسڕیتەوە');
     }
     
     // Delete supplier

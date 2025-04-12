@@ -4,20 +4,19 @@ require_once '../config/database.php';
 header('Content-Type: application/json');
 
 try {
-    // Get JSON input
-    $input = json_decode(file_get_contents('php://input'), true);
+    // Get JSON data from request body
+    $data = json_decode(file_get_contents('php://input'), true);
     
-    // Validate input
-    if (!isset($input['id']) || empty($input['id'])) {
-        throw new Exception('ناسنامەی کارمەند دیاری نەکراوە');
+    if (!isset($data['id']) || empty($data['id'])) {
+        throw new Exception('ناسنامەی کارمەند نادروستە');
     }
-
-    $employeeId = intval($input['id']);
-
+    
+    $employeeId = (int)$data['id'];
+    
     // Create database connection
     $db = new Database();
     $conn = $db->getConnection();
-
+    
     // Check if employee exists
     $checkStmt = $conn->prepare("SELECT id FROM employees WHERE id = ?");
     $checkStmt->execute([$employeeId]);
@@ -25,28 +24,32 @@ try {
     if ($checkStmt->rowCount() === 0) {
         throw new Exception('کارمەندەکە نەدۆزرایەوە');
     }
-
-    // Begin transaction
-    $conn->beginTransaction();
-
-    try {
-        // Delete the employee
-        $stmt = $conn->prepare("DELETE FROM employees WHERE id = ?");
-        $stmt->execute([$employeeId]);
-
-        // Commit transaction
-        $conn->commit();
-
-        echo json_encode([
-            'success' => true,
-            'message' => 'کارمەندەکە بە سەرکەوتوویی سڕایەوە'
-        ]);
-    } catch (Exception $e) {
-        // Rollback transaction on error
-        $conn->rollBack();
-        throw $e;
+    
+    // Check if employee has associated payments
+    $checkPaymentsStmt = $conn->prepare("SELECT id FROM employee_payments WHERE employee_id = ? LIMIT 1");
+    $checkPaymentsStmt->execute([$employeeId]);
+    
+    if ($checkPaymentsStmt->rowCount() > 0) {
+        throw new Exception('ناتوانرێت ئەم کارمەندە بسڕێتەوە چونکە پارەدانی بۆ تۆمارکراوە');
     }
+    
+    // Delete employee
+    $deleteStmt = $conn->prepare("DELETE FROM employees WHERE id = ?");
+    $result = $deleteStmt->execute([$employeeId]);
+    
+    if (!$result) {
+        throw new Exception('هەڵەیەک ڕوویدا لە سڕینەوەی کارمەند');
+    }
+    
+    // Return success response
+    echo json_encode([
+        'success' => true,
+        'message' => 'کارمەند بە سەرکەوتوویی سڕایەوە'
+    ]);
+    
 } catch (Exception $e) {
+    // Return error response
+    http_response_code(400);
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()

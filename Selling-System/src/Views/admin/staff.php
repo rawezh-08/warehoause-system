@@ -846,7 +846,7 @@ $suppliers = $supplierModel->getAll();
         // Function to add event listeners for employee actions
         function addEmployeeActionListeners() {
             // Edit buttons
-            document.querySelectorAll('.edit-btn').forEach(button => {
+            document.querySelectorAll('#employeeTable .edit-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const employeeId = this.dataset.id;
                     // Get employee data
@@ -881,8 +881,8 @@ $suppliers = $supplierModel->getAll();
                 });
             });
             
-            // Delete buttons
-            document.querySelectorAll('.delete-btn').forEach(button => {
+            // Delete buttons - ONLY for employee table
+            document.querySelectorAll('#employeeTable .delete-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const employeeId = this.dataset.id;
                     deleteEmployee(employeeId);
@@ -1855,6 +1855,8 @@ $suppliers = $supplierModel->getAll();
                 button.addEventListener('click', function() {
                     const customerId = this.getAttribute('data-id');
                     
+                    console.log('Deleting customer with ID:', customerId);
+                    
                     Swal.fire({
                         title: 'دڵنیای لە سڕینەوە؟',
                         text: 'ئەم کردارە ناتوانرێت گەڕێنرێتەوە!',
@@ -1876,21 +1878,40 @@ $suppliers = $supplierModel->getAll();
                                 }
                             });
                             
+                            console.log('Sending request to delete_customer.php with ID:', customerId);
+                            
+                            // Create the data to send
+                            const data = JSON.stringify({ id: customerId });
+                            console.log('Request payload:', data);
+                            
                             // Send delete request
                             fetch('../../process/delete_customer.php', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
                                 },
-                                body: JSON.stringify({ id: customerId })
+                                body: data
                             })
                             .then(response => {
-                                if (!response.ok) {
-                                    throw new Error('Network response was not ok: ' + response.statusText);
-                                }
-                                return response.json();
+                                console.log('Response status:', response.status);
+                                console.log('Response headers:', response.headers);
+                                
+                                // For debugging - show raw response
+                                return response.text().then(text => {
+                                    console.log('Raw response:', text);
+                                    try {
+                                        // Try to parse as JSON
+                                        const data = JSON.parse(text);
+                                        return data;
+                                    } catch (e) {
+                                        // If not valid JSON, throw error with the raw text
+                                        throw new Error('Invalid JSON response: ' + text);
+                                    }
+                                });
                             })
                             .then(data => {
+                                console.log('Response data:', data);
                                 if (data.success) {
                                     Swal.fire({
                                         icon: 'success',
@@ -1929,6 +1950,8 @@ $suppliers = $supplierModel->getAll();
                 button.addEventListener('click', function() {
                     const supplierId = this.getAttribute('data-id');
                     
+                    console.log('Deleting supplier with ID:', supplierId);
+                    
                     Swal.fire({
                         title: 'دڵنیای لە سڕینەوە؟',
                         text: 'ئەم کردارە ناتوانرێت گەڕێنرێتەوە!',
@@ -1950,21 +1973,40 @@ $suppliers = $supplierModel->getAll();
                                 }
                             });
                             
+                            console.log('Sending request to delete_supplier.php with ID:', supplierId);
+                            
+                            // Create the data to send
+                            const data = JSON.stringify({ id: supplierId });
+                            console.log('Request payload:', data);
+                            
                             // Send delete request
                             fetch('../../process/delete_supplier.php', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
                                 },
-                                body: JSON.stringify({ id: supplierId })
+                                body: data
                             })
                             .then(response => {
-                                if (!response.ok) {
-                                    throw new Error('Network response was not ok: ' + response.statusText);
-                                }
-                                return response.json();
+                                console.log('Response status:', response.status);
+                                console.log('Response headers:', response.headers);
+                                
+                                // For debugging - show raw response
+                                return response.text().then(text => {
+                                    console.log('Raw response:', text);
+                                    try {
+                                        // Try to parse as JSON
+                                        const data = JSON.parse(text);
+                                        return data;
+                                    } catch (e) {
+                                        // If not valid JSON, throw error with the raw text
+                                        throw new Error('Invalid JSON response: ' + text);
+                                    }
+                                });
                             })
                             .then(data => {
+                                console.log('Response data:', data);
                                 if (data.success) {
                                     Swal.fire({
                                         icon: 'success',

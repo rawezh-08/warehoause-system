@@ -15,13 +15,12 @@ try {
 }
 
 // Function to get employee payments data
-function getEmployeePaymentsData($limit = 10, $offset = 0, $filters = []) {
+function getEmployeePaymentsData($limit = 0, $offset = 0, $filters = []) {
     global $conn;
     
     // Base query to get employee payments
-    $sql = "SELECT 
-                ep.*,
-                e.name as employee_name
+    $sql = "SELECT ep.id, ep.employee_id, ep.amount, ep.payment_type, ep.payment_date, ep.notes, 
+                   e.name as employee_name
             FROM employee_payments ep
             LEFT JOIN employees e ON ep.employee_id = e.id
             WHERE 1=1";
@@ -38,12 +37,13 @@ function getEmployeePaymentsData($limit = 10, $offset = 0, $filters = []) {
         $params[':end_date'] = $filters['end_date'];
     }
     if (!empty($filters['employee_name'])) {
-        $sql .= " AND e.name LIKE :employee_name";
+        $sql .= " AND (e.name LIKE :employee_name OR e.phone LIKE :employee_name)";
         $params[':employee_name'] = '%' . $filters['employee_name'] . '%';
     }
     
     $sql .= " ORDER BY ep.payment_date DESC";
     
+    // Only apply limit if it's greater than 0
     if ($limit > 0) {
         $sql .= " LIMIT :offset, :limit";
         $params[':offset'] = (int)$offset;
@@ -53,7 +53,7 @@ function getEmployeePaymentsData($limit = 10, $offset = 0, $filters = []) {
     try {
         $stmt = $conn->prepare($sql);
         foreach ($params as $key => $val) {
-            if ($key == ':offset' || $key == ':limit') {
+            if (($key == ':offset' || $key == ':limit') && $limit > 0) {
                 $stmt->bindValue($key, $val, PDO::PARAM_INT);
             } else {
                 $stmt->bindValue($key, $val);
@@ -118,7 +118,7 @@ function getEmployeePaymentsStats($filters = []) {
 }
 
 // Function to get withdrawal data
-function getWithdrawalsData($limit = 10, $offset = 0, $filters = []) {
+function getWithdrawalsData($limit = 0, $offset = 0, $filters = []) {
     global $conn;
     
     // Base query to get expenses
@@ -138,6 +138,7 @@ function getWithdrawalsData($limit = 10, $offset = 0, $filters = []) {
     
     $sql .= " ORDER BY expense_date DESC";
     
+    // Only apply limit if it's greater than 0
     if ($limit > 0) {
         $sql .= " LIMIT :offset, :limit";
         $params[':offset'] = (int)$offset;
@@ -147,7 +148,7 @@ function getWithdrawalsData($limit = 10, $offset = 0, $filters = []) {
     try {
         $stmt = $conn->prepare($sql);
         foreach ($params as $key => $val) {
-            if ($key == ':offset' || $key == ':limit') {
+            if (($key == ':offset' || $key == ':limit') && $limit > 0) {
                 $stmt->bindValue($key, $val, PDO::PARAM_INT);
             } else {
                 $stmt->bindValue($key, $val);
@@ -171,10 +172,10 @@ $defaultFilters = [
     'end_date' => $today
 ];
 
-// Get data with default filters
-$employeePaymentsData = getEmployeePaymentsData(10, 0, $defaultFilters);
+// Get data with default filters - load all records (limit=0)
+$employeePaymentsData = getEmployeePaymentsData(0, 0, $defaultFilters);
 $employeePaymentsStats = getEmployeePaymentsStats($defaultFilters);
-$withdrawalsData = getWithdrawalsData(10, 0, $defaultFilters);
+$withdrawalsData = getWithdrawalsData(0, 0, $defaultFilters);
 
 // Handle AJAX filter requests
 if (isset($_POST['action']) && $_POST['action'] == 'filter') {
@@ -189,7 +190,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
         if (!empty($_POST['employee_name'])) {
             $filters['employee_name'] = $_POST['employee_name'];
         }
-        $employeePaymentsData = getEmployeePaymentsData(10, 0, $filters);
+        $employeePaymentsData = getEmployeePaymentsData(0, 0, $filters);
         $employeePaymentsStats = getEmployeePaymentsStats($filters);
         echo json_encode([
             'success' => true, 
@@ -201,7 +202,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
         if (!empty($_POST['name'])) {
             $filters['name'] = $_POST['name'];
         }
-        $withdrawalsData = getWithdrawalsData(10, 0, $filters);
+        $withdrawalsData = getWithdrawalsData(0, 0, $filters);
         echo json_encode(['success' => true, 'data' => $withdrawalsData]);
         exit;
     }
@@ -716,11 +717,8 @@ if (isset($_POST['action'])) {
                                                                     <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="<?php echo $withdrawal['id']; ?>" data-bs-toggle="modal" data-bs-target="#editWithdrawalModal">
                                                                         <i class="fas fa-edit"></i>
                                                                     </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="<?php echo $withdrawal['id']; ?>">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="<?php echo $withdrawal['id']; ?>">
-                                                                        <i class="fas fa-print"></i>
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="<?php echo $withdrawal['id']; ?>">
+                                                                        <i class="fas fa-trash"></i>
                                                                     </button>
                                                                 </div>
                                                             </td>
@@ -801,55 +799,466 @@ if (isset($_POST['action'])) {
             resetWithdrawalFilter();
         });
 
-        // Apply filter for employee payments
-        function applyEmployeePaymentFilter() {
-            const startDate = $('#employeePaymentStartDate').val();
-            const endDate = $('#employeePaymentEndDate').val();
-            const employeeName = $('#employeePaymentName').val();
+        // Handle edit button click for employee payments
+        $(document).on('click', '#employeeHistoryTable .edit-btn', function() {
+            const paymentId = $(this).data('id');
             
+            // Show loading in modal
+            $('#editEmployeePaymentForm').html('<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2">چاوەڕێ بکە...</p></div>');
+            
+            // Fetch payment data
             $.ajax({
-                url: window.location.href,
+                url: '../../process/get_employee_payment.php',
+                method: 'GET',
+                data: { id: paymentId },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        const payment = response.payment;
+                        
+                        // Restore form content first
+                        restoreEmployeePaymentForm();
+                        
+                        // Fill the form with payment data
+                        $('#editEmployeePaymentId').val(payment.id);
+                        $('#editEmployeePaymentName').val(payment.employee_id);
+                        $('#editEmployeePaymentDate').val(payment.payment_date);
+                        
+                        // Format the amount with commas
+                        const formattedAmount = parseFloat(payment.amount).toLocaleString('en-US', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2
+                        });
+                        $('#editEmployeePaymentAmount').val(formattedAmount);
+                        
+                        $('#editEmployeePaymentType').val(payment.payment_type);
+                        $('#editEmployeePaymentNotes').val(payment.notes);
+                    } else {
+                        // Show error message
+                        $('#editEmployeePaymentForm').html('<div class="alert alert-danger">' + (response.message || 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیارییەکان') + '</div>');
+                    }
+                },
+                error: function() {
+                    // Show error message
+                    $('#editEmployeePaymentForm').html('<div class="alert alert-danger">هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە</div>');
+                }
+            });
+        });
+        
+        // Handle edit button click for withdrawals
+        $(document).on('click', '#withdrawalHistoryTable .edit-btn', function() {
+            const withdrawalId = $(this).data('id');
+            
+            // Show loading in modal
+            $('#editWithdrawalForm').html('<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2">چاوەڕێ بکە...</p></div>');
+            
+            // Fetch withdrawal data
+            $.ajax({
+                url: '../../process/get_expense.php',
+                method: 'GET',
+                data: { id: withdrawalId },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        const withdrawal = response.expense;
+                        
+                        // Restore form content first
+                        restoreWithdrawalForm();
+                        
+                        // Fill the form with withdrawal data
+                        $('#editWithdrawalId').val(withdrawal.id);
+                        $('#editWithdrawalDate').val(withdrawal.expense_date);
+                        
+                        // Format the amount with commas
+                        const formattedAmount = parseFloat(withdrawal.amount).toLocaleString('en-US', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2
+                        });
+                        $('#editWithdrawalAmount').val(formattedAmount);
+                        
+                        $('#editWithdrawalNotes').val(withdrawal.notes);
+                    } else {
+                        // Show error message
+                        $('#editWithdrawalForm').html('<div class="alert alert-danger">' + (response.message || 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیارییەکان') + '</div>');
+                    }
+                },
+                error: function() {
+                    // Show error message
+                    $('#editWithdrawalForm').html('<div class="alert alert-danger">هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە</div>');
+                }
+            });
+        });
+        
+        // Restore employee payment form content
+        function restoreEmployeePaymentForm() {
+            $('#editEmployeePaymentForm').html(`
+                <input type="hidden" id="editEmployeePaymentId">
+                <div class="mb-3">
+                    <label for="editEmployeePaymentName" class="form-label">ناوی کارمەند</label>
+                    <select id="editEmployeePaymentName" class="form-select" required>
+                        <option value="" selected disabled>کارمەند هەڵبژێرە</option>
+                        <?php foreach ($employees as $employee): ?>
+                            <option value="<?php echo $employee['id']; ?>"><?php echo htmlspecialchars($employee['name']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="editEmployeePaymentDate" class="form-label">بەروار</label>
+                    <input type="date" id="editEmployeePaymentDate" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="editEmployeePaymentAmount" class="form-label">بڕی پارە</label>
+                    <div class="input-group">
+                        <input type="text" id="editEmployeePaymentAmount" class="form-control number-format" required>
+                        <span class="input-group-text">د.ع</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="editEmployeePaymentType" class="form-label">جۆری پارەدان</label>
+                    <select id="editEmployeePaymentType" class="form-select" required>
+                        <option value="" selected disabled>جۆری پارەدان</option>
+                        <option value="salary">مووچە</option>
+                        <option value="bonus">پاداشت</option>
+                        <option value="overtime">کاتژمێری زیادە</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="editEmployeePaymentNotes" class="form-label">تێبینی</label>
+                    <textarea id="editEmployeePaymentNotes" class="form-control" rows="3"></textarea>
+                </div>
+            `);
+            
+            // Initialize number formatting
+            initNumberFormat();
+        }
+        
+        // Restore withdrawal form content
+        function restoreWithdrawalForm() {
+            $('#editWithdrawalForm').html(`
+                <input type="hidden" id="editWithdrawalId">
+                <div class="mb-3">
+                    <label for="editWithdrawalDate" class="form-label">بەروار</label>
+                    <input type="date" id="editWithdrawalDate" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="editWithdrawalAmount" class="form-label">بڕی پارە</label>
+                    <div class="input-group">
+                        <input type="text" id="editWithdrawalAmount" class="form-control number-format" required>
+                        <span class="input-group-text">د.ع</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="editWithdrawalNotes" class="form-label">تێبینی</label>
+                    <textarea id="editWithdrawalNotes" class="form-control" rows="3"></textarea>
+                </div>
+            `);
+            
+            // Initialize number formatting
+            initNumberFormat();
+        }
+        
+        // Function to initialize number formatting for inputs
+        function initNumberFormat() {
+            const formatNumberInputs = document.querySelectorAll('.number-format');
+            
+            formatNumberInputs.forEach(input => {
+                input.addEventListener('input', function(e) {
+                    // Remove non-numeric characters except decimal point
+                    let value = this.value.replace(/[^\d.]/g, '');
+                    
+                    // Ensure only one decimal point
+                    const parts = value.split('.');
+                    if (parts.length > 2) {
+                        value = parts[0] + '.' + parts.slice(1).join('');
+                    }
+                    
+                    // Add thousand separators
+                    if (value) {
+                        const decimalParts = value.split('.');
+                        decimalParts[0] = decimalParts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                        value = decimalParts.join('.');
+                    }
+                    
+                    this.value = value;
+                });
+            });
+        }
+        
+        // Save employee payment edit
+        $('#saveEmployeePaymentEdit').on('click', function() {
+            const paymentId = $('#editEmployeePaymentId').val();
+            const employeeId = $('#editEmployeePaymentName').val();
+            const paymentDate = $('#editEmployeePaymentDate').val();
+            const amount = $('#editEmployeePaymentAmount').val().replace(/,/g, ''); // Remove commas
+            const paymentType = $('#editEmployeePaymentType').val();
+            const notes = $('#editEmployeePaymentNotes').val();
+            
+            // Validate form
+            if (!employeeId || !paymentDate || !amount || !paymentType) {
+                Swal.fire({
+                    title: 'هەڵە!',
+                    text: 'تکایە هەموو خانە پێویستەکان پڕ بکەوە',
+                    icon: 'error',
+                    confirmButtonText: 'باشە'
+                });
+                return;
+            }
+            
+            // Show loading
+            Swal.fire({
+                title: 'تکایە چاوەڕێ بکە...',
+                text: 'نوێکردنەوەی زانیاری',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Send update request
+            $.ajax({
+                url: '../../process/update_employee_payment.php',
                 method: 'POST',
                 data: {
-                    action: 'filter',
-                    type: 'employee_payments',
-                    start_date: startDate,
-                    end_date: endDate,
-                    employee_name: employeeName
+                    id: paymentId,
+                    employee_id: employeeId,
+                    payment_date: paymentDate,
+                    amount: amount,
+                    payment_type: paymentType,
+                    notes: notes
                 },
                 dataType: 'json',
-                beforeSend: function() {
-                    // Show loading state
-                    $('#employeeHistoryTable tbody').html('<tr><td colspan="7" class="text-center">جاوەڕێ بکە...</td></tr>');
-                },
                 success: function(response) {
-                    console.log("Response:", response);
                     if (response.success) {
-                        // Update table with filtered data
-                        updateEmployeePaymentsTable(response.data);
-                        updateEmployeePaymentsStats(response.stats);
+                        Swal.fire({
+                            title: 'سەرکەوتوو بوو!',
+                            text: response.message || 'زانیاری پارەدان بە سەرکەوتوویی نوێ کرایەوە',
+                            icon: 'success',
+                            confirmButtonText: 'باشە'
+                        }).then(() => {
+                            // Close modal
+                            $('#editEmployeePaymentModal').modal('hide');
+                            
+                            // Refresh table
+                            applyEmployeePaymentFilter();
+                        });
                     } else {
                         Swal.fire({
                             title: 'هەڵە!',
-                            text: response.message || 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردندا',
+                            text: response.message || 'هەڵەیەک ڕوویدا لە نوێکردنەوەی زانیاری',
                             icon: 'error',
                             confirmButtonText: 'باشە'
                         });
                     }
                 },
-                error: function(xhr, status, error) {
-                    console.error("AJAX Error:", xhr.responseText);
+                error: function() {
                     Swal.fire({
                         title: 'هەڵە!',
-                        text: 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردندا',
+                        text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە',
                         icon: 'error',
                         confirmButtonText: 'باشە'
                     });
                 }
             });
-        }
+        });
+        
+        // Save withdrawal edit
+        $('#saveWithdrawalEdit').on('click', function() {
+            const withdrawalId = $('#editWithdrawalId').val();
+            const expenseDate = $('#editWithdrawalDate').val();
+            const amount = $('#editWithdrawalAmount').val().replace(/,/g, ''); // Remove commas
+            const notes = $('#editWithdrawalNotes').val();
+            
+            // Validate form
+            if (!expenseDate || !amount) {
+                Swal.fire({
+                    title: 'هەڵە!',
+                    text: 'تکایە هەموو خانە پێویستەکان پڕ بکەوە',
+                    icon: 'error',
+                    confirmButtonText: 'باشە'
+                });
+                return;
+            }
+            
+            // Show loading
+            Swal.fire({
+                title: 'تکایە چاوەڕێ بکە...',
+                text: 'نوێکردنەوەی زانیاری',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Send update request
+            $.ajax({
+                url: '../../process/update_expense.php',
+                method: 'POST',
+                data: {
+                    id: withdrawalId,
+                    name: 'Expense', // Use default value as we don't have name input
+                    expense_date: expenseDate,
+                    amount: amount,
+                    category: 'expense', // Use default value as we don't have category input
+                    notes: notes
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            title: 'سەرکەوتوو بوو!',
+                            text: response.message || 'زانیاری دەرکردنی پارە بە سەرکەوتوویی نوێ کرایەوە',
+                            icon: 'success',
+                            confirmButtonText: 'باشە'
+                        }).then(() => {
+                            // Close modal
+                            $('#editWithdrawalModal').modal('hide');
+                            
+                            // Refresh table
+                            applyWithdrawalFilter();
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: response.message || 'هەڵەیەک ڕوویدا لە نوێکردنەوەی زانیاری',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            });
+        });
 
-        // Update employee payments table
+        // Initialize default values for pagination
+        let employeeCurrentPage = 1;
+        let employeeRecordsPerPage = 10;
+        let employeeAllData = <?php echo json_encode($employeePaymentsData); ?>;
+        
+        let withdrawalCurrentPage = 1;
+        let withdrawalRecordsPerPage = 10;
+        let withdrawalAllData = <?php echo json_encode($withdrawalsData); ?>;
+        
+        // Records per page change handler
+        $('#employeeRecordsPerPage').on('change', function() {
+            employeeRecordsPerPage = parseInt($(this).val());
+            employeeCurrentPage = 1; // Reset to first page when changing records per page
+            displayEmployeeData();
+        });
+        
+        $('#withdrawalRecordsPerPage').on('change', function() {
+            withdrawalRecordsPerPage = parseInt($(this).val());
+            withdrawalCurrentPage = 1; // Reset to first page when changing records per page
+            displayWithdrawalData();
+        });
+        
+        // Function to display employee data with pagination
+        function displayEmployeeData() {
+            const startIndex = (employeeCurrentPage - 1) * employeeRecordsPerPage;
+            const endIndex = startIndex + employeeRecordsPerPage;
+            const dataToShow = employeeAllData.slice(startIndex, endIndex);
+            
+            updateEmployeePaymentsTable(dataToShow);
+            updatePaginationInfo('employee', employeeAllData.length, employeeCurrentPage, employeeRecordsPerPage, employeeAllData.length);
+            
+            // Update pagination controls
+            $('#employeePrevPageBtn').prop('disabled', employeeCurrentPage === 1);
+            $('#employeeNextPageBtn').prop('disabled', endIndex >= employeeAllData.length);
+            
+            // Generate pagination numbers
+            generatePaginationNumbers('employee', employeeAllData.length, employeeCurrentPage, employeeRecordsPerPage);
+        }
+        
+        // Function to display withdrawal data with pagination
+        function displayWithdrawalData() {
+            const startIndex = (withdrawalCurrentPage - 1) * withdrawalRecordsPerPage;
+            const endIndex = startIndex + withdrawalRecordsPerPage;
+            const dataToShow = withdrawalAllData.slice(startIndex, endIndex);
+            
+            updateWithdrawalsTable(dataToShow);
+            updatePaginationInfo('withdrawal', withdrawalAllData.length, withdrawalCurrentPage, withdrawalRecordsPerPage, withdrawalAllData.length);
+            
+            // Update pagination controls
+            $('#withdrawalPrevPageBtn').prop('disabled', withdrawalCurrentPage === 1);
+            $('#withdrawalNextPageBtn').prop('disabled', endIndex >= withdrawalAllData.length);
+            
+            // Generate pagination numbers
+            generatePaginationNumbers('withdrawal', withdrawalAllData.length, withdrawalCurrentPage, withdrawalRecordsPerPage);
+        }
+        
+        // Generate pagination numbers
+        function generatePaginationNumbers(prefix, totalRecords, currentPage, recordsPerPage) {
+            const totalPages = Math.ceil(totalRecords / recordsPerPage);
+            let html = '';
+            
+            // Show max 5 page numbers
+            const maxPagesToShow = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+            let endPage = startPage + maxPagesToShow - 1;
+            
+            if (endPage > totalPages) {
+                endPage = totalPages;
+                startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button class="btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2 page-number" data-page="${i}">${i}</button>`;
+            }
+            
+            $(`#${prefix}PaginationNumbers`).html(html);
+            
+            // Add event listeners to new pagination buttons
+            $(`.page-number`).on('click', function() {
+                const page = parseInt($(this).data('page'));
+                if ($(this).closest(`#${prefix}PaginationNumbers`).length) {
+                    if (prefix === 'employee') {
+                        employeeCurrentPage = page;
+                        displayEmployeeData();
+                    } else if (prefix === 'withdrawal') {
+                        withdrawalCurrentPage = page;
+                        displayWithdrawalData();
+                    }
+                }
+            });
+        }
+        
+        // Next page button handler
+        $('#employeeNextPageBtn').on('click', function() {
+            if (employeeCurrentPage < Math.ceil(employeeAllData.length / employeeRecordsPerPage)) {
+                employeeCurrentPage++;
+                displayEmployeeData();
+            }
+        });
+        
+        $('#withdrawalNextPageBtn').on('click', function() {
+            if (withdrawalCurrentPage < Math.ceil(withdrawalAllData.length / withdrawalRecordsPerPage)) {
+                withdrawalCurrentPage++;
+                displayWithdrawalData();
+            }
+        });
+        
+        // Previous page button handler
+        $('#employeePrevPageBtn').on('click', function() {
+            if (employeeCurrentPage > 1) {
+                employeeCurrentPage--;
+                displayEmployeeData();
+            }
+        });
+        
+        $('#withdrawalPrevPageBtn').on('click', function() {
+            if (withdrawalCurrentPage > 1) {
+                withdrawalCurrentPage--;
+                displayWithdrawalData();
+            }
+        });
+        
+        // Update employee payments table - modified to use the data passed to it directly
         function updateEmployeePaymentsTable(data) {
             let html = '';
             
@@ -869,9 +1278,12 @@ if (isset($_POST['action'])) {
                                          String(dateObj.getMonth() + 1).padStart(2, '0') + '/' + 
                                          String(dateObj.getDate()).padStart(2, '0');
                     
+                    // Calculate the actual row number based on the current page and records per page
+                    const actualIndex = ((employeeCurrentPage - 1) * employeeRecordsPerPage) + index + 1;
+                    
                     html += `
                         <tr data-id="${payment.id}">
-                            <td>${index + 1}</td>
+                            <td>${actualIndex}</td>
                             <td>${payment.employee_name || 'N/A'}</td>
                             <td>${formattedDate}</td>
                             <td>${payment.amount ? new Intl.NumberFormat().format(payment.amount) + ' د.ع' : '0 د.ع'}</td>
@@ -897,20 +1309,152 @@ if (isset($_POST['action'])) {
             }
             
             $('#employeeHistoryTable tbody').html(html);
-            
-            // Update pagination info
-            updatePaginationInfo('employee', data.length, 1, data.length, data.length);
         }
-
-        // Update employee payments stats
-        function updateEmployeePaymentsStats(stats) {
-            $('.card-title:contains("کۆی پارەدان")').next().text(new Intl.NumberFormat().format(stats.total_amount || 0) + ' د.ع');
-            $('.card-title:contains("کۆی پارەدان")').next().next().text((stats.total_payments || 0) + ' پارەدان');
+        
+        // Update withdrawals table - modified to use the data passed to it directly
+        function updateWithdrawalsTable(data) {
+            let html = '';
             
-            $('.card-title:contains("مووچە")').next().text(new Intl.NumberFormat().format(stats.total_salary || 0) + ' د.ع');
-            $('.card-title:contains("پاداشت")').next().text(new Intl.NumberFormat().format(stats.total_bonus || 0) + ' د.ع');
-            $('.card-title:contains("کاتژمێری زیادە")').next().text(new Intl.NumberFormat().format(stats.total_overtime || 0) + ' د.ع');
+            if (data.length === 0) {
+                html = '<tr><td colspan="5" class="text-center">هیچ دەرکردنێکی پارە نەدۆزرایەوە</td></tr>';
+            } else {
+                data.forEach(function(withdrawal, index) {
+                    // Format date to Y/m/d
+                    const dateObj = new Date(withdrawal.expense_date);
+                    const formattedDate = dateObj.getFullYear() + '/' + 
+                                         String(dateObj.getMonth() + 1).padStart(2, '0') + '/' + 
+                                         String(dateObj.getDate()).padStart(2, '0');
+                    
+                    // Calculate the actual row number based on the current page and records per page
+                    const actualIndex = ((withdrawalCurrentPage - 1) * withdrawalRecordsPerPage) + index + 1;
+                    
+                    html += `
+                        <tr data-id="${withdrawal.id}">
+                            <td>${actualIndex}</td>
+                            <td>${formattedDate}</td>
+                            <td>${withdrawal.amount ? new Intl.NumberFormat().format(withdrawal.amount) + ' د.ع' : '0 د.ع'}</td>
+                            <td>${withdrawal.notes || ''}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${withdrawal.id}" data-bs-toggle="modal" data-bs-target="#editWithdrawalModal">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${withdrawal.id}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            $('#withdrawalHistoryTable tbody').html(html);
         }
+        
+        // When applying filters, update the global data arrays
+        function applyEmployeePaymentFilter() {
+            const startDate = $('#employeePaymentStartDate').val();
+            const endDate = $('#employeePaymentEndDate').val();
+            const employeeName = $('#employeePaymentName').val();
+            
+            $.ajax({
+                url: window.location.href,
+                method: 'POST',
+                data: {
+                    action: 'filter',
+                    type: 'employee_payments',
+                    start_date: startDate,
+                    end_date: endDate,
+                    employee_name: employeeName
+                },
+                dataType: 'json',
+                beforeSend: function() {
+                    // Show loading state
+                    $('#employeeHistoryTable tbody').html('<tr><td colspan="7" class="text-center">جاوەڕێ بکە...</td></tr>');
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Update global data array
+                        employeeAllData = response.data;
+                        employeeCurrentPage = 1; // Reset to first page
+                        
+                        // Display data with pagination
+                        displayEmployeeData();
+                        
+                        // Update stats
+                        updateEmployeePaymentsStats(response.stats);
+                    } else {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: response.message || 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردندا',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error:", xhr.responseText);
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردندا',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            });
+        }
+        
+        function applyWithdrawalFilter() {
+            const startDate = $('#withdrawalStartDate').val();
+            const endDate = $('#withdrawalEndDate').val();
+            
+            $.ajax({
+                url: window.location.href,
+                method: 'POST',
+                data: {
+                    action: 'filter',
+                    type: 'withdrawals',
+                    start_date: startDate,
+                    end_date: endDate
+                },
+                dataType: 'json',
+                beforeSend: function() {
+                    // Show loading state
+                    $('#withdrawalHistoryTable tbody').html('<tr><td colspan="5" class="text-center">جاوەڕێ بکە...</td></tr>');
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Update global data array
+                        withdrawalAllData = response.data;
+                        withdrawalCurrentPage = 1; // Reset to first page
+                        
+                        // Display data with pagination
+                        displayWithdrawalData();
+                    } else {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: response.message || 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردندا',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error:", xhr.responseText);
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردندا',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            });
+        }
+        
+        // Initialize pagination on page load
+        displayEmployeeData();
+        displayWithdrawalData();
 
         // Reset employee payment filter
         function resetEmployeePaymentFilter() {
@@ -996,11 +1540,8 @@ if (isset($_POST['action'])) {
                                     <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${withdrawal.id}" data-bs-toggle="modal" data-bs-target="#editWithdrawalModal">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${withdrawal.id}">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${withdrawal.id}">
-                                        <i class="fas fa-print"></i>
+                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${withdrawal.id}">
+                                        <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
                             </td>
@@ -1102,6 +1643,63 @@ if (isset($_POST['action'])) {
                 }
             });
         });
+        
+        // Delete withdrawal
+        $(document).on('click', '#withdrawalHistoryTable .delete-btn', function() {
+            const withdrawalId = $(this).data('id');
+            
+            Swal.fire({
+                title: 'دڵنیای؟',
+                text: "ئەم کردارە ناگەڕێتەوە، دەرکردنی پارە دەسڕێتەوە!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'بەڵێ، بیسڕەوە!',
+                cancelButtonText: 'نەخێر، پاشگەزبوونەوە'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Send AJAX request to delete the withdrawal
+                    $.ajax({
+                        url: window.location.href,
+                        method: 'POST',
+                        data: {
+                            action: 'delete_withdrawal',
+                            id: withdrawalId
+                        },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    title: 'سڕایەوە!',
+                                    text: 'دەرکردنی پارە بە سەرکەوتوویی سڕایەوە.',
+                                    icon: 'success',
+                                    confirmButtonText: 'باشە'
+                                });
+                                
+                                // Refresh the withdrawals table
+                                applyWithdrawalFilter();
+                            } else {
+                                Swal.fire({
+                                    title: 'هەڵە!',
+                                    text: response.message || 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا',
+                                    icon: 'error',
+                                    confirmButtonText: 'باشە'
+                                });
+                            }
+                        },
+                        error: function() {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەدا',
+                                icon: 'error',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    });
+                }
+            });
+        });
     });
     </script>
 
@@ -1132,7 +1730,7 @@ if (isset($_POST['action'])) {
                         <div class="mb-3">
                             <label for="editEmployeePaymentAmount" class="form-label">بڕی پارە</label>
                             <div class="input-group">
-                                <input type="number" id="editEmployeePaymentAmount" class="form-control" required>
+                                <input type="text" id="editEmployeePaymentAmount" class="form-control number-format" required>
                                 <span class="input-group-text">د.ع</span>
                             </div>
                         </div>
@@ -1221,30 +1819,15 @@ if (isset($_POST['action'])) {
                     <form id="editWithdrawalForm">
                         <input type="hidden" id="editWithdrawalId">
                         <div class="mb-3">
-                            <label for="editWithdrawalName" class="form-label">ناو</label>
-                            <input type="text" id="editWithdrawalName" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
                             <label for="editWithdrawalDate" class="form-label">بەروار</label>
                             <input type="date" id="editWithdrawalDate" class="form-control" required>
                         </div>
                         <div class="mb-3">
                             <label for="editWithdrawalAmount" class="form-label">بڕی پارە</label>
                             <div class="input-group">
-                                <input type="number" id="editWithdrawalAmount" class="form-control" required>
-                                <span class="input-group-text">$</span>
+                                <input type="text" id="editWithdrawalAmount" class="form-control number-format" required>
+                                <span class="input-group-text">د.ع</span>
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editWithdrawalCategory" class="form-label">جۆری دەرکردن</label>
-                            <select id="editWithdrawalCategory" class="form-select" required>
-                                <option value="" selected disabled>جۆر هەڵبژێرە</option>
-                                <option value="expense">خەرجی ڕۆژانە</option>
-                                <option value="supplies">پێداویستی</option>
-                                <option value="rent">کرێ</option>
-                                <option value="utility">خزمەتگوزاری</option>
-                                <option value="other">جۆری تر</option>
-                            </select>
                         </div>
                         <div class="mb-3">
                             <label for="editWithdrawalNotes" class="form-label">تێبینی</label>

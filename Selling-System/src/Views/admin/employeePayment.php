@@ -126,7 +126,7 @@ try {
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label for="paymentDate" class="form-label">بەروار</label>
-                                                    <input type="date" id="paymentDate" name="paymentDate" class="form-control" required>
+                                                    <input type="date" id="paymentDate" name="paymentDate" class="form-control" value="<?php echo date('Y-m-d'); ?>" required>
                                                 </div>
                                             </div>
                                             
@@ -134,7 +134,7 @@ try {
                                                 <div class="col-md-6 mb-3">
                                                     <label for="paymentAmount" class="form-label">بڕی پارە</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="paymentAmount" name="amount" class="form-control" placeholder="بڕی پارە" required>
+                                                        <input type="text" id="paymentAmount" name="amount" class="form-control number-format" placeholder="بڕی پارە" required>
                                                         <span class="input-group-text">$</span>
                                                     </div>
                                                 </div>
@@ -232,12 +232,12 @@ try {
                                                 
                                                 <div class="col-md-6 mb-3">
                                                     <label for="withdrawalDate" class="form-label">بەروار <span class="text-danger">*</span></label>
-                                                    <input type="date" id="withdrawalDate" name="withdrawalDate" class="form-control" required>
+                                                    <input type="date" id="withdrawalDate" name="withdrawalDate" class="form-control" value="<?php echo date('Y-m-d'); ?>" required>
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label for="withdrawalAmount" class="form-label">بڕی پارە <span class="text-danger">*</span></label>
                                                     <div class="input-group">
-                                                        <input type="number" id="withdrawalAmount" name="withdrawalAmount" class="form-control" placeholder="بڕی پارە" required>
+                                                        <input type="text" id="withdrawalAmount" name="withdrawalAmount" class="form-control number-format" placeholder="بڕی پارە" required>
                                                         <span class="input-group-text">$</span>
                                                     </div>
                                                 </div>
@@ -316,5 +316,50 @@ try {
     <!-- Custom JavaScript -->
     <script src="../../js/include-components.js"></script>
     <script src="../../js/employeePayment/script.js"></script>
+    <script>
+        // Format numbers with commas as thousands separators
+        document.addEventListener('DOMContentLoaded', function() {
+            // Format number inputs
+            const formatNumberInputs = document.querySelectorAll('.number-format');
+            
+            formatNumberInputs.forEach(input => {
+                input.addEventListener('input', function(e) {
+                    // Remove non-numeric characters except decimal point
+                    let value = this.value.replace(/[^\d.]/g, '');
+                    
+                    // Ensure only one decimal point
+                    const parts = value.split('.');
+                    if (parts.length > 2) {
+                        value = parts[0] + '.' + parts.slice(1).join('');
+                    }
+                    
+                    // Add thousand separators
+                    if (value) {
+                        const decimalParts = value.split('.');
+                        decimalParts[0] = decimalParts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                        value = decimalParts.join('.');
+                    }
+                    
+                    this.value = value;
+                });
+                
+                // Trigger formatting on initial load
+                const event = new Event('input');
+                input.dispatchEvent(event);
+            });
+            
+            // Add form submit handler to remove formatting before submission
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const formatInputs = this.querySelectorAll('.number-format');
+                    formatInputs.forEach(input => {
+                        // Remove commas before submitting
+                        input.value = input.value.replace(/,/g, '');
+                    });
+                });
+            });
+        });
+    </script>
 </body>
 </html> 
