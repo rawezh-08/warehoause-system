@@ -13,12 +13,16 @@ try {
     $sql = "SELECT 
                 p.id, 
                 p.name, 
+                p.code, 
                 p.barcode, 
-                p.code,
-                p.selling_price_single as retail_price,
-                p.selling_price_wholesale as wholesale_price,
+                p.image,
+                p.purchase_price,
+                p.selling_price_single,
+                p.selling_price_wholesale,
                 p.current_quantity,
-                p.image_path,
+                p.pieces_per_box,
+                p.boxes_per_set,
+                p.notes,
                 c.name as category_name,
                 u.name as unit_name,
                 u.is_piece,
@@ -40,24 +44,21 @@ try {
     // Format products for Select2
     $formattedProducts = [];
     foreach ($products as $product) {
-        $image = !empty($product['image_path']) ? 
-            '../../uploads/products/' . $product['image_path'] : 
-            '../../assets/images/no-image.png';
-        
         $formattedProducts[] = [
             'id' => $product['id'],
             'text' => $product['name'],
             'barcode' => $product['barcode'],
             'code' => $product['code'],
-            'retail_price' => $product['retail_price'],
-            'wholesale_price' => $product['wholesale_price'],
+            'retail_price' => $product['selling_price_single'],
+            'wholesale_price' => $product['selling_price_wholesale'],
             'current_quantity' => $product['current_quantity'],
-            'image' => $image,
+            'pieces_per_box' => $product['pieces_per_box'],
+            'boxes_per_set' => $product['boxes_per_set'],
+            'image' => !empty($product['image']) ? 
+                '../../uploads/products/' . basename($product['image']) : 
+                '../../assets/images/no-image.png',
             'category' => $product['category_name'],
-            'unit_name' => $product['unit_name'],
-            'is_piece' => $product['is_piece'],
-            'is_box' => $product['is_box'],
-            'is_set' => $product['is_set']
+            'unit' => $product['unit_name']
         ];
     }
     

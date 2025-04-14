@@ -93,6 +93,51 @@ require_once '../../config/database.php';
                         </div>
                     </div>
 
+                    <!-- Items Table - Moved to top -->
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px" class="tbl-header">#</th>
+                                    <th class="tbl-header">کاڵا</th>
+                                    <th class="tbl-header">وێنە</th>
+                                    <th class="tbl-header">جۆری یەکە</th>
+                                    <th class="tbl-header">نرخی یەکە</th>
+                                    <th class="tbl-header">بڕی یەکە</th>
+                                    <th class="tbl-header">کۆی گشتی</th>
+                                    <th class="tbl-header" style="width: 100px">کردار</th>
+                                </tr>
+                            </thead>
+                            <tbody class="items-list">
+                                <tr>
+                                    <td>1</td>
+                                    <td><select class="form-control product-select" style="width: 100%"></select></td>
+                                    <td class="product-image-cell"></td>
+                                    <td>
+                                        <select class="form-control unit-type">
+                                            <option value="piece">دانە</option>
+                                            <option value="box">کارتۆن</option>
+                                            <option value="set">سێت</option>
+                                        </select>
+                                    </td>
+                                    <td><input type="number" class="form-control unit-price" step="1"></td>
+                                    <td><input type="number" class="form-control quantity"></td>
+                                    <td><input type="number" class="form-control total" readonly></td>
+                                    <td>
+                                        <button type="button" class="btn btn-danger btn-sm remove-row">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Add Row Button -->
+                    <button type="button" class="btn btn-link text-primary add-row-btn mb-4">
+                        <i class="fas fa-plus"></i> زیادکردنی ڕیز
+                    </button>
+
                     <!-- Credit Payment Fields (initially hidden) -->
                     <div class="row mb-4 credit-payment-fields" style="display: none;">
                         <div class="col-md-6">
@@ -120,7 +165,7 @@ require_once '../../config/database.php';
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">تێچووی تر</label>
-                            <input type="number" class="form-control other-costs" value="0">
+                            <input type="number" class="form-control other-cost" value="0">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">بەروار</label>
@@ -147,51 +192,6 @@ require_once '../../config/database.php';
                             چاپکردن
                         </button>
                     </div>
-
-                    <!-- Items Table -->
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th style="width: 50px" class="tbl-header">#</th>
-                                    <th class="tbl-header">کاڵا</th>
-                                    <th class="tbl-header">وێنە</th>
-                                    <th class="tbl-header">جۆری یەکە</th>
-                                    <th class="tbl-header">نرخی یەکە</th>
-                                    <th class="tbl-header">بڕی یەکە</th>
-                                    <th class="tbl-header">کۆی گشتی</th>
-                                    <th class="tbl-header" style="width: 100px">کردار</th>
-                                </tr>
-                            </thead>
-                            <tbody class="items-list">
-                                <tr>
-                                    <td>1</td>
-                                    <td><select class="form-control product-select" style="width: 100%"></select></td>
-                                    <td class="product-image-cell"></td>
-                                    <td>
-                                        <select class="form-control unit-type">
-                                            <option value="piece">دانە</option>
-                                            <option value="box">کارتۆن</option>
-                                            <option value="set">سێت</option>
-                                        </select>
-                                    </td>
-                                    <td><input type="number" class="form-control unit-price" step="0.01"></td>
-                                    <td><input type="number" class="form-control quantity"></td>
-                                    <td><input type="number" class="form-control total" readonly></td>
-                                    <td>
-                                        <button type="button" class="btn btn-danger btn-sm remove-row">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Add Row Button -->
-                    <button type="button" class="btn btn-link text-primary add-row-btn">
-                        <i class="fas fa-plus"></i> زیادکردنی ڕیز
-                    </button>
 
                     <!-- Totals Section -->
                     <div class="total-section">
@@ -244,50 +244,14 @@ require_once '../../config/database.php';
                 <div class="col-md-4 col-sm-12">
                     <label class="form-label">جۆری پارەدان</label>
                     <select class="form-select payment-type">
-                        <option value="cash">پارە</option>
+                        <option value="cash">نەقد</option>
                         <option value="credit">قەرز</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Credit Payment Fields (initially hidden) -->
-            <div class="row mb-4 credit-payment-fields" style="display: none;">
-                <div class="col-md-6">
-                    <label class="form-label">بڕی پارەی دراو</label>
-                    <input type="number" class="form-control paid-amount" value="0" min="0">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">بڕی ماوە</label>
-                    <input type="number" class="form-control remaining-amount" value="0" readonly>
-                </div>
-            </div>
-
-            <!-- Date and Notes -->
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <label class="form-label">بەروار</label>
-                    <input type="date" class="form-control purchase-date">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">تێبینی</label>
-                    <textarea class="form-control notes" rows="2" placeholder="تێبینی"></textarea>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="action-buttons">
-                <button class="btn btn-outline-primary refresh-btn">
-                    <i class="fas fa-sync"></i>
-                    نوێکردنەوە
-                </button>
-                <button class="btn btn-outline-primary print-btn">
-                    <i class="fas fa-print"></i>
-                    چاپکردن
-                </button>
-            </div>
-
-            <!-- Items Table -->
-            <div class="table-responsive">
+            <!-- Items Table - Moved to top -->
+            <div class="table-responsive mb-4">
                 <table class="table table-bordered">
                     <thead>
                         <tr>
@@ -319,9 +283,59 @@ require_once '../../config/database.php';
             </div>
 
             <!-- Add Row Button -->
-            <button type="button" class="btn btn-link text-primary add-row-btn">
+            <button type="button" class="btn btn-link text-primary add-row-btn mb-4">
                 <i class="fas fa-plus"></i> زیادکردنی ڕیز
             </button>
+
+            <!-- Credit Payment Fields (initially hidden) -->
+            <div class="row mb-4 credit-payment-fields" style="display: none;">
+                <div class="col-md-6">
+                    <label class="form-label">بڕی پارەی دراو</label>
+                    <input type="number" class="form-control paid-amount" value="0" min="0">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">بڕی ماوە</label>
+                    <input type="number" class="form-control remaining-amount" value="0" readonly>
+                </div>
+            </div>
+
+            <!-- Additional Purchase Fields -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <label class="form-label">کرێی بار</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control shipping-cost" value="0" min="0">
+                        <span class="input-group-text">دینار</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">تێچووی تر</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control other-cost" value="0" min="0">
+                        <span class="input-group-text">دینار</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">بەروار</label>
+                    <input type="date" class="form-control purchase-date">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">تێبینی</label>
+                    <textarea class="form-control notes" rows="1" placeholder="تێبینی"></textarea>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-outline-primary refresh-btn">
+                    <i class="fas fa-sync"></i>
+                    نوێکردنەوە
+                </button>
+                <button class="btn btn-outline-primary print-btn">
+                    <i class="fas fa-print"></i>
+                    چاپکردن
+                </button>
+            </div>
 
             <!-- Totals Section -->
             <div class="total-section">
@@ -333,6 +347,10 @@ require_once '../../config/database.php';
                     <div class="col-md-3">
                         <label class="total-label">داشکاندن</label>
                         <input type="number" class="form-control discount" value="0" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="total-label">کرێی بار</label>
+                        <input type="number" class="form-control shipping-cost-total" readonly>
                     </div>
                     <div class="col-md-3">
                         <label class="total-label">کۆی گشتی</label>
@@ -375,6 +393,47 @@ require_once '../../config/database.php';
                 </div>
             </div>
 
+            <!-- Items Table - Moved to top -->
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px">#</th>
+                            <th>کاڵا</th>
+                            <th>وێنە</th>
+                            <th>بڕی بەردەست</th>
+                            <th>بڕی ڕێکخراو</th>
+                            <th>نرخی یەکە</th>
+                            <th>وەسفکردن</th>
+                            <th>کۆی گشتی</th>
+                            <th style="width: 100px">کردار</th>
+                        </tr>
+                    </thead>
+                    <tbody class="items-list">
+                        <tr>
+                            <td>1</td>
+                            <td><select class="form-control product-select" style="width: 100%"></select></td>
+                            <td class="product-image-cell"></td>
+                            <td><input type="number" class="form-control current-quantity" readonly></td>
+                            <td><input type="number" class="form-control adjusted-quantity"></td>
+                            <td><input type="number" class="form-control price" step="1"></td>
+                            <td><input type="text" class="form-control" placeholder="وەسفکردن"></td>
+                            <td><input type="number" class="form-control total" readonly></td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-sm remove-row">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Add Row Button -->
+            <button type="button" class="btn btn-link text-primary add-row-btn mb-4">
+                <i class="fas fa-plus"></i> زیادکردنی ڕیز
+            </button>
+
             <!-- Date and Reason Info -->
             <div class="row mb-4">
                 <div class="col-md-6">
@@ -413,47 +472,6 @@ require_once '../../config/database.php';
                 </button>
               
             </div>
-
-            <!-- Items Table -->
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th style="width: 50px">#</th>
-                            <th>کاڵا</th>
-                            <th>وێنە</th>
-                            <th>بڕی بەردەست</th>
-                            <th>بڕی ڕێکخراو</th>
-                            <th>نرخی یەکە</th>
-                            <th>وەسفکردن</th>
-                            <th>کۆی گشتی</th>
-                            <th style="width: 100px">کردار</th>
-                        </tr>
-                    </thead>
-                    <tbody class="items-list">
-                        <tr>
-                            <td>1</td>
-                            <td><select class="form-control product-select" style="width: 100%"></select></td>
-                            <td class="product-image-cell"></td>
-                            <td><input type="number" class="form-control current-quantity" readonly></td>
-                            <td><input type="number" class="form-control adjusted-quantity"></td>
-                            <td><input type="number" class="form-control price" step="0.01"></td>
-                            <td><input type="text" class="form-control" placeholder="وەسفکردن"></td>
-                            <td><input type="number" class="form-control total" readonly></td>
-                            <td>
-                                <button type="button" class="btn btn-danger btn-sm remove-row">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Add Row Button -->
-            <button type="button" class="btn btn-link text-primary add-row-btn">
-                <i class="fas fa-plus"></i> زیادکردنی ڕیز
-            </button>
 
             <!-- Totals Section -->
             <div class="total-section">
@@ -510,6 +528,51 @@ require_once '../../config/database.php';
                 </div>
             </div>
 
+            <!-- Items Table - Moved to top -->
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px">#</th>
+                            <th>کاڵا</th>
+                            <th>وێنە</th>
+                            <th>جۆری یەکە</th>
+                            <th>نرخی یەکە</th>
+                            <th>بڕی یەکە</th>
+                            <th>کۆی گشتی</th>
+                            <th style="width: 100px">کردار</th>
+                        </tr>
+                    </thead>
+                    <tbody class="items-list">
+                        <tr>
+                            <td>1</td>
+                            <td><select class="form-control product-select" style="width: 100%"></select></td>
+                            <td class="product-image-cell"></td>
+                            <td>
+                                <select class="form-control unit-type">
+                                    <option value="piece">دانە</option>
+                                    <option value="box">کارتۆن</option>
+                                    <option value="set">سێت</option>
+                                </select>
+                            </td>
+                            <td><input type="number" class="form-control unit-price" step="1"></td>
+                            <td><input type="number" class="form-control quantity"></td>
+                            <td><input type="number" class="form-control total" readonly></td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-sm remove-row">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Add Row Button -->
+            <button type="button" class="btn btn-link text-primary add-row-btn mb-4">
+                <i class="fas fa-plus"></i> زیادکردنی ڕیز
+            </button>
+
             <!-- Additional Sale Fields -->
             <div class="row mb-4">
                 <div class="col-md-3">
@@ -525,7 +588,7 @@ require_once '../../config/database.php';
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">تێچووی تر</label>
-                    <input type="number" class="form-control other-costs" value="0">
+                    <input type="number" class="form-control other-cost" value="0">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">بەروار</label>
@@ -552,51 +615,6 @@ require_once '../../config/database.php';
                     چاپکردن
                 </button>
             </div>
-
-            <!-- Items Table -->
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th style="width: 50px">#</th>
-                            <th>کاڵا</th>
-                            <th>وێنە</th>
-                            <th>جۆری یەکە</th>
-                            <th>نرخی یەکە</th>
-                            <th>بڕی یەکە</th>
-                            <th>کۆی گشتی</th>
-                            <th style="width: 100px">کردار</th>
-                        </tr>
-                    </thead>
-                    <tbody class="items-list">
-                        <tr>
-                            <td>1</td>
-                            <td><select class="form-control product-select" style="width: 100%"></select></td>
-                            <td class="product-image-cell"></td>
-                            <td>
-                                <select class="form-control unit-type">
-                                    <option value="piece">دانە</option>
-                                    <option value="box">کارتۆن</option>
-                                    <option value="set">سێت</option>
-                                </select>
-                            </td>
-                            <td><input type="number" class="form-control unit-price" step="0.01"></td>
-                            <td><input type="number" class="form-control quantity"></td>
-                            <td><input type="number" class="form-control total" readonly></td>
-                            <td>
-                                <button type="button" class="btn btn-danger btn-sm remove-row">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Add Row Button -->
-            <button type="button" class="btn btn-link text-primary add-row-btn">
-                <i class="fas fa-plus"></i> زیادکردنی ڕیز
-            </button>
 
             <!-- Totals Section -->
             <div class="total-section">
@@ -635,6 +653,7 @@ require_once '../../config/database.php';
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="../../js/debug_selects.js"></script>
     <script src="../../js/addReceipt.js"></script>
     <script src="../../js/include-components.js"></script>
     

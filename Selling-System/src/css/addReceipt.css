@@ -654,3 +654,58 @@ input[type="text"].form-control {
     border-radius: 50%;
     padding: 8px;
 }
+
+/* Add styles for inventory info cards */
+.inventory-alert .swal2-html-container {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.inventory-card {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.inventory-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.inventory-card h3 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #2c3e50;
+}
+
+.inventory-card p {
+    font-size: 1.1rem;
+    color: #7f8c8d;
+    margin-bottom: 0;
+}
+
+/* Product Info Button */
+.product-info-btn {
+    margin-left: 4px;
+    margin-right: 4px;
+    padding: 3px 7px;
+    font-size: 12px;
+    border-radius: 4px;
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
+}
+
+.product-info-btn:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+.product-info-btn i {
+    font-size: 14px;
+}

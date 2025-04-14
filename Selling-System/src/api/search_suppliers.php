@@ -15,8 +15,8 @@ try {
                 name, 
                 phone1, 
                 phone2, 
-                address,
                 debt_on_myself,
+                debt_on_supplier,
                 notes
             FROM suppliers
             WHERE name LIKE :query OR phone1 LIKE :query OR phone2 LIKE :query
@@ -37,8 +37,8 @@ try {
             'text' => $supplier['name'],
             'phone1' => $supplier['phone1'],
             'phone2' => $supplier['phone2'],
-            'address' => $supplier['address'],
             'debt_on_myself' => $supplier['debt_on_myself'],
+            'debt_on_supplier' => $supplier['debt_on_supplier'],
             'notes' => $supplier['notes']
         ];
     }

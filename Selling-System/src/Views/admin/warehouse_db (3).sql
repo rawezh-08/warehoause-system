@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 12, 2025 at 07:12 AM
+-- Generation Time: Apr 14, 2025 at 10:43 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -85,7 +85,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_expense` (IN `p_amount` DECIMAL
     SELECT LAST_INSERT_ID() AS 'result';
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `add_purchase` (IN `p_invoice_number` VARCHAR(50), IN `p_supplier_id` INT, IN `p_date` TIMESTAMP, IN `p_payment_type` ENUM('cash','credit'), IN `p_discount` DECIMAL(10,2), IN `p_paid_amount` DECIMAL(10,2), IN `p_notes` TEXT, IN `p_created_by` INT, IN `p_products` JSON)   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `add_purchase` (IN `p_invoice_number` VARCHAR(50), IN `p_supplier_id` INT, IN `p_date` TIMESTAMP, IN `p_payment_type` ENUM('cash','credit'), IN `p_discount` DECIMAL(10,2), IN `p_paid_amount` DECIMAL(10,2), IN `p_shipping_cost` DECIMAL(10,2), IN `p_other_costs` DECIMAL(10,2), IN `p_notes` TEXT, IN `p_created_by` INT, IN `p_products` JSON)   BEGIN
     DECLARE purchase_id INT;
     DECLARE i INT DEFAULT 0;
     DECLARE product_count INT;
@@ -97,13 +97,13 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_purchase` (IN `p_invoice_number
     DECLARE total_purchase_amount DECIMAL(10,2) DEFAULT 0;
     DECLARE remaining_amount DECIMAL(10,2) DEFAULT 0;
     
-    -- Create purchase record
+    -- Create purchase record with shipping_cost and other_costs
     INSERT INTO purchases (
         invoice_number, supplier_id, date, payment_type, 
-        discount, paid_amount, notes, created_by
+        discount, paid_amount, shipping_cost, other_costs, notes, created_by
     ) VALUES (
         p_invoice_number, p_supplier_id, p_date, p_payment_type, 
-        p_discount, p_paid_amount, p_notes, p_created_by
+        p_discount, p_paid_amount, p_shipping_cost, p_other_costs, p_notes, p_created_by
     );
     
     SET purchase_id = LAST_INSERT_ID();
@@ -148,6 +148,9 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_purchase` (IN `p_invoice_number
     IF p_discount > 0 THEN
         SET total_purchase_amount = total_purchase_amount - p_discount;
     END IF;
+    
+    -- Add shipping and other costs to total
+    SET total_purchase_amount = total_purchase_amount + p_shipping_cost + p_other_costs;
     
     -- Calculate remaining amount
     IF p_payment_type = 'credit' THEN
@@ -903,9 +906,9 @@ CREATE TABLE `customers` (
 --
 
 INSERT INTO `customers` (`id`, `name`, `phone1`, `phone2`, `guarantor_name`, `guarantor_phone`, `address`, `debit_on_business`, `notes`, `created_at`, `updated_at`) VALUES
-(8, 'ڕاوێژ ', '07709240894', '', 'جزا ', '07501211541', 'سلێمانی-بەکرەجۆی تازە', 41500, '', '2025-04-06 07:51:02', '2025-04-09 11:15:55'),
-(9, 'دانا', '07709240897', '', 'جەلال', '', 'پیرەمۆگرون', 500000, '', '2025-04-07 08:37:06', '2025-04-11 15:46:48'),
-(10, 'دارا ', '07709248251', '', 'عسمان', '', '', 90000, '', '2025-04-11 15:43:48', '2025-04-11 15:58:13');
+(8, 'ڕاوێژ ', '07709240894', '', 'جزا ', '07501211541', 'سلێمانی-بەکرەجۆی تازە', 0, '', '2025-04-06 07:51:02', '2025-04-12 14:41:38'),
+(9, 'دانا', '07709240897', '', 'جەلال', '', 'پیرەمۆگرون', 520000, '', '2025-04-07 08:37:06', '2025-04-14 04:12:51'),
+(10, 'دارا ', '07709248251', '', 'عسمان', '07501211541', 'سلێمانی-بەکرەجۆی تازە', 90000, '', '2025-04-11 15:43:48', '2025-04-12 16:24:34');
 
 -- --------------------------------------------------------
 
@@ -939,13 +942,11 @@ INSERT INTO `debt_transactions` (`id`, `customer_id`, `amount`, `transaction_typ
 (61, 9, 50000, 'sale', 40, 'Test sale', 1, '2025-04-09 10:25:27'),
 (62, 9, 50000, 'sale', 41, 'Test sale', 1, '2025-04-09 10:25:27'),
 (63, 9, 50000, 'sale', 42, 'Test sale', 1, '2025-04-09 10:26:38'),
-(66, 8, 5500, 'sale', 45, '', 1, '2025-04-09 10:51:15'),
-(67, 8, 13000, 'sale', 47, '', 1, '2025-04-09 11:14:59'),
-(68, 8, 13000, 'sale', 48, '', 1, '2025-04-09 11:14:59'),
-(69, 8, 10000, 'sale', 49, '', 1, '2025-04-09 11:15:55'),
 (70, 9, 10000, 'collection', NULL, '{\"payment_method\":\"cash\",\"notes\":\"\",\"return_date\":\"2025-04-11\"}', 1, '2025-04-11 10:53:58'),
 (71, 10, 100000, '', NULL, 'بڕی سەرەتایی قەرز بەسەر کڕیار', NULL, '2025-04-11 15:43:48'),
-(72, 10, 10000, 'collection', NULL, '{\"payment_method\":\"cash\",\"notes\":\"\",\"return_date\":\"2025-04-11\"}', 1, '2025-04-11 15:58:13');
+(72, 10, 10000, 'collection', NULL, '{\"payment_method\":\"cash\",\"notes\":\"\",\"return_date\":\"2025-04-11\"}', 1, '2025-04-11 15:58:13'),
+(73, 8, 0, '', NULL, 'تازەکردنەوەی قەرزی کڕیار', NULL, '2025-04-12 14:41:38'),
+(74, 9, 20000, 'sale', 55, '', 1, '2025-04-14 04:12:51');
 
 -- --------------------------------------------------------
 
@@ -968,8 +969,7 @@ CREATE TABLE `employees` (
 --
 
 INSERT INTO `employees` (`id`, `name`, `phone`, `salary`, `notes`, `created_at`, `updated_at`) VALUES
-(7, 'کاروان', '07708540101', 750000, '', '2025-04-10 20:38:27', '2025-04-10 20:38:27'),
-(8, 'Rawe', '07706514889', 0, '', '2025-04-11 13:04:18', '2025-04-11 15:46:37');
+(7, 'کاروان', '07708540101', 750000, '', '2025-04-10 20:38:27', '2025-04-13 06:01:17');
 
 -- --------------------------------------------------------
 
@@ -993,7 +993,32 @@ CREATE TABLE `employee_payments` (
 --
 
 INSERT INTO `employee_payments` (`id`, `employee_id`, `amount`, `payment_type`, `payment_date`, `notes`, `created_by`, `created_at`) VALUES
-(11, 7, 200000, 'salary', '2025-04-11', '', 1, '2025-04-11 06:52:22');
+(19, 7, 100000, 'salary', '2025-04-12', '', 1, '2025-04-12 08:14:28'),
+(21, 7, 10250, 'salary', '2025-04-12', '', 1, '2025-04-12 15:04:37'),
+(22, 7, 10250, 'bonus', '2025-04-12', '', 1, '2025-04-12 15:04:43'),
+(23, 7, 10250, 'overtime', '2025-04-12', '', 1, '2025-04-12 15:04:49'),
+(24, 7, 10250, 'bonus', '2025-04-12', '', 1, '2025-04-12 15:04:53'),
+(25, 7, 10250, 'bonus', '2025-04-12', '', 1, '2025-04-12 15:04:58'),
+(26, 7, 10250, 'salary', '2025-04-12', '', 1, '2025-04-12 15:05:03'),
+(27, 7, 10250, 'salary', '2025-04-12', '', 1, '2025-04-12 15:13:36'),
+(28, 7, 10250, 'salary', '2025-04-12', '', 1, '2025-04-12 15:13:41'),
+(29, 7, 10250, 'salary', '2025-04-12', '', 1, '2025-04-12 15:13:45'),
+(30, 7, 10250, 'salary', '2025-04-12', '', 1, '2025-04-12 15:13:49'),
+(31, 7, 10250, 'salary', '2025-04-12', '', 1, '2025-04-12 15:13:54'),
+(32, 7, 10250, 'salary', '2025-04-12', '', 1, '2025-04-12 15:13:58'),
+(33, 7, 10250, 'salary', '2025-04-12', '', 1, '2025-04-12 15:14:04'),
+(34, 7, 10250, 'salary', '2025-04-12', '', 1, '2025-04-12 15:14:11'),
+(35, 7, 10250, 'overtime', '2025-04-12', '', 1, '2025-04-12 15:14:16'),
+(36, 7, 10250, 'salary', '2025-04-12', '', 1, '2025-04-12 15:14:21'),
+(37, 7, 10250, 'bonus', '2025-04-12', '', 1, '2025-04-12 15:14:25'),
+(38, 7, 10250, 'salary', '2025-04-12', '', 1, '2025-04-12 15:14:31'),
+(39, 7, 10250, 'overtime', '2025-04-12', '', 1, '2025-04-12 15:14:35'),
+(40, 7, 10250, 'bonus', '2025-04-12', '', 1, '2025-04-12 15:14:40'),
+(41, 7, 10250, 'salary', '2025-04-12', '', 1, '2025-04-12 15:14:44'),
+(42, 7, 10250, 'bonus', '2025-04-12', '', 1, '2025-04-12 15:14:49'),
+(43, 7, 10250, 'salary', '2025-04-12', '', 1, '2025-04-12 15:14:53'),
+(44, 7, 10250, 'salary', '2025-04-12', '', 1, '2025-04-12 15:15:26'),
+(45, 7, 10250, 'bonus', '2025-04-12', '', 1, '2025-04-12 15:16:14');
 
 -- --------------------------------------------------------
 
@@ -1015,7 +1040,7 @@ CREATE TABLE `expenses` (
 --
 
 INSERT INTO `expenses` (`id`, `amount`, `expense_date`, `notes`, `created_by`, `created_at`) VALUES
-(4, 50000, '2025-04-11', 'بۆ خۆم ', 1, '2025-04-11 07:04:05');
+(6, 50000, '2025-04-12', 'بۆ خۆم ', 1, '2025-04-12 16:54:11');
 
 -- --------------------------------------------------------
 
@@ -1024,64 +1049,44 @@ INSERT INTO `expenses` (`id`, `amount`, `expense_date`, `notes`, `created_by`, `
 --
 
 CREATE TABLE `inventory` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `product_id` int(11) NOT NULL,
-  `quantity` int(11) NOT NULL DEFAULT 0,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `product_id` (`product_id`),
-  CONSTRAINT `inventory_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `quantity` int(11) NOT NULL COMMENT 'Positive for additions, negative for removals',
+  `reference_type` enum('purchase','sale','adjustment','return') NOT NULL,
+  `reference_id` int(11) NOT NULL COMMENT 'ID reference to the source table',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `inventory`
 --
 
-INSERT INTO `inventory` (`id`, `product_id`, `quantity`, `created_at`, `updated_at`) VALUES
-(35, 46, 55, '2025-04-09 07:13:12', '2025-04-09 07:13:12'),
-(36, 46, 10, '2025-04-09 07:23:32', '2025-04-09 07:23:32'),
-(37, 46, 10, '2025-04-09 07:46:02', '2025-04-09 07:46:02'),
-(38, 46, 10, '2025-04-09 07:48:23', '2025-04-09 07:48:23'),
-(39, 46, 10, '2025-04-09 07:50:46', '2025-04-09 07:50:46'),
-(40, 46, -40, '2025-04-09 07:58:38', '2025-04-09 07:58:38'),
-(41, 46, 40, '2025-04-09 09:35:01', '2025-04-09 09:35:01'),
-(44, 46, -40, '2025-04-09 10:25:25', '2025-04-09 10:25:25'),
-(45, 46, -40, '2025-04-09 10:25:26', '2025-04-09 10:25:26'),
-(46, 46, -40, '2025-04-09 10:25:26', '2025-04-09 10:25:26'),
-(47, 46, -40, '2025-04-09 10:25:26', '2025-04-09 10:25:26'),
-(48, 46, -40, '2025-04-09 10:25:27', '2025-04-09 10:25:27'),
-(49, 46, -40, '2025-04-09 10:25:27', '2025-04-09 10:25:27'),
-(50, 46, -40, '2025-04-09 10:25:27', '2025-04-09 10:25:27'),
-(51, 46, -40, '2025-04-09 10:25:27', '2025-04-09 10:25:27'),
-(52, 46, 10, '2025-04-09 10:26:25', '2025-04-09 10:26:25'),
-(53, 46, 10, '2025-04-09 10:26:28', '2025-04-09 10:26:28'),
-(54, 46, 10, '2025-04-09 10:26:28', '2025-04-09 10:26:28'),
-(55, 46, 10, '2025-04-09 10:26:28', '2025-04-09 10:26:28'),
-(56, 46, 10, '2025-04-09 10:26:29', '2025-04-09 10:26:29'),
-(57, 46, 10, '2025-04-09 10:26:29', '2025-04-09 10:26:29'),
-(58, 46, -40, '2025-04-09 10:26:38', '2025-04-09 10:26:38'),
-(62, 46, 20, '2025-04-09 10:33:44', '2025-04-09 10:33:44'),
-(63, 46, 20, '2025-04-09 10:33:44', '2025-04-09 10:33:44'),
-(64, 46, 20, '2025-04-09 10:37:30', '2025-04-09 10:37:30'),
-(65, 46, -5, '2025-04-09 10:51:15', '2025-04-09 10:51:15'),
-(66, 46, 10, '2025-04-09 11:04:52', '2025-04-09 11:04:52'),
-(67, 46, -20, '2025-04-09 11:14:59', '2025-04-09 11:14:59'),
-(68, 46, -20, '2025-04-09 11:14:59', '2025-04-09 11:14:59'),
-(69, 46, -20, '2025-04-09 11:15:55', '2025-04-09 11:15:55'),
-(70, 47, 20, '2025-04-09 11:16:33', '2025-04-09 11:16:33'),
-(71, 49, -1, '2025-04-12 02:35:47', '2025-04-12 02:35:47'),
-(72, 46, -1, '2025-04-12 02:35:47', '2025-04-12 02:35:47'),
-(73, 51, -1, '2025-04-12 02:35:47', '2025-04-12 02:35:47'),
-(74, 51, -1, '2025-04-12 02:35:47', '2025-04-12 02:35:47'),
-(75, 46, -1, '2025-04-12 02:35:47', '2025-04-12 02:35:47'),
-(76, 51, -1, '2025-04-12 03:01:55', '2025-04-12 03:01:55'),
-(77, 49, 1, '2025-04-12 03:34:08', '2025-04-12 03:34:08'),
-(78, 49, 1, '2025-04-12 03:34:08', '2025-04-12 03:34:08'),
-(79, 51, 1, '2025-04-12 03:34:20', '2025-04-12 03:34:20'),
-(80, 51, 1, '2025-04-12 03:34:20', '2025-04-12 03:34:20'),
-(81, 46, 1, '2025-04-12 03:34:31', '2025-04-12 03:34:31'),
-(82, 46, 1, '2025-04-12 03:34:42', '2025-04-12 03:34:42');
+INSERT INTO `inventory` (`id`, `product_id`, `quantity`, `reference_type`, `reference_id`, `created_at`) VALUES
+(0, 50, 1, 'purchase', 51, '2025-04-12 05:26:12'),
+(0, 50, 1, 'purchase', 52, '2025-04-12 05:26:12'),
+(0, 50, 1, 'purchase', 53, '2025-04-12 15:39:36'),
+(0, 51, 1, 'purchase', 55, '2025-04-12 15:39:44'),
+(0, 51, 1, 'purchase', 56, '2025-04-12 15:39:44'),
+(0, 46, 1, 'purchase', 57, '2025-04-12 15:39:52'),
+(0, 46, 1, 'purchase', 58, '2025-04-12 15:39:52'),
+(0, 51, 1, 'purchase', 59, '2025-04-12 15:40:00'),
+(0, 51, 1, 'purchase', 60, '2025-04-12 15:40:00'),
+(0, 51, 1, 'purchase', 61, '2025-04-12 15:40:07'),
+(0, 51, 1, 'purchase', 62, '2025-04-12 15:40:07'),
+(0, 46, 1, 'purchase', 63, '2025-04-12 15:40:13'),
+(0, 46, 1, 'purchase', 64, '2025-04-12 15:40:13'),
+(0, 51, 1, 'purchase', 65, '2025-04-12 15:41:23'),
+(0, 51, 1, 'purchase', 66, '2025-04-12 15:41:23'),
+(0, 51, 1, 'purchase', 67, '2025-04-12 15:41:32'),
+(0, 51, 1, 'purchase', 69, '2025-04-12 15:42:04'),
+(0, 51, 1, 'purchase', 70, '2025-04-12 15:42:04'),
+(0, 46, -1, 'sale', 53, '2025-04-14 04:05:20'),
+(0, 46, -40, 'sale', 48, '2025-04-14 04:11:25'),
+(0, 47, -20, 'sale', 49, '2025-04-14 04:12:51'),
+(0, 51, 100, 'purchase', 71, '2025-04-14 04:25:51'),
+(0, 50, 100, 'purchase', 72, '2025-04-14 04:27:23'),
+(0, 50, 50, 'purchase', 73, '2025-04-14 04:46:20'),
+(0, 49, 50, 'purchase', 74, '2025-04-14 04:47:47');
 
 -- --------------------------------------------------------
 
@@ -1143,11 +1148,12 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`id`, `name`, `code`, `barcode`, `image`, `notes`, `category_id`, `unit_id`, `pieces_per_box`, `boxes_per_set`, `purchase_price`, `selling_price_single`, `selling_price_wholesale`, `min_quantity`, `current_quantity`, `created_at`, `updated_at`) VALUES
-(46, 'پیاڵە', 'A488', '1743956793191', 'uploads/products/67f2ab56e219b_1743956822.jpg', '', 1, 3, 20, 10, 1000, 1500, 1250, 10, 602, '2025-04-06 16:27:02', '2025-04-12 03:34:42'),
-(47, 'سوراحی', 'A475', '1744104685757', 'uploads/products/67f4ed09d8699_1744104713.png', '', 1, 2, 20, 0, 3000, 3500, 3250, 10, 86, '2025-04-08 09:31:53', '2025-04-09 11:16:33'),
-(49, 'test', 'A101', '1744387562014', 'uploads/products/67f940e7140f3_1744388327.jpg', '', 3, 1, 0, 0, 1000, 2000, 1500, 10, 6, '2025-04-11 16:18:47', '2025-04-12 03:34:08'),
-(50, 'test', 'A637', '1744388415539', 'uploads/products/67f94146d1a6a_1744388422.jpg', '', 3, 1, 0, 0, 1000, 2000, 1500, 10, 5, '2025-04-11 16:20:22', '2025-04-11 16:20:22'),
-(51, 'ژێر پیاڵە', 'A265', '1744388488429', 'uploads/products/67f94195bdaf4_1744388501.png', '', 3, 1, 0, 0, 1000, 1500, 1250, 10, 9, '2025-04-11 16:21:41', '2025-04-12 03:34:20');
+(46, 'پیاڵە', 'A488', '1743956793191', 'uploads/products/67f2ab56e219b_1743956822.jpg', '', 1, 3, 20, 10, 1000, 1500, 1250, 10, 565, '2025-04-06 16:27:02', '2025-04-14 04:11:25'),
+(47, 'سوراحی', 'A475', '1744104685757', 'uploads/products/67f4ed09d8699_1744104713.png', '', 1, 2, 20, 0, 3000, 3500, 3250, 10, 66, '2025-04-08 09:31:53', '2025-04-14 04:12:51'),
+(49, 'test', 'A101', '1744387562014', 'uploads/products/67f940e7140f3_1744388327.jpg', '', 3, 1, 0, 0, 1000, 2000, 1500, 10, 56, '2025-04-11 16:18:47', '2025-04-14 04:47:47'),
+(50, 'test', 'A637', '1744388415539', 'uploads/products/67f94146d1a6a_1744388422.jpg', '', 3, 1, 0, 0, 1000, 2000, 1500, 10, 158, '2025-04-11 16:20:22', '2025-04-14 04:46:20'),
+(51, 'ژێر پیاڵە', 'A265', '1744388488429', 'uploads/products/67f94195bdaf4_1744388501.png', '', 3, 1, 0, 0, 1000, 1500, 1250, 10, 120, '2025-04-11 16:21:41', '2025-04-14 04:25:51'),
+(53, 'کەوچک ', 'A899', '1744477703301', 'uploads/products/67fa9e19dbe4c_1744477721.jpg', '', 1, 1, 0, 0, 1500, 2000, 1750, 10, 20, '2025-04-12 17:08:41', '2025-04-12 17:08:41');
 
 -- --------------------------------------------------------
 
@@ -1162,6 +1168,8 @@ CREATE TABLE `purchases` (
   `date` timestamp NOT NULL DEFAULT current_timestamp(),
   `payment_type` enum('cash','credit') NOT NULL,
   `discount` decimal(10,0) DEFAULT 0,
+  `shipping_cost` decimal(10,0) NOT NULL DEFAULT 0,
+  `other_cost` decimal(10,0) NOT NULL DEFAULT 0,
   `notes` text DEFAULT NULL,
   `created_by` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -1174,16 +1182,38 @@ CREATE TABLE `purchases` (
 -- Dumping data for table `purchases`
 --
 
-INSERT INTO `purchases` (`id`, `invoice_number`, `supplier_id`, `date`, `payment_type`, `discount`, `notes`, `created_by`, `created_at`, `updated_at`, `paid_amount`, `remaining_amount`) VALUES
-(33, '1454', 3, '2025-04-08 21:00:00', 'credit', 0, '', 1, '2025-04-09 10:37:30', '2025-04-09 10:37:30', 5000, 15000),
-(34, 'TEST-001', 2, '2025-04-09 10:04:52', 'credit', 0, 'Test purchase', 1, '2025-04-09 11:04:52', '2025-04-09 11:04:52', 5000, 5000),
-(36, '863', 2, '2025-04-08 21:00:00', 'credit', 0, '', 1, '2025-04-09 11:16:33', '2025-04-09 11:16:33', 20000, 40000),
-(37, '4', 3, '2025-04-11 21:00:00', 'cash', 0, '', 1, '2025-04-12 03:34:08', '2025-04-12 03:34:08', 1000, 0),
-(38, '4', 3, '2025-04-11 21:00:00', 'cash', 0, '', 1, '2025-04-12 03:34:08', '2025-04-12 03:34:08', 1000, 0),
-(39, '55', 3, '2025-04-11 21:00:00', 'cash', 0, '', 1, '2025-04-12 03:34:20', '2025-04-12 03:34:20', 1000, 0),
-(40, '55', 3, '2025-04-11 21:00:00', 'cash', 0, '', 1, '2025-04-12 03:34:20', '2025-04-12 03:34:20', 1000, 0),
-(42, '54', 3, '2025-04-11 21:00:00', 'cash', 0, '', 1, '2025-04-12 03:34:31', '2025-04-12 03:34:31', 1000, 0),
-(44, '5', 3, '2025-04-11 21:00:00', 'cash', 0, '', 1, '2025-04-12 03:34:42', '2025-04-12 03:34:42', 1000, 0);
+INSERT INTO `purchases` (`id`, `invoice_number`, `supplier_id`, `date`, `payment_type`, `discount`, `shipping_cost`, `other_cost`, `notes`, `created_by`, `created_at`, `updated_at`, `paid_amount`, `remaining_amount`) VALUES
+(33, '1454', 3, '2025-04-08 21:00:00', 'credit', 0, 0, 0, '', 1, '2025-04-09 10:37:30', '2025-04-09 10:37:30', 5000, 15000),
+(34, 'TEST-001', 2, '2025-04-09 10:04:52', 'credit', 0, 0, 0, 'Test purchase', 1, '2025-04-09 11:04:52', '2025-04-09 11:04:52', 5000, 5000),
+(36, '863', 2, '2025-04-08 21:00:00', 'credit', 0, 0, 0, '', 1, '2025-04-09 11:16:33', '2025-04-09 11:16:33', 20000, 40000),
+(37, '4', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 03:34:08', '2025-04-12 03:34:08', 1000, 0),
+(38, '4', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 03:34:08', '2025-04-12 03:34:08', 1000, 0),
+(39, '55', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 03:34:20', '2025-04-12 03:34:20', 1000, 0),
+(40, '55', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 03:34:20', '2025-04-12 03:34:20', 1000, 0),
+(42, '54', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 03:34:31', '2025-04-12 03:34:31', 1000, 0),
+(44, '5', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 03:34:42', '2025-04-12 03:34:42', 1000, 0),
+(51, '5445', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 05:26:12', '2025-04-12 05:26:12', 1000, 0),
+(52, '5445', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 05:26:12', '2025-04-12 05:26:12', 1000, 0),
+(53, '25', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 15:39:36', '2025-04-12 15:39:36', 1000, 0),
+(55, '75', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 15:39:44', '2025-04-12 15:39:44', 1000, 0),
+(56, '75', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 15:39:44', '2025-04-12 15:39:44', 1000, 0),
+(57, '767', 2, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 15:39:52', '2025-04-12 15:39:52', 1000, 0),
+(58, '767', 2, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 15:39:52', '2025-04-12 15:39:52', 1000, 0),
+(59, '76', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 15:40:00', '2025-04-12 15:40:00', 1000, 0),
+(60, '76', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 15:40:00', '2025-04-12 15:40:00', 1000, 0),
+(61, '67', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 15:40:07', '2025-04-12 15:40:07', 1000, 0),
+(62, '67', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 15:40:07', '2025-04-12 15:40:07', 1000, 0),
+(63, '677', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 15:40:13', '2025-04-12 15:40:13', 1000, 0),
+(64, '677', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 15:40:13', '2025-04-12 15:40:13', 1000, 0),
+(65, '54', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 15:41:23', '2025-04-12 15:41:23', 1000, 0),
+(66, '54', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 15:41:23', '2025-04-12 15:41:23', 1000, 0),
+(68, '45', 2, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 15:41:32', '2025-04-12 15:41:32', 1000, 0),
+(69, '21', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 15:42:04', '2025-04-12 15:42:04', 1000, 0),
+(70, '21', 3, '2025-04-11 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-12 15:42:04', '2025-04-12 15:42:04', 1000, 0),
+(71, '2', 3, '2025-04-13 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-14 04:25:51', '2025-04-14 04:25:51', 150000, 0),
+(72, '12', 3, '2025-04-13 21:00:00', 'cash', 0, 0, 0, '', 1, '2025-04-14 04:27:23', '2025-04-14 04:27:23', 200000, 0),
+(73, '24', 3, '2025-04-13 21:00:00', 'credit', 2000, 0, 0, '', 1, '2025-04-14 04:46:20', '2025-04-14 04:46:20', 100000, -2000),
+(74, '44', 3, '2025-04-13 21:00:00', 'credit', 2000, 0, 0, '', 1, '2025-04-14 04:47:47', '2025-04-14 04:47:47', 99000, -1000);
 
 -- --------------------------------------------------------
 
@@ -1213,7 +1243,29 @@ INSERT INTO `purchase_items` (`id`, `purchase_id`, `product_id`, `quantity`, `un
 (39, 39, 51, 1, 1000, 1000),
 (40, 40, 51, 1, 1000, 1000),
 (41, 42, 46, 1, 1000, 1000),
-(44, 44, 46, 1, 1000, 1000);
+(44, 44, 46, 1, 1000, 1000),
+(51, 51, 50, 1, 1000, 1000),
+(52, 52, 50, 1, 1000, 1000),
+(53, 53, 50, 1, 1000, 1000),
+(55, 55, 51, 1, 1000, 1000),
+(56, 56, 51, 1, 1000, 1000),
+(57, 57, 46, 1, 1000, 1000),
+(58, 58, 46, 1, 1000, 1000),
+(59, 59, 51, 1, 1000, 1000),
+(60, 60, 51, 1, 1000, 1000),
+(61, 61, 51, 1, 1000, 1000),
+(62, 62, 51, 1, 1000, 1000),
+(63, 63, 46, 1, 1000, 1000),
+(64, 64, 46, 1, 1000, 1000),
+(65, 65, 51, 1, 1000, 1000),
+(66, 66, 51, 1, 1000, 1000),
+(67, 68, 51, 1, 1000, 1000),
+(69, 69, 51, 1, 1000, 1000),
+(70, 70, 51, 1, 1000, 1000),
+(71, 71, 51, 100, 1500, 150000),
+(72, 72, 50, 100, 2000, 200000),
+(73, 73, 50, 50, 2000, 100000),
+(74, 74, 49, 50, 2000, 100000);
 
 -- --------------------------------------------------------
 
@@ -1249,7 +1301,10 @@ INSERT INTO `sales` (`id`, `invoice_number`, `customer_id`, `date`, `payment_typ
 (48, 'A-0002', 8, '2025-04-08 21:00:00', 'credit', 0.00, 'single', 0.00, 0.00, '', 1, '2025-04-09 11:14:59', '2025-04-09 11:14:59', 17000, 13000),
 (49, 'A-0003', 8, '2025-04-08 21:00:00', 'credit', 0.00, 'single', 0.00, 0.00, '', 1, '2025-04-09 11:15:55', '2025-04-09 11:15:55', 20000, 10000),
 (51, 'A-0004', 10, '2025-04-11 21:00:00', 'cash', 0.00, 'single', 0.00, 0.00, '', 1, '2025-04-12 02:35:47', '2025-04-12 02:35:47', 8000, 0),
-(52, 'A-0005', 10, '2025-04-11 21:00:00', 'cash', 0.00, 'single', 0.00, 0.00, '', 1, '2025-04-12 03:01:55', '2025-04-12 03:01:55', 1500, 0);
+(52, 'A-0005', 10, '2025-04-11 21:00:00', 'cash', 0.00, 'single', 0.00, 0.00, '', 1, '2025-04-12 03:01:55', '2025-04-12 03:01:55', 1500, 0),
+(53, 'TEST-001', 8, '2025-04-14 03:05:20', 'cash', 0.00, 'single', 0.00, 0.00, 'Test sale', 1, '2025-04-14 04:05:20', '2025-04-14 04:05:20', 0, 0),
+(54, 'A-0001', 9, '2025-04-13 21:00:00', 'cash', 0.00, 'single', 0.00, 0.00, '', 1, '2025-04-14 04:11:25', '2025-04-14 04:11:25', 60000, 0),
+(55, 'A-0002', 9, '2025-04-13 21:00:00', 'credit', 0.00, 'single', 0.00, 0.00, '', 1, '2025-04-14 04:12:51', '2025-04-14 04:12:51', 50000, 20000);
 
 -- --------------------------------------------------------
 
@@ -1282,7 +1337,10 @@ INSERT INTO `sale_items` (`id`, `sale_id`, `product_id`, `quantity`, `unit_type`
 (43, 51, 51, 1, 'piece', 1, 1500, 1500),
 (44, 51, 51, 1, 'piece', 1, 1500, 1500),
 (45, 51, 46, 1, 'piece', 1, 1500, 1500),
-(46, 52, 51, 1, 'piece', 1, 1500, 1500);
+(46, 52, 51, 1, 'piece', 1, 1500, 1500),
+(47, 53, 46, 1, 'piece', 1, 1500, 1500),
+(48, 54, 46, 2, 'box', 40, 30000, 60000),
+(49, 55, 47, 1, 'box', 20, 70000, 70000);
 
 -- --------------------------------------------------------
 
@@ -1307,8 +1365,8 @@ CREATE TABLE `suppliers` (
 --
 
 INSERT INTO `suppliers` (`id`, `name`, `phone1`, `phone2`, `debt_on_myself`, `debt_on_supplier`, `notes`, `created_at`, `updated_at`) VALUES
-(2, 'محمد ', '07708542838', '', 25000, -80000, '', '2025-04-06 07:51:37', '2025-04-11 16:01:13'),
-(3, 'ڕاوێژ', '07702183313', '', -110000, 0, '', '2025-04-06 16:28:52', '2025-04-11 16:04:17');
+(2, 'محمد ', '07708542838', '', -55000, -80000, '', '2025-04-06 07:51:37', '2025-04-14 04:34:52'),
+(3, 'ڕاوێژ', '07702183313', '', -135000, 0, '', '2025-04-06 16:28:52', '2025-04-14 04:37:10');
 
 -- --------------------------------------------------------
 
@@ -1338,7 +1396,9 @@ INSERT INTO `supplier_debt_transactions` (`id`, `supplier_id`, `amount`, `transa
 (88, 3, 80000, 'payment', NULL, '', 1, '2025-04-11 07:50:40'),
 (89, 2, 80000, 'supplier_payment', NULL, '', 1, '2025-04-11 07:51:08'),
 (90, 2, 20000, 'payment', NULL, '{\"paymentMethod\":\"cash\",\"referenceNumber\":\"\",\"originalNotes\":\"\"}', NULL, '2025-04-11 16:01:13'),
-(91, 3, 45000, 'payment', NULL, '', 1, '2025-04-11 16:04:17');
+(91, 3, 45000, 'payment', NULL, '', 1, '2025-04-11 16:04:17'),
+(92, 2, 80000, 'payment', NULL, '', 1, '2025-04-14 04:34:52'),
+(93, 3, 25000, 'payment', NULL, '', 1, '2025-04-14 04:37:10');
 
 -- --------------------------------------------------------
 
@@ -1405,13 +1465,6 @@ ALTER TABLE `employee_payments`
 --
 ALTER TABLE `expenses`
   ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `inventory`
---
-ALTER TABLE `inventory`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `product_id` (`product_id`);
 
 --
 -- Indexes for table `inventory_count`
@@ -1498,13 +1551,13 @@ ALTER TABLE `categories`
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `debt_transactions`
 --
 ALTER TABLE `debt_transactions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
 
 --
 -- AUTO_INCREMENT for table `employees`
@@ -1516,19 +1569,13 @@ ALTER TABLE `employees`
 -- AUTO_INCREMENT for table `employee_payments`
 --
 ALTER TABLE `employee_payments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
 
 --
 -- AUTO_INCREMENT for table `expenses`
 --
 ALTER TABLE `expenses`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
-
---
--- AUTO_INCREMENT for table `inventory`
---
-ALTER TABLE `inventory`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `inventory_count`
@@ -1546,31 +1593,31 @@ ALTER TABLE `inventory_count_items`
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
 
 --
 -- AUTO_INCREMENT for table `purchases`
 --
 ALTER TABLE `purchases`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
 
 --
 -- AUTO_INCREMENT for table `purchase_items`
 --
 ALTER TABLE `purchase_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
 
 --
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
 
 --
 -- AUTO_INCREMENT for table `sale_items`
 --
 ALTER TABLE `sale_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- AUTO_INCREMENT for table `suppliers`
@@ -1582,7 +1629,7 @@ ALTER TABLE `suppliers`
 -- AUTO_INCREMENT for table `supplier_debt_transactions`
 --
 ALTER TABLE `supplier_debt_transactions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=92;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=94;
 
 --
 -- AUTO_INCREMENT for table `units`
@@ -1605,12 +1652,6 @@ ALTER TABLE `debt_transactions`
 --
 ALTER TABLE `employee_payments`
   ADD CONSTRAINT `employee_payments_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`);
-
---
--- Constraints for table `inventory`
---
-ALTER TABLE `inventory`
-  ADD CONSTRAINT `inventory_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
 
 --
 -- Constraints for table `inventory_count_items`

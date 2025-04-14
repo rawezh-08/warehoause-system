@@ -1,4 +1,8 @@
 <?php
+// Turn off all error reporting for production
+error_reporting(0);
+ini_set('display_errors', 0);
+
 // Include database connection
 require_once '../config/database.php';
 
@@ -10,16 +14,80 @@ $json_data = file_get_contents('php://input');
 $data = json_decode($json_data, true);
 
 // Debug: Log received data
-error_log("Received data: " . print_r($data, true));
+error_log("Raw POST data: " . print_r($_POST, true));
+error_log("Raw JSON data: " . $json_data);
+error_log("Decoded data: " . print_r($data, true));
 
 // Validate input data
 if (!$data) {
+    $error_message = json_last_error_msg();
+    error_log("JSON decode error: " . $error_message);
     echo json_encode([
         'success' => false, 
         'message' => 'داتای نادروست',
         'debug' => [
             'received_data' => $json_data,
-            'json_error' => json_last_error_msg()
+            'json_error' => $error_message,
+            'post_data' => $_POST
+        ]
+    ]);
+    exit;
+}
+
+// Validate required fields
+$required_fields = ['receipt_type', 'invoice_number', 'date', 'payment_type'];
+$missing_fields = [];
+foreach ($required_fields as $field) {
+    if (!isset($data[$field]) || empty($data[$field])) {
+        $missing_fields[] = $field;
+    }
+}
+
+if (!empty($missing_fields)) {
+    error_log("Missing required fields: " . implode(', ', $missing_fields));
+    echo json_encode([
+        'success' => false,
+        'message' => 'زانیاری پێویست کەمە: ' . implode(', ', $missing_fields),
+        'debug' => [
+            'missing_fields' => $missing_fields,
+            'received_data' => $data
+        ]
+    ]);
+    exit;
+}
+
+// Validate receipt type specific fields
+if ($data['receipt_type'] === 'selling') {
+    if (empty($data['customer_id'])) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'کڕیار پێویستە',
+            'debug' => [
+                'customer_id' => $data['customer_id'] ?? 'missing'
+            ]
+        ]);
+        exit;
+    }
+} elseif ($data['receipt_type'] === 'buying') {
+    if (empty($data['supplier_id'])) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'فرۆشیار پێویستە',
+            'debug' => [
+                'supplier_id' => $data['supplier_id'] ?? 'missing'
+            ]
+        ]);
+        exit;
+    }
+}
+
+// Validate products
+if (empty($data['products']) || !is_array($data['products'])) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'کاڵاکان پێویستن',
+        'debug' => [
+            'products' => $data['products'] ?? 'missing'
         ]
     ]);
     exit;
@@ -69,7 +137,7 @@ try {
             'paid_amount' => floatval($data['paid_amount']),
             'price_type' => $data['price_type'],
             'shipping_cost' => floatval($data['shipping_cost']),
-            'other_costs' => floatval($data['other_costs']),
+            'other_cost' => floatval($data['other_cost']),
             'notes' => $data['notes'],
             'products' => $products_json
         ], true));
@@ -84,7 +152,7 @@ try {
         $stmt->bindParam(6, $data['paid_amount'], PDO::PARAM_STR);
         $stmt->bindParam(7, $data['price_type'], PDO::PARAM_STR);
         $stmt->bindParam(8, $data['shipping_cost'], PDO::PARAM_STR);
-        $stmt->bindParam(9, $data['other_costs'], PDO::PARAM_STR);
+        $stmt->bindParam(9, $data['other_cost'], PDO::PARAM_STR);
         $stmt->bindParam(10, $data['notes'], PDO::PARAM_STR);
         $created_by = 1; // Replace with actual user ID when authentication is implemented
         $stmt->bindParam(11, $created_by, PDO::PARAM_INT);
@@ -133,22 +201,26 @@ try {
             'payment_type' => $data['payment_type'],
             'discount' => floatval($data['discount']),
             'paid_amount' => floatval($data['paid_amount']),
+            'shipping_cost' => floatval($data['shipping_cost']),
+            'other_cost' => floatval($data['other_cost']),
             'notes' => $data['notes'],
             'products' => $products_json
         ], true));
         
         // Call the stored procedure to add purchase
-        $stmt = $conn->prepare("CALL add_purchase(?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("CALL add_purchase(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->bindParam(1, $data['invoice_number'], PDO::PARAM_STR);
         $stmt->bindParam(2, $data['supplier_id'], PDO::PARAM_INT);
         $stmt->bindParam(3, $data['date'], PDO::PARAM_STR);
         $stmt->bindParam(4, $data['payment_type'], PDO::PARAM_STR);
         $stmt->bindParam(5, $data['discount'], PDO::PARAM_STR);
         $stmt->bindParam(6, $data['paid_amount'], PDO::PARAM_STR);
-        $stmt->bindParam(7, $data['notes'], PDO::PARAM_STR);
+        $stmt->bindParam(7, $data['shipping_cost'], PDO::PARAM_STR);
+        $stmt->bindParam(8, $data['other_cost'], PDO::PARAM_STR);
+        $stmt->bindParam(9, $data['notes'], PDO::PARAM_STR);
         $created_by = 1; // Replace with actual user ID when authentication is implemented
-        $stmt->bindParam(8, $created_by, PDO::PARAM_INT);
-        $stmt->bindParam(9, $products_json_string, PDO::PARAM_STR);
+        $stmt->bindParam(10, $created_by, PDO::PARAM_INT);
+        $stmt->bindParam(11, $products_json_string, PDO::PARAM_STR);
         
         $stmt->execute();
         
