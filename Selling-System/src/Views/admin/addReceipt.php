@@ -52,7 +52,7 @@ require_once '../../config/database.php';
         </div>
     </div>
 
-    <div class="container-fluid px-3">
+    <div class="container-fluid px-0">
         <!-- Tabs Navigation -->
         <ul class="nav nav-tabs" id="receiptTabs" role="tablist">
             <li class="nav-item" role="presentation">
