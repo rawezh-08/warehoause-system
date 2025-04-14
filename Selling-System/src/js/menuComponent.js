@@ -206,6 +206,20 @@ class MenuComponent {
         this.sidebar.classList.toggle('active');
         if (this.overlay) {
             this.overlay.classList.toggle('active');
+            // Ensure overlay is displayed on iPad screens
+            if (this.sidebar.classList.contains('active')) {
+                this.overlay.style.display = 'block';
+                // Force page redraw to ensure overlay shows on iPad
+                setTimeout(() => {
+                    this.overlay.style.opacity = '1';
+                }, 10);
+            } else {
+                this.overlay.style.opacity = '0';
+                // Delay hiding to allow fade out animation
+                setTimeout(() => {
+                    this.overlay.style.display = 'none';
+                }, 300);
+            }
         }
         document.body.classList.toggle('sidebar-active');
     }

@@ -2031,7 +2031,7 @@ foreach ($cashFlowData as $data) {
     <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     
     <!-- Global JS -->
-    <script src="../../assets/js/include-components.js"></script>
+    <script src="../../js/include-components.js"></script>
     
     <script>
         $(document).ready(function() {

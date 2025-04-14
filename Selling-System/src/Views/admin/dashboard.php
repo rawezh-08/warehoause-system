@@ -257,6 +257,9 @@ try {
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
+<!-- Global CSS -->
+<link rel="stylesheet" href="../../assets/css/custom.css">
+    <!-- Page CSS -->
     <link rel="stylesheet" href="../../css/dashboard.css">
     <link rel="stylesheet" href="../../css/global.css">
     <style>

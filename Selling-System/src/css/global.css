@@ -388,6 +388,48 @@ body.sidebar-active .overlay {
     }
 }
 
+/* iPad specific styles */
+@media (min-width: 768px) and (max-width: 1024px) {
+    /* Make iPad sidebar behave like mobile */
+    .sidebar {
+        transform: translateX(100%);
+        width: 320px; /* Slightly wider for iPad */
+    }
+    
+    body.sidebar-active .sidebar {
+        transform: translateX(0);
+    }
+    
+    /* Make sure overlay works on iPad */
+    .overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+    }
+    
+    body.sidebar-active .overlay {
+        display: block;
+    }
+    
+    /* Prevent content from being pushed */
+    body.sidebar-active .main-content,
+    body.sidebar-active #wrapper {
+        margin-right: 0 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+    
+    /* Hide scrollbar when sidebar is open */
+    body.sidebar-active {
+        overflow: hidden;
+    }
+}
+
 /* Extra responsive settings */
 
 

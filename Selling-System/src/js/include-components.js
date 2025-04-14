@@ -267,18 +267,24 @@ function initSidebar() {
     document.addEventListener('click', function(e) {
         if (e.target.matches('.overlay')) {
             document.body.classList.remove('sidebar-active');
+            // Reset body position when closing sidebar
+            document.body.style.position = '';
+            document.body.style.width = '';
         }
     });
     
     // Close sidebar on window resize if screen is large
     window.addEventListener('resize', function() {
-        if (window.innerWidth > 992) {
+        if (window.innerWidth > 1024) {
             document.body.classList.remove('sidebar-active');
+            // Reset body position when closing sidebar
+            document.body.style.position = '';
+            document.body.style.width = '';
         }
     });
     
-    // Close sidebar when clicking outside (for mobile)
-    if (window.innerWidth <= 400) {
+    // Close sidebar when clicking outside (for mobile and iPad)
+    if (window.innerWidth <= 1024) {
         document.addEventListener('click', function(e) {
             const sidebar = document.querySelector('.sidebar');
             const sidebarToggle = document.querySelector('.sidebar-toggle');
@@ -289,6 +295,9 @@ function initSidebar() {
                 
                 if (!isClickInsideSidebar && !isClickOnToggleBtn && document.body.classList.contains('sidebar-active')) {
                     document.body.classList.remove('sidebar-active');
+                    // Reset body position when closing sidebar
+                    document.body.style.position = '';
+                    document.body.style.width = '';
                 }
             }
         });

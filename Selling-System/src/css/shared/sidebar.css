@@ -270,3 +270,57 @@ justify-content: start;
     height: 20px;
   }
 }
+
+/* iPad specific styles (similar to mobile but with some differences) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .sidebar {
+    margin: 0px;
+    position: fixed;
+    display: block;
+    top: 0;
+    right: -320px; /* Hide off-screen by default, wider for iPad */
+    width: 320px; /* Take reasonable width for iPad */
+    height: 100vh;
+    z-index: 1030;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    transition: right 0.3s ease;
+  }
+  
+  body.sidebar-active .sidebar {
+    right: 0; /* Slide in from right */
+  }
+  
+  /* Create an overlay effect when sidebar is open */
+  body.sidebar-active::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1020;
+  }
+  
+  /* Make sure content doesn't shift when sidebar opens */
+  body.sidebar-active .main-content {
+    margin-right: 0 !important;
+    transform: none !important;
+  }
+  
+  #wrapper, #wrapper:not(.sidebar-collapsed) {
+    padding-right: 0 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  
+  /* Fix toggle button on iPad */
+  body.sidebar-active .sidebar-toggle {
+    right: 325px; /* Positions the toggle button at the edge of the sidebar */
+    background-color: white;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    padding: 8px;
+    transform: translateX(50%);
+  }
+}
