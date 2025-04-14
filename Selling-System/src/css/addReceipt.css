@@ -14,12 +14,15 @@ body {
     border-radius: 10px;
     box-shadow: 0 0 15px rgba(0,0,0,0.1);
     padding: 20px;
+    margin: 0 auto;
+    max-width: 100%;
 }
 .top-nav {
     background: #fff;
     border-bottom: 1px solid #dee2e6;
     padding: 10px 0;
     margin-bottom: 20px;
+    width: 100%;
 }
 .receipt-type-btn {
     padding: 8px 15px;
@@ -136,11 +139,10 @@ body {
     padding-top: 20px;
 }
 .receipt-type-container {
-    /* display: flex; */
-    justify-content: space-between;
+    display: flex;
     align-items: center;
     margin-bottom: 20px;
-    margin-top: 60px;
+    margin-top: 10px;
 }
 
 /* Type-specific styles */
@@ -855,8 +857,8 @@ input[type="text"].form-control {
 
     /* Make table responsive */
     .table-responsive {
-        margin-bottom: 15px;
-        border: 0;
+        margin: 0 -5px;
+        width: calc(100% + 10px);
     }
 
     /* Adjust table cell padding */
@@ -1038,5 +1040,27 @@ input[type="text"].form-control {
 
     .action-buttons .btn {
         min-height: 34px;
+    }
+}
+
+@media (min-width: 992px) {
+    .receipt-container {
+        padding: 25px;
+    }
+    
+    .table-responsive {
+        margin: 0;
+        width: 100%;
+    }
+}
+
+@media (max-width: 991px) {
+    .receipt-container {
+        padding: 15px;
+    }
+    
+    .table-responsive {
+        margin: 0 -5px;
+        width: calc(100% + 10px);
     }
 }

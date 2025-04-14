@@ -27,10 +27,10 @@ require_once '../../config/database.php';
 <body>
     <!-- Top Navigation -->
     <div class="main-content">
-    <div class="container">
+    <div class="container-fluid px-0">
         <div id="navbar-container"></div>
 
-    <div class="top-nav">
+    <div class="top-nav px-3">
        
 <!-- Sidebar container - will be populated by JavaScript -->
 <div id="sidebar-container"></div>
@@ -52,7 +52,7 @@ require_once '../../config/database.php';
         </div>
     </div>
 
-    <div class="container">
+    <div class="container-fluid px-3">
         <!-- Tabs Navigation -->
         <ul class="nav nav-tabs" id="receiptTabs" role="tablist">
             <li class="nav-item" role="presentation">
