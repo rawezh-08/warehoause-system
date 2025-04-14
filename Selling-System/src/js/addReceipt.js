@@ -220,7 +220,7 @@ $(document).ready(function() {
                     row.find('.product-image-cell').html(`
                         <div class="product-image-container">
                             <div class="no-image-placeholder">
-                                <i class="fas fa-image"></i>
+                                <i class="fas fa-box"></i>
                             </div>
                         </div>
                     `);
@@ -280,15 +280,177 @@ $(document).ready(function() {
                 // Add info button to action column if not already added
                 if (row.find('.product-info-btn').length === 0) {
                     const actionCell = row.find('td:last');
-                    const infoBtn = $(`<button type="button" class="btn btn-info btn-sm product-info-btn ms-1" title="زانیاری بەرهەم">
+                    actionCell.addClass('action-column');
+                    
+                    // Create action buttons container
+                    const actionButtonsContainer = $('<div class="action-buttons"></div>');
+                    
+                    // Create info button
+                    const infoBtn = $(`<button type="button" class="btn btn-info btn-sm" title="زانیاری بەرهەم">
                         <i class="fas fa-info-circle"></i>
                     </button>`);
                     
                     // Store product data for the info button
                     infoBtn.data('product', data);
                     
-                    // Insert the button before remove button
-                    actionCell.find('.remove-row').before(infoBtn);
+                    // Add profit calculation button only for selling tabs
+                    const tabPane = row.closest('.tab-pane');
+                    const tabType = tabPane.attr('data-receipt-type');
+                    
+                    // Create remove button
+                    const removeBtn = $(`<button type="button" class="btn btn-danger btn-sm remove-row" title="ڕەشکردنەوە">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>`);
+                    
+                    // Add buttons to container
+                    actionButtonsContainer.append(infoBtn);
+                    
+                    // Insert buttons for selling tabs
+                    if (tabType === RECEIPT_TYPES.SELLING) {
+                        // Create profit calculation button
+                        const profitBtn = $(`<button type="button" class="btn btn-success btn-sm profit-info-btn" title="زانیاری قازانجی فرۆشتن">
+                            <i class="fas fa-chart-line"></i>
+                        </button>`);
+                        
+                        // Add profit button to container
+                        actionButtonsContainer.append(profitBtn);
+                        
+                        // Add click event for profit calculation button
+                        profitBtn.on('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            const productData = infoBtn.data('product');
+                            const quantity = parseFloat(row.find('.quantity').val()) || 0;
+                            const unitType = row.find('.unit-type').val();
+                            const piecesPerBox = parseInt(productData.pieces_per_box) || 0;
+                            const boxesPerSet = parseInt(productData.boxes_per_set) || 0;
+                            
+                            // Calculate purchase and selling prices based on unit type
+                            const purchasePrice = parseFloat(productData.purchase_price) || 0;
+                            const tabPane = row.closest('.tab-pane');
+                            const priceType = tabPane.find('.price-type').val() || PRICE_TYPES.SINGLE;
+                            const retailPrice = parseFloat(productData.retail_price) || 0;
+                            const wholesalePrice = parseFloat(productData.wholesale_price) || 0;
+                            
+                            // Get actual unit price from the form
+                            const unitPrice = parseFloat(row.find('.unit-price').val()) || 0;
+                            
+                            // Calculate total purchase cost and selling price based on unit type and quantity
+                            let totalPurchaseCost = 0;
+                            let totalSellingPrice = 0;
+                            let unitLabel = "دانە";
+                            let totalUnits = quantity;
+                            
+                            if (unitType === 'piece') {
+                                totalPurchaseCost = purchasePrice * quantity;
+                                totalSellingPrice = unitPrice * quantity;
+                                unitLabel = "دانە";
+                            } else if (unitType === 'box' && piecesPerBox > 0) {
+                                totalPurchaseCost = (purchasePrice * piecesPerBox) * quantity;
+                                totalSellingPrice = unitPrice * quantity;
+                                totalUnits = quantity * piecesPerBox;
+                                unitLabel = "کارتۆن";
+                            } else if (unitType === 'set' && piecesPerBox > 0 && boxesPerSet > 0) {
+                                totalPurchaseCost = (purchasePrice * piecesPerBox * boxesPerSet) * quantity;
+                                totalSellingPrice = unitPrice * quantity;
+                                totalUnits = quantity * piecesPerBox * boxesPerSet;
+                                unitLabel = "سێت";
+                            }
+                            
+                            // Calculate profit
+                            const totalProfit = totalSellingPrice - totalPurchaseCost;
+                            
+                            // Create HTML content for the modal
+                            let htmlContent = `
+                                <div class="card border-primary mb-3">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0">زانیاری قازانجی فرۆشتنی ${productData.text}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="profit-details">
+                                            <div class="row text-center mb-4">
+                                                <div class="col-md-4">
+                                                    <div class="card inventory-card">
+                                                        <div class="card-body">
+                                                            <h3>${quantity}</h3>
+                                                            <p>${unitLabel}</p>
+                                                            ${unitType !== 'piece' ? `<small>(${totalUnits} دانە)</small>` : ''}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="card inventory-card">
+                                                        <div class="card-body">
+                                                            <h3>${totalPurchaseCost.toLocaleString()}</h3>
+                                                            <p>نرخی کڕین</p>
+                                                            <small>دینار</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="card inventory-card">
+                                                        <div class="card-body">
+                                                            <h3>${totalSellingPrice.toLocaleString()}</h3>
+                                                            <p>نرخی فرۆشتن</p>
+                                                            <small>دینار</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="table-responsive mb-4">
+                                                <table class="table table-bordered">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>بڕی کاڵا</th>
+                                                            <th>نرخی کڕین</th>
+                                                            <th>نرخی فرۆشتن</th>
+                                                            <th>بڕی قازانج</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>${quantity} ${unitLabel} (${totalUnits} دانە)</td>
+                                                            <td>${totalPurchaseCost.toLocaleString()} دینار</td>
+                                                            <td>${totalSellingPrice.toLocaleString()} دینار</td>
+                                                            <td class="${totalProfit >= 0 ? 'text-success' : 'text-danger'}">${totalProfit.toLocaleString()} دینار</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <div class="alert ${totalProfit >= 0 ? 'alert-success' : 'alert-danger'}">
+                                                        <h5 class="mb-0 text-center">
+                                                            <i class="fas ${totalProfit >= 0 ? 'fa-check-circle' : 'fa-exclamation-triangle'} me-2"></i>
+                                                            قازانجی نێوان نرخی کڕین و فرۆشتن: <strong>${totalProfit.toLocaleString()} دینار</strong>
+                                                        </h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            // Show SweetAlert2 modal
+                            Swal.fire({
+                                title: 'زانیاری قازانج',
+                                html: htmlContent,
+                                width: 800,
+                                showCloseButton: true,
+                                showConfirmButton: false,
+                                customClass: {
+                                    container: 'inventory-alert'
+                                }
+                            });
+                        });
+                    } else {
+                        // For buying tabs, only add the info button
+                        actionButtonsContainer.append(infoBtn);
+                    }
                     
                     // Add click event to the info button
                     infoBtn.on('click', function(e) {
@@ -299,6 +461,31 @@ $(document).ready(function() {
                         const piecesInStock = parseInt(productData.current_quantity);
                         const piecesPerBox = parseInt(productData.pieces_per_box) || 0;
                         const boxesPerSet = parseInt(productData.boxes_per_set) || 0;
+                        
+                        // Calculate profit percentages and amounts
+                        const purchasePrice = parseFloat(productData.purchase_price) || 0;
+                        const retailPrice = parseFloat(productData.retail_price) || 0;
+                        const wholesalePrice = parseFloat(productData.wholesale_price) || 0;
+                        
+                        // Calculate profits per piece
+                        const retailProfitPerPiece = retailPrice - purchasePrice;
+                        const wholesaleProfitPerPiece = wholesalePrice - purchasePrice;
+                        
+                        // Calculate box and set prices and profits
+                        const purchasePricePerBox = purchasePrice * piecesPerBox;
+                        const retailPricePerBox = retailPrice * piecesPerBox;
+                        const wholesalePricePerBox = wholesalePrice * piecesPerBox;
+                        
+                        const retailProfitPerBox = retailPricePerBox - purchasePricePerBox;
+                        const wholesaleProfitPerBox = wholesalePricePerBox - purchasePricePerBox;
+                        
+                        // Calculate set prices and profits if applicable
+                        const purchasePricePerSet = purchasePricePerBox * boxesPerSet;
+                        const retailPricePerSet = retailPricePerBox * boxesPerSet;
+                        const wholesalePricePerSet = wholesalePricePerBox * boxesPerSet;
+                        
+                        const retailProfitPerSet = retailPricePerSet - purchasePricePerSet;
+                        const wholesaleProfitPerSet = wholesalePricePerSet - purchasePricePerSet;
                         
                         let boxesInStock = 0;
                         let setsInStock = 0;
@@ -316,10 +503,9 @@ $(document).ready(function() {
                             <div class="card border-primary mb-3">
                                 <div class="card-header bg-primary text-white">
                                     <h5 class="mb-0">${productData.text}</h5>
-                                    <small>${productData.code} | ${productData.barcode}</small>
                                 </div>
                                 <div class="card-body">
-                                    <div class="row text-center">
+                                    <div class="row text-center mb-4">
                                         <div class="col-md-4">
                                             <div class="card inventory-card">
                                                 <div class="card-body">
@@ -357,15 +543,98 @@ $(document).ready(function() {
                         
                         htmlContent += `
                                     </div>
-                                    <div class="row mt-3">
-                                        <div class="col-md-6">
-                                            <p><strong>نرخی تاک:</strong> ${productData.retail_price}</p>
-                                            <p><strong>نرخی کۆمەڵ:</strong> ${productData.wholesale_price}</p>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <p><strong>پۆل:</strong> ${productData.category || '-'}</p>
-                                            <p><strong>یەکە:</strong> ${productData.unit || '-'}</p>
-                                        </div>
+                            <div class="profit-details">
+                                <h6 class="text-primary mb-3">زانیاری نرخ و قازانج بە دانە</h6>
+                                <div class="table-responsive mb-4">
+                                    <table class="table table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>جۆری نرخ</th>
+                                                <th>نرخی کڕین</th>
+                                                <th>نرخی فرۆشتن</th>
+                                                <th>بڕی قازانج</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>تاک</td>
+                                                <td>${purchasePrice.toLocaleString()} دینار</td>
+                                                <td>${retailPrice.toLocaleString()} دینار</td>
+                                                <td class="${retailProfitPerPiece >= 0 ? 'text-success' : 'text-danger'}">${retailProfitPerPiece.toLocaleString()} دینار</td>
+                                            </tr>
+                                            <tr>
+                                                <td>کۆمەڵ</td>
+                                                <td>${purchasePrice.toLocaleString()} دینار</td>
+                                                <td>${wholesalePrice.toLocaleString()} دینار</td>
+                                                <td class="${wholesaleProfitPerPiece >= 0 ? 'text-success' : 'text-danger'}">${wholesaleProfitPerPiece.toLocaleString()} دینار</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>`;
+                        
+                        if (piecesPerBox > 0) {
+                            htmlContent += `
+                                <h6 class="text-primary mb-3">زانیاری نرخ و قازانج بە کارتۆن (${piecesPerBox} دانە)</h6>
+                                <div class="table-responsive mb-4">
+                                    <table class="table table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>جۆری نرخ</th>
+                                                <th>نرخی کڕین</th>
+                                                <th>نرخی فرۆشتن</th>
+                                                <th>بڕی قازانج</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>تاک</td>
+                                                <td>${purchasePricePerBox.toLocaleString()} دینار</td>
+                                                <td>${retailPricePerBox.toLocaleString()} دینار</td>
+                                                <td class="${retailProfitPerBox >= 0 ? 'text-success' : 'text-danger'}">${retailProfitPerBox.toLocaleString()} دینار</td>
+                                            </tr>
+                                            <tr>
+                                                <td>کۆمەڵ</td>
+                                                <td>${purchasePricePerBox.toLocaleString()} دینار</td>
+                                                <td>${wholesalePricePerBox.toLocaleString()} دینار</td>
+                                                <td class="${wholesaleProfitPerBox >= 0 ? 'text-success' : 'text-danger'}">${wholesaleProfitPerBox.toLocaleString()} دینار</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>`;
+                        }
+                        
+                        if (boxesPerSet > 0) {
+                            htmlContent += `
+                                <h6 class="text-primary mb-3">زانیاری نرخ و قازانج بە سێت (${boxesPerSet} کارتۆن)</h6>
+                                <div class="table-responsive mb-4">
+                                    <table class="table table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>جۆری نرخ</th>
+                                                <th>نرخی کڕین</th>
+                                                <th>نرخی فرۆشتن</th>
+                                                <th>بڕی قازانج</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>تاک</td>
+                                                <td>${purchasePricePerSet.toLocaleString()} دینار</td>
+                                                <td>${retailPricePerSet.toLocaleString()} دینار</td>
+                                                <td class="${retailProfitPerSet >= 0 ? 'text-success' : 'text-danger'}">${retailProfitPerSet.toLocaleString()} دینار</td>
+                                            </tr>
+                                            <tr>
+                                                <td>کۆمەڵ</td>
+                                                <td>${purchasePricePerSet.toLocaleString()} دینار</td>
+                                                <td>${wholesalePricePerSet.toLocaleString()} دینار</td>
+                                                <td class="${wholesaleProfitPerSet >= 0 ? 'text-success' : 'text-danger'}">${wholesaleProfitPerSet.toLocaleString()} دینار</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>`;
+                        }
+                        
+                        htmlContent += `
                                     </div>
                                 </div>
                             </div>
@@ -373,9 +642,9 @@ $(document).ready(function() {
                         
                         // Show SweetAlert2 modal
                         Swal.fire({
-                            title: 'زانیاری لەسەر بڕی بەردەست',
+                            title: 'زانیاری وردی کاڵا',
                             html: htmlContent,
-                            width: 600,
+                            width: 800,
                             showCloseButton: true,
                             showConfirmButton: false,
                             customClass: {
@@ -383,6 +652,10 @@ $(document).ready(function() {
                             }
                         });
                     });
+                    
+                    // Add remove button to container and append container to cell
+                    actionButtonsContainer.append(removeBtn);
+                    actionCell.html(actionButtonsContainer);
                 } else {
                     // Update product data for existing info button
                     row.find('.product-info-btn').data('product', data);
@@ -565,23 +838,35 @@ $(document).ready(function() {
                     const unitType = $(this).val();
                     const priceType = tabPane.find('.price-type').val();
                     
-                    // Fetch unit price based on product, unit type and price type
-                    $.ajax({
-                        url: '../../api/get_product_price.php',
-                        type: 'GET',
-                        data: {
-                            product_id: productId,
-                            unit_type: unitType,
-                            price_type: priceType
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                row.find('.unit-price').val(response.price);
-                                calculateRowTotal(row);
-                                calculateGrandTotal(tabId);
-                            }
-                        }
-                    });
+                    // Get product data from the select2 instance
+                    const productSelect = row.find('.product-select');
+                    const productData = productSelect.select2('data')[0];
+                    
+                    if (!productData) {
+                        console.error('Product data not found');
+                        return;
+                    }
+                    
+                    // Get base price based on price type (single unit price)
+                    let basePrice = priceType === PRICE_TYPES.WHOLESALE ? 
+                        parseFloat(productData.wholesale_price || 0) : 
+                        parseFloat(productData.retail_price || 0);
+                    
+                    // Calculate price based on unit type
+                    if (unitType === 'box' && productData.pieces_per_box) {
+                        basePrice = Math.round(basePrice * parseInt(productData.pieces_per_box || 0));
+                        console.log(`Box price calculated: ${basePrice} (${productData.pieces_per_box} pieces per box)`);
+                    } else if (unitType === 'set' && productData.pieces_per_box && productData.boxes_per_set) {
+                        const totalPieces = parseInt(productData.pieces_per_box || 0) * parseInt(productData.boxes_per_set || 0);
+                        basePrice = Math.round(basePrice * totalPieces);
+                        console.log(`Set price calculated: ${basePrice} (${totalPieces} total pieces)`);
+                    }
+                    
+                    // Update unit price field
+                    row.find('.unit-price').val(basePrice);
+                    
+                    // Recalculate row total
+                    calculateRowTotal(row);
                 }
             });
             
@@ -592,28 +877,32 @@ $(document).ready(function() {
                 // Update all rows
                 tabPane.find('.items-list tr').each(function() {
                     const row = $(this);
-                    const productId = row.find('.product-select').val();
+                    const productSelect = row.find('.product-select');
+                    const productData = productSelect.select2('data')[0];
                     
-                    if (productId) {
+                    if (productData) {
                         const unitType = row.find('.unit-type').val();
                         
-                        // Fetch updated unit price
-                        $.ajax({
-                            url: '../../api/get_product_price.php',
-                            type: 'GET',
-                            data: {
-                                product_id: productId,
-                                unit_type: unitType,
-                                price_type: priceType
-                            },
-                            success: function(response) {
-                                if (response.success) {
-                                    row.find('.unit-price').val(response.price);
+                        // Get base price based on price type (single unit price)
+                        let basePrice = priceType === PRICE_TYPES.WHOLESALE ? 
+                            parseFloat(productData.wholesale_price || 0) : 
+                            parseFloat(productData.retail_price || 0);
+                        
+                        // Calculate price based on unit type
+                        if (unitType === 'box' && productData.pieces_per_box) {
+                            basePrice = Math.round(basePrice * parseInt(productData.pieces_per_box || 0));
+                            console.log(`Box price calculated: ${basePrice} (${productData.pieces_per_box} pieces per box)`);
+                        } else if (unitType === 'set' && productData.pieces_per_box && productData.boxes_per_set) {
+                            const totalPieces = parseInt(productData.pieces_per_box || 0) * parseInt(productData.boxes_per_set || 0);
+                            basePrice = Math.round(basePrice * totalPieces);
+                            console.log(`Set price calculated: ${basePrice} (${totalPieces} total pieces)`);
+                        }
+                        
+                        // Update unit price field
+                        row.find('.unit-price').val(basePrice);
+                        
+                        // Recalculate row total
                                     calculateRowTotal(row);
-                                    calculateGrandTotal(tabId);
-                                }
-                            }
-                        });
                     }
                 });
             });
@@ -706,7 +995,7 @@ $(document).ready(function() {
                 row.find('.product-image-cell').html(`
                     <div class="product-image-container">
                         <div class="no-image-placeholder">
-                            <i class="fas fa-image"></i>
+                            <i class="fas fa-box"></i>
                         </div>
                     </div>
                 `);
@@ -766,15 +1055,177 @@ $(document).ready(function() {
             // Add info button to action column if not already added
             if (row.find('.product-info-btn').length === 0) {
                 const actionCell = row.find('td:last');
-                const infoBtn = $(`<button type="button" class="btn btn-info btn-sm product-info-btn ms-1" title="زانیاری بەرهەم">
+                actionCell.addClass('action-column');
+                
+                // Create action buttons container
+                const actionButtonsContainer = $('<div class="action-buttons"></div>');
+                
+                // Create info button
+                const infoBtn = $(`<button type="button" class="btn btn-info btn-sm" title="زانیاری بەرهەم">
                     <i class="fas fa-info-circle"></i>
                 </button>`);
                 
                 // Store product data for the info button
                 infoBtn.data('product', data);
                 
-                // Insert the button before remove button
-                actionCell.find('.remove-row').before(infoBtn);
+                // Add profit calculation button only for selling tabs
+                const tabPane = row.closest('.tab-pane');
+                const tabType = tabPane.attr('data-receipt-type');
+                
+                // Create remove button
+                const removeBtn = $(`<button type="button" class="btn btn-danger btn-sm remove-row" title="ڕەشکردنەوە">
+                    <i class="fas fa-trash-alt"></i>
+                </button>`);
+                
+                // Add buttons to container
+                actionButtonsContainer.append(infoBtn);
+                
+                // Insert buttons for selling tabs
+                if (tabType === RECEIPT_TYPES.SELLING) {
+                    // Create profit calculation button
+                    const profitBtn = $(`<button type="button" class="btn btn-success btn-sm profit-info-btn" title="زانیاری قازانجی فرۆشتن">
+                        <i class="fas fa-chart-line"></i>
+                    </button>`);
+                    
+                    // Add profit button to container
+                    actionButtonsContainer.append(profitBtn);
+                    
+                    // Add click event for profit calculation button
+                    profitBtn.on('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const productData = infoBtn.data('product');
+                        const quantity = parseFloat(row.find('.quantity').val()) || 0;
+                        const unitType = row.find('.unit-type').val();
+                        const piecesPerBox = parseInt(productData.pieces_per_box) || 0;
+                        const boxesPerSet = parseInt(productData.boxes_per_set) || 0;
+                        
+                        // Calculate purchase and selling prices based on unit type
+                        const purchasePrice = parseFloat(productData.purchase_price) || 0;
+                        const tabPane = row.closest('.tab-pane');
+                        const priceType = tabPane.find('.price-type').val() || PRICE_TYPES.SINGLE;
+                        const retailPrice = parseFloat(productData.retail_price) || 0;
+                        const wholesalePrice = parseFloat(productData.wholesale_price) || 0;
+                        
+                        // Get actual unit price from the form
+                        const unitPrice = parseFloat(row.find('.unit-price').val()) || 0;
+                        
+                        // Calculate total purchase cost and selling price based on unit type and quantity
+                        let totalPurchaseCost = 0;
+                        let totalSellingPrice = 0;
+                        let unitLabel = "دانە";
+                        let totalUnits = quantity;
+                        
+                        if (unitType === 'piece') {
+                            totalPurchaseCost = purchasePrice * quantity;
+                            totalSellingPrice = unitPrice * quantity;
+                            unitLabel = "دانە";
+                        } else if (unitType === 'box' && piecesPerBox > 0) {
+                            totalPurchaseCost = (purchasePrice * piecesPerBox) * quantity;
+                            totalSellingPrice = unitPrice * quantity;
+                            totalUnits = quantity * piecesPerBox;
+                            unitLabel = "کارتۆن";
+                        } else if (unitType === 'set' && piecesPerBox > 0 && boxesPerSet > 0) {
+                            totalPurchaseCost = (purchasePrice * piecesPerBox * boxesPerSet) * quantity;
+                            totalSellingPrice = unitPrice * quantity;
+                            totalUnits = quantity * piecesPerBox * boxesPerSet;
+                            unitLabel = "سێت";
+                        }
+                        
+                        // Calculate profit
+                        const totalProfit = totalSellingPrice - totalPurchaseCost;
+                        
+                        // Create HTML content for the modal
+                        let htmlContent = `
+                            <div class="card border-primary mb-3">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0">زانیاری قازانجی فرۆشتنی ${productData.text}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="profit-details">
+                                        <div class="row text-center mb-4">
+                                            <div class="col-md-4">
+                                                <div class="card inventory-card">
+                                                    <div class="card-body">
+                                                        <h3>${quantity}</h3>
+                                                        <p>${unitLabel}</p>
+                                                        ${unitType !== 'piece' ? `<small>(${totalUnits} دانە)</small>` : ''}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="card inventory-card">
+                                                    <div class="card-body">
+                                                        <h3>${totalPurchaseCost.toLocaleString()}</h3>
+                                                        <p>نرخی کڕین</p>
+                                                        <small>دینار</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="card inventory-card">
+                                                    <div class="card-body">
+                                                        <h3>${totalSellingPrice.toLocaleString()}</h3>
+                                                        <p>نرخی فرۆشتن</p>
+                                                        <small>دینار</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="table-responsive mb-4">
+                                            <table class="table table-bordered">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>بڕی کاڵا</th>
+                                                        <th>نرخی کڕین</th>
+                                                        <th>نرخی فرۆشتن</th>
+                                                        <th>بڕی قازانج</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>${quantity} ${unitLabel} (${totalUnits} دانە)</td>
+                                                        <td>${totalPurchaseCost.toLocaleString()} دینار</td>
+                                                        <td>${totalSellingPrice.toLocaleString()} دینار</td>
+                                                        <td class="${totalProfit >= 0 ? 'text-success' : 'text-danger'}">${totalProfit.toLocaleString()} دینار</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <div class="alert ${totalProfit >= 0 ? 'alert-success' : 'alert-danger'}">
+                                                    <h5 class="mb-0 text-center">
+                                                        <i class="fas ${totalProfit >= 0 ? 'fa-check-circle' : 'fa-exclamation-triangle'} me-2"></i>
+                                                        قازانجی نێوان نرخی کڕین و فرۆشتن: <strong>${totalProfit.toLocaleString()} دینار</strong>
+                                                    </h5>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Show SweetAlert2 modal
+                        Swal.fire({
+                            title: 'زانیاری قازانج',
+                            html: htmlContent,
+                            width: 800,
+                            showCloseButton: true,
+                            showConfirmButton: false,
+                            customClass: {
+                                container: 'inventory-alert'
+                            }
+                        });
+                    });
+                } else {
+                    // For buying tabs, only add the info button
+                    actionButtonsContainer.append(infoBtn);
+                }
                 
                 // Add click event to the info button
                 infoBtn.on('click', function(e) {
@@ -785,6 +1236,31 @@ $(document).ready(function() {
                     const piecesInStock = parseInt(productData.current_quantity);
                     const piecesPerBox = parseInt(productData.pieces_per_box) || 0;
                     const boxesPerSet = parseInt(productData.boxes_per_set) || 0;
+                    
+                    // Calculate profit percentages and amounts
+                    const purchasePrice = parseFloat(productData.purchase_price) || 0;
+                    const retailPrice = parseFloat(productData.retail_price) || 0;
+                    const wholesalePrice = parseFloat(productData.wholesale_price) || 0;
+                    
+                    // Calculate profits per piece
+                    const retailProfitPerPiece = retailPrice - purchasePrice;
+                    const wholesaleProfitPerPiece = wholesalePrice - purchasePrice;
+                    
+                    // Calculate box and set prices and profits
+                    const purchasePricePerBox = purchasePrice * piecesPerBox;
+                    const retailPricePerBox = retailPrice * piecesPerBox;
+                    const wholesalePricePerBox = wholesalePrice * piecesPerBox;
+                    
+                    const retailProfitPerBox = retailPricePerBox - purchasePricePerBox;
+                    const wholesaleProfitPerBox = wholesalePricePerBox - purchasePricePerBox;
+                    
+                    // Calculate set prices and profits if applicable
+                    const purchasePricePerSet = purchasePricePerBox * boxesPerSet;
+                    const retailPricePerSet = retailPricePerBox * boxesPerSet;
+                    const wholesalePricePerSet = wholesalePricePerBox * boxesPerSet;
+                    
+                    const retailProfitPerSet = retailPricePerSet - purchasePricePerSet;
+                    const wholesaleProfitPerSet = wholesalePricePerSet - purchasePricePerSet;
                     
                     let boxesInStock = 0;
                     let setsInStock = 0;
@@ -802,10 +1278,9 @@ $(document).ready(function() {
                         <div class="card border-primary mb-3">
                             <div class="card-header bg-primary text-white">
                                 <h5 class="mb-0">${productData.text}</h5>
-                                <small>${productData.code} | ${productData.barcode}</small>
                             </div>
                             <div class="card-body">
-                                <div class="row text-center">
+                                <div class="row text-center mb-4">
                                     <div class="col-md-4">
                                         <div class="card inventory-card">
                                             <div class="card-body">
@@ -843,15 +1318,98 @@ $(document).ready(function() {
                     
                     htmlContent += `
                                 </div>
-                                <div class="row mt-3">
-                                    <div class="col-md-6">
-                                        <p><strong>نرخی تاک:</strong> ${productData.retail_price}</p>
-                                        <p><strong>نرخی کۆمەڵ:</strong> ${productData.wholesale_price}</p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <p><strong>پۆل:</strong> ${productData.category || '-'}</p>
-                                        <p><strong>یەکە:</strong> ${productData.unit || '-'}</p>
-                                    </div>
+                        <div class="profit-details">
+                            <h6 class="text-primary mb-3">زانیاری نرخ و قازانج بە دانە</h6>
+                            <div class="table-responsive mb-4">
+                                <table class="table table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>جۆری نرخ</th>
+                                            <th>نرخی کڕین</th>
+                                            <th>نرخی فرۆشتن</th>
+                                            <th>بڕی قازانج</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>تاک</td>
+                                            <td>${purchasePrice.toLocaleString()} دینار</td>
+                                            <td>${retailPrice.toLocaleString()} دینار</td>
+                                            <td class="${retailProfitPerPiece >= 0 ? 'text-success' : 'text-danger'}">${retailProfitPerPiece.toLocaleString()} دینار</td>
+                                        </tr>
+                                        <tr>
+                                            <td>کۆمەڵ</td>
+                                            <td>${purchasePrice.toLocaleString()} دینار</td>
+                                            <td>${wholesalePrice.toLocaleString()} دینار</td>
+                                            <td class="${wholesaleProfitPerPiece >= 0 ? 'text-success' : 'text-danger'}">${wholesaleProfitPerPiece.toLocaleString()} دینار</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>`;
+                    
+                    if (piecesPerBox > 0) {
+                        htmlContent += `
+                            <h6 class="text-primary mb-3">زانیاری نرخ و قازانج بە کارتۆن (${piecesPerBox} دانە)</h6>
+                            <div class="table-responsive mb-4">
+                                <table class="table table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>جۆری نرخ</th>
+                                            <th>نرخی کڕین</th>
+                                            <th>نرخی فرۆشتن</th>
+                                            <th>بڕی قازانج</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>تاک</td>
+                                            <td>${purchasePricePerBox.toLocaleString()} دینار</td>
+                                            <td>${retailPricePerBox.toLocaleString()} دینار</td>
+                                            <td class="${retailProfitPerBox >= 0 ? 'text-success' : 'text-danger'}">${retailProfitPerBox.toLocaleString()} دینار</td>
+                                        </tr>
+                                        <tr>
+                                            <td>کۆمەڵ</td>
+                                            <td>${purchasePricePerBox.toLocaleString()} دینار</td>
+                                            <td>${wholesalePricePerBox.toLocaleString()} دینار</td>
+                                            <td class="${wholesaleProfitPerBox >= 0 ? 'text-success' : 'text-danger'}">${wholesaleProfitPerBox.toLocaleString()} دینار</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>`;
+                    }
+                    
+                    if (boxesPerSet > 0) {
+                        htmlContent += `
+                            <h6 class="text-primary mb-3">زانیاری نرخ و قازانج بە سێت (${boxesPerSet} کارتۆن)</h6>
+                            <div class="table-responsive mb-4">
+                                <table class="table table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>جۆری نرخ</th>
+                                            <th>نرخی کڕین</th>
+                                            <th>نرخی فرۆشتن</th>
+                                            <th>بڕی قازانج</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>تاک</td>
+                                            <td>${purchasePricePerSet.toLocaleString()} دینار</td>
+                                            <td>${retailPricePerSet.toLocaleString()} دینار</td>
+                                            <td class="${retailProfitPerSet >= 0 ? 'text-success' : 'text-danger'}">${retailProfitPerSet.toLocaleString()} دینار</td>
+                                        </tr>
+                                        <tr>
+                                            <td>کۆمەڵ</td>
+                                            <td>${purchasePricePerSet.toLocaleString()} دینار</td>
+                                            <td>${wholesalePricePerSet.toLocaleString()} دینار</td>
+                                            <td class="${wholesaleProfitPerSet >= 0 ? 'text-success' : 'text-danger'}">${wholesaleProfitPerSet.toLocaleString()} دینار</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>`;
+                    }
+                    
+                    htmlContent += `
                                 </div>
                             </div>
                         </div>
@@ -859,9 +1417,9 @@ $(document).ready(function() {
                     
                     // Show SweetAlert2 modal
                     Swal.fire({
-                        title: 'زانیاری لەسەر بڕی بەردەست',
+                        title: 'زانیاری وردی کاڵا',
                         html: htmlContent,
-                        width: 600,
+                        width: 800,
                         showCloseButton: true,
                         showConfirmButton: false,
                         customClass: {
@@ -869,6 +1427,10 @@ $(document).ready(function() {
                         }
                     });
                 });
+                
+                // Add remove button to container and append container to cell
+                actionButtonsContainer.append(removeBtn);
+                actionCell.html(actionButtonsContainer);
             } else {
                 // Update product data for existing info button
                 row.find('.product-info-btn').data('product', data);
@@ -1278,10 +1840,9 @@ $(document).ready(function() {
         const stockStatus = parseInt(product.current_quantity) > 10 ? 'in-stock' : (parseInt(product.current_quantity) > 0 ? 'low-stock' : 'out-of-stock');
         const stockLabel = stockStatus === 'in-stock' ? 'بەردەستە' : (stockStatus === 'low-stock' ? 'کەمە' : 'نەماوە');
         
-        // Use the image path directly from the product data
         const imageUrl = product.image || null;
         
-        let $option = $(
+        return $(
             `<div class="product-option-container">
                 <div class="product-option-image-container">
                     <div class="product-option-image">
@@ -1301,10 +1862,6 @@ $(document).ready(function() {
                             <i class="fas fa-circle"></i> ${stockLabel}
                         </span>
                     </div>
-                    <div class="product-meta">
-                        ${product.code ? `<span class="product-code"><i class="fas fa-hashtag"></i> ${product.code}</span>` : ''}
-                        ${product.barcode ? `<span class="product-barcode"><i class="fas fa-barcode"></i> ${product.barcode}</span>` : ''}
-                    </div>
                     <div class="product-prices">
                         <span class="retail-price"><i class="fas fa-tag"></i> تاک: ${product.retail_price}</span>
                         <span class="wholesale-price"><i class="fas fa-tags"></i> کۆ: ${product.wholesale_price}</span>
@@ -1312,8 +1869,6 @@ $(document).ready(function() {
                 </div>
             </div>`
         );
-        
-        return $option;
     }
 
     function formatProductSelection(product) {

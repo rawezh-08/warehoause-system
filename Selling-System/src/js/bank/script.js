@@ -231,9 +231,11 @@ $(document).ready(function() {
         };
         
         if (paymentDirection === 'to_supplier') {
-            apiEndpoint = '../../api/business_pay_supplier.php';
+            // When we pay supplier (reduces our debt to them)
+            apiEndpoint = '../../api/pay_supplier.php';
         } else if (paymentDirection === 'from_supplier') {
-            apiEndpoint = '../../api/handle_supplier_payment.php';
+            // When supplier pays us (reduces their debt to us)
+            apiEndpoint = '../../api/supplier_pays_business.php';
         } else if (paymentDirection === 'adjust_balance') {
             apiEndpoint = '../../api/adjust_supplier_balance.php';
         }
@@ -257,9 +259,9 @@ $(document).ready(function() {
                     // Show success message
                     let successMessage = '';
                     if (paymentDirection === 'to_supplier') {
-                        successMessage = 'پارەدان بۆ فرۆشیار بە سەرکەوتوویی تۆمارکرا';
+                        successMessage = 'پارەدان بە دابینکەر بە سەرکەوتوویی تۆمارکرا';
                     } else if (paymentDirection === 'from_supplier') {
-                        successMessage = 'وەرگرتنی پارە لە فرۆشیار بە سەرکەوتوویی تۆمارکرا';
+                        successMessage = 'وەرگرتنی پارە لە دابینکەر بە سەرکەوتوویی تۆمارکرا';
                     } else {
                         successMessage = 'باڵانس بە سەرکەوتوویی ڕێکخرایەوە';
                     }
@@ -363,86 +365,61 @@ function filterSuppliers() {
 
 // Load supplier data and populate the filter dropdown
 function loadSupplierBalances() {
-    // Show loading spinner
-    $('#supplierCardsContainer').html('<div class="text-center my-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>');
-    
     $.ajax({
-        url: '../../api/get_suppliers_with_balance.php',
+        url: '../../api/get_suppliers.php',
         type: 'GET',
-        dataType: 'json',
         success: function(response) {
-            console.log('API response:', response); // Debug log
-            
-            // Handle both response formats (status or success)
-            if (response.status === 'success' || response.success === true) {
-                const suppliers = response.suppliers;
-                let totalBalance = 0;
-                let totalTheyOweUs = 0;
-                let totalWeOweThem = 0;
+            if (response.success) {
+                const suppliers = response.data;
+                let totalDebtOnMyself = 0;
+                let totalDebtOnSupplier = 0;
                 
                 // Clear existing cards
                 $('#supplierCardsContainer').empty();
                 
-                // Process each supplier
                 suppliers.forEach(supplier => {
-                    const netBalance = supplier.debt_on_supplier - supplier.debt_on_myself;
+                    // Calculate net balance
+                    const debtOnMyself = parseFloat(supplier.debt_on_myself) || 0;  // ئێمە قەرزداری ئەوانین
+                    const debtOnSupplier = parseFloat(supplier.debt_on_supplier) || 0;  // ئەوان قەرزداری ئێمەن
                     
-                    // Update totals
-                    if (netBalance > 0) {
-                        totalTheyOweUs += netBalance;
-                    } else if (netBalance < 0) {
-                        totalWeOweThem += Math.abs(netBalance);
-                    }
-                    totalBalance += netBalance;
+                    // Add to totals
+                    totalDebtOnMyself += debtOnMyself;
+                    totalDebtOnSupplier += debtOnSupplier;
                     
-                    // Create card
-                    const card = createSupplierCard(supplier, netBalance);
-                    $('#supplierCardsContainer').append(card);
+                    // Create and append supplier card
+                    createSupplierCard(supplier, debtOnMyself, debtOnSupplier);
                 });
                 
-                // Update summary cards
-                $('#totalBalance').text(formatCurrency(totalBalance));
-                $('#totalTheyOweUs').text(formatCurrency(totalTheyOweUs));
-                $('#totalWeOweThem').text(formatCurrency(totalWeOweThem));
+                // Update summary cards - FIXED: Swapped the display to show correct relationships
+                $('#totalWeOweThem').text(formatCurrency(totalDebtOnMyself) + ' دینار');  // ئێمە قەرزداری ئەوانین
+                $('#totalTheyOweUs').text(formatCurrency(totalDebtOnSupplier) + ' دینار');  // ئەوان قەرزداری ئێمەن
                 
-                // Update balance description
-                let balanceDescription = '';
-                if (totalBalance > 0) {
-                    balanceDescription = 'کۆی قەرزی فرۆشیارەکان لە ئێمە';
-                } else if (totalBalance < 0) {
-                    balanceDescription = 'کۆی قەرزی ئێمە لە فرۆشیارەکان';
+                // Calculate and display net balance
+                const netBalance = totalDebtOnSupplier - totalDebtOnMyself;  // ئەگەر موجەب بێت ئەوان قەرزدارن، ئەگەر سالب بێت ئێمە قەرزدارین
+                $('#totalBalance').text(formatCurrency(Math.abs(netBalance)) + ' دینار');
+                
+                // Update balance description - FIXED: Updated text to reflect correct relationships
+                if (netBalance > 0) {
+                    $('#balanceDescription').text('پارەیان لای ئێمەیە');
+                    $('#totalBalance').removeClass('negative-balance').addClass('positive-balance');
+                } else if (netBalance < 0) {
+                    $('#balanceDescription').text('پارەمان لای ئەوانە');
+                    $('#totalBalance').removeClass('positive-balance').addClass('negative-balance');
                 } else {
-                    balanceDescription = 'باڵانسەکان هاوسەنگن';
+                    $('#balanceDescription').text('هیچ پارەیەک نییە');
+                    $('#totalBalance').removeClass('positive-balance negative-balance');
                 }
-                $('#balanceDescription').text(balanceDescription);
                 
-                // Populate the supplier filter dropdown
+                // Populate supplier filter
                 populateSupplierFilter(suppliers);
-                
-                // Apply any existing filters
-                filterSuppliers();
-                
-                // Apply the current sort
-                const currentSort = $('#sortSelect').val();
-                sortSuppliers(currentSort);
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'هەڵە',
-                    text: response.message || 'هەڵەیەک ڕوویدا لە کاتی بارکردنی زانیاریەکان',
-                    confirmButtonText: 'باشە'
-                });
             }
         },
         error: function(xhr, status, error) {
-            console.error('Error loading data:', error); // Debug log
-            console.error('XHR Status:', xhr.status); // Debug log
-            console.error('XHR Response:', xhr.responseText); // Debug log
-            
+            console.error('Error loading supplier balances:', error);
             Swal.fire({
                 icon: 'error',
                 title: 'هەڵە',
-                text: 'پەیوەندی بە سێرڤەرەوە شکستی هێنا',
+                text: 'هەڵەیەک ڕوویدا لە کاتی بارکردنی زانیارییەکان',
                 confirmButtonText: 'باشە'
             });
         }
@@ -464,57 +441,57 @@ function populateSupplierFilter(suppliers) {
     });
 }
 
-function createSupplierCard(supplier, netBalance) {
-    const cardClass = netBalance > 0 ? 'positive' : (netBalance < 0 ? 'negative' : 'zero');
-    const balanceText = formatCurrency(Math.abs(netBalance));
-    const balanceType = netBalance > 0 ? 'قەرزی ئەوان لە ئێمە' : (netBalance < 0 ? 'قەرزی ئێمە لە ئەوان' : 'باڵانس هاوسەنگە');
+function createSupplierCard(supplier, debtOnMyself, debtOnSupplier) {
+    const netBalance = debtOnSupplier - debtOnMyself;
+    let balanceClass = netBalance > 0 ? 'positive' : (netBalance < 0 ? 'negative' : 'zero');
     
-    // Ensure numeric types for data attributes
-    const safeId = parseInt(supplier.id) || 0;
-    const safeDebtOnMyself = parseFloat(supplier.debt_on_myself) || 0;
-    const safeDebtOnSupplier = parseFloat(supplier.debt_on_supplier) || 0;
-    
-    // Log debug information
-    console.log('Creating card for supplier:', {
-        id: safeId,
-        name: supplier.name,
-        debt_on_myself: safeDebtOnMyself,
-        debt_on_supplier: safeDebtOnSupplier,
-        netBalance: netBalance
-    });
-    
-    return `
-        <div class="card supplier-card ${cardClass}" data-id="${safeId}" data-balance="${netBalance}">
-                    <div class="card-header">
-                        <h5 class="card-title">${supplier.name}</h5>
-                <span class="badge ${cardClass === 'positive' ? 'bg-success' : (cardClass === 'negative' ? 'bg-danger' : 'bg-secondary')}">${balanceType}</span>
-                    </div>
-                    <div class="card-body">
-                <div class="card-text supplier-phone">
-                            <i class="fas fa-phone card-icons"></i>
-                    ${supplier.phone1 || 'بێ ژمارە'}
-                        </div>
-                <div class="debt-info mt-3">
-                    <p><strong>قەرزی ئەوان لە ئێمە:</strong> <span class="positive-balance">${formatCurrency(safeDebtOnSupplier)}</span></p>
-                    <p><strong>قەرزی ئێمە لە ئەوان:</strong> <span class="negative-balance">${formatCurrency(safeDebtOnMyself)}</span></p>
-                    <p><strong>باڵانسی کۆتایی:</strong> <span class="card-balance ${cardClass}">${balanceText}</span></p>
-                        </div>
-                        <div class="card-actions">
-                    <button class="btn btn-primary add-payment-btn" 
-                            data-id="${safeId}"
-                                data-name="${supplier.name}" 
-                            data-balance="${netBalance}"
-                            data-debt-on-myself="${safeDebtOnMyself}"
-                            data-debt-on-supplier="${safeDebtOnSupplier}">
-                        <i class="fas fa-money-bill-wave"></i> پارەدان
-                            </button>
-                    <button class="btn btn-info view-history-btn" data-id="${safeId}">
-                                <i class="fas fa-history"></i> مێژوو
-                            </button>
-                        </div>
-                    </div>
+    const card = `
+        <div class="card supplier-card ${balanceClass}" data-id="${supplier.id}" 
+             data-debt-on-myself="${debtOnMyself}" data-debt-on-supplier="${debtOnSupplier}">
+            <div class="card-header">
+                <h5 class="card-title">${supplier.name}</h5>
+                <span class="card-badge ${balanceClass === 'positive' ? 'bg-success' : 
+                    (balanceClass === 'negative' ? 'bg-danger' : 'bg-secondary')} text-white">
+                    ${balanceClass === 'positive' ? 'پارەیان لای ئێمەیە' : 
+                      (balanceClass === 'negative' ? 'پارەمان لای ئەوانە' : 'هیچ پارەیەک نییە')}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="debt-info">
+                    <p class="mb-2">
+                        <i class="fas fa-arrow-up text-danger"></i>
+                        پارەی لای ئەوان: ${formatCurrency(debtOnMyself)} دینار
+                        <small class="text-muted d-block">(ئەو پارەیەی کە ئێمە دەبێت بیدەین)</small>
+                    </p>
+                    <p class="mb-2">
+                        <i class="fas fa-arrow-down text-success"></i>
+                        پارەی لای ئێمە: ${formatCurrency(debtOnSupplier)} دینار
+                        <small class="text-muted d-block">(ئەو پارەیەی کە ئەوان دەبێت بیدەن)</small>
+                    </p>
+                    <p class="mb-0">
+                        <i class="fas fa-balance-scale"></i>
+                        باڵانسی کۆتایی: <span class="${getAmountClass(netBalance)}">
+                            ${formatCurrency(Math.abs(netBalance))} دینار
+                            ${netBalance > 0 ? '(پارەیان لای ئێمەیە)' : (netBalance < 0 ? '(پارەمان لای ئەوانە)' : '')}
+                        </span>
+                    </p>
                 </div>
-            `;
+                <div class="card-actions">
+                    <button class="btn btn-primary add-payment-btn" data-id="${supplier.id}" 
+                            data-name="${supplier.name}" data-balance="${netBalance}"
+                            data-debt-on-myself="${debtOnMyself}" 
+                            data-debt-on-supplier="${debtOnSupplier}">
+                        <i class="fas fa-money-bill-wave"></i> پارەدان
+                    </button>
+                    <button class="btn btn-info view-history-btn" data-id="${supplier.id}">
+                        <i class="fas fa-history"></i> مێژوو
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $('#supplierCardsContainer').append(card);
 }
 
 // Helper function to format currency

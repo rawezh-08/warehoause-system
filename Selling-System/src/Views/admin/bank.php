@@ -245,7 +245,8 @@
                     <div class="col-md-4">
                         <div class="card bg-light total-balances">
                             <div class="card-body text-center">
-                                <h5 class="card-title">کۆی قەرزی ئەوان لە ئێمە</h5>
+                                <h5 class="card-title">پارەی لای ئێمە</h5>
+                                <p class="text-muted small mb-2">(ئەو پارەیەی کە دابینکەرەکان دەبێت بیدەن بە ئێمە)</p>
                                 <h2 class="mt-3 positive-balance" id="totalTheyOweUs">0 دینار</h2>
                             </div>
                         </div>
@@ -253,7 +254,8 @@
                     <div class="col-md-4">
                         <div class="card bg-light total-balances">
                             <div class="card-body text-center">
-                                <h5 class="card-title">کۆی قەرزی ئێمە لە ئەوان</h5>
+                                <h5 class="card-title">پارەی لای ئەوان</h5>
+                                <p class="text-muted small mb-2">(ئەو پارەیەی کە ئێمە دەبێت بیدەین بە دابینکەرەکان)</p>
                                 <h2 class="mt-3 negative-balance" id="totalWeOweThem">0 دینار</h2>
                             </div>
                         </div>
@@ -331,10 +333,17 @@
                         <div class="mb-3">
                             <label for="paymentDirection" class="form-label">جۆری پارەدان</label>
                             <select class="form-select" id="paymentDirection" required>
-                                <option value="to_supplier">پارەدان بۆ فرۆشیار (ئێمە دەدەین بەوان)</option>
-                                <option value="from_supplier">وەرگرتنی پارە لە فرۆشیار (ئەوان دەدەن بە ئێمە)</option>
-                                <option value="adjust_balance">ڕێکخستنی باڵانس (دەستکاری دەستی)</option>
+                                <option value="to_supplier">پارەدان بە دابینکەر (کەمکردنەوەی قەرزی ئێمە لەسەر دابینکەر)</option>
+                                <option value="from_supplier">وەرگرتنی پارە لە دابینکەر (کەمکردنەوەی قەرزی دابینکەر لەسەر ئێمە)</option>
+                                <option value="adjust_balance">ڕێکخستنی باڵانس (ڕاستکردنەوەی هەڵە)</option>
                             </select>
+                            <div class="form-text text-muted mt-2">
+                                <ul class="mb-0 small">
+                                    <li>پارەدان بە دابینکەر: کاتێک ئێمە پارە دەدەین بە دابینکەر بۆ کەمکردنەوەی قەرزی خۆمان</li>
+                                    <li>وەرگرتنی پارە لە دابینکەر: کاتێک دابینکەر پارە دەدات بە ئێمە بۆ کەمکردنەوەی قەرزی خۆی</li>
+                                    <li>ڕێکخستنی باڵانس: بۆ ڕاستکردنەوەی هەر هەڵەیەک لە تۆمارکردنی قەرزەکان</li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label for="paymentNote" class="form-label">تێبینی</label>
@@ -379,5 +388,4 @@
         });
     </script>
 </body>
-</html> 
 </html> 

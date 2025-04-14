@@ -14,9 +14,9 @@
   <!-- Global CSS -->
   <link rel="stylesheet" href="../../assets/css/custom.css">
     <!-- Page CSS -->
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/employeePayment/style.css">
+    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/employeePayment/style.css">
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <!-- Custom styles for this page -->
@@ -399,7 +399,7 @@
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="./js/include-components.js"></script>
-    <script src="js/supplier_detail.js"></script>
+    <script src="../../js/include-components.js"></script>
+    <script src="../../js/supplier_detail.js"></script>
 </body>
 </html> 

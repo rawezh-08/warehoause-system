@@ -49,6 +49,7 @@ try {
             'text' => $product['name'],
             'barcode' => $product['barcode'],
             'code' => $product['code'],
+            'purchase_price' => $product['purchase_price'],
             'retail_price' => $product['selling_price_single'],
             'wholesale_price' => $product['selling_price_wholesale'],
             'current_quantity' => $product['current_quantity'],

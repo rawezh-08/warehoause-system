@@ -254,11 +254,11 @@ $(document).ready(function() {
         };
         
         if (paymentDirection === 'to_supplier') {
-            apiEndpoint = 'api/business_pay_supplier.php';
+            apiEndpoint = '../../api/business_pay_supplier.php';
         } else if (paymentDirection === 'from_supplier') {
-            apiEndpoint = 'api/handle_supplier_payment.php';
+            apiEndpoint = '../../api/handle_supplier_payment.php';
         } else if (paymentDirection === 'adjust_balance') {
-            apiEndpoint = 'api/adjust_supplier_balance.php';
+            apiEndpoint = '../../api/adjust_supplier_balance.php';
         }
         
         // Send AJAX request to process the payment
@@ -303,7 +303,7 @@ $(document).ready(function() {
     // Function to load supplier details
     function loadSupplierDetails() {
         $.ajax({
-            url: 'api/get_supplier_details.php',
+            url: '../../api/get_supplier_details.php',
             type: 'GET',
             data: { 
                 supplier_id: supplierId 
@@ -386,7 +386,7 @@ $(document).ready(function() {
         }
         
         $.ajax({
-            url: 'api/get_supplier_transactions.php',
+            url: '../../api/get_supplier_transactions.php',
             type: 'GET',
             data: { 
                 supplier_id: supplierId,
