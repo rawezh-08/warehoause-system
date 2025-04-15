@@ -803,7 +803,27 @@ $(document).ready(function() {
         
         // Print button click
         tabPane.find('.print-btn').click(function() {
-            Swal.fire('نیشاندان', 'تایبەتمەندی چاپکردن لە داهاتوودا زیاد دەکرێت', 'info');
+            // For "selling" type receipts, redirect to print_receipt.php
+            if (tabType === RECEIPT_TYPES.SELLING) {
+                // Check if we have a saved receipt ID (stored after successful save)
+                const savedReceiptId = tabPane.data('saved-receipt-id');
+                
+                if (savedReceiptId) {
+                    // Open the print receipt page in a new window/tab with the sale_id
+                    window.open(`../../views/receipt/print_receipt.php?sale_id=${savedReceiptId}`, '_blank');
+                } else {
+                    // No saved receipt ID, inform the user to save first
+                    Swal.fire({
+                        title: 'تکایە پسوڵەکە پاشەکەوت بکە',
+                        text: 'بۆ چاپکردن، پێویستە سەرەتا پسوڵەکە پاشەکەوت بکەیت.',
+                        icon: 'warning',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            } else {
+                // For other types (not implemented yet)
+                Swal.fire('نیشاندان', 'تایبەتمەندی چاپکردن لە داهاتوودا زیاد دەکرێت', 'info');
+            }
         });
         
         // Handle row removal
@@ -1571,14 +1591,37 @@ $(document).ready(function() {
             data: JSON.stringify(formData),
             success: function(response) {
                 if (response.success) {
-                    Swal.fire({
-                        title: 'سەرکەوتوو بوو!',
-                        text: 'پسوڵە بە سەرکەوتووی پاشەکەوت کرا.',
-                        icon: 'success',
-                        confirmButtonText: 'باشە'
-                    }).then(() => {
-                        resetForm(tabPane, tabType);
-                    });
+                    // For selling receipts only, show the print confirmation dialog
+                    if (tabType === RECEIPT_TYPES.SELLING) {
+                        // Store the receipt ID in the tab's data for later use
+                        tabPane.data('saved-receipt-id', response.receipt_id);
+                        
+                        Swal.fire({
+                            title: 'سەرکەوتوو بوو!',
+                            text: 'پسوڵەی فرۆشتن بە سەرکەوتووی پاشەکەوت کرا. دەتەوێت پسوڵەکە چاپ بکەیت؟',
+                            icon: 'success',
+                            showCancelButton: true,
+                            confirmButtonText: 'بەڵێ، چاپی بکە',
+                            cancelButtonText: 'نەخێر'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Open the print receipt page in a new window/tab with the sale_id
+                                window.open(`../../views/receipt/print_receipt.php?sale_id=${response.receipt_id}`, '_blank');
+                            }
+                            // Reset the form after printing or if user chooses not to print
+                            resetForm(tabPane, tabType);
+                        });
+                    } else {
+                        // For other receipt types, just show a success message
+                        Swal.fire({
+                            title: 'سەرکەوتوو بوو!',
+                            text: 'پسوڵە بە سەرکەوتووی پاشەکەوت کرا.',
+                            icon: 'success',
+                            confirmButtonText: 'باشە'
+                        }).then(() => {
+                            resetForm(tabPane, tabType);
+                        });
+                    }
                 } else {
                     Swal.fire({
                         title: 'هەڵە!',
@@ -1714,6 +1757,9 @@ $(document).ready(function() {
 
     // Reset form
     function resetForm(tabPane, tabType) {
+        // Clear the saved receipt ID
+        tabPane.removeData('saved-receipt-id');
+        
         // Reset all inputs except receipt number
         tabPane.find('input:not(.receipt-number)').val('');
         tabPane.find('textarea').val('');

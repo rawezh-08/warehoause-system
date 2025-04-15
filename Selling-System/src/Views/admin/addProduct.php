@@ -1,35 +1,6 @@
 <?php
-require_once '../../config/database.php';
-
-// Get categories and units
-$categoriesQuery = "SELECT * FROM categories ORDER BY name";
-$unitsQuery = "SELECT * FROM units ORDER BY name";
-$latestProductsQuery = "SELECT p.*, c.name as category_name, u.name as unit_name 
-                     FROM products p 
-                     LEFT JOIN categories c ON p.category_id = c.id 
-                     LEFT JOIN units u ON p.unit_id = u.id 
-                     ORDER BY p.created_at DESC 
-                     LIMIT 5";
-
-try {
-    // Get categories
-    $stmt = $conn->query($categoriesQuery);
-    $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Get units
-    $stmt = $conn->query($unitsQuery);
-    $units = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Get latest products
-    $stmt = $conn->query($latestProductsQuery);
-    $latestProducts = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (Exception $e) {
-    // If there's an error, set empty arrays
-    $categories = [];
-    $units = [];
-    $latestProducts = [];
-    error_log("Error loading data: " . $e->getMessage());
-}
+// Include the addProduct logic file
+require_once '../../process/addProduct_logic.php';
 ?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
@@ -43,17 +14,11 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
-
     <!-- Global CSS -->
     <link rel="stylesheet" href="../../assets/css/custom.css">
     <!-- Page CSS -->
-    <!-- <link rel="stylesheet" href="css/dashboard.css"> -->
     <link rel="stylesheet" href="../../css/global.css">
     <link rel="stylesheet" href="../../css/addProduct.css">
-
-
-
-   
 </head>
 <body>
 <div>
@@ -139,11 +104,11 @@ try {
                                             <div class="row mb-4" id="unitQuantityContainer" style="display: none;">
                                                 <div class="col-md-4 mb-3" id="piecesPerBoxContainer" style="display: none;">
                                                     <label for="piecesPerBox" class="form-label">ژمارەی دانە لە کارتۆن</label>
-                                                    <input type="text" id="piecesPerBox" name="pieces_per_box" class="form-control" placeholder="ژمارەی دانە لە کارتۆن" oninput="formatNumber(this)">
+                                                    <input type="text" id="piecesPerBox" name="pieces_per_box" class="form-control" placeholder="ژمارەی دانە لە کارتۆن">
                                                 </div>
                                                 <div class="col-md-4 mb-3" id="boxesPerSetContainer" style="display: none;">
                                                     <label for="boxesPerSet" class="form-label">ژمارەی کارتۆن لە سێت</label>
-                                                    <input type="text" id="boxesPerSet" name="boxes_per_set" class="form-control" placeholder="ژمارەی کارتۆن لە سێت" oninput="formatNumber(this)">
+                                                    <input type="text" id="boxesPerSet" name="boxes_per_set" class="form-control" placeholder="ژمارەی کارتۆن لە سێت">
                                                 </div>
                                             </div>
                                             
@@ -184,21 +149,21 @@ try {
                                                 <div class="col-md-4 mb-3" style="direction: rtl;">
                                                     <label for="buyingPrice" class="form-label">نرخی کڕین</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="buyingPrice" name="purchase_price" class="form-control" placeholder="نرخی کڕین" oninput="formatNumber(this)">
+                                                        <input type="text" id="buyingPrice" name="purchase_price" class="form-control" placeholder="نرخی کڕین">
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label for="sellingPrice" class="form-label">نرخی فرۆشتن</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="sellingPrice" name="selling_price_single" class="form-control" placeholder="نرخی فرۆشتن" oninput="formatNumber(this)">
+                                                        <input type="text" id="sellingPrice" name="selling_price_single" class="form-control" placeholder="نرخی فرۆشتن">
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label for="selling_price_wholesale" class="form-label">نرخی فرۆشتن (کۆمەڵ)</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="selling_price_wholesale" name="selling_price_wholesale" class="form-control" placeholder="نرخی فرۆشتن (کۆمەڵ)" oninput="formatNumber(this)">
+                                                        <input type="text" id="selling_price_wholesale" name="selling_price_wholesale" class="form-control" placeholder="نرخی فرۆشتن (کۆمەڵ)">
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
@@ -208,11 +173,11 @@ try {
                                             <div class="row mb-4">
                                                 <div class="col-md-4 mb-3">
                                                     <label for="min_quantity" class="form-label">کەمترین بڕ</label>
-                                                    <input type="text" id="min_quantity" name="min_quantity" class="form-control" placeholder="کەمترین بڕ" oninput="formatNumber(this)">
+                                                    <input type="text" id="min_quantity" name="min_quantity" class="form-control" placeholder="کەمترین بڕ">
                                                 </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label for="current_quantity" class="form-label">بڕی بەردەست</label>
-                                                    <input type="text" id="current_quantity" name="current_quantity" class="form-control" placeholder="بڕی بەردەست" oninput="formatNumber(this)">
+                                                    <input type="text" id="current_quantity" name="current_quantity" class="form-control" placeholder="بڕی بەردەست">
                                                 </div>
                                             </div>
                                             
@@ -307,60 +272,9 @@ try {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
-    <!-- Custom JavaScript -->
+    <!-- Component loading script -->
     <script src="../../js/include-components.js"></script>
+    <!-- Add Product Script -->
     <script src="../../js/addProduct.js"></script>
-    <script>
-    // زیادکردنی فانکشنی فۆرماتی ژمارەکان
-    function formatNumber(input) {
-        // سڕینەوەی هەموو نەژمارەکان و کۆماکان
-        let value = input.value.replace(/[^\d]/g, '');
-        
-        // زیادکردنی کۆما هەر سێ ژمارەیەک
-        value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        
-        // نوێکردنەوەی نرخی ئینپووت
-        input.value = value;
-    }
-
-    // زیادکردنی event listener بۆ ئینپووتەکان
-    document.addEventListener('DOMContentLoaded', function() {
-        // ئینپووتەکانی ژمارە
-        const numberInputs = [
-            'buyingPrice',
-            'sellingPrice',
-            'selling_price_wholesale',
-            'piecesPerBox',
-            'boxesPerSet',
-            'min_quantity',
-            'current_quantity'
-        ];
-
-        // زیادکردنی event listener بۆ هەر ئینپووتێک
-        numberInputs.forEach(inputId => {
-            const input = document.getElementById(inputId);
-            if (input) {
-                // گۆڕینی تایپی ئینپووت
-                input.setAttribute('type', 'text');
-                
-                input.addEventListener('input', function() {
-                    formatNumber(this);
-                });
-            }
-        });
-        
-        // نوێکردنەوەی لیستی کاڵاکان
-        document.querySelector('.refresh-products').addEventListener('click', function() {
-            updateLatestProducts();
-        });
-    });
-    </script>
-    <style>
-    /* زیادکردنی CSS بۆ ئینپووتەکانی ژمارە */
-    input[type="text"].form-control {
-        text-align: right;
-        direction: rtl;
-    }
-    </style>
 </body>
 </html> 

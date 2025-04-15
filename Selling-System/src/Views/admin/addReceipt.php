@@ -122,7 +122,7 @@ require_once '../../config/database.php';
                                         </select>
                                     </td>
                                     <td><input type="number" class="form-control unit-price" step="1"></td>
-                                    <td><input type="number" class="form-control quantity"></td>
+                                    <td><input type="number" class="form-control quantity" min="1" onchange="checkProductStock(this)"></td>
                                     <td><input type="number" class="form-control total" readonly></td>
                                     <td>
                                         <button type="button" class="btn btn-danger btn-sm remove-row">
@@ -557,7 +557,7 @@ require_once '../../config/database.php';
                                 </select>
                             </td>
                             <td><input type="number" class="form-control unit-price" step="1"></td>
-                            <td><input type="number" class="form-control quantity"></td>
+                            <td><input type="number" class="form-control quantity" min="1" onchange="checkProductStock(this)"></td>
                             <td><input type="number" class="form-control total" readonly></td>
                             <td>
                                 <button type="button" class="btn btn-danger btn-sm remove-row">
@@ -720,6 +720,59 @@ require_once '../../config/database.php';
                     }
                 }
             });
+        }
+
+        // Function to check product stock
+        function checkProductStock(quantityInput) {
+            const row = quantityInput.closest('tr');
+            const productSelect = row.querySelector('.product-select');
+            const unitTypeSelect = row.querySelector('.unit-type');
+            
+            if (!productSelect || !productSelect.value || !quantityInput.value) {
+                return;
+            }
+            
+            const productId = productSelect.value;
+            const quantity = parseInt(quantityInput.value);
+            const unitType = unitTypeSelect ? unitTypeSelect.value : 'piece';
+            
+            // AJAX call to check stock
+            $.ajax({
+                url: '../../api/check_product_stock.php',
+                type: 'POST',
+                data: {
+                    product_id: productId,
+                    quantity: quantity,
+                    unit_type: unitType
+                },
+                success: function(response) {
+                    if (!response.success) {
+                        // Show warning if insufficient stock
+                        Swal.fire({
+                            title: 'ئاگاداری!',
+                            text: `بڕی پێویست لە کۆگادا بەردەست نیە! بڕی بەردەست: ${response.available_quantity} ${getUnitName(unitType)}`,
+                            icon: 'warning',
+                            confirmButtonText: 'باشە'
+                        });
+                        // Reset quantity to 1 or the maximum available
+                        quantityInput.value = Math.min(1, response.available_quantity);
+                        // Recalculate total
+                        calculateRowTotal(row);
+                    }
+                },
+                error: function() {
+                    console.error('Error checking product stock');
+                }
+            });
+        }
+
+        // Helper function to get unit name in Kurdish
+        function getUnitName(unitType) {
+            switch(unitType) {
+                case 'box': return 'کارتۆن';
+                case 'set': return 'سێت';
+                default: return 'دانە';
+            }
         }
     </script>
 </body>

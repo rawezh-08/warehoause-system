@@ -531,14 +531,16 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         
         // Insert at the top of the form
-        const formCard = addProductForm.closest('.card-body');
-        formCard.insertBefore(successAlert, formCard.firstChild);
-        
-        // Auto dismiss after 3 seconds
-        setTimeout(() => {
-            successAlert.classList.remove('show');
-            setTimeout(() => successAlert.remove(), 300);
-        }, 3000);
+        const formCard = document.querySelector('.card-body');
+        if (formCard) {
+            formCard.insertBefore(successAlert, formCard.firstChild);
+            
+            // Auto dismiss after 3 seconds
+            setTimeout(() => {
+                successAlert.classList.remove('show');
+                setTimeout(() => successAlert.remove(), 300);
+            }, 3000);
+        }
     }
     
     // Handle drag and drop for image upload
@@ -620,11 +622,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Form submission handler
     if (addProductForm) {
+        let isSubmitting = false; // Flag to prevent double submission
+        
         addProductForm.addEventListener('submit', async function(e) {
             e.preventDefault(); // Prevent the form from submitting normally
             
+            // Prevent double submission
+            if (isSubmitting) {
+                return;
+            }
+            
+            isSubmitting = true;
+            
+            // Disable submit buttons to prevent double submission
+            const submitButtons = this.querySelectorAll('button[type="submit"]');
+            submitButtons.forEach(button => {
+                button.disabled = true;
+            });
+            
             // Validate all tabs before submission
             if (!validateAllTabs()) {
+                isSubmitting = false;
+                submitButtons.forEach(button => {
+                    button.disabled = false;
+                });
                 return;
             }
             
@@ -671,6 +692,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         confirmButtonText: 'باشە'
                     });
                     
+                    // Show success message
+                    showSuccessMessage();
+                    
                     // Reset form and image preview
                     this.reset();
                     resetImagePreview();
@@ -706,6 +730,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     title: 'هەڵە',
                     text: error.message || 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا',
                     confirmButtonText: 'باشە'
+                });
+            } finally {
+                // Reset submission flag and enable buttons
+                isSubmitting = false;
+                submitButtons.forEach(button => {
+                    button.disabled = false;
                 });
             }
         });
@@ -756,12 +786,16 @@ async function updateLatestProducts() {
             if (data && data.length > 0) {
                 let html = '';
                 data.forEach(product => {
+                    // Extract just the filename from the full path
+                    const imagePath = product.image ? product.image.split('/').pop() : null;
+                    const imageUrl = imagePath ? `../../uploads/products/${imagePath}` : null;
+                    
                     html += `
                         <li class="list-group-item">
                             <div class="d-flex align-items-center">
                                 <div class="product-icon me-3">
-                                    ${product.image 
-                                        ? `<img src="${product.image}" alt="${product.name}" class="product-thumbnail">` 
+                                    ${imageUrl 
+                                        ? `<img src="${imageUrl}" alt="${product.name}" class="product-thumbnail">` 
                                         : '<i class="fas fa-box"></i>'}
                                 </div>
                                 <div class="product-info flex-grow-1">
@@ -801,15 +835,123 @@ async function updateLatestProducts() {
 
 // Format numbers with commas
 function formatNumber(input) {
-    // Remove existing commas
-    let value = input.value.replace(/,/g, '');
+    // Remove all non-digit characters and commas
+    let value = input.value.replace(/[^\d]/g, '');
     
-    // Only allow numbers
-    value = value.replace(/[^\d]/g, '');
-    
-    // Add commas
-    value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    // Add comma every three digits
+    value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     
     // Update input value
     input.value = value;
-} 
+}
+
+// Function to handle unit type changes
+function handleUnitTypeChange() {
+    const unitSelect = document.getElementById('unit_id');
+    const unitQuantityContainer = document.getElementById('unitQuantityContainer');
+    const piecesPerBoxContainer = document.getElementById('piecesPerBoxContainer');
+    const boxesPerSetContainer = document.getElementById('boxesPerSetContainer');
+
+    if (unitSelect && unitQuantityContainer && piecesPerBoxContainer && boxesPerSetContainer) {
+        const selectedUnit = unitSelect.value;
+        
+        // Hide all containers first
+        unitQuantityContainer.style.display = 'none';
+        piecesPerBoxContainer.style.display = 'none';
+        boxesPerSetContainer.style.display = 'none';
+        
+        // Show relevant containers based on unit type
+        if (selectedUnit === '2') { // کارتۆن
+            unitQuantityContainer.style.display = 'flex';
+            piecesPerBoxContainer.style.display = 'block';
+        } else if (selectedUnit === '3') { // سێت
+            unitQuantityContainer.style.display = 'flex';
+            piecesPerBoxContainer.style.display = 'block';
+            boxesPerSetContainer.style.display = 'block';
+        }
+    }
+}
+
+// Function to handle tab navigation
+function handleTabNavigation() {
+    const basicInfoTab = document.querySelector('[data-tab="basic-info"]');
+    const priceInfoTab = document.querySelector('[data-tab="price-info"]');
+    const basicInfoContent = document.getElementById('basic-info-content');
+    const priceInfoContent = document.getElementById('price-info-content');
+    const prevTabBtn = document.getElementById('prevTabBtn');
+    const nextTabBtn = document.getElementById('nextTabBtn');
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (basicInfoTab && priceInfoTab && basicInfoContent && priceInfoContent) {
+        basicInfoTab.addEventListener('click', function() {
+            basicInfoTab.classList.add('active');
+            priceInfoTab.classList.remove('active');
+            basicInfoContent.style.display = 'block';
+            priceInfoContent.style.display = 'none';
+            prevTabBtn.style.display = 'none';
+            nextTabBtn.style.display = 'block';
+            submitBtn.style.display = 'none';
+        });
+
+        priceInfoTab.addEventListener('click', function() {
+            priceInfoTab.classList.add('active');
+            basicInfoTab.classList.remove('active');
+            priceInfoContent.style.display = 'block';
+            basicInfoContent.style.display = 'none';
+            prevTabBtn.style.display = 'block';
+            nextTabBtn.style.display = 'none';
+            submitBtn.style.display = 'block';
+        });
+    }
+}
+
+// Function to handle form submission
+function handleFormSubmission() {
+    console.log("Form submission handler initialization is disabled to prevent double submission");
+    // This function is not used anymore to prevent double submission
+    // We're keeping it empty as a placeholder in case other code references it
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize number formatting
+    const numberInputs = [
+        'buyingPrice',
+        'sellingPrice',
+        'selling_price_wholesale',
+        'piecesPerBox',
+        'boxesPerSet',
+        'min_quantity',
+        'current_quantity'
+    ];
+
+    numberInputs.forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.setAttribute('type', 'text');
+            input.addEventListener('input', function() {
+                formatNumber(this);
+            });
+        }
+    });
+
+    // Initialize unit type handling
+    const unitSelect = document.getElementById('unit_id');
+    if (unitSelect) {
+        unitSelect.addEventListener('change', handleUnitTypeChange);
+        // Call once on page load to set initial state
+        handleUnitTypeChange();
+    }
+
+    // Initialize tab navigation
+    handleTabNavigation();
+
+    // DO NOT initialize form submission here - it's already handled in the main code
+    // handleFormSubmission();
+
+    // Initialize refresh button
+    const refreshButton = document.querySelector('.refresh-products');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', updateLatestProducts);
+    }
+}); 

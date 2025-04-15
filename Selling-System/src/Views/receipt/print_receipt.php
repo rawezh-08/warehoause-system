@@ -1,96 +1,153 @@
 <?php
-// Sample data
-$products = [
-    [
-        'image' => '../../uploads/products/67f00bba0f489_1743784890.jpg',
-        'code' => '9878',
-        'name' => 'شووشەی ئاو کەوانتەر',
-        'price' => 12.349,
-        'quantity' => 5,
-        'total' => 582.353,
-        'unit_price' => 435.456
-    ],
-    [
-        'image' => '../../uploads/products/67f00bba0f489_1743784890.jpg',
-        'code' => '9878',
-        'name' => 'شووشەی ئاو کەوانتەر',
-        'price' => 12.349,
-        'quantity' => 5,
-        'total' => 582.353,
-        'unit_price' => 435.456
-    ],
-    [
-        'image' => '../../uploads/products/67f00bba0f489_1743784890.jpg',
-        'code' => '9878',
-        'name' => 'شووشەی ئاو کەوانتەر',
-        'price' => 12.349,
-        'quantity' => 5,
-        'total' => 582.353,
-        'unit_price' => 435.456
-    ],
-    [
-        'image' => '../../uploads/products/67f00bba0f489_1743784890.jpg',
-        'code' => '9878',
-        'name' => 'شووشەی ئاو کەوانتەر',
-        'price' => 12.349,
-        'quantity' => 5,
-        'total' => 582.353,
-        'unit_price' => 435.456
-    ],
-    [
-        'image' => '../../uploads/products/67f00bba0f489_1743784890.jpg',
-        'code' => '9878',
-        'name' => 'شووشەی ئاو کەوانتەر',
-        'price' => 12.349,
-        'quantity' => 5,
-        'total' => 582.353,
-        'unit_price' => 435.456
-    ],
-    [
-        'image' => '../../uploads/products/67f00bba0f489_1743784890.jpg',
+// Include database connection
+require_once '../../config/database.php';
 
-        'code' => '9878',
-        'name' => 'شووشەی ئاو کەوانتەر',
-        'price' => 12.349,
-        'quantity' => 5,
-        'total' => 582.353,
-        'unit_price' => 435.456
-    ],
-    [
-        'image' => '../../uploads/products/67f00bba0f489_1743784890.jpg',
-        'code' => '9878',
-        'name' => 'شووشەی ئاو کەوانتەر',
-        'price' => 12.349,
-        'quantity' => 5,
-        'total' => 582.353,
-        'unit_price' => 435.456
-    ]
-];
+// Function to get correct image path without duplication
+function get_correct_image_path($image_name) {
+    // Remove any existing paths to avoid duplication
+    $image_name = basename($image_name);
+    
+    // Check if the image exists in common locations
+    $possible_locations = [
+        '/uploads/products/',
+        '/Selling-System/uploads/products/',
+        '/warehouse-system/uploads/products/'
+    ];
+    
+    $base_url = '';
+    // Try to determine base URL from current script
+    if (isset($_SERVER['HTTP_HOST']) && isset($_SERVER['SCRIPT_NAME'])) {
+        $base_path = dirname(dirname(dirname($_SERVER['SCRIPT_NAME'])));
+        $base_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . 
+                   '://' . $_SERVER['HTTP_HOST'] . ($base_path == '/' ? '' : $base_path);
+    }
+    
+    foreach ($possible_locations as $location) {
+        $image_path = $base_url . $location . $image_name;
+        // We can't check if file exists with URL, so just return the most likely path
+        return $image_path;
+    }
+    
+    // If all else fails, return a path relative to current file
+    return '../../uploads/products/' . $image_name;
+}
 
-// Sample calculations
-$total_amount = 18320.00;
-$discount = 0;
-$after_discount = 18320.00;
-$paid_amount = 916.00;
-$remaining_balance = 916.00;
-$previous_balance = 18320.00;
-$remaining_amount = 916.00;
-$grand_total = 19236.00;
+// Check if sale_id is provided
+if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
+    $sale_id = $_GET['sale_id']; // Don't convert to int to preserve string format
+    
+    // First try to find directly by sale ID
+    $stmt = $conn->prepare("
+        SELECT s.*, c.name as customer_name, c.phone1 as customer_phone
+        FROM sales s
+        LEFT JOIN customers c ON s.customer_id = c.id
+        WHERE s.id = ?
+    ");
+    $stmt->execute([intval($sale_id)]);
+    $sale = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    // If not found, check if this is a debt_transaction ID and get the reference_id
+    if (!$sale) {
+        $stmt = $conn->prepare("
+            SELECT s.*, c.name as customer_name, c.phone1 as customer_phone
+            FROM debt_transactions dt
+            JOIN sales s ON dt.reference_id = s.id
+            LEFT JOIN customers c ON s.customer_id = c.id
+            WHERE dt.id = ? AND dt.transaction_type = 'sale'
+        ");
+        $stmt->execute([intval($sale_id)]);
+        $sale = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    if (!$sale) {
+        die("پسوڵەی داواکراو نەدۆزرایەوە (پسووڵەی ژمارە: " . htmlspecialchars($sale_id) . ")");
+    }
+    
+    // Fetch sale items with correct column names
+    $stmt = $conn->prepare("
+        SELECT si.*, 
+               p.name as product_name, 
+               p.code as product_code, 
+               p.image as product_image,
+               p.pieces_per_box,
+               p.boxes_per_set
+        FROM sale_items si
+        JOIN products p ON si.product_id = p.id
+        WHERE si.sale_id = ?
+    ");
+    $stmt->execute([$sale['id']]);
+    $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Set receipt data
+    $invoice_number = $sale['invoice_number'];
+    $customer_name = $sale['customer_name'];
+    $subtotal = 0;
+    
+    // Calculate subtotal from sale items
+    foreach ($products as $product) {
+        $subtotal += floatval($product['total_price']);
+    }
+    
+    $discount = floatval($sale['discount']);
+    $shipping_cost = floatval($sale['shipping_cost']);
+    $other_costs = floatval($sale['other_costs']);
+    
+    // Calculate total before discount
+    $total_amount = $subtotal + $shipping_cost + $other_costs;
+    
+    // Calculate amount after discount
+    $after_discount = $total_amount - $discount;
+    
+    // Get paid and remaining amounts directly from the database
+    $paid_amount = floatval($sale['paid_amount']);
+    $remaining_balance = floatval($sale['remaining_amount']);
+    
+    // Get previous balance (all previous debt except this sale)
+    $stmt = $conn->prepare("
+        SELECT debit_on_business 
+        FROM customers 
+        WHERE id = ?
+    ");
+    $stmt->execute([$sale['customer_id']]);
+    $customer = $stmt->fetch(PDO::FETCH_ASSOC);
+    $previous_balance = floatval($customer['debit_on_business']) - $remaining_balance;
+    $previous_balance = $previous_balance < 0 ? 0 : $previous_balance;
+    
+    $remaining_amount = $remaining_balance;
+    $grand_total = $previous_balance + $remaining_balance;
+} else {
+  
+}
 ?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پسووڵەی فرۆشتن</title>
+    <title>پسووڵەی فرۆشتن - <?php echo $invoice_number; ?></title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600&display=swap');
         @font-face {
-    font-family: 'Rabar';
-    src: url('../../assets/fonts/Rabar_021.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
+            font-family: 'Rabar';
+            src: url('../../assets/fonts/Rabar_021.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        :root {
+            --primary-color: #7380ec;
+            --primary-light: rgba(115, 128, 236, 0.1);
+            --primary-hover: #5b6be0;
+            --danger-color: #ff7782;
+            --success-color: #41f1b6;
+            --warning-color: #ffbb55;
+            --info-color: #7380ec;
+            --dark-color: #363949; 
+            --text-color: #363949;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --bg-light: #f8f9fa;
+        }
 
         * {
             margin: 0;
@@ -100,314 +157,476 @@ $grand_total = 19236.00;
 
         body {
             font-family: 'Rabar', sans-serif;
-            background: #f8f9fa;
-            padding: 20px;
-            color: #333;
+            background: #f0f0f0;
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 0;
         }
 
         .receipt-container {
-            max-width: 1200px;
+            max-width: 21cm;
             margin: 0 auto;
             background: white;
-            border-radius: 20px;
-            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            position: relative;
         }
-
-        .header-section {
+        
+        /* Header design */
+        .receipt-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            padding: 25px;
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            padding: 20px;
+            align-items: center;
+            color: white;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .company-info h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .company-info p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .invoice-details {
+            text-align: left;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+        }
+
+        .invoice-number {
+            font-size: 22px;
+            margin-bottom: 5px;
+        }
+
+        .invoice-date {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Customer info */
+        .customer-info {
+            padding: 20px 25px;
+            background: var(--bg-light);
+            border-bottom: 2px dashed var(--border-color);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
         }
 
-        .qr-section {
-            background: #F6F8FC;
-            padding: 4px;
-            border-radius: 32px;
-            text-align: center;
-            flex: 0 0 200px;
-        }
-
-        .qr-section img {
-            width: 140px;
-            height: 140px;
-        }
-
-        .qr-text {
-            color: #666;
-            font-size: 14px;
-            margin-top: 10px;
-            text-align: center;
-        }
-
-        .company-info {
-            position: relative;
-            overflow: hidden;
-
-            background: linear-gradient(135deg, #6B8CFF 0%, #737FFF 100%);
-            padding: 36px;
-            border-radius: 40px;
-            color: white;
-            flex-grow: 1;
-        }
-
-        .company-title {
-            display: flex;
-            align-items: center;
-            /* justify-content: space-between; */
-            margin-bottom: 20px;
-      }
-
-        .company-name {
-            font-size: 28px;
-            font-weight: 600;
-        }
-
-        .company-logo {
-            width: 50px;
-            height: 50px;
-            
-            /* padding: 5px; */
-            /* margin: 10px; */
-        }
-      
-        .company-details {
+        .info-group {
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .info-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .info-value {
             font-size: 16px;
+            font-weight: bold;
+            color: var(--dark-color);
         }
 
-        .icon-location{
-            width: 20px;
-            height: 20px;
-        }
-        .icon-call{
-            width: 20px;
-            height: 20px;
-        }
-        .detail-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        /* Table styles */
+        .items-section {
+            padding: 20px 25px;
         }
 
-        .products-table {
+        .items-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
-            background: white;
+            border: 1px solid var(--border-color);
         }
 
-        .products-table th {
-            background: #F8F9FA;
-            padding: 15px;
-            text-align: right;
-            font-weight: 500;
-            color: #666;
+        .items-table th {
+            background: var(--primary-color);
+            color: white;
+            padding: 12px 15px;
+            font-size: 14px;
+            font-weight: normal;
+            text-align: center;
+            white-space: nowrap;
         }
 
-        .products-table td {
-            padding: 15px;
-            border-bottom: 1px solid #F8F9FA;
+        .items-table td {
+            padding: 2px 2px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .items-table tr:nth-child(even) {
+            background-color: var(--primary-light);
         }
 
         .product-image {
-            width: 50px;
-            height: 50px;
-            border-radius: 8px;
-            object-fit: cover;
-        }
-
-        .summary-section {
-            display: flex;
-            gap: 20px;
-            padding: 20px;
-        }
-
-        .summary-left {
-            position: relative;
-            background: linear-gradient(135deg, #6B8CFF 0%, #737FFF 100%);
-            border-radius: 32px;
-            padding: 30px;
-            padding-top:50px;
-
-            color: white;
-            flex: 1;
-            overflow: hidden;
-            box-shadow: 0 0 10px 0 rgba(80, 159, 255, 0.38);
             text-align: center;
         }
 
-        .texture-2{
-            position: absolute;
-            top: -90%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
+        .product-thumb {
+            max-width: 50px;
+            max-height: 50px;
+            object-fit: contain;
+            border-radius: 4px;
         }
 
-        .summary-right {
-            background: #F8F9FA;
-            border-radius: 32px;
-            padding: 30px;
-            flex: 1;
+        .product-name-cell {
+            text-align: right;
         }
 
-        .summary-item {
+        .quantity-cell {
+            font-weight: bold;
+        }
+
+        /* Summary section */
+        .summary-section {
+            padding: 20px 25px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .summary-table {
+            width: 350px;
+            border-collapse: collapse;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .summary-table td {
+            padding: 10px 15px;
+            border: none;
+        }
+
+        .summary-table tr:not(:last-child) td {
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary-table tr:last-child {
+            background: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .summary-label {
+            text-align: right;
+        }
+
+        .summary-value {
+            text-align: left;
+            font-weight: bold;
+        }
+
+        /* Footer */
+        .receipt-footer {
+            padding: 25px;
+            background: var(--bg-light);
+            border-top: 2px dashed var(--border-color);
+        }
+
+        .signatures {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 25px;
         }
 
-        .summary-right .summary-item {
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .total-amount {
-            font-size: 24px;
-            font-weight: 600;
-            margin-top: 10px;
-        }
-        .texture-1{
-            position: absolute;
-            top: -0%;
-            left: -60%;
-            width: 200%;
-            height: 200%; 
-        }
-
-       .t-head{
-            background:rgb(196, 18, 107);
-        }
-
-        .summary-left .summary-item {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .summary-left .total-amount {
-            font-size: 24px;
-            font-weight: 600;
-            margin-top: 20px;
+        .signature-box {
+            width: 200px;
             text-align: center;
+        }
+
+        .signature-line {
+            width: 100%;
+            height: 1px;
+            background: var(--border-color);
+            margin: 10px 0;
+        }
+
+        .signature-label {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .footer-notes {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .thank-you {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            color: var(--primary-color);
+        }
+
+        .print-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .print-button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
         }
 
         @media print {
             body {
                 padding: 0;
+                background: white;
             }
             .receipt-container {
-                max-width: 100%;
+                box-shadow: none;
                 margin: 0;
+                max-width: none;
+            }
+            .print-button {
+                display: none;
+            }
+            @page {
+                size: A4;
+                margin: 0;
+            }
+            
+            /* Force page break before summary section */
+            .page-break-summary {
+                page-break-before: always;
+            }
+            
+            /* Ensure header appears on all pages */
+            .receipt-header {
+                display: flex !important;
+            }
+            
+            /* Ensure table headers repeat on new pages */
+            thead {
+                display: table-header-group;
+            }
+            
+            /* Keep table rows together where possible */
+            tr {
+                page-break-inside: avoid;
             }
         }
     </style>
+
 </head>
 <body>
     <div class="receipt-container">
-        <div class="header-section">
-           
-            <div class="company-info">
-                <img src="../../assets/images/bg-texture.svg" alt="Logo" class="texture-1">
-                <div class="company-title">
-                    <img src="../../assets/images/company-logo.svg" alt="Logo" class="company-logo">
-                    <div class="company-name">کۆگای ئەشکان</div>
-
-                </div>
-                <div class="company-details">
-                    <div class="detail-item">
-                    <img src="../../assets/icons/location.svg" class="icon-location" alt="">
-                    <span>ناونیشان: سلێمانی - کانی با</span>
-                    </div>
-                    <div class="detail-item">
-                        <img src="../../assets/icons/call.svg" class="icon-call" alt="">
-                        <span>ژمارە تەلەفۆن: 0770 123 5678</span>
-                    </div>
+        <header class="receipt-header">
+            <div class="logo-section">
+                <img src="../../assets/images/company-logo.svg" alt="کۆگای ئەشکان" class="company-logo">
+                <div class="company-info">
+                    <h1>کۆگای ئەشکان</h1>
+                    <p>ناونیشان: سلێمانی - کۆگاکانی غرفة تجارة - کۆگای 288</p>
+                    <p>ژمارە تەلەفۆن: 5678 123 0770</p>
                 </div>
             </div>
-
-            <div class="qr-section">
-                <img src="../../assets/images/sample_qr.svg" alt="QR Code">
-                <div class="qr-text">
-                  <p>سەردانی گروپ بکەن بۆ بینینی بابەتەکان</p>
-                </div>
+            <div class="invoice-details">
+                <div class="invoice-number">ژمارەی پسووڵە: <?php echo $invoice_number; ?></div>
+                <div class="invoice-date">بەروار: <?php echo isset($sale['date']) ? date('Y-m-d', strtotime($sale['date'])) : date('Y-m-d'); ?></div>
             </div>
-        </div>
+        </header>
+<center>
+        <section class="customer-info">
+            <div class="info-group">
+                <div class="info-label">کڕیار</div>
+                <div class="info-value"><?php echo isset($customer_name) ? $customer_name : 'هیچ'; ?></div>
+            </div>
+            <?php if (isset($sale['customer_phone']) && !empty($sale['customer_phone'])): ?>
+            <div class="info-group">
+                <div class="info-label">ژمارەی مۆبایل</div>
+                <div class="info-value"><?php echo $sale['customer_phone']; ?></div>
+            </div>
+            <?php endif; ?>
+            <div class="info-group">
+                <div class="info-label">کات</div>
+                <div class="info-value"><?php echo date('H:i', strtotime($sale['date'] ?? 'now')); ?></div>
+            </div>
+        </section>
+        </center>
 
-        <table class="products-table">
-            <thead>
-                <tr >
-                    <th style="border-top-right-radius: 50px; border-bottom-right-radius: 50px;">وێنە</th>
-                    <th>کۆد</th>
-                    <th>جۆری کاڵا</th>
-                    <th>نرخ</th>
-                    <th>بڕ</th>
-                    <th>کۆ</th>
-                    <th style="border-top-left-radius: 50px; border-bottom-left-radius: 50px;">نرخی یەکە</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($products as $product): ?>
+        <section class="items-section">
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>وێنە</th>
+                        <th>کۆد</th>
+                        <th>ناوی کاڵا</th>
+                        <th>بڕ</th>
+                        <th>نرخی یەکە</th>
+                        <th>کۆی گشتی</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php 
+                    $count = 0;
+                    $total_items = 0;
+                    foreach ($products as $product): 
+                        $count++;
+                        $total_items += $product['quantity'];
+                    ?>
+                    <tr>
+                        <td><?php echo $count; ?></td>
+                        <td class="product-image">
+                            <?php 
+                            $image_name = !empty($product['product_image']) ? $product['product_image'] : 'pro-1.png';
+                            $image_url = get_correct_image_path($image_name);
+                            $product_name = isset($product['product_name']) ? $product['product_name'] : 'Product';
+                            ?>
+                            <img src="<?php echo htmlspecialchars($image_url); ?>" 
+                                 alt="<?php echo htmlspecialchars($product_name); ?>" 
+                                 class="product-thumb"
+                                 onerror="this.onerror=null; this.src='<?php echo htmlspecialchars(get_correct_image_path('pro-1.png')); ?>';">
+                        </td>
+                        <td><?php echo isset($product['product_code']) ? $product['product_code'] : $product['code']; ?></td>
+                        <td class="product-name-cell">
+                            <div class="product-details">
+                                <span class="product-name">
+                                    <?php echo isset($product['product_name']) ? $product['product_name'] : $product['name']; ?>
+                                </span>
+                            </div>
+                        </td>
+                        <td class="quantity-cell">
+                            <?php 
+                            echo $product['quantity'] . ' ';
+                            switch($product['unit_type']) {
+                                case 'box':
+                                    echo '<span class="unit-type">کارتۆن</span>';
+                                    break;
+                                case 'set':
+                                    echo '<span class="unit-type">سێت</span>';
+                                    break;
+                                default:
+                                    echo '<span class="unit-type">دانە</span>';
+                            }
+                            ?>
+                        </td>
+                        <td><?php echo number_format(isset($product['unit_price']) ? $product['unit_price'] : $product['price'], 0) . ' د.ع'; ?></td>
+                        <td><?php echo number_format(isset($product['total_price']) ? $product['total_price'] : $product['total'], 0) . ' د.ع'; ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="summary-section" class="summary-section">
+            <table class="summary-table">
                 <tr>
-                    <td><img src="<?php echo $product['image']; ?>" alt="Product" class="product-image"></td>
-                    <td><?php echo $product['code']; ?></td>
-                    <td><?php echo $product['name']; ?></td>
-                    <td><?php echo number_format($product['price'], 3) . '$'; ?></td>
-                    <td><?php echo $product['quantity']; ?></td>
-                    <td><?php echo number_format($product['total'], 3) . '$'; ?></td>
-                    <td><?php echo number_format($product['unit_price'], 3) . '$'; ?></td>
+                    <td class="summary-label">کۆی پارەی کاڵاکان:</td>
+                    <td class="summary-value"><?php echo number_format($total_amount, 0) . ' د.ع'; ?></td>
                 </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                <?php if ($discount > 0): ?>
+                <tr>
+                    <td class="summary-label">داشکاندن:</td>
+                    <td class="summary-value"><?php echo number_format($discount , 0)  ?> د.ع</td>
+                </tr>
+                <tr>
+                    <td class="summary-label">دوای داشکاندن:</td>
+                    <td class="summary-value"><?php echo number_format($after_discount, 0) . ' د.ع'; ?></td>
+                </tr>
+                <?php endif; ?>
+                <tr>
+                    <td class="summary-label">پارەی دراو:</td>
+                    <td class="summary-value"><?php echo number_format($paid_amount, 0) . ' د.ع'; ?></td>
+                </tr>
+                <?php if ($remaining_balance > 0): ?>
+                <tr>
+                    <td class="summary-label">پارەی ماوە:</td>
+                    <td class="summary-value"><?php echo number_format($remaining_balance, 0) . ' د.ع'; ?></td>
+                </tr>
+                <?php endif; ?>
+                <?php if ($previous_balance > 0): ?>
+                <tr>
+                    <td class="summary-label">قەرزی پێشوو:</td>
+                    <td class="summary-value"><?php echo number_format($previous_balance, 0) . ' د.ع'; ?></td>
+                </tr>
+                <?php endif; ?>
+                <tr>
+                    <td class="summary-label">کۆی گشتی:</td>
+                    <td class="summary-value"><?php echo number_format($grand_total, 0) . ' د.ع'; ?></td>
+                </tr>
+            </table>
+        </section>
 
-        <div class="summary-section">
-        <div class="summary-right">
-                <div class="summary-item">
-                    <span>کۆی گشتی پسولە</span>
-                    <span>$<?php echo number_format($total_amount, 2); ?></span>
+        <footer class="receipt-footer">
+            <div class="signatures">
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div class="signature-label">واژۆی کڕیار</div>
                 </div>
-                <div class="summary-item">
-                    <span>داشکاندن</span>
-                    <span><?php echo $discount; ?>%</span>
-                </div>
-                <div class="summary-item">
-                    <span>دوای داشکاندن</span>
-                    <span>$<?php echo number_format($after_discount, 2); ?></span>
-                </div>
-                <div class="summary-item">
-                    <span>پارەی دراو</span>
-                    <span>$<?php echo number_format($paid_amount, 2); ?></span>
-                </div>
-                <div class="summary-item">
-                    <span>پارەی ماوە</span>
-                    <span>$<?php echo number_format($remaining_balance, 2); ?></span>
-                </div>
-            </div>
-            <div class="summary-left">
-                <img src="../../assets/images/bg-texture-2.svg" alt="" class="texture-2">
-                <div class="summary-item">
-                    <span>قەرزی پێشوو</span>
-                    <span>$<?php echo number_format($total_amount, 2); ?></span>
-                </div>
-                <div class="summary-item">
-                    <span>پارەی ماوەی ئەم پسولە</span>
-                    <span>$<?php echo number_format($remaining_amount, 2); ?></span>
-                </div>
-                <div class="total-amount">
-                    <span>$<?php echo number_format($grand_total, 2); ?></span>
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div class="signature-label">واژۆی فرۆشیار</div>
                 </div>
             </div>
             
-        </div>
+            <div class="thank-you">
+                سوپاس بۆ کڕینتان
+            </div>
+            
+         
+        </footer>
     </div>
+
+    <button class="print-button" onclick="window.print()">چاپکردن</button>
+        <script>
+        // Auto open print dialog when page loads
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+                checkSummaryPosition();
+                // Recalculate on window resize
+                window.addEventListener('resize', checkSummaryPosition);
+            }, 1000); // Short delay to ensure everything is loaded
+        };
+        
+        function checkSummaryPosition() {
+            const summarySection = document.getElementById('summary-section');
+            const itemsSection = document.querySelector('.items-section');
+            
+            if (!summarySection || !itemsSection) return;
+            
+            // Get elements positions
+            const itemsRect = itemsSection.getBoundingClientRect();
+            const summaryRect = summarySection.getBoundingClientRect();
+            
+            // If items table takes up most of the page, force summary to next page
+            const pageHeight = window.innerHeight;
+            const itemsHeight = itemsRect.height;
+            
+            if (itemsHeight > pageHeight * 0.7) { // If items take more than 70% of the page
+                summarySection.classList.add('page-break-summary');
+            } else {
+                summarySection.classList.remove('page-break-summary');
+            }
+        }
+    </script>
 </body>
 </html> 
