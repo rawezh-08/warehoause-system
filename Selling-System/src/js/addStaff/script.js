@@ -55,13 +55,13 @@ function showToast(message, type) {
  */
 function loadComponents() {
     try {
-        $("#navbar-container").load("components/navbar.php");
-        $("#sidebar-container").load("components/sidebar.php", function() {
-            // Activate the current menu item
+        // Components are already being loaded by include-components.js
+        // Just activate the sidebar item after a small delay to ensure components are loaded
+        setTimeout(function() {
             activateSidebarItem();
-        });
+        }, 500);
     } catch (error) {
-        console.error("Error loading components:", error);
+        console.error("Error handling components:", error);
     }
 }
 

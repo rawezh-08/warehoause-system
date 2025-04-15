@@ -92,9 +92,12 @@ function fixComponentPaths() {
  * Load both navbar and sidebar components with error handling
  */
 function loadNavbarAndSidebar() {
+    // Determine base path for components
+    const basePath = window.location.origin + '/warehouse-system/Selling-System/src/';
+    
     // Load navbar
     if (document.getElementById('navbar-container')) {
-        fetch('../../components/navbar.php')
+        fetch(basePath + 'components/navbar.php')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('پەیوەندی بە ناوبارەوە سەرکەوتوو نەبوو');
@@ -119,7 +122,7 @@ function loadNavbarAndSidebar() {
 
     // Load sidebar
     if (document.getElementById('sidebar-container')) {
-        fetch('../../components/sidebar.php')
+        fetch(basePath + 'components/sidebar.php')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('پەیوەندی بە سایدبارەوە سەرکەوتوو نەبوو');

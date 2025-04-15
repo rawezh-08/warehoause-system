@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const boxesPerSetContainer = document.getElementById('boxesPerSetContainer');
     const imagePreview = document.querySelector('.image-preview');
     const uploadBtn = document.getElementById('uploadBtn');
+    const wrapper = document.getElementById('wrapper');
     
     // Get CSS variables for consistent styling in JS
     const style = getComputedStyle(document.documentElement);
@@ -41,10 +42,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabIds = ['basic-info', 'price-info'];
     
     // Toggle sidebar on mobile
-    if (toggleSidebarBtn && sidebar) {
+    if (toggleSidebarBtn && sidebar && wrapper) {
         toggleSidebarBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            document.getElementById('wrapper').classList.toggle('sidebar-collapsed');
+            wrapper.classList.toggle('sidebar-collapsed');
             document.body.classList.toggle('sidebar-active');
             
             let overlay = document.querySelector('.overlay');
@@ -55,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 overlay.addEventListener('click', function() {
                     document.body.classList.remove('sidebar-active');
-                    document.getElementById('wrapper').classList.add('sidebar-collapsed');
+                    wrapper.classList.add('sidebar-collapsed');
                 });
             }
         });
@@ -64,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle clicks outside sidebar to close it on mobile
     document.addEventListener('click', function(event) {
         // Skip if sidebar or toggle button are not found
-        if (!sidebar || !toggleSidebarBtn) return;
+        if (!sidebar || !toggleSidebarBtn || !wrapper) return;
         
         try {
             const isClickInsideSidebar = sidebar.contains(event.target);
@@ -73,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!isClickInsideSidebar && !isClickOnToggleBtn && window.innerWidth < 992) {
                 // Remove both toggle classes to ensure consistency
                 document.body.classList.remove('sidebar-active');
-                document.getElementById('wrapper').classList.add('sidebar-collapsed');
+                wrapper.classList.add('sidebar-collapsed');
             }
         } catch (error) {
             console.error('Error in sidebar click handler:', error);

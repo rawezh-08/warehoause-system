@@ -1,0 +1,59 @@
+/* Custom styles for the expenses history page */
+
+/* Transparent search input */
+.table-search-input {
+    background-color: transparent !important;
+    border: 1px solid #dee2e6;
+}
+
+.custom-table td,
+th {
+    white-space: normal;
+    word-wrap: break-word;
+    vertical-align: middle;
+    padding: 0.75rem;
+}
+
+/* Table cell styles for better readability */
+#employeeHistoryTable td,
+#shippingHistoryTable td,
+#withdrawalHistoryTable td,
+#employeeHistoryTable th,
+#shippingHistoryTable th,
+#withdrawalHistoryTable th {
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Adjust pagination display for many pages */
+.pagination-numbers {
+    flex-wrap: wrap;
+    max-width: 300px;
+    overflow: hidden;
+}
+
+.pagination-numbers .btn {
+    margin-bottom: 5px;
+}
+
+/* RTL Toast Container Styles */
+.toast-container-rtl {
+    right: 0 !important;
+    left: auto !important;
+}
+
+.toast-container-rtl .swal2-toast {
+    margin-right: 1em !important;
+    margin-left: 0 !important;
+}
+
+.toast-container-rtl .swal2-toast .swal2-title {
+    text-align: right !important;
+}
+
+.toast-container-rtl .swal2-toast .swal2-icon {
+    margin-right: 0 !important;
+    margin-left: 0.5em !important;
+} 
