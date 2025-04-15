@@ -187,6 +187,7 @@ try {
             $products_json[] = [
                 'product_id' => (int)$item['product_id'],
                 'quantity' => (int)$item['quantity'],
+                'unit_type' => $item['unit_type'],
                 'unit_price' => floatval($item['unit_price'])
             ];
         }

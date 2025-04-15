@@ -259,6 +259,7 @@ require_once '../../config/database.php';
                             <th style="width: 50px" class="tbl-header">#</th>
                             <th class="tbl-header">کاڵا</th>
                             <th class="tbl-header">وێنە</th>
+                            <th class="tbl-header">جۆری یەکە</th>
                             <th class="tbl-header">نرخی یەکە</th>
                             <th class="tbl-header">بڕی یەکە</th>
                             <th class="tbl-header">کۆی گشتی</th>
@@ -270,6 +271,13 @@ require_once '../../config/database.php';
                             <td>1</td>
                             <td><select class="form-control product-select" style="width: 100%"></select></td>
                             <td class="product-image-cell"></td>
+                            <td>
+                                <select class="form-control unit-type">
+                                    <option value="piece">دانە</option>
+                                    <option value="box">کارتۆن</option>
+                                    <option value="set">سێت</option>
+                                </select>
+                            </td>
                             <td><input type="number" class="form-control unit-price" min="0"></td>
                             <td><input type="number" class="form-control quantity" min="0"></td>
                             <td><input type="number" class="form-control total" readonly></td>

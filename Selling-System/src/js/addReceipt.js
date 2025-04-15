@@ -757,176 +757,158 @@ $(document).ready(function() {
 
     // Initialize tab event listeners
     function initTabEventListeners(tabId, tabType) {
-        const tabPane = $(`#${tabId}`);
+        console.log(`Initializing event listeners for tab: ${tabId}, type: ${tabType}`);
         
-        // Initialize selects
-        initializeSelectsForTab(tabId);
-        
-        // Save button click
-        tabPane.find('.save-btn').click(function() {
-            saveReceipt(tabId, tabType);
-        });
-        
-        // Payment type change
-        tabPane.find('.payment-type').change(function() {
+        // Payment type change handler
+        $(`#${tabId} .payment-type`).on('change', function() {
             const paymentType = $(this).val();
-            const creditFields = tabPane.find('.credit-payment-fields');
+            const creditFields = $(`#${tabId} .credit-payment-fields`);
             
             if (paymentType === PAYMENT_TYPES.CREDIT) {
-                creditFields.slideDown();
-                updateRemainingAmount(tabPane);
+                creditFields.show();
             } else {
-                creditFields.slideUp();
+                creditFields.hide();
             }
         });
         
-        // Add new row button click
-        tabPane.find('.add-row-btn').click(function() {
-            const itemsList = tabPane.find('.items-list');
+        // Price type change handler (selling only)
+        if (tabType === RECEIPT_TYPES.SELLING) {
+            $(`#${tabId} .price-type`).on('change', function() {
+                const priceType = $(this).val();
+                // Any price type specific logic here
+            });
+        }
+        
+        // Add row button handler
+        $(`#${tabId} .add-row-btn`).on('click', function() {
+            const itemsList = $(`#${tabId} .items-list`);
             addNewRow(itemsList);
         });
         
-        // Paid amount change for credit payments
-        tabPane.find('.paid-amount').on('input', function() {
-            updateRemainingAmount(tabPane);
-        });
-        
-        // Discount, shipping cost and other cost changes
-        tabPane.find('.discount, .shipping-cost, .other-cost').on('input', function() {
-            calculateGrandTotal(tabId);
-        });
-        
-        // Refresh button click
-        tabPane.find('.refresh-btn').click(function() {
-            resetForm(tabPane, tabType);
-        });
-        
-        // Print button click
-        tabPane.find('.print-btn').click(function() {
-            // For "selling" type receipts, redirect to print_receipt.php
-            if (tabType === RECEIPT_TYPES.SELLING) {
-                // Check if we have a saved receipt ID (stored after successful save)
-                const savedReceiptId = tabPane.data('saved-receipt-id');
-                
-                if (savedReceiptId) {
-                    // Open the print receipt page in a new window/tab with the sale_id
-                    window.open(`../../views/receipt/print_receipt.php?sale_id=${savedReceiptId}`, '_blank');
-                } else {
-                    // No saved receipt ID, inform the user to save first
-                    Swal.fire({
-                        title: 'تکایە پسوڵەکە پاشەکەوت بکە',
-                        text: 'بۆ چاپکردن، پێویستە سەرەتا پسوڵەکە پاشەکەوت بکەیت.',
-                        icon: 'warning',
-                        confirmButtonText: 'باشە'
-                    });
-                }
-            } else {
-                // For other types (not implemented yet)
-                Swal.fire('نیشاندان', 'تایبەتمەندی چاپکردن لە داهاتوودا زیاد دەکرێت', 'info');
-            }
-        });
-        
-        // Handle row removal
-        tabPane.on('click', '.remove-row', function() {
+        // Remove row button handler (using event delegation for dynamically added rows)
+        $(`#${tabId}`).on('click', '.remove-row', function() {
             const row = $(this).closest('tr');
-            const table = row.closest('table');
+            const itemsList = row.closest('tbody');
             
             // Don't remove if it's the only row
-            if (table.find('tbody tr').length > 1) {
-                row.remove();
-                // Recalculate totals
-                calculateGrandTotal(tabId);
+            if (itemsList.find('tr').length <= 1) {
+                // Just clear the row instead
+                row.find('input').val('');
+                row.find('.product-select').val(null).trigger('change');
+                row.find('.product-image-cell').empty();
             } else {
-                Swal.fire('ئاگاداری', 'ناتوانی هەموو ڕیزەکان بسڕیتەوە', 'warning');
+                // Remove the row with animation
+                row.fadeOut(300, function() {
+                    row.remove();
+                    
+                    // Update row numbers
+                    itemsList.find('tr').each(function(index) {
+                        $(this).find('td:first').text(index + 1);
+                    });
+                    
+                    // Update totals
+                    calculateGrandTotal(tabId);
+                });
             }
         });
         
-        // Handle dynamic row fields
-        tabPane.on('input', '.unit-price, .quantity', function() {
+        // Product select change handler (for both selling and buying)
+        $(`#${tabId}`).on('select2:select', '.product-select', function(e) {
+            // Existing product select handler code...
+        });
+        
+        // Unit type change handler (for both selling and buying)
+        $(`#${tabId}`).on('change', '.unit-type', function() {
+            const row = $(this).closest('tr');
+            const unitType = $(this).val();
+            const productSelect = row.find('.product-select');
+            
+            if (!productSelect.val()) return;
+            
+            // Get product data
+            const productData = productSelect.select2('data')[0];
+            if (!productData) return;
+            
+            // Update unit price based on unit type
+            const unitPriceField = row.find('.unit-price');
+            let newPrice = 0;
+            
+            if (tabType === RECEIPT_TYPES.SELLING) {
+                const priceType = $(`#${tabId} .price-type`).val();
+                const basePrice = priceType === PRICE_TYPES.WHOLESALE ? 
+                    parseFloat(productData.wholesale_price) : 
+                    parseFloat(productData.retail_price);
+                
+                if (unitType === 'piece') {
+                    newPrice = basePrice;
+                } else if (unitType === 'box' && productData.pieces_per_box) {
+                    newPrice = basePrice * parseInt(productData.pieces_per_box);
+                } else if (unitType === 'set' && productData.pieces_per_box && productData.boxes_per_set) {
+                    newPrice = basePrice * parseInt(productData.pieces_per_box) * parseInt(productData.boxes_per_set);
+                }
+            } else if (tabType === RECEIPT_TYPES.BUYING) {
+                const basePrice = parseFloat(productData.purchase_price) || 0;
+                
+                if (unitType === 'piece') {
+                    newPrice = basePrice;
+                } else if (unitType === 'box' && productData.pieces_per_box) {
+                    newPrice = basePrice * parseInt(productData.pieces_per_box);
+                } else if (unitType === 'set' && productData.pieces_per_box && productData.boxes_per_set) {
+                    newPrice = basePrice * parseInt(productData.pieces_per_box) * parseInt(productData.boxes_per_set);
+                }
+            }
+            
+            // Update the unit price field
+            if (newPrice > 0) {
+                unitPriceField.val(newPrice);
+                // Recalculate row total
+                calculateRowTotal(row);
+            }
+        });
+        
+        // Unit price, quantity change handlers
+        $(`#${tabId}`).on('input', '.unit-price, .quantity', function() {
             const row = $(this).closest('tr');
             calculateRowTotal(row);
+        });
+        
+        // Refresh button handler
+        $(`#${tabId} .refresh-btn`).on('click', function() {
+            resetForm($(`#${tabId}`), tabType);
+        });
+        
+        // Print button handler
+        $(`#${tabId} .print-btn`).on('click', function() {
+            // Check if we have a saved receipt ID
+            const receiptId = $(`#${tabId}`).data('saved-receipt-id');
+            
+            if (receiptId) {
+                // Open print window for the saved receipt
+                window.open(`../../views/receipt/print_receipt.php?sale_id=${receiptId}`, '_blank');
+            } else {
+                Swal.fire({
+                    title: 'پسوڵە پاشەکەوت نەکراوە',
+                    text: 'تکایە سەرەتا پسوڵەکە پاشەکەوت بکە',
+                    icon: 'warning',
+                    confirmButtonText: 'باشە'
+                });
+            }
+        });
+        
+        // Shipping cost, discount, other cost change handlers
+        $(`#${tabId}`).on('input', '.shipping-cost, .discount, .other-cost', function() {
             calculateGrandTotal(tabId);
         });
         
-        // Handle unit type change for selling tab
-        if (tabType === RECEIPT_TYPES.SELLING) {
-            tabPane.on('change', '.unit-type', function() {
-                const row = $(this).closest('tr');
-                const productId = row.find('.product-select').val();
-                
-                if (productId) {
-                    const unitType = $(this).val();
-                    const priceType = tabPane.find('.price-type').val();
-                    
-                    // Get product data from the select2 instance
-                    const productSelect = row.find('.product-select');
-                    const productData = productSelect.select2('data')[0];
-                    
-                    if (!productData) {
-                        console.error('Product data not found');
-                        return;
-                    }
-                    
-                    // Get base price based on price type (single unit price)
-                    let basePrice = priceType === PRICE_TYPES.WHOLESALE ? 
-                        parseFloat(productData.wholesale_price || 0) : 
-                        parseFloat(productData.retail_price || 0);
-                    
-                    // Calculate price based on unit type
-                    if (unitType === 'box' && productData.pieces_per_box) {
-                        basePrice = Math.round(basePrice * parseInt(productData.pieces_per_box || 0));
-                        console.log(`Box price calculated: ${basePrice} (${productData.pieces_per_box} pieces per box)`);
-                    } else if (unitType === 'set' && productData.pieces_per_box && productData.boxes_per_set) {
-                        const totalPieces = parseInt(productData.pieces_per_box || 0) * parseInt(productData.boxes_per_set || 0);
-                        basePrice = Math.round(basePrice * totalPieces);
-                        console.log(`Set price calculated: ${basePrice} (${totalPieces} total pieces)`);
-                    }
-                    
-                    // Update unit price field
-                    row.find('.unit-price').val(basePrice);
-                    
-                    // Recalculate row total
-                    calculateRowTotal(row);
-                }
-            });
-            
-            // Price type change
-            tabPane.find('.price-type').change(function() {
-                const priceType = $(this).val();
-                
-                // Update all rows
-                tabPane.find('.items-list tr').each(function() {
-                    const row = $(this);
-                    const productSelect = row.find('.product-select');
-                    const productData = productSelect.select2('data')[0];
-                    
-                    if (productData) {
-                        const unitType = row.find('.unit-type').val();
-                        
-                        // Get base price based on price type (single unit price)
-                        let basePrice = priceType === PRICE_TYPES.WHOLESALE ? 
-                            parseFloat(productData.wholesale_price || 0) : 
-                            parseFloat(productData.retail_price || 0);
-                        
-                        // Calculate price based on unit type
-                        if (unitType === 'box' && productData.pieces_per_box) {
-                            basePrice = Math.round(basePrice * parseInt(productData.pieces_per_box || 0));
-                            console.log(`Box price calculated: ${basePrice} (${productData.pieces_per_box} pieces per box)`);
-                        } else if (unitType === 'set' && productData.pieces_per_box && productData.boxes_per_set) {
-                            const totalPieces = parseInt(productData.pieces_per_box || 0) * parseInt(productData.boxes_per_set || 0);
-                            basePrice = Math.round(basePrice * totalPieces);
-                            console.log(`Set price calculated: ${basePrice} (${totalPieces} total pieces)`);
-                        }
-                        
-                        // Update unit price field
-                        row.find('.unit-price').val(basePrice);
-                        
-                        // Recalculate row total
-                                    calculateRowTotal(row);
-                    }
-                });
-            });
-        }
+        // Paid amount change handler
+        $(`#${tabId}`).on('input', '.paid-amount', function() {
+            updateRemainingAmount($(`#${tabId}`));
+        });
+        
+        // Save button handler
+        $(`#${tabId} .save-btn`).on('click', function() {
+            saveReceipt(tabId, tabType);
+        });
     }
 
     // Add a new row to the items table
@@ -1664,40 +1646,44 @@ $(document).ready(function() {
         const products = [];
         let valid = true;
         
+        // Collect product data
         tabPane.find('.items-list tr').each(function() {
             const row = $(this);
-            const productSelect = row.find('.product-select');
-            const productId = productSelect.val();
+            const productId = row.find('.product-select').val();
+            const quantity = parseInt(row.find('.quantity').val()) || 0;
+            const unitPrice = parseFloat(row.find('.unit-price').val()) || 0;
             
+            // Skip empty rows
+            if (!productId || quantity <= 0) return;
+            
+            // Validate entered data
             if (!productId) {
                 Swal.fire('خەتا', 'تکایە کاڵا هەڵبژێرە', 'error');
                 valid = false;
                 return false;
             }
             
-            const unitPrice = parseFloat(row.find('.unit-price').val());
-            const quantity = parseFloat(row.find('.quantity').val());
-            
-            if (isNaN(unitPrice) || unitPrice <= 0) {
+            if (unitPrice <= 0) {
                 Swal.fire('خەتا', 'تکایە نرخی دروست بنووسە', 'error');
                 valid = false;
                 return false;
             }
             
-            if (isNaN(quantity) || quantity <= 0) {
+            if (quantity <= 0) {
                 Swal.fire('خەتا', 'تکایە بڕی دروست بنووسە', 'error');
                 valid = false;
                 return false;
             }
             
-            const productData = {
+            let productData = {
                 product_id: productId,
-                unit_price: unitPrice,
-                quantity: quantity
+                quantity: quantity,
+                unit_price: unitPrice
             };
             
-            if (tabType === RECEIPT_TYPES.SELLING) {
-                productData.unit_type = row.find('.unit-type').val();
+            // Add unit_type for both selling and buying receipts
+            if (tabType === RECEIPT_TYPES.SELLING || tabType === RECEIPT_TYPES.BUYING) {
+                productData.unit_type = row.find('.unit-type').val() || 'piece';
             }
             
             products.push(productData);
