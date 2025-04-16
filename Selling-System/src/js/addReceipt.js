@@ -909,6 +909,19 @@ $(document).ready(function() {
         $(`#${tabId} .save-btn`).on('click', function() {
             saveReceipt(tabId, tabType);
         });
+
+        // Add costs and profits button for selling tab
+        if (tabType === RECEIPT_TYPES.SELLING) {
+            const costsBtn = $('<button>')
+                .addClass('btn btn-info costs-btn')
+                .html('<i class="fas fa-calculator me-2"></i>نرخ و قازانج')
+                .on('click', function() {
+                    showProductCostsAndProfits(tabId);
+                });
+            
+            // Add the button next to the save button
+            $(`#${tabId} .save-btn`).before(costsBtn);
+        }
     }
 
     // Add a new row to the items table
@@ -2299,4 +2312,111 @@ $(document).ready(function() {
             }
         </style>
     `);
+
+    // Calculate and show product costs and profits
+    function showProductCostsAndProfits(tabId) {
+        const tabPane = $(`#${tabId}`);
+        let totalPurchasePrice = 0;
+        let totalSellingPrice = 0;
+        let hasProducts = false;
+
+        // Calculate totals for each product
+        tabPane.find('.items-list tr').each(function() {
+            const row = $(this);
+            const productId = row.find('.product-select').val();
+            const quantity = parseFloat(row.find('.quantity').val()) || 0;
+            
+            if (productId && quantity > 0) {
+                hasProducts = true;
+                const productData = row.find('.product-select').select2('data')[0];
+                const purchasePrice = parseFloat(productData.purchase_price) || 0;
+                const sellingPrice = parseFloat(row.find('.unit-price').val()) || 0;
+                
+                totalPurchasePrice += purchasePrice * quantity;
+                totalSellingPrice += sellingPrice * quantity;
+            }
+        });
+
+        if (!hasProducts) {
+            Swal.fire({
+                title: 'ئاگاداری!',
+                text: 'هیچ کاڵایەک هەڵنەبژێردراوە',
+                icon: 'warning',
+                confirmButtonText: 'باشە'
+            });
+            return;
+        }
+
+        const profit = totalSellingPrice - totalPurchasePrice;
+
+        // Format numbers with commas for thousands
+        const formatNumber = (num) => {
+            return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "،");
+        };
+
+        Swal.fire({
+            title: 'کۆی نرخ و قازانج',
+            html: `
+                <div class="costs-summary">
+                    <div class="cost-item">
+                        <span class="cost-label">کۆی نرخی کڕین:</span>
+                        <span class="cost-value">${formatNumber(totalPurchasePrice)} د.ع</span>
+                    </div>
+                    <div class="cost-item">
+                        <span class="cost-label">کۆی نرخی فرۆشتن:</span>
+                        <span class="cost-value">${formatNumber(totalSellingPrice)} د.ع</span>
+                    </div>
+                    <div class="cost-item profit">
+                        <span class="cost-label">قازانج:</span>
+                        <span class="cost-value">${formatNumber(profit)} د.ع</span>
+                    </div>
+                </div>
+            `,
+            icon: 'info',
+            confirmButtonText: 'باشە',
+            customClass: {
+                popup: 'costs-popup',
+                htmlContainer: 'costs-container'
+            }
+        });
+
+        // Add custom styles
+        $('<style>')
+            .text(`
+                .costs-popup {
+                    max-width: 400px;
+                }
+                .costs-container {
+                    padding: 1rem;
+                }
+                .costs-summary {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 1rem;
+                    margin-top: 1rem;
+                }
+                .cost-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0.75rem;
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                    font-size: 1.1rem;
+                }
+                .cost-item.profit {
+                    background: #e3fcef;
+                    color: #0d6efd;
+                    font-weight: bold;
+                }
+                .cost-label {
+                    color: #6c757d;
+                }
+                .cost-value {
+                    font-weight: 600;
+                    color: #212529;
+                }
+            `)
+            .appendTo('head');
+    }
 });

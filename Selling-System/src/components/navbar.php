@@ -1,5 +1,7 @@
 <?php
 // Navbar Component for ASHKAN system
+require_once '../includes/auth.php';
+// session_start() removed as it's already called in auth.php
 ?>
 <link rel="stylesheet" href="../../css/shared/navbar.css">
 <nav class="navbar" style="border-radius: 50px; margin: 8px; margin-top:10px; height: 80px;">
@@ -26,9 +28,22 @@
             </div>
 
             <!-- User Profile -->
-            <div class="user-profile ms-3">
-                <img src="../../assets/img/profile.png" alt="User Avatar">
+            <div class="user-profile ms-3 dropdown">
+                <img src="../../assets/img/profile.png" alt="User Avatar" class="dropdown-toggle" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                    <li><a class="dropdown-item" href="../../src/includes/logout.php">چوونە دەرەوە</a></li>
+                </ul>
             </div>
         </div>
     </div>
 </nav>
+
+<script>
+    // Make sure Bootstrap JS is loaded for dropdown functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+        dropdownElementList.map(function(dropdownToggleEl) {
+            return new bootstrap.Dropdown(dropdownToggleEl);
+        });
+    });
+</script>

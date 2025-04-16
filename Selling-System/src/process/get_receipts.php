@@ -2,6 +2,9 @@
 // Include database connection
 require_once '../config/db_connection.php';
 
+// Get database connection
+$pdo = getDbConnection();
+
 // Set headers for JSON response
 header('Content-Type: application/json');
 
@@ -31,23 +34,32 @@ try {
     $query = '';
     
     if ($receiptType === 'selling') {
-        $query = "SELECT r.id, r.title, c.name AS customer, r.date, r.total, r.status 
-                 FROM receipts r 
-                 LEFT JOIN customers c ON r.customer_id = c.id 
-                 WHERE r.type = 'selling' 
-                 ORDER BY r.date DESC";
+        $query = "SELECT s.id, s.invoice_number as title, c.name AS customer, s.date, 
+                        (s.paid_amount + COALESCE(s.remaining_amount, 0)) as total,
+                        CASE 
+                            WHEN s.remaining_amount > 0 THEN 'قەرز'
+                            ELSE 'نەقد'
+                        END as status
+                 FROM sales s 
+                 LEFT JOIN customers c ON s.customer_id = c.id 
+                 ORDER BY s.date DESC";
     } elseif ($receiptType === 'buying') {
-        $query = "SELECT r.id, r.title, v.name AS vendor, r.date, r.vendor_invoice, r.total, r.status 
-                 FROM receipts r 
-                 LEFT JOIN vendors v ON r.vendor_id = v.id 
-                 WHERE r.type = 'buying' 
-                 ORDER BY r.date DESC";
+        $query = "SELECT p.id, p.invoice_number as title, s.name AS vendor, p.date,
+                        p.invoice_number as vendor_invoice,
+                        (p.paid_amount + COALESCE(p.remaining_amount, 0)) as total,
+                        CASE 
+                            WHEN p.remaining_amount > 0 THEN 'قەرز'
+                            ELSE 'نەقد'
+                        END as status
+                 FROM purchases p
+                 LEFT JOIN suppliers s ON p.supplier_id = s.id 
+                 ORDER BY p.date DESC";
     } elseif ($receiptType === 'wasting') {
-        $query = "SELECT r.id, r.title, s.name AS responsible, r.date, r.reason, r.total, r.status 
-                 FROM receipts r 
-                 LEFT JOIN staff s ON r.responsible_id = s.id 
-                 WHERE r.type = 'wasting' 
-                 ORDER BY r.date DESC";
+        $query = "SELECT e.id, 'خەرجی' as title, 'بەفیڕۆچوو' as responsible, 
+                        e.expense_date as date, e.notes as reason, 
+                        e.amount as total, 'نەقد' as status
+                 FROM expenses e 
+                 ORDER BY e.expense_date DESC";
     }
     
     // Execute the query

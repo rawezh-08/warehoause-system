@@ -544,7 +544,7 @@ function loadSellingReceipts() {
     
     // AJAX request to get selling receipts
     $.ajax({
-        url: 'process/get_receipts.php',
+        url: '../../process/get_receipts.php',
         type: 'POST',
         data: { type: 'selling' },
         dataType: 'json',
@@ -571,7 +571,7 @@ function loadBuyingReceipts() {
     
     // AJAX request to get buying receipts
     $.ajax({
-        url: 'process/get_receipts.php',
+        url: '../../process/get_receipts.php',
         type: 'POST',
         data: { type: 'buying' },
         dataType: 'json',
@@ -598,7 +598,7 @@ function loadWastingReceipts() {
     
     // AJAX request to get wasting receipts
     $.ajax({
-        url: 'process/get_receipts.php',
+        url: '../../process/get_receipts.php',
         type: 'POST',
         data: { type: 'wasting' },
         dataType: 'json',
@@ -759,7 +759,7 @@ function loadReceiptDetails(receiptId, receiptType) {
     
     // AJAX request to get receipt details
     $.ajax({
-        url: 'process/get_receipt_details.php',
+        url: '../../process/get_receipt_details.php',
         type: 'POST',
         data: { 
             id: receiptId,
@@ -850,7 +850,7 @@ function deleteReceipt(receiptId, receiptType) {
     
     // AJAX request to delete receipt
     $.ajax({
-        url: 'process/delete_receipt.php',
+        url: '../../process/delete_receipt.php',
         type: 'POST',
         data: { 
             id: receiptId,
@@ -894,7 +894,7 @@ function deleteReceipt(receiptId, receiptType) {
 // Function to print receipt
 function printReceipt(receiptId, receiptType) {
     // Open the print window
-    window.open(`process/print_receipt.php?id=${receiptId}&type=${receiptType}`, '_blank');
+    window.open(`../../process/print_receipt.php?id=${receiptId}&type=${receiptType}`, '_blank');
 }
 
 // Function to apply date filter
@@ -1018,3 +1018,926 @@ function showErrorAlert(message) {
         text: message
     });
 } 
+
+     // Function to handle products list display
+     $(document).ready(function() {
+        // Products list popup functionality
+        $('.products-list-cell').hover(
+            function() {
+                const products = $(this).data('products');
+                if (products && products.trim() !== '') {
+                    const $popup = $(this).find('.products-popup');
+                    // Format products list for better readability
+                    const productItems = products.split(', ').map(item => {
+                        return `<div class="product-item">${item}</div>`;
+                    }).join('');
+                    
+                    $popup.html(productItems);
+                    $popup.show();
+                }
+            },
+            function() {
+                $(this).find('.products-popup').hide();
+            }
+        );
+        
+        // Click event to keep popup open
+        $('.products-list-cell').click(function() {
+            const products = $(this).data('products');
+            if (products && products.trim() !== '') {
+                // Use SweetAlert2 for better display on click
+                Swal.fire({
+                    title: 'کاڵاکان',
+                    html: products.split(', ').map(item => {
+                        return `<div style="text-align: right; padding: 5px 0; border-bottom: 1px solid #eee;">${item}</div>`;
+                    }).join(''),
+                    confirmButtonText: 'داخستن',
+                    customClass: {
+                        container: 'rtl-swal',
+                        popup: 'rtl-swal-popup',
+                        title: 'rtl-swal-title',
+                        htmlContainer: 'rtl-swal-html',
+                        confirmButton: 'rtl-swal-confirm'
+                    }
+                });
+            }
+        });
+
+        // Handle filter changes for sales
+        $('.auto-filter').on('change input', function() {
+            if ($('#employee-payment-content').hasClass('show')) {
+                filterSalesData();
+            } else if ($('#shipping-content').hasClass('show')) {
+                filterPurchasesData();
+            }
+        });
+
+        // Reset filter button for sales
+        $('#employeePaymentResetFilter').click(function() {
+            $('#employeePaymentStartDate').val('');
+            $('#employeePaymentEndDate').val('');
+            $('#employeePaymentName').val('');
+            $('#invoiceNumber').val('');
+            filterSalesData();
+        });
+
+        // Reset filter button for purchases
+        $('#shippingResetFilter').click(function() {
+            $('#shippingStartDate').val('');
+            $('#shippingEndDate').val('');
+            $('#shippingProvider').val('');
+            $('#shippingInvoiceNumber').val('');
+            filterPurchasesData();
+        });
+
+        // Records per page functionality for sales
+        let currentSalesPage = 1;
+        const salesRecordsPerPageSelect = $('#employeeRecordsPerPage');
+        let salesRecordsPerPage = parseInt(salesRecordsPerPageSelect.val());
+        
+        // Update records per page when select changes for sales
+        salesRecordsPerPageSelect.on('change', function() {
+            salesRecordsPerPage = parseInt($(this).val());
+            currentSalesPage = 1; // Reset to first page
+            updateSalesDisplayedRows();
+        });
+        
+        // Records per page functionality for purchases
+        let currentPurchasesPage = 1;
+        const purchasesRecordsPerPageSelect = $('#shippingRecordsPerPage');
+        let purchasesRecordsPerPage = parseInt(purchasesRecordsPerPageSelect.val());
+        
+        // Update records per page when select changes for purchases
+        purchasesRecordsPerPageSelect.on('change', function() {
+            purchasesRecordsPerPage = parseInt($(this).val());
+            currentPurchasesPage = 1; // Reset to first page
+            updatePurchasesDisplayedRows();
+        });
+        
+        // Records per page functionality for waste
+        let currentWastePage = 1;
+        const wasteRecordsPerPageSelect = $('#withdrawalRecordsPerPage');
+        let wasteRecordsPerPage = parseInt(wasteRecordsPerPageSelect.val());
+        
+        // Update records per page when select changes for waste
+        wasteRecordsPerPageSelect.on('change', function() {
+            wasteRecordsPerPage = parseInt($(this).val());
+            currentWastePage = 1; // Reset to first page
+            updateWasteDisplayedRows();
+        });
+        
+        // Pagination navigation for sales
+        $('#employeePrevPageBtn').on('click', function() {
+            if (!$(this).prop('disabled')) {
+                currentSalesPage--;
+                updateSalesDisplayedRows();
+            }
+        });
+        
+        $('#employeeNextPageBtn').on('click', function() {
+            if (!$(this).prop('disabled')) {
+                currentSalesPage++;
+                updateSalesDisplayedRows();
+            }
+        });
+        
+        // Pagination navigation for purchases
+        $('#shippingPrevPageBtn').on('click', function() {
+            if (!$(this).prop('disabled')) {
+                currentPurchasesPage--;
+                updatePurchasesDisplayedRows();
+            }
+        });
+        
+        $('#shippingNextPageBtn').on('click', function() {
+            if (!$(this).prop('disabled')) {
+                currentPurchasesPage++;
+                updatePurchasesDisplayedRows();
+            }
+        });
+        
+        // Pagination navigation for waste
+        $('#withdrawalPrevPageBtn').on('click', function() {
+            if (!$(this).prop('disabled')) {
+                currentWastePage--;
+                updateWasteDisplayedRows();
+            }
+        });
+        
+        $('#withdrawalNextPageBtn').on('click', function() {
+            if (!$(this).prop('disabled')) {
+                currentWastePage++;
+                updateWasteDisplayedRows();
+            }
+        });
+        
+        // Function to update sales table displayed rows
+        function updateSalesDisplayedRows() {
+            const tableRows = $('#employeeHistoryTable tbody tr');
+            const totalRecords = tableRows.length;
+            
+            if (totalRecords === 0) return;
+            
+            const startIndex = (currentSalesPage - 1) * salesRecordsPerPage;
+            const endIndex = startIndex + salesRecordsPerPage;
+            
+            // Hide all rows
+            tableRows.hide();
+            
+            // Show only rows for current page
+            tableRows.slice(startIndex, endIndex).show();
+            
+            // Update pagination info
+            $('#employeeStartRecord').text(totalRecords > 0 ? startIndex + 1 : 0);
+            $('#employeeEndRecord').text(Math.min(endIndex, totalRecords));
+            $('#employeeTotalRecords').text(totalRecords);
+            
+            // Enable/disable pagination buttons
+            $('#employeePrevPageBtn').prop('disabled', currentSalesPage === 1);
+            $('#employeeNextPageBtn').prop('disabled', endIndex >= totalRecords);
+            
+            // Update pagination numbers
+            updateSalesPaginationNumbers();
+        }
+        
+        // Function to update purchases table displayed rows
+        function updatePurchasesDisplayedRows() {
+            const tableRows = $('#shippingHistoryTable tbody tr');
+            const totalRecords = tableRows.length;
+            
+            if (totalRecords === 0) return;
+            
+            const startIndex = (currentPurchasesPage - 1) * purchasesRecordsPerPage;
+            const endIndex = startIndex + purchasesRecordsPerPage;
+            
+            // Hide all rows
+            tableRows.hide();
+            
+            // Show only rows for current page
+            tableRows.slice(startIndex, endIndex).show();
+            
+            // Update pagination info
+            $('#shippingStartRecord').text(totalRecords > 0 ? startIndex + 1 : 0);
+            $('#shippingEndRecord').text(Math.min(endIndex, totalRecords));
+            $('#shippingTotalRecords').text(totalRecords);
+            
+            // Enable/disable pagination buttons
+            $('#shippingPrevPageBtn').prop('disabled', currentPurchasesPage === 1);
+            $('#shippingNextPageBtn').prop('disabled', endIndex >= totalRecords);
+            
+            // Update pagination numbers
+            updatePurchasesPaginationNumbers();
+        }
+        
+        // Function to update waste table displayed rows
+        function updateWasteDisplayedRows() {
+            const tableRows = $('#withdrawalHistoryTable tbody tr');
+            const totalRecords = tableRows.length;
+            
+            if (totalRecords === 0) return;
+            
+            const startIndex = (currentWastePage - 1) * wasteRecordsPerPage;
+            const endIndex = startIndex + wasteRecordsPerPage;
+            
+            // Hide all rows
+            tableRows.hide();
+            
+            // Show only rows for current page
+            tableRows.slice(startIndex, endIndex).show();
+            
+            // Update pagination info
+            $('#withdrawalStartRecord').text(totalRecords > 0 ? startIndex + 1 : 0);
+            $('#withdrawalEndRecord').text(Math.min(endIndex, totalRecords));
+            $('#withdrawalTotalRecords').text(totalRecords);
+            
+            // Enable/disable pagination buttons
+            $('#withdrawalPrevPageBtn').prop('disabled', currentWastePage === 1);
+            $('#withdrawalNextPageBtn').prop('disabled', endIndex >= totalRecords);
+            
+            // Update pagination numbers
+            updateWastePaginationNumbers();
+        }
+        
+        // Function to update sales pagination number buttons
+        function updateSalesPaginationNumbers() {
+            const totalRecords = $('#employeeHistoryTable tbody tr').length;
+            const totalPages = Math.ceil(totalRecords / salesRecordsPerPage);
+            
+            let paginationHTML = '';
+            
+            // Determine range of page numbers to show
+            let startPage = Math.max(1, currentSalesPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            
+            // Ensure we always show 5 page numbers if possible
+            if (endPage - startPage < 4 && totalPages > 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `<button class="btn btn-sm ${i === currentSalesPage ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2" data-page="${i}">${i}</button>`;
+            }
+            
+            $('#employeePaginationNumbers').html(paginationHTML);
+            
+            // Add click event for pagination numbers
+            $('#employeePaginationNumbers button').on('click', function() {
+                currentSalesPage = parseInt($(this).data('page'));
+                updateSalesDisplayedRows();
+            });
+        }
+        
+        // Function to update purchases pagination number buttons
+        function updatePurchasesPaginationNumbers() {
+            const totalRecords = $('#shippingHistoryTable tbody tr').length;
+            const totalPages = Math.ceil(totalRecords / purchasesRecordsPerPage);
+            
+            let paginationHTML = '';
+            
+            // Determine range of page numbers to show
+            let startPage = Math.max(1, currentPurchasesPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            
+            // Ensure we always show 5 page numbers if possible
+            if (endPage - startPage < 4 && totalPages > 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `<button class="btn btn-sm ${i === currentPurchasesPage ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2" data-page="${i}">${i}</button>`;
+            }
+            
+            $('#shippingPaginationNumbers').html(paginationHTML);
+            
+            // Add click event for pagination numbers
+            $('#shippingPaginationNumbers button').on('click', function() {
+                currentPurchasesPage = parseInt($(this).data('page'));
+                updatePurchasesDisplayedRows();
+            });
+        }
+        
+        // Function to update waste pagination number buttons
+        function updateWastePaginationNumbers() {
+            const totalRecords = $('#withdrawalHistoryTable tbody tr').length;
+            const totalPages = Math.ceil(totalRecords / wasteRecordsPerPage);
+            
+            let paginationHTML = '';
+            
+            // Determine range of page numbers to show
+            let startPage = Math.max(1, currentWastePage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            
+            // Ensure we always show 5 page numbers if possible
+            if (endPage - startPage < 4 && totalPages > 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `<button class="btn btn-sm ${i === currentWastePage ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2" data-page="${i}">${i}</button>`;
+            }
+            
+            $('#withdrawalPaginationNumbers').html(paginationHTML);
+            
+            // Add click event for pagination numbers
+            $('#withdrawalPaginationNumbers button').on('click', function() {
+                currentWastePage = parseInt($(this).data('page'));
+                updateWasteDisplayedRows();
+            });
+        }
+
+        // Table search functionality for sales
+        $('#employeeTableSearch').on('input', function() {
+            const searchText = $(this).val().toLowerCase();
+            $('#employeeHistoryTable tbody tr').each(function() {
+                const rowText = $(this).text().toLowerCase();
+                $(this).toggle(rowText.indexOf(searchText) > -1);
+            });
+            
+            // Reset pagination after search
+            currentSalesPage = 1;
+            updateSalesDisplayedRows();
+        });
+
+        // Table search functionality for purchases
+        $('#shippingTableSearch').on('input', function() {
+            const searchText = $(this).val().toLowerCase();
+            $('#shippingHistoryTable tbody tr').each(function() {
+                const rowText = $(this).text().toLowerCase();
+                $(this).toggle(rowText.indexOf(searchText) > -1);
+            });
+            
+            // Reset pagination after search
+            currentPurchasesPage = 1;
+            updatePurchasesDisplayedRows();
+        });
+
+        // Function to filter sales data
+        function filterSalesData() {
+            const filters = {
+                start_date: $('#employeePaymentStartDate').val(),
+                end_date: $('#employeePaymentEndDate').val(),
+                customer_name: $('#employeePaymentName').val(),
+                invoice_number: $('#invoiceNumber').val()
+            };
+
+            $.ajax({
+                url: window.location.href,
+                type: 'POST',
+                data: {
+                    action: 'filter',
+                    type: 'sales',
+                    ...filters
+                },
+                success: function(response) {
+                    if (response.success) {
+                        updateSalesTable(response.data);
+                    }
+                }
+            });
+        }
+
+        // Function to filter purchases data
+        function filterPurchasesData() {
+            const filters = {
+                start_date: $('#shippingStartDate').val(),
+                end_date: $('#shippingEndDate').val(),
+                supplier_name: $('#shippingProvider').val(),
+                invoice_number: $('#shippingInvoiceNumber').val()
+            };
+
+            $.ajax({
+                url: window.location.href,
+                type: 'POST',
+                data: {
+                    action: 'filter',
+                    type: 'purchases',
+                    ...filters
+                },
+                success: function(response) {
+                    if (response.success) {
+                        updatePurchasesTable(response.data);
+                    }
+                }
+            });
+        }
+
+        // Function to update sales table
+        function updateSalesTable(data) {
+            const tbody = $('#employeeHistoryTable tbody');
+            tbody.empty();
+
+            if (data.length === 0) {
+                tbody.append('<tr><td colspan="13" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td></tr>');
+                return;
+            }
+
+            data.forEach((sale, index) => {
+                const row = `
+                    <tr data-id="${sale.id}">
+                        <td>${index + 1}</td>
+                        <td>${sale.invoice_number}</td>
+                        <td>${sale.customer_name || 'N/A'}</td>
+                        <td>${new Date(sale.date).toLocaleDateString('en-US')}</td>
+                        <td class="products-list-cell" data-products="${sale.products_list || ''}">
+                            ${sale.products_list || ''}
+                            <div class="products-popup"></div>
+                        </td>
+                        <td>${sale.subtotal.toLocaleString()} د.ع</td>
+                        <td>${sale.shipping_cost.toLocaleString()} د.ع</td>
+                        <td>${sale.other_costs.toLocaleString()} د.ع</td>
+                        <td>${sale.discount.toLocaleString()} د.ع</td>
+                        <td>${sale.total_amount.toLocaleString()} د.ع</td>
+                        <td>
+                            <span class="badge rounded-pill ${sale.payment_type === 'cash' ? 'bg-success' : (sale.payment_type === 'credit' ? 'bg-warning' : 'bg-info')}">
+                                ${sale.payment_type === 'cash' ? 'نەقد' : (sale.payment_type === 'credit' ? 'قەرز' : 'چەک')}
+                            </span>
+                        </td>
+                        <td>${sale.notes || ''}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${sale.id}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${sale.id}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${sale.id}">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+            
+            // Initialize product popups for new rows
+            initializeProductListPopups();
+            
+            // Reset pagination to first page when loading new data
+            currentSalesPage = 1;
+            updateSalesDisplayedRows();
+        }
+
+        // Function to update purchases table
+        function updatePurchasesTable(data) {
+            const tbody = $('#shippingHistoryTable tbody');
+            tbody.empty();
+
+            if (data.length === 0) {
+                tbody.append('<tr><td colspan="11" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td></tr>');
+                return;
+            }
+
+            data.forEach((purchase, index) => {
+                const row = `
+                    <tr data-id="${purchase.id}">
+                        <td>${index + 1}</td>
+                        <td>${purchase.invoice_number}</td>
+                        <td>${purchase.supplier_name || 'N/A'}</td>
+                        <td>${new Date(purchase.date).toLocaleDateString('en-US')}</td>
+                        <td class="products-list-cell" data-products="${purchase.products_list || ''}">
+                            ${purchase.products_list || ''}
+                            <div class="products-popup"></div>
+                        </td>
+                        <td>${purchase.subtotal.toLocaleString()} د.ع</td>
+                        <td>${purchase.discount.toLocaleString()} د.ع</td>
+                        <td>${purchase.total_amount.toLocaleString()} د.ع</td>
+                        <td>
+                            <span class="badge rounded-pill ${purchase.payment_type === 'cash' ? 'bg-success' : (purchase.payment_type === 'credit' ? 'bg-warning' : 'bg-info')}">
+                                ${purchase.payment_type === 'cash' ? 'نەقد' : (purchase.payment_type === 'credit' ? 'قەرز' : 'چەک')}
+                            </span>
+                        </td>
+                        <td>${purchase.notes || ''}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${purchase.id}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${purchase.id}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${purchase.id}">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+            
+            // Initialize product popups for new rows
+            initializeProductListPopups();
+            
+            // Reset pagination to first page when loading new data
+            currentPurchasesPage = 1;
+            updatePurchasesDisplayedRows();
+        }
+
+        // Initialize date inputs with current month
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        
+        $('#employeePaymentStartDate').val(firstDay.toISOString().split('T')[0]);
+        $('#employeePaymentEndDate').val(today.toISOString().split('T')[0]);
+        $('#shippingStartDate').val(firstDay.toISOString().split('T')[0]);
+        $('#shippingEndDate').val(today.toISOString().split('T')[0]);
+
+        // Load initial data
+        filterSalesData();
+        filterPurchasesData();
+
+        // Initialize table pagination on page load
+        updateSalesDisplayedRows();
+        updatePurchasesDisplayedRows();
+        updateWasteDisplayedRows();
+    });
+
+    // Handle edit button click for sales
+    $(document).on('click', '#employeeHistoryTable .edit-btn', function() {
+        const saleId = $(this).data('id');
+        // Get sale data from the row
+        const row = $(this).closest('tr');
+        const saleData = {
+            id: saleId,
+            invoice_number: row.find('td:eq(1)').text(),
+            customer_name: row.find('td:eq(2)').text(),
+            date: row.find('td:eq(3)').text(),
+            shipping_cost: parseFloat(row.find('td:eq(6)').text().replace(/[^0-9.-]+/g, '')),
+            other_costs: parseFloat(row.find('td:eq(7)').text().replace(/[^0-9.-]+/g, '')),
+            discount: parseFloat(row.find('td:eq(8)').text().replace(/[^0-9.-]+/g, '')),
+            payment_type: row.find('td:eq(10) .badge').text().trim(),
+            notes: row.find('td:eq(11)').text()
+        };
+
+        // Fill the form with sale data
+        $('#editSaleId').val(saleData.id);
+        $('#editSaleInvoiceNumber').val(saleData.invoice_number);
+        
+        // Set customer selection
+        const customerSelect = $('#editSaleCustomer');
+        customerSelect.find('option').each(function() {
+            if ($(this).text().trim() === saleData.customer_name.trim()) {
+                customerSelect.val($(this).val());
+                return false;
+            }
+        });
+        
+        // Set payment type
+        const paymentTypeMap = {
+            'نەقد': 'cash',
+            'قەرز': 'credit',
+            'چەک': 'check'
+        };
+        const paymentTypeValue = paymentTypeMap[saleData.payment_type];
+        if (paymentTypeValue) {
+            $('#editSalePaymentType').val(paymentTypeValue);
+        }
+        
+        $('#editSaleDate').val(new Date(saleData.date).toISOString().split('T')[0]);
+        $('#editSaleShippingCost').val(saleData.shipping_cost);
+        $('#editSaleOtherCosts').val(saleData.other_costs);
+        $('#editSaleDiscount').val(saleData.discount);
+        $('#editSaleNotes').val(saleData.notes);
+
+        // Show the modal
+        $('#editSaleModal').modal('show');
+    });
+
+    // Handle edit button click for purchases
+    $(document).on('click', '#shippingHistoryTable .edit-btn', function() {
+        const purchaseId = $(this).data('id');
+        // Get purchase data from the row
+        const row = $(this).closest('tr');
+        const purchaseData = {
+            id: purchaseId,
+            invoice_number: row.find('td:eq(1)').text(),
+            supplier_name: row.find('td:eq(2)').text(),
+            date: row.find('td:eq(3)').text(),
+            discount: parseFloat(row.find('td:eq(6)').text().replace(/[^0-9.-]+/g, '')),
+            payment_type: row.find('td:eq(8) .badge').text().trim(),
+            notes: row.find('td:eq(9)').text()
+        };
+
+        // Fill the form with purchase data
+        $('#editPurchaseId').val(purchaseData.id);
+        $('#editPurchaseInvoiceNumber').val(purchaseData.invoice_number);
+        $('#editPurchaseSupplier').val(purchaseData.supplier_name);
+        $('#editPurchaseDate').val(new Date(purchaseData.date).toISOString().split('T')[0]);
+        $('#editPurchaseDiscount').val(purchaseData.discount);
+        $('#editPurchasePaymentType').val(purchaseData.payment_type);
+        $('#editPurchaseNotes').val(purchaseData.notes);
+
+        // Show the modal
+        $('#editPurchaseModal').modal('show');
+    });
+
+    // Handle save sale edit
+    $('#saveSaleEdit').click(function() {
+        const saleData = {
+            id: $('#editSaleId').val(),
+            invoice_number: $('#editSaleInvoiceNumber').val(),
+            customer_id: $('#editSaleCustomer').val(),
+            date: $('#editSaleDate').val(),
+            shipping_cost: $('#editSaleShippingCost').val(),
+            other_costs: $('#editSaleOtherCosts').val(),
+            discount: $('#editSaleDiscount').val(),
+            payment_type: $('#editSalePaymentType').val(),
+            notes: $('#editSaleNotes').val()
+        };
+
+        $.ajax({
+            url: window.location.href,
+            type: 'POST',
+            data: {
+                action: 'update_sale',
+                ...saleData
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#editSaleModal').modal('hide');
+                    // Refresh the table without using DataTable
+                    filterSalesData();
+                    Swal.fire({
+                        title: 'سەرکەوتوو',
+                        text: 'پسووڵە بە سەرکەوتوویی نوێکرایەوە',
+                        icon: 'success',
+                        confirmButtonText: 'باشە'
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'هەڵە',
+                        text: response.message || 'هەڵەیەک ڕوویدا',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            }
+        });
+    });
+
+    // Handle save purchase edit
+    $('#savePurchaseEdit').click(function() {
+        const purchaseData = {
+            id: $('#editPurchaseId').val(),
+            invoice_number: $('#editPurchaseInvoiceNumber').val(),
+            supplier_id: $('#editPurchaseSupplier').val(),
+            date: $('#editPurchaseDate').val(),
+            discount: $('#editPurchaseDiscount').val(),
+            payment_type: $('#editPurchasePaymentType').val(),
+            notes: $('#editPurchaseNotes').val()
+        };
+
+        $.ajax({
+            url: window.location.href,
+            type: 'POST',
+            data: {
+                action: 'update_purchase',
+                ...purchaseData
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#editPurchaseModal').modal('hide');
+                    filterPurchasesData();
+                    Swal.fire({
+                        title: 'سەرکەوتوو',
+                        text: 'پسووڵە بە سەرکەوتوویی نوێکرایەوە',
+                        icon: 'success',
+                        confirmButtonText: 'باشە'
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'هەڵە',
+                        text: response.message || 'هەڵەیەک ڕوویدا',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            }
+        });
+    });
+
+       // Custom number formatting function for Iraqi Dinar (JavaScript version)
+       function formatCurrency(number) {
+        return number.toLocaleString('en-US') + ' د.ع';
+    }
+
+    // Function to load and filter sales data
+    function filterSalesData() {
+        $.ajax({
+            url: '../../process/get_receipts.php',
+            type: 'POST',
+            data: {
+                type: 'selling',
+                startDate: $('#employeePaymentStartDate').val(),
+                endDate: $('#employeePaymentEndDate').val(),
+                customerName: $('#employeePaymentName').val(),
+                invoiceNumber: $('#invoiceNumber').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Clear the table
+                    $('#employeeHistoryTable tbody').empty();
+                    
+                    // Add new data
+                    response.data.forEach(function(sale, index) {
+                        let row = `
+                            <tr data-id="${sale.id}">
+                                <td>${index + 1}</td>
+                                <td>${sale.title}</td>
+                                <td>${sale.customer || 'N/A'}</td>
+                                <td>${new Date(sale.date).toLocaleDateString('en-US')}</td>
+                                <td class="products-list-cell" data-products="${sale.products || ''}">
+                                    ${sale.products || 'N/A'}
+                                    <div class="products-popup"></div>
+                                </td>
+                                <td>${formatCurrency(parseFloat(sale.total))}</td>
+                                <td>
+                                    <span class="badge rounded-pill ${sale.status === 'قەرز' ? 'bg-warning' : 'bg-success'}">
+                                        ${sale.status}
+                                    </span>
+                                </td>
+                                <td>${sale.notes || ''}</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${sale.id}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${sale.id}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${sale.id}">
+                                            <i class="fas fa-print"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                        $('#employeeHistoryTable tbody').append(row);
+                    });
+                    
+                    // Reinitialize any necessary event handlers
+                    initializeProductListPopups();
+                } else {
+                    Swal.fire({
+                        title: 'هەڵە',
+                        text: response.message,
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                Swal.fire({
+                    title: 'هەڵە',
+                    text: 'هەڵەیەک ڕوویدا لە کاتی داواکردنی زانیارییەکان',
+                    icon: 'error',
+                    confirmButtonText: 'باشە'
+                });
+            }
+        });
+    }
+
+    // Initialize DataTable
+    $(document).ready(function() {
+        // Initial load of sales data
+        filterSalesData();
+        
+        // Add event listeners for filter inputs
+        $('.auto-filter').on('change', filterSalesData);
+        
+        // Reset filter button
+        $('#employeePaymentResetFilter').on('click', function() {
+            // Clear all filter inputs
+            $('#employeePaymentStartDate').val('');
+            $('#employeePaymentEndDate').val('');
+            $('#employeePaymentName').val('');
+            $('#invoiceNumber').val('');
+            
+            // Reload data
+            filterSalesData();
+        });
+        
+        // Initialize product list popups
+        initializeProductListPopups();
+    });
+
+    // Initialize product list popups functionality
+    function initializeProductListPopups() {
+        $('.view-btn').off('click').on('click', function() {
+            const row = $(this).closest('tr');
+            const productsCell = row.find('.products-list-cell');
+            const products = productsCell.data('products');
+            
+            // Format products list with HTML for better display
+            const formattedProducts = products.split(',').map((product, index) => {
+                return `
+                    <div class="product-item" style="
+                        padding: 10px;
+                        margin: 5px 0;
+                        background-color: #f8f9fa;
+                        border-radius: 8px;
+                        border: 1px solid #dee2e6;
+                        text-align: right;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    ">
+                        <span class="product-number" style="
+                            background-color: #0d6efd;
+                            color: white;
+                            width: 24px;
+                            height: 24px;
+                            border-radius: 50%;
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                            margin-left: 10px;
+                            font-size: 0.9em;
+                        ">${index + 1}</span>
+                        <span class="product-name" style="flex-grow: 1;">${product.trim()}</span>
+                    </div>
+                `;
+            }).join('');
+
+            const htmlContent = `
+                <div style="
+                    max-height: 400px;
+                    overflow-y: auto;
+                    padding: 10px;
+                    direction: rtl;
+                ">
+                    <div style="
+                        background-color: #e9ecef;
+                        padding: 10px;
+                        margin-bottom: 15px;
+                        border-radius: 8px;
+                        text-align: center;
+                        font-weight: bold;
+                    ">
+                        کۆی کاڵاکان: ${products.split(',').length}
+                    </div>
+                    ${formattedProducts}
+                </div>
+            `;
+
+            Swal.fire({
+                title: 'کاڵاکانی پسووڵە',
+                html: htmlContent,
+                icon: 'info',
+                confirmButtonText: 'باشە',
+                width: '600px',
+                customClass: {
+                    container: 'swal-rtl',
+                    title: 'swal-title-rtl',
+                    htmlContainer: 'swal-html-rtl'
+                }
+            });
+        });
+    }
+
+    // Error handling for AJAX requests
+    $(document).ajaxError(function(event, jqXHR, settings, error) {
+        console.error('AJAX Error:', {
+            status: jqXHR.status,
+            statusText: jqXHR.statusText,
+            responseText: jqXHR.responseText,
+            error: error
+        });
+        
+        // Show error in a more user-friendly way
+        Swal.fire({
+            title: 'هەڵەیەک ڕوویدا',
+            html: `<div dir="rtl">
+                <p>وردەکاری هەڵە:</p>
+                <pre style="text-align: left; direction: ltr; background: #f8f9fa; padding: 10px; border-radius: 5px;">${jqXHR.responseText}</pre>
+            </div>`,
+            icon: 'error',
+            confirmButtonText: 'باشە'
+        });
+    });
+
+    // Catch general JavaScript errors
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+        console.error('JavaScript Error:', {
+            message: msg,
+            url: url,
+            lineNo: lineNo,
+            columnNo: columnNo,
+            error: error
+        });
+        
+        // Show error in a more user-friendly way
+        Swal.fire({
+            title: 'هەڵەیەک ڕوویدا',
+            html: `<div dir="rtl">
+                <p>وردەکاری هەڵە:</p>
+                <pre style="text-align: left; direction: ltr; background: #f8f9fa; padding: 10px; border-radius: 5px;">${msg}\nلە هێڵی: ${lineNo}</pre>
+            </div>`,
+            icon: 'error',
+            confirmButtonText: 'باشە'
+        });
+        
+        return false;
+    };

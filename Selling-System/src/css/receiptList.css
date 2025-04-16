@@ -180,4 +180,238 @@ table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control:before {
 .table .action-buttons .btn {
     padding: 5px;
     margin: 0 2px;
+}
+
+/* Transparent search input */
+.table-search-input {
+    background-color: transparent !important;
+    border: 1px solid #dee2e6;
+}
+
+.custom-table td,
+th {
+    white-space: normal;
+    word-wrap: break-word;
+    vertical-align: middle;
+    padding: 0.75rem;
+}
+
+#employeeHistoryTable td {
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#shippingHistoryTable td {
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#withdrawalHistoryTable td {
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#employeeHistoryTable th {
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#shippingHistoryTable th {
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#withdrawalHistoryTable th {
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Products list column style */
+.products-list-cell {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    position: relative;
+}
+
+/* Products list popup style */
+.products-popup {
+    display: none;
+    position: absolute;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px;
+    z-index: 1000;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    max-width: 350px;
+    min-width: 250px;
+    white-space: normal;
+    word-wrap: break-word;
+    right: 0;
+    left: auto;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+/* Product item style */
+.product-item {
+    padding: 4px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.product-item:last-child {
+    border-bottom: none;
+}
+
+/* Adjust pagination display for many pages */
+.pagination-numbers {
+    flex-wrap: wrap;
+    max-width: 300px;
+    overflow: hidden;
+}
+
+.pagination-numbers .btn {
+    margin-bottom: 5px;
+}
+
+/* RTL Toast Container Styles */
+.toast-container-rtl {
+    right: 0 !important;
+    left: auto !important;
+}
+
+.toast-container-rtl .swal2-toast {
+    margin-right: 1em !important;
+    margin-left: 0 !important;
+}
+
+.toast-container-rtl .swal2-toast .swal2-title {
+    text-align: right !important;
+}
+
+.toast-container-rtl .swal2-toast .swal2-icon {
+    margin-right: 0 !important;
+    margin-left: 0.5em !important;
+}
+
+/* Custom styles for receipt list page */
+.expenses-tabs {
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.expenses-tabs .nav-link {
+    color: #6c757d;
+    border: none;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.expenses-tabs .nav-link.active {
+    color: #0d6efd;
+    border-bottom: 2px solid #0d6efd;
+    background: none;
+}
+
+.expenses-tabs .nav-link:hover {
+    color: #0d6efd;
+    border-bottom: 2px solid #0d6efd;
+}
+
+/* Card styles */
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+/* Table styles */
+.table-container {
+    position: relative;
+}
+
+.table-controls {
+    margin-bottom: 1rem;
+}
+
+.records-per-page {
+    display: flex;
+    align-items: center;
+}
+
+.custom-select-wrapper {
+    position: relative;
+    width: auto;
+}
+
+/* Action buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.action-buttons .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Modal styles */
+.modal-content {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.modal-header {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+}
+
+/* Form styles */
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .table-controls {
+        flex-direction: column;
+    }
+    
+    .records-per-page {
+        margin-bottom: 1rem;
+    }
+    
+    .action-buttons {
+        flex-wrap: wrap;
+    }
 } 

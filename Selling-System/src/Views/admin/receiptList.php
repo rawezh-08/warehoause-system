@@ -1,198 +1,9 @@
 <?php
-require_once '../../config/database.php';
+require_once '../../controllers/receiptController.php';
 
-// Function to get sales data with customer info
-function getSalesData($limit = 0, $offset = 0, $filters = []) {
-    global $conn;
-    
-    // Base query to get sales with joined customer info and calculated total amount
-    $sql = "SELECT 
-                s.*, 
-                c.name as customer_name,
-                (
-                    SELECT GROUP_CONCAT(
-                        CONCAT(p.name, ' (', si.quantity, ' ', 
-                            CASE si.unit_type 
-                                WHEN 'piece' THEN 'دانە'
-                                WHEN 'box' THEN 'کارتۆن'
-                                WHEN 'set' THEN 'سێت'
-                            END,
-                            ')'
-                        ) SEPARATOR ', '
-                    )
-                    FROM sale_items si 
-                    LEFT JOIN products p ON si.product_id = p.id 
-                    WHERE si.sale_id = s.id
-                ) as products_list,
-                SUM(si.total_price) as subtotal,
-                s.shipping_cost + s.other_costs as additional_costs,
-                SUM(si.total_price) + s.shipping_cost + s.other_costs - s.discount as total_amount
-            FROM sales s 
-            LEFT JOIN customers c ON s.customer_id = c.id 
-            LEFT JOIN sale_items si ON s.id = si.sale_id
-            LEFT JOIN products p ON si.product_id = p.id
-            WHERE 1=1";
-    
-    $params = [];
-    
-    // Apply filters if any
-    if (!empty($filters['start_date'])) {
-        $sql .= " AND DATE(s.date) >= :start_date";
-        $params[':start_date'] = $filters['start_date'];
-    }
-    if (!empty($filters['end_date'])) {
-        $sql .= " AND DATE(s.date) <= :end_date";
-        $params[':end_date'] = $filters['end_date'];
-    }
-    if (!empty($filters['customer_name'])) {
-        $sql .= " AND c.name LIKE :customer_name";
-        $params[':customer_name'] = '%' . $filters['customer_name'] . '%';
-    }
-    if (!empty($filters['invoice_number'])) {
-        $sql .= " AND s.invoice_number LIKE :invoice_number";
-        $params[':invoice_number'] = '%' . $filters['invoice_number'] . '%';
-    }
-    
-    $sql .= " GROUP BY s.id ORDER BY s.date DESC";
-    
-    // Only apply limit if it's greater than 0
-    if ($limit > 0) {
-        $sql .= " LIMIT :offset, :limit";
-        $params[':offset'] = (int)$offset;
-        $params[':limit'] = (int)$limit;
-    }
-    
-    try {
-        $stmt = $conn->prepare($sql);
-        foreach ($params as $key => $val) {
-            if (($key == ':offset' || $key == ':limit') && $limit > 0) {
-                $stmt->bindValue($key, $val, PDO::PARAM_INT);
-            } else {
-                $stmt->bindValue($key, $val);
-            }
-        }
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        error_log("Database error: " . $e->getMessage());
-        return [];
-    }
-}
-
-// Function to get purchases data with supplier info
-function getPurchasesData($limit = 0, $offset = 0, $filters = []) {
-    global $conn;
-    
-    // Base query to get purchases with joined supplier info and calculated total amount
-    $sql = "SELECT 
-                p.*, 
-                s.name as supplier_name,
-                (
-                    SELECT GROUP_CONCAT(
-                        CONCAT(pr.name, ' (', pi.quantity, ' دانە)') 
-                        SEPARATOR ', '
-                    )
-                    FROM purchase_items pi 
-                    LEFT JOIN products pr ON pi.product_id = pr.id 
-                    WHERE pi.purchase_id = p.id
-                ) as products_list,
-                SUM(pi.total_price) as subtotal,
-                SUM(pi.total_price) - p.discount as total_amount
-            FROM purchases p 
-            LEFT JOIN suppliers s ON p.supplier_id = s.id 
-            LEFT JOIN purchase_items pi ON p.id = pi.purchase_id
-            LEFT JOIN products pr ON pi.product_id = pr.id
-            WHERE 1=1";
-    
-    $params = [];
-    
-    // Apply filters if any
-    if (!empty($filters['start_date'])) {
-        $sql .= " AND DATE(p.date) >= :start_date";
-        $params[':start_date'] = $filters['start_date'];
-    }
-    if (!empty($filters['end_date'])) {
-        $sql .= " AND DATE(p.date) <= :end_date";
-        $params[':end_date'] = $filters['end_date'];
-    }
-    if (!empty($filters['supplier_name'])) {
-        $sql .= " AND s.name LIKE :supplier_name";
-        $params[':supplier_name'] = '%' . $filters['supplier_name'] . '%';
-    }
-    
-    $sql .= " GROUP BY p.id ORDER BY p.date DESC";
-    
-    // Only apply limit if it's greater than 0
-    if ($limit > 0) {
-        $sql .= " LIMIT :offset, :limit";
-        $params[':offset'] = (int)$offset;
-        $params[':limit'] = (int)$limit;
-    }
-    
-    try {
-        $stmt = $conn->prepare($sql);
-        foreach ($params as $key => $val) {
-            if (($key == ':offset' || $key == ':limit') && $limit > 0) {
-                $stmt->bindValue($key, $val, PDO::PARAM_INT);
-            } else {
-                $stmt->bindValue($key, $val);
-            }
-        }
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        error_log("Database error: " . $e->getMessage());
-        return [];
-    }
-}
-
-// Default filter values
-$today = date('Y-m-d');
-$startOfMonth = date('Y-m-01');
-
-// Get initial data
-$defaultFilters = [
-    'start_date' => $startOfMonth,
-    'end_date' => $today
-];
-
-// Get data with default filters - retrieve all records
-$salesData = getSalesData(0, 0, $defaultFilters);
-$purchasesData = getPurchasesData(0, 0, $defaultFilters);
-
-// Handle AJAX filter requests
-if (isset($_POST['action']) && $_POST['action'] == 'filter') {
-    header('Content-Type: application/json');
-    
-    $filters = [
-        'start_date' => $_POST['start_date'] ?? null,
-        'end_date' => $_POST['end_date'] ?? null
-    ];
-    
-    if ($_POST['type'] == 'sales') {
-        if (!empty($_POST['customer_name'])) {
-            $filters['customer_name'] = $_POST['customer_name'];
-        }
-        if (!empty($_POST['invoice_number'])) {
-            $filters['invoice_number'] = $_POST['invoice_number'];
-        }
-        $salesData = getSalesData(0, 0, $filters);
-        echo json_encode(['success' => true, 'data' => $salesData]);
-        exit;
-    } else if ($_POST['type'] == 'purchases') {
-        if (!empty($_POST['supplier_name'])) {
-            $filters['supplier_name'] = $_POST['supplier_name'];
-        }
-        if (!empty($_POST['invoice_number'])) {
-            $filters['invoice_number'] = $_POST['invoice_number'];
-        }
-        $purchasesData = getPurchasesData(0, 0, $filters);
-        echo json_encode(['success' => true, 'data' => $purchasesData]);
-        exit;
-    }
-    
-    echo json_encode(['success' => false, 'message' => 'Invalid request']);
-    exit;
+// Custom number formatting function for Iraqi Dinar
+function numberFormat($number) {
+    return number_format($number, 0, '.', ',') . ' د.ع';
 }
 ?>
 <!DOCTYPE html>
@@ -205,153 +16,21 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <!-- Global CSS -->
     <link rel="stylesheet" href="../../assets/css/custom.css">
     <!-- Page CSS -->
     <link rel="stylesheet" href="../../css/dashboard.css">
     <link rel="stylesheet" href="../../css/global.css">
     <link rel="stylesheet" href="../../css/employeePayment/style.css">
+    <link rel="stylesheet" href="../../css/receiptList.css">
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
-    <!-- Custom styles for this page -->
-    <style>
-        /* Transparent search input */
-        .table-search-input {
-            background-color: transparent !important;
-            border: 1px solid #dee2e6;
-        }
-        
-        .custom-table td,
-        th {
-            white-space: normal;
-            word-wrap: break-word;
-            vertical-align: middle;
-            padding: 0.75rem;
-        }
-
-        #employeeHistoryTable td {
-
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        #shippingHistoryTable td {
-
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        #withdrawalHistoryTable td {
-
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        #employeeHistoryTable th {
-
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        #shippingHistoryTable th {
-
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        #withdrawalHistoryTable th {
-
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Products list column style */
-        .products-list-cell {
-            max-width: 200px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            cursor: pointer;
-            position: relative;
-        }
-
-        /* Products list popup style */
-        .products-popup {
-            display: none;
-            position: absolute;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            padding: 10px;
-            z-index: 1000;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-            max-width: 350px;
-            min-width: 250px;
-            white-space: normal;
-            word-wrap: break-word;
-            right: 0;
-            left: auto;
-            max-height: 250px;
-            overflow-y: auto;
-        }
-
-        /* Product item style */
-        .product-item {
-            padding: 4px 0;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .product-item:last-child {
-            border-bottom: none;
-        }
-        
-        /* Adjust pagination display for many pages */
-        .pagination-numbers {
-            flex-wrap: wrap;
-            max-width: 300px;
-            overflow: hidden;
-        }
-        
-        .pagination-numbers .btn {
-            margin-bottom: 5px;
-        }
-
-        /* RTL Toast Container Styles */
-        .toast-container-rtl {
-            right: 0 !important;
-            left: auto !important;
-        }
-
-        .toast-container-rtl .swal2-toast {
-            margin-right: 1em !important;
-            margin-left: 0 !important;
-        }
-
-        .toast-container-rtl .swal2-toast .swal2-title {
-            text-align: right !important;
-        }
-
-        .toast-container-rtl .swal2-toast .swal2-icon {
-            margin-right: 0 !important;
-            margin-left: 0.5em !important;
-        }
-    </style>
+    
+    <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+
 </head>
 <body>
     <!-- Main Content Wrapper -->
@@ -446,7 +125,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
                             <div class="col-12">
                                 <div class="card shadow-sm">
                                     <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                                        <h5 class="card-title mb-0">لیستی پسووڵە کڕدراوەکان</h5>
+                                        <h5 class="card-title mb-0">ئەو پسوووڵانەی کە تۆ فرۆشتووتن</h5>
                                         <div>
                                             <button class="btn btn-sm btn-outline-primary refresh-btn me-2">
                                                 <i class="fas fa-sync-alt"></i>
@@ -515,11 +194,11 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
                                                                 <?php echo htmlspecialchars($sale['products_list'] ?? ''); ?>
                                                                 <div class="products-popup"></div>
                                                             </td>
-                                                            <td><?php echo number_format($sale['subtotal']) . ' د.ع'; ?></td>
-                                                            <td><?php echo number_format($sale['shipping_cost']) . ' د.ع'; ?></td>
-                                                            <td><?php echo number_format($sale['other_costs']) . ' د.ع'; ?></td>
-                                                            <td><?php echo number_format($sale['discount']) . ' د.ع'; ?></td>
-                                                            <td><?php echo number_format($sale['total_amount']) . ' د.ع'; ?></td>
+                                                            <td><?php echo numberFormat($sale['subtotal']); ?></td>
+                                                            <td><?php echo numberFormat($sale['shipping_cost']); ?></td>
+                                                            <td><?php echo numberFormat($sale['other_costs']); ?></td>
+                                                            <td><?php echo numberFormat($sale['discount']); ?></td>
+                                                            <td><?php echo numberFormat($sale['total_amount']); ?></td>
                                                             <td>
                                                                 <span class="badge rounded-pill <?php 
                                                                     echo $sale['payment_type'] == 'cash' ? 'bg-success' : 
@@ -637,7 +316,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
                             <div class="col-12">
                                 <div class="card shadow-sm">
                                     <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                                        <h5 class="card-title mb-0">مێژووی کرێی بار</h5>
+                                        <h5 class="card-title mb-0">ئەو پسووڵانە کە تۆ کڕیوتن</h5>
                                         <div>
                                             <button class="btn btn-sm btn-outline-primary refresh-btn me-2">
                                                 <i class="fas fa-sync-alt"></i>
@@ -686,8 +365,12 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
                                                             <th>بەروار</th>
                                                             <th>کاڵاکان</th>
                                                             <th>کۆی نرخی کاڵاکان</th>
+                                                            <th>کرێی گواستنەوە</th>
+                                                            <th>خەرجی تر</th>
                                                             <th>داشکاندن</th>
                                                             <th>کۆی گشتی</th>
+                                                            <th>بڕی پارەی دراو</th>
+                                                            <th>بڕی پارەی ماوە</th>
                                                             <th>جۆری پارەدان</th>
                                                             <th>تێبینی</th>
                                                             <th>کردارەکان</th>
@@ -704,9 +387,13 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
                                                                 <?php echo htmlspecialchars($purchase['products_list'] ?? ''); ?>
                                                                 <div class="products-popup"></div>
                                                             </td>
-                                                            <td><?php echo number_format($purchase['subtotal']) . ' د.ع'; ?></td>
-                                                            <td><?php echo number_format($purchase['discount']) . ' د.ع'; ?></td>
-                                                            <td><?php echo number_format($purchase['total_amount']) . ' د.ع'; ?></td>
+                                                            <td><?php echo numberFormat($purchase['subtotal']); ?></td>
+                                                            <td><?php echo numberFormat($purchase['shipping_cost']); ?></td>
+                                                            <td><?php echo numberFormat($purchase['other_cost']); ?></td>
+                                                            <td><?php echo numberFormat($purchase['discount']); ?></td>
+                                                            <td><?php echo numberFormat($purchase['total_amount']); ?></td>
+                                                            <td><?php echo numberFormat($purchase['paid_amount']); ?></td>
+                                                            <td><?php echo numberFormat($purchase['remaining_amount']); ?></td>
                                                             <td>
                                                                 <span class="badge rounded-pill <?php 
                                                                     echo $purchase['payment_type'] == 'cash' ? 'bg-success' : 
@@ -736,7 +423,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
                                                         <?php endforeach; ?>
                                                         <?php if (empty($purchasesData)): ?>
                                                         <tr>
-                                                            <td colspan="11" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td>
+                                                            <td colspan="15" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td>
                                                         </tr>
                                                         <?php endif; ?>
                                                     </tbody>
@@ -973,718 +660,6 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
         </div>
     </div>
 
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- SweetAlert2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
-    <!-- Custom JavaScript -->
-    <script src="../../js/include-components.js"></script>
-    <script src="../../js/receiptList/receipt.js"></script>
-    
-    <script>
-        // Function to handle products list display
-        $(document).ready(function() {
-            // Products list popup functionality
-            $('.products-list-cell').hover(
-                function() {
-                    const products = $(this).data('products');
-                    if (products && products.trim() !== '') {
-                        const $popup = $(this).find('.products-popup');
-                        // Format products list for better readability
-                        const productItems = products.split(', ').map(item => {
-                            return `<div class="product-item">${item}</div>`;
-                        }).join('');
-                        
-                        $popup.html(productItems);
-                        $popup.show();
-                    }
-                },
-                function() {
-                    $(this).find('.products-popup').hide();
-                }
-            );
-            
-            // Click event to keep popup open
-            $('.products-list-cell').click(function() {
-                const products = $(this).data('products');
-                if (products && products.trim() !== '') {
-                    // Use SweetAlert2 for better display on click
-                    Swal.fire({
-                        title: 'کاڵاکان',
-                        html: products.split(', ').map(item => {
-                            return `<div style="text-align: right; padding: 5px 0; border-bottom: 1px solid #eee;">${item}</div>`;
-                        }).join(''),
-                        confirmButtonText: 'داخستن',
-                        customClass: {
-                            container: 'rtl-swal',
-                            popup: 'rtl-swal-popup',
-                            title: 'rtl-swal-title',
-                            htmlContainer: 'rtl-swal-html',
-                            confirmButton: 'rtl-swal-confirm'
-                        }
-                    });
-                }
-            });
-
-            // Handle filter changes for sales
-            $('.auto-filter').on('change input', function() {
-                if ($('#employee-payment-content').hasClass('show')) {
-                    filterSalesData();
-                } else if ($('#shipping-content').hasClass('show')) {
-                    filterPurchasesData();
-                }
-            });
-
-            // Reset filter button for sales
-            $('#employeePaymentResetFilter').click(function() {
-                $('#employeePaymentStartDate').val('');
-                $('#employeePaymentEndDate').val('');
-                $('#employeePaymentName').val('');
-                $('#invoiceNumber').val('');
-                filterSalesData();
-            });
-
-            // Reset filter button for purchases
-            $('#shippingResetFilter').click(function() {
-                $('#shippingStartDate').val('');
-                $('#shippingEndDate').val('');
-                $('#shippingProvider').val('');
-                $('#shippingInvoiceNumber').val('');
-                filterPurchasesData();
-            });
-
-            // Records per page functionality for sales
-            let currentSalesPage = 1;
-            const salesRecordsPerPageSelect = $('#employeeRecordsPerPage');
-            let salesRecordsPerPage = parseInt(salesRecordsPerPageSelect.val());
-            
-            // Update records per page when select changes for sales
-            salesRecordsPerPageSelect.on('change', function() {
-                salesRecordsPerPage = parseInt($(this).val());
-                currentSalesPage = 1; // Reset to first page
-                updateSalesDisplayedRows();
-            });
-            
-            // Records per page functionality for purchases
-            let currentPurchasesPage = 1;
-            const purchasesRecordsPerPageSelect = $('#shippingRecordsPerPage');
-            let purchasesRecordsPerPage = parseInt(purchasesRecordsPerPageSelect.val());
-            
-            // Update records per page when select changes for purchases
-            purchasesRecordsPerPageSelect.on('change', function() {
-                purchasesRecordsPerPage = parseInt($(this).val());
-                currentPurchasesPage = 1; // Reset to first page
-                updatePurchasesDisplayedRows();
-            });
-            
-            // Records per page functionality for waste
-            let currentWastePage = 1;
-            const wasteRecordsPerPageSelect = $('#withdrawalRecordsPerPage');
-            let wasteRecordsPerPage = parseInt(wasteRecordsPerPageSelect.val());
-            
-            // Update records per page when select changes for waste
-            wasteRecordsPerPageSelect.on('change', function() {
-                wasteRecordsPerPage = parseInt($(this).val());
-                currentWastePage = 1; // Reset to first page
-                updateWasteDisplayedRows();
-            });
-            
-            // Pagination navigation for sales
-            $('#employeePrevPageBtn').on('click', function() {
-                if (!$(this).prop('disabled')) {
-                    currentSalesPage--;
-                    updateSalesDisplayedRows();
-                }
-            });
-            
-            $('#employeeNextPageBtn').on('click', function() {
-                if (!$(this).prop('disabled')) {
-                    currentSalesPage++;
-                    updateSalesDisplayedRows();
-                }
-            });
-            
-            // Pagination navigation for purchases
-            $('#shippingPrevPageBtn').on('click', function() {
-                if (!$(this).prop('disabled')) {
-                    currentPurchasesPage--;
-                    updatePurchasesDisplayedRows();
-                }
-            });
-            
-            $('#shippingNextPageBtn').on('click', function() {
-                if (!$(this).prop('disabled')) {
-                    currentPurchasesPage++;
-                    updatePurchasesDisplayedRows();
-                }
-            });
-            
-            // Pagination navigation for waste
-            $('#withdrawalPrevPageBtn').on('click', function() {
-                if (!$(this).prop('disabled')) {
-                    currentWastePage--;
-                    updateWasteDisplayedRows();
-                }
-            });
-            
-            $('#withdrawalNextPageBtn').on('click', function() {
-                if (!$(this).prop('disabled')) {
-                    currentWastePage++;
-                    updateWasteDisplayedRows();
-                }
-            });
-            
-            // Function to update sales table displayed rows
-            function updateSalesDisplayedRows() {
-                const tableRows = $('#employeeHistoryTable tbody tr');
-                const totalRecords = tableRows.length;
-                
-                if (totalRecords === 0) return;
-                
-                const startIndex = (currentSalesPage - 1) * salesRecordsPerPage;
-                const endIndex = startIndex + salesRecordsPerPage;
-                
-                // Hide all rows
-                tableRows.hide();
-                
-                // Show only rows for current page
-                tableRows.slice(startIndex, endIndex).show();
-                
-                // Update pagination info
-                $('#employeeStartRecord').text(totalRecords > 0 ? startIndex + 1 : 0);
-                $('#employeeEndRecord').text(Math.min(endIndex, totalRecords));
-                $('#employeeTotalRecords').text(totalRecords);
-                
-                // Enable/disable pagination buttons
-                $('#employeePrevPageBtn').prop('disabled', currentSalesPage === 1);
-                $('#employeeNextPageBtn').prop('disabled', endIndex >= totalRecords);
-                
-                // Update pagination numbers
-                updateSalesPaginationNumbers();
-            }
-            
-            // Function to update purchases table displayed rows
-            function updatePurchasesDisplayedRows() {
-                const tableRows = $('#shippingHistoryTable tbody tr');
-                const totalRecords = tableRows.length;
-                
-                if (totalRecords === 0) return;
-                
-                const startIndex = (currentPurchasesPage - 1) * purchasesRecordsPerPage;
-                const endIndex = startIndex + purchasesRecordsPerPage;
-                
-                // Hide all rows
-                tableRows.hide();
-                
-                // Show only rows for current page
-                tableRows.slice(startIndex, endIndex).show();
-                
-                // Update pagination info
-                $('#shippingStartRecord').text(totalRecords > 0 ? startIndex + 1 : 0);
-                $('#shippingEndRecord').text(Math.min(endIndex, totalRecords));
-                $('#shippingTotalRecords').text(totalRecords);
-                
-                // Enable/disable pagination buttons
-                $('#shippingPrevPageBtn').prop('disabled', currentPurchasesPage === 1);
-                $('#shippingNextPageBtn').prop('disabled', endIndex >= totalRecords);
-                
-                // Update pagination numbers
-                updatePurchasesPaginationNumbers();
-            }
-            
-            // Function to update waste table displayed rows
-            function updateWasteDisplayedRows() {
-                const tableRows = $('#withdrawalHistoryTable tbody tr');
-                const totalRecords = tableRows.length;
-                
-                if (totalRecords === 0) return;
-                
-                const startIndex = (currentWastePage - 1) * wasteRecordsPerPage;
-                const endIndex = startIndex + wasteRecordsPerPage;
-                
-                // Hide all rows
-                tableRows.hide();
-                
-                // Show only rows for current page
-                tableRows.slice(startIndex, endIndex).show();
-                
-                // Update pagination info
-                $('#withdrawalStartRecord').text(totalRecords > 0 ? startIndex + 1 : 0);
-                $('#withdrawalEndRecord').text(Math.min(endIndex, totalRecords));
-                $('#withdrawalTotalRecords').text(totalRecords);
-                
-                // Enable/disable pagination buttons
-                $('#withdrawalPrevPageBtn').prop('disabled', currentWastePage === 1);
-                $('#withdrawalNextPageBtn').prop('disabled', endIndex >= totalRecords);
-                
-                // Update pagination numbers
-                updateWastePaginationNumbers();
-            }
-            
-            // Function to update sales pagination number buttons
-            function updateSalesPaginationNumbers() {
-                const totalRecords = $('#employeeHistoryTable tbody tr').length;
-                const totalPages = Math.ceil(totalRecords / salesRecordsPerPage);
-                
-                let paginationHTML = '';
-                
-                // Determine range of page numbers to show
-                let startPage = Math.max(1, currentSalesPage - 2);
-                let endPage = Math.min(totalPages, startPage + 4);
-                
-                // Ensure we always show 5 page numbers if possible
-                if (endPage - startPage < 4 && totalPages > 4) {
-                    startPage = Math.max(1, endPage - 4);
-                }
-                
-                for (let i = startPage; i <= endPage; i++) {
-                    paginationHTML += `<button class="btn btn-sm ${i === currentSalesPage ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2" data-page="${i}">${i}</button>`;
-                }
-                
-                $('#employeePaginationNumbers').html(paginationHTML);
-                
-                // Add click event for pagination numbers
-                $('#employeePaginationNumbers button').on('click', function() {
-                    currentSalesPage = parseInt($(this).data('page'));
-                    updateSalesDisplayedRows();
-                });
-            }
-            
-            // Function to update purchases pagination number buttons
-            function updatePurchasesPaginationNumbers() {
-                const totalRecords = $('#shippingHistoryTable tbody tr').length;
-                const totalPages = Math.ceil(totalRecords / purchasesRecordsPerPage);
-                
-                let paginationHTML = '';
-                
-                // Determine range of page numbers to show
-                let startPage = Math.max(1, currentPurchasesPage - 2);
-                let endPage = Math.min(totalPages, startPage + 4);
-                
-                // Ensure we always show 5 page numbers if possible
-                if (endPage - startPage < 4 && totalPages > 4) {
-                    startPage = Math.max(1, endPage - 4);
-                }
-                
-                for (let i = startPage; i <= endPage; i++) {
-                    paginationHTML += `<button class="btn btn-sm ${i === currentPurchasesPage ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2" data-page="${i}">${i}</button>`;
-                }
-                
-                $('#shippingPaginationNumbers').html(paginationHTML);
-                
-                // Add click event for pagination numbers
-                $('#shippingPaginationNumbers button').on('click', function() {
-                    currentPurchasesPage = parseInt($(this).data('page'));
-                    updatePurchasesDisplayedRows();
-                });
-            }
-            
-            // Function to update waste pagination number buttons
-            function updateWastePaginationNumbers() {
-                const totalRecords = $('#withdrawalHistoryTable tbody tr').length;
-                const totalPages = Math.ceil(totalRecords / wasteRecordsPerPage);
-                
-                let paginationHTML = '';
-                
-                // Determine range of page numbers to show
-                let startPage = Math.max(1, currentWastePage - 2);
-                let endPage = Math.min(totalPages, startPage + 4);
-                
-                // Ensure we always show 5 page numbers if possible
-                if (endPage - startPage < 4 && totalPages > 4) {
-                    startPage = Math.max(1, endPage - 4);
-                }
-                
-                for (let i = startPage; i <= endPage; i++) {
-                    paginationHTML += `<button class="btn btn-sm ${i === currentWastePage ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2" data-page="${i}">${i}</button>`;
-                }
-                
-                $('#withdrawalPaginationNumbers').html(paginationHTML);
-                
-                // Add click event for pagination numbers
-                $('#withdrawalPaginationNumbers button').on('click', function() {
-                    currentWastePage = parseInt($(this).data('page'));
-                    updateWasteDisplayedRows();
-                });
-            }
-
-            // Table search functionality for sales
-            $('#employeeTableSearch').on('input', function() {
-                const searchText = $(this).val().toLowerCase();
-                $('#employeeHistoryTable tbody tr').each(function() {
-                    const rowText = $(this).text().toLowerCase();
-                    $(this).toggle(rowText.indexOf(searchText) > -1);
-                });
-                
-                // Reset pagination after search
-                currentSalesPage = 1;
-                updateSalesDisplayedRows();
-            });
-
-            // Table search functionality for purchases
-            $('#shippingTableSearch').on('input', function() {
-                const searchText = $(this).val().toLowerCase();
-                $('#shippingHistoryTable tbody tr').each(function() {
-                    const rowText = $(this).text().toLowerCase();
-                    $(this).toggle(rowText.indexOf(searchText) > -1);
-                });
-                
-                // Reset pagination after search
-                currentPurchasesPage = 1;
-                updatePurchasesDisplayedRows();
-            });
-
-            // Function to filter sales data
-            function filterSalesData() {
-                const filters = {
-                    start_date: $('#employeePaymentStartDate').val(),
-                    end_date: $('#employeePaymentEndDate').val(),
-                    customer_name: $('#employeePaymentName').val(),
-                    invoice_number: $('#invoiceNumber').val()
-                };
-
-                $.ajax({
-                    url: window.location.href,
-                    type: 'POST',
-                    data: {
-                        action: 'filter',
-                        type: 'sales',
-                        ...filters
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            updateSalesTable(response.data);
-                        }
-                    }
-                });
-            }
-
-            // Function to filter purchases data
-            function filterPurchasesData() {
-                const filters = {
-                    start_date: $('#shippingStartDate').val(),
-                    end_date: $('#shippingEndDate').val(),
-                    supplier_name: $('#shippingProvider').val(),
-                    invoice_number: $('#shippingInvoiceNumber').val()
-                };
-
-                $.ajax({
-                    url: window.location.href,
-                    type: 'POST',
-                    data: {
-                        action: 'filter',
-                        type: 'purchases',
-                        ...filters
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            updatePurchasesTable(response.data);
-                        }
-                    }
-                });
-            }
-
-            // Function to update sales table
-            function updateSalesTable(data) {
-                const tbody = $('#employeeHistoryTable tbody');
-                tbody.empty();
-
-                if (data.length === 0) {
-                    tbody.append('<tr><td colspan="13" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td></tr>');
-                    return;
-                }
-
-                data.forEach((sale, index) => {
-                    const row = `
-                        <tr data-id="${sale.id}">
-                            <td>${index + 1}</td>
-                            <td>${sale.invoice_number}</td>
-                            <td>${sale.customer_name || 'N/A'}</td>
-                            <td>${new Date(sale.date).toLocaleDateString('en-US')}</td>
-                            <td class="products-list-cell" data-products="${sale.products_list || ''}">
-                                ${sale.products_list || ''}
-                                <div class="products-popup"></div>
-                            </td>
-                            <td>${sale.subtotal.toLocaleString()} د.ع</td>
-                            <td>${sale.shipping_cost.toLocaleString()} د.ع</td>
-                            <td>${sale.other_costs.toLocaleString()} د.ع</td>
-                            <td>${sale.discount.toLocaleString()} د.ع</td>
-                            <td>${sale.total_amount.toLocaleString()} د.ع</td>
-                            <td>
-                                <span class="badge rounded-pill ${sale.payment_type === 'cash' ? 'bg-success' : (sale.payment_type === 'credit' ? 'bg-warning' : 'bg-info')}">
-                                    ${sale.payment_type === 'cash' ? 'نەقد' : (sale.payment_type === 'credit' ? 'قەرز' : 'چەک')}
-                                </span>
-                            </td>
-                            <td>${sale.notes || ''}</td>
-                            <td>
-                                <div class="action-buttons">
-                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${sale.id}">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${sale.id}">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${sale.id}">
-                                        <i class="fas fa-print"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                    tbody.append(row);
-                });
-                
-                // Initialize product popups for new rows
-                initializeProductListPopups();
-                
-                // Reset pagination to first page when loading new data
-                currentSalesPage = 1;
-                updateSalesDisplayedRows();
-            }
-
-            // Function to update purchases table
-            function updatePurchasesTable(data) {
-                const tbody = $('#shippingHistoryTable tbody');
-                tbody.empty();
-
-                if (data.length === 0) {
-                    tbody.append('<tr><td colspan="11" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td></tr>');
-                    return;
-                }
-
-                data.forEach((purchase, index) => {
-                    const row = `
-                        <tr data-id="${purchase.id}">
-                            <td>${index + 1}</td>
-                            <td>${purchase.invoice_number}</td>
-                            <td>${purchase.supplier_name || 'N/A'}</td>
-                            <td>${new Date(purchase.date).toLocaleDateString('en-US')}</td>
-                            <td class="products-list-cell" data-products="${purchase.products_list || ''}">
-                                ${purchase.products_list || ''}
-                                <div class="products-popup"></div>
-                            </td>
-                            <td>${purchase.subtotal.toLocaleString()} د.ع</td>
-                            <td>${purchase.discount.toLocaleString()} د.ع</td>
-                            <td>${purchase.total_amount.toLocaleString()} د.ع</td>
-                            <td>
-                                <span class="badge rounded-pill ${purchase.payment_type === 'cash' ? 'bg-success' : (purchase.payment_type === 'credit' ? 'bg-warning' : 'bg-info')}">
-                                    ${purchase.payment_type === 'cash' ? 'نەقد' : (purchase.payment_type === 'credit' ? 'قەرز' : 'چەک')}
-                                </span>
-                            </td>
-                            <td>${purchase.notes || ''}</td>
-                            <td>
-                                <div class="action-buttons">
-                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${purchase.id}">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${purchase.id}">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${purchase.id}">
-                                        <i class="fas fa-print"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                    tbody.append(row);
-                });
-                
-                // Initialize product popups for new rows
-                initializeProductListPopups();
-                
-                // Reset pagination to first page when loading new data
-                currentPurchasesPage = 1;
-                updatePurchasesDisplayedRows();
-            }
-
-            // Initialize date inputs with current month
-            const today = new Date();
-            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-            
-            $('#employeePaymentStartDate').val(firstDay.toISOString().split('T')[0]);
-            $('#employeePaymentEndDate').val(today.toISOString().split('T')[0]);
-            $('#shippingStartDate').val(firstDay.toISOString().split('T')[0]);
-            $('#shippingEndDate').val(today.toISOString().split('T')[0]);
-
-            // Load initial data
-            filterSalesData();
-            filterPurchasesData();
-
-            // Initialize table pagination on page load
-            updateSalesDisplayedRows();
-            updatePurchasesDisplayedRows();
-            updateWasteDisplayedRows();
-        });
-
-        // Handle edit button click for sales
-        $(document).on('click', '#employeeHistoryTable .edit-btn', function() {
-            const saleId = $(this).data('id');
-            // Get sale data from the row
-            const row = $(this).closest('tr');
-            const saleData = {
-                id: saleId,
-                invoice_number: row.find('td:eq(1)').text(),
-                customer_name: row.find('td:eq(2)').text(),
-                date: row.find('td:eq(3)').text(),
-                shipping_cost: parseFloat(row.find('td:eq(6)').text().replace(/[^0-9.-]+/g, '')),
-                other_costs: parseFloat(row.find('td:eq(7)').text().replace(/[^0-9.-]+/g, '')),
-                discount: parseFloat(row.find('td:eq(8)').text().replace(/[^0-9.-]+/g, '')),
-                payment_type: row.find('td:eq(10) .badge').text().trim(),
-                notes: row.find('td:eq(11)').text()
-            };
-
-            // Fill the form with sale data
-            $('#editSaleId').val(saleData.id);
-            $('#editSaleInvoiceNumber').val(saleData.invoice_number);
-            
-            // Set customer selection
-            const customerSelect = $('#editSaleCustomer');
-            customerSelect.find('option').each(function() {
-                if ($(this).text().trim() === saleData.customer_name.trim()) {
-                    customerSelect.val($(this).val());
-                    return false;
-                }
-            });
-            
-            // Set payment type
-            const paymentTypeMap = {
-                'نەقد': 'cash',
-                'قەرز': 'credit',
-                'چەک': 'check'
-            };
-            const paymentTypeValue = paymentTypeMap[saleData.payment_type];
-            if (paymentTypeValue) {
-                $('#editSalePaymentType').val(paymentTypeValue);
-            }
-            
-            $('#editSaleDate').val(new Date(saleData.date).toISOString().split('T')[0]);
-            $('#editSaleShippingCost').val(saleData.shipping_cost);
-            $('#editSaleOtherCosts').val(saleData.other_costs);
-            $('#editSaleDiscount').val(saleData.discount);
-            $('#editSaleNotes').val(saleData.notes);
-
-            // Show the modal
-            $('#editSaleModal').modal('show');
-        });
-
-        // Handle edit button click for purchases
-        $(document).on('click', '#shippingHistoryTable .edit-btn', function() {
-            const purchaseId = $(this).data('id');
-            // Get purchase data from the row
-            const row = $(this).closest('tr');
-            const purchaseData = {
-                id: purchaseId,
-                invoice_number: row.find('td:eq(1)').text(),
-                supplier_name: row.find('td:eq(2)').text(),
-                date: row.find('td:eq(3)').text(),
-                discount: parseFloat(row.find('td:eq(6)').text().replace(/[^0-9.-]+/g, '')),
-                payment_type: row.find('td:eq(8) .badge').text().trim(),
-                notes: row.find('td:eq(9)').text()
-            };
-
-            // Fill the form with purchase data
-            $('#editPurchaseId').val(purchaseData.id);
-            $('#editPurchaseInvoiceNumber').val(purchaseData.invoice_number);
-            $('#editPurchaseSupplier').val(purchaseData.supplier_name);
-            $('#editPurchaseDate').val(new Date(purchaseData.date).toISOString().split('T')[0]);
-            $('#editPurchaseDiscount').val(purchaseData.discount);
-            $('#editPurchasePaymentType').val(purchaseData.payment_type);
-            $('#editPurchaseNotes').val(purchaseData.notes);
-
-            // Show the modal
-            $('#editPurchaseModal').modal('show');
-        });
-
-        // Handle save sale edit
-        $('#saveSaleEdit').click(function() {
-            const saleData = {
-                id: $('#editSaleId').val(),
-                invoice_number: $('#editSaleInvoiceNumber').val(),
-                customer_id: $('#editSaleCustomer').val(),
-                date: $('#editSaleDate').val(),
-                shipping_cost: $('#editSaleShippingCost').val(),
-                other_costs: $('#editSaleOtherCosts').val(),
-                discount: $('#editSaleDiscount').val(),
-                payment_type: $('#editSalePaymentType').val(),
-                notes: $('#editSaleNotes').val()
-            };
-
-            $.ajax({
-                url: window.location.href,
-                type: 'POST',
-                data: {
-                    action: 'update_sale',
-                    ...saleData
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $('#editSaleModal').modal('hide');
-                        // Refresh the table without using DataTable
-                        filterSalesData();
-                        Swal.fire({
-                            title: 'سەرکەوتوو',
-                            text: 'پسووڵە بە سەرکەوتوویی نوێکرایەوە',
-                            icon: 'success',
-                            confirmButtonText: 'باشە'
-                        });
-                    } else {
-                        Swal.fire({
-                            title: 'هەڵە',
-                            text: response.message || 'هەڵەیەک ڕوویدا',
-                            icon: 'error',
-                            confirmButtonText: 'باشە'
-                        });
-                    }
-                }
-            });
-        });
-
-        // Handle save purchase edit
-        $('#savePurchaseEdit').click(function() {
-            const purchaseData = {
-                id: $('#editPurchaseId').val(),
-                invoice_number: $('#editPurchaseInvoiceNumber').val(),
-                supplier_id: $('#editPurchaseSupplier').val(),
-                date: $('#editPurchaseDate').val(),
-                discount: $('#editPurchaseDiscount').val(),
-                payment_type: $('#editPurchasePaymentType').val(),
-                notes: $('#editPurchaseNotes').val()
-            };
-
-            $.ajax({
-                url: window.location.href,
-                type: 'POST',
-                data: {
-                    action: 'update_purchase',
-                    ...purchaseData
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $('#editPurchaseModal').modal('hide');
-                        filterPurchasesData();
-                        Swal.fire({
-                            title: 'سەرکەوتوو',
-                            text: 'پسووڵە بە سەرکەوتوویی نوێکرایەوە',
-                            icon: 'success',
-                            confirmButtonText: 'باشە'
-                        });
-                    } else {
-                        Swal.fire({
-                            title: 'هەڵە',
-                            text: response.message || 'هەڵەیەک ڕوویدا',
-                            icon: 'error',
-                            confirmButtonText: 'باشە'
-                        });
-                    }
-                }
-            });
-        });
-    </script>
-
-    <!-- Employee Payment Edit Modal -->
     <div class="modal fade" id="editEmployeePaymentModal" tabindex="-1" aria-labelledby="editEmployeePaymentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -1841,12 +816,12 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
     </div>
 
     <!-- Edit Sale Modal -->
-    <div class="modal fade" id="editSaleModal" tabindex="-1" aria-labelledby="editSaleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+    <div class="modal fade" id="editSaleModal" tabindex="-1" role="dialog" aria-labelledby="editSaleModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editSaleModalLabel">دەستکاری پسووڵەی فرۆشتن</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="داخستن"></button>
                 </div>
                 <div class="modal-body">
                     <form id="editSaleForm">
@@ -1965,5 +940,53 @@ if (isset($_POST['action']) && $_POST['action'] == 'filter') {
             </div>
         </div>
     </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="../../js/include-components.js"></script>
+    <script src="../../js/receiptList/receipt.js"></script>
+    
+    <!-- DataTables JavaScript -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+    
+    <script>
+     
+    </script>
+
+    <style>
+        .swal-html-rtl {
+            direction: rtl !important;
+            text-align: right !important;
+        }
+        
+        /* Custom scrollbar for Webkit browsers */
+        .swal2-html-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .swal2-html-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .swal2-html-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        
+        .swal2-html-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
 </body>
 </html> 
