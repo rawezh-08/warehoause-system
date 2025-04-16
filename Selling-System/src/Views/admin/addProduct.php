@@ -57,11 +57,11 @@ require_once '../../process/addProduct_logic.php';
                                             <div class="row mb-4">
                                                 <div class="col-md-6 mb-3">
                                                     <label for="productName" class="form-label">ناوی کاڵا</label>
-                                                    <input type="text" id="productName" name="name" class="form-control" placeholder="ناوی کاڵا">
+                                                    <input type="text" id="productName" name="name" class="form-control" placeholder="ناوی کاڵا" required>
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label for="category_id" class="form-label">جۆری کاڵا</label>
-                                                    <select id="category_id" name="category_id" class="form-select">
+                                                    <select id="category_id" name="category_id" class="form-select" required>
                                                         <option value="" selected disabled>جۆر</option>
                                                         <?php foreach ($categories as $category): ?>
                                                             <option value="<?php echo $category['id']; ?>"><?php echo $category['name']; ?></option>
@@ -74,7 +74,7 @@ require_once '../../process/addProduct_logic.php';
                                                 <div class="col-md-4 mb-3">
                                                     <label for="productCode" class="form-label">کۆدی کاڵا</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="productCode" name="code" class="form-control" placeholder="کۆدی کاڵا">
+                                                        <input type="text" id="productCode" name="code" class="form-control" placeholder="کۆدی کاڵا" required>
                                                         <button type="button" class="btn btn-primary" id="generateCode">
                                                             <i class="fas fa-plus"></i>
                                                         </button>
@@ -91,7 +91,7 @@ require_once '../../process/addProduct_logic.php';
                                                 </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label for="unit_id" class="form-label">یەکە</label>
-                                                    <select id="unit_id" name="unit_id" class="form-select">
+                                                    <select id="unit_id" name="unit_id" class="form-select" required>
                                                         <option value="" selected disabled>یەکە</option>
                                                         <?php foreach ($units as $unit): ?>
                                                             <option value="<?php echo $unit['id']; ?>"><?php echo $unit['name']; ?></option>
@@ -104,11 +104,11 @@ require_once '../../process/addProduct_logic.php';
                                             <div class="row mb-4" id="unitQuantityContainer" style="display: none;">
                                                 <div class="col-md-4 mb-3" id="piecesPerBoxContainer" style="display: none;">
                                                     <label for="piecesPerBox" class="form-label">ژمارەی دانە لە کارتۆن</label>
-                                                    <input type="text" id="piecesPerBox" name="pieces_per_box" class="form-control" placeholder="ژمارەی دانە لە کارتۆن">
+                                                    <input type="text" id="piecesPerBox" name="pieces_per_box" class="form-control" placeholder="ژمارەی دانە لە کارتۆن" required>
                                                 </div>
                                                 <div class="col-md-4 mb-3" id="boxesPerSetContainer" style="display: none;">
                                                     <label for="boxesPerSet" class="form-label">ژمارەی کارتۆن لە سێت</label>
-                                                    <input type="text" id="boxesPerSet" name="boxes_per_set" class="form-control" placeholder="ژمارەی کارتۆن لە سێت">
+                                                    <input type="text" id="boxesPerSet" name="boxes_per_set" class="form-control" placeholder="ژمارەی کارتۆن لە سێت" required>
                                                 </div>
                                             </div>
                                             
@@ -149,14 +149,14 @@ require_once '../../process/addProduct_logic.php';
                                                 <div class="col-md-4 mb-3" style="direction: rtl;">
                                                     <label for="buyingPrice" class="form-label">نرخی کڕین</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="buyingPrice" name="purchase_price" class="form-control" placeholder="نرخی کڕین">
+                                                        <input type="text" id="buyingPrice" name="purchase_price" class="form-control" placeholder="نرخی کڕین" required>
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label for="sellingPrice" class="form-label">نرخی فرۆشتن</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="sellingPrice" name="selling_price_single" class="form-control" placeholder="نرخی فرۆشتن">
+                                                        <input type="text" id="sellingPrice" name="selling_price_single" class="form-control" placeholder="نرخی فرۆشتن" required>
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
@@ -173,11 +173,11 @@ require_once '../../process/addProduct_logic.php';
                                             <div class="row mb-4">
                                                 <div class="col-md-4 mb-3">
                                                     <label for="min_quantity" class="form-label">کەمترین بڕ</label>
-                                                    <input type="text" id="min_quantity" name="min_quantity" class="form-control" placeholder="کەمترین بڕ">
+                                                    <input type="text" id="min_quantity" name="min_quantity" class="form-control" placeholder="کەمترین بڕ" required>
                                                 </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label for="current_quantity" class="form-label">بڕی بەردەست</label>
-                                                    <input type="text" id="current_quantity" name="current_quantity" class="form-control" placeholder="بڕی بەردەست">
+                                                    <input type="text" id="current_quantity" name="current_quantity" class="form-control" placeholder="بڕی بەردەست" required>
                                                 </div>
                                             </div>
                                             

@@ -186,12 +186,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const unitQuantityContainer = document.getElementById('unitQuantityContainer');
             const piecesPerBoxContainer = document.getElementById('piecesPerBoxContainer');
             const boxesPerSetContainer = document.getElementById('boxesPerSetContainer');
+            const piecesPerBoxInput = document.getElementById('piecesPerBox');
+            const boxesPerSetInput = document.getElementById('boxesPerSet');
 
             if (unitQuantityContainer && piecesPerBoxContainer && boxesPerSetContainer) {
                 // First hide all containers
                 unitQuantityContainer.style.display = 'none';
                 piecesPerBoxContainer.style.display = 'none';
                 boxesPerSetContainer.style.display = 'none';
+
+                // Remove required attribute from all fields initially
+                if (piecesPerBoxInput) piecesPerBoxInput.removeAttribute('required');
+                if (boxesPerSetInput) boxesPerSetInput.removeAttribute('required');
 
                 // Show relevant containers based on unit selection
                 switch (selectedUnit) {
@@ -200,20 +206,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     case '2': // دانە و کارتۆن
                         unitQuantityContainer.style.display = 'flex';
                         piecesPerBoxContainer.style.display = 'block';
+                        // Add required attribute for visible fields
+                        if (piecesPerBoxInput) piecesPerBoxInput.setAttribute('required', 'required');
                         break;
                     case '3': // دانە و کارتۆن و سێت
                         unitQuantityContainer.style.display = 'flex';
                         piecesPerBoxContainer.style.display = 'block';
                         boxesPerSetContainer.style.display = 'block';
+                        // Add required attribute for visible fields
+                        if (piecesPerBoxInput) piecesPerBoxInput.setAttribute('required', 'required');
+                        if (boxesPerSetInput) boxesPerSetInput.setAttribute('required', 'required');
                         break;
                 }
 
                 // Clear values when hiding
                 if (selectedUnit === '1') {
-                    document.getElementById('piecesPerBox').value = '';
-                    document.getElementById('boxesPerSet').value = '';
+                    if (piecesPerBoxInput) piecesPerBoxInput.value = '';
+                    if (boxesPerSetInput) boxesPerSetInput.value = '';
                 } else if (selectedUnit === '2') {
-                    document.getElementById('boxesPerSet').value = '';
+                    if (boxesPerSetInput) boxesPerSetInput.value = '';
                 }
             }
         });
@@ -306,13 +317,21 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentTabId === 'basic-info') {
             const productName = document.getElementById('productName').value;
             const productCode = document.getElementById('productCode').value;
-            const unit = document.getElementById('unit_id').value;
+            const categoryId = document.getElementById('category_id').value;
+            const unitId = document.getElementById('unit_id').value;
             
             if (!productName) {
                 showValidationError('productName', 'تکایە ناوی کاڵا بنووسە');
                 isValid = false;
             } else {
                 clearValidationError('productName');
+            }
+            
+            if (!categoryId) {
+                showValidationError('category_id', 'تکایە جۆری کاڵا هەڵبژێرە');
+                isValid = false;
+            } else {
+                clearValidationError('category_id');
             }
             
             if (!productCode) {
@@ -322,31 +341,47 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearValidationError('productCode');
             }
             
-            // Validate unit quantities based on selected unit
-            if (unit === 'box') {
-                const piecesPerBox = document.getElementById('piecesPerBox').value;
-                if (!piecesPerBox) {
-                    showValidationError('piecesPerBox', 'تکایە ژمارەی دانە لە کارتۆن بنووسە');
-                    isValid = false;
-                } else {
-                    clearValidationError('piecesPerBox');
-                }
-            } else if (unit === 'set') {
-                const piecesPerBox = document.getElementById('piecesPerBox').value;
-                const boxesPerSet = document.getElementById('boxesPerSet').value;
+            if (!unitId) {
+                showValidationError('unit_id', 'تکایە یەکەی کاڵا هەڵبژێرە');
+                isValid = false;
+            } else {
+                clearValidationError('unit_id');
                 
-                if (!piecesPerBox) {
-                    showValidationError('piecesPerBox', 'تکایە ژمارەی دانە لە کارتۆن بنووسە');
-                    isValid = false;
-                } else {
-                    clearValidationError('piecesPerBox');
-                }
-                
-                if (!boxesPerSet) {
-                    showValidationError('boxesPerSet', 'تکایە ژمارەی کارتۆن لە سێت بنووسە');
-                    isValid = false;
-                } else {
-                    clearValidationError('boxesPerSet');
+                // Validate unit quantities based on selected unit
+                if (unitId === '2') { // دانە و کارتۆن
+                    const piecesPerBoxEl = document.getElementById('piecesPerBox');
+                    if (piecesPerBoxEl && piecesPerBoxEl.style.display !== 'none') {
+                        const piecesPerBox = piecesPerBoxEl.value;
+                        if (!piecesPerBox) {
+                            showValidationError('piecesPerBox', 'تکایە ژمارەی دانە لە کارتۆن بنووسە');
+                            isValid = false;
+                        } else {
+                            clearValidationError('piecesPerBox');
+                        }
+                    }
+                } else if (unitId === '3') { // دانە و کارتۆن و سێت
+                    const piecesPerBoxEl = document.getElementById('piecesPerBox');
+                    const boxesPerSetEl = document.getElementById('boxesPerSet');
+                    
+                    if (piecesPerBoxEl && piecesPerBoxEl.style.display !== 'none') {
+                        const piecesPerBox = piecesPerBoxEl.value;
+                        if (!piecesPerBox) {
+                            showValidationError('piecesPerBox', 'تکایە ژمارەی دانە لە کارتۆن بنووسە');
+                            isValid = false;
+                        } else {
+                            clearValidationError('piecesPerBox');
+                        }
+                    }
+                    
+                    if (boxesPerSetEl && boxesPerSetEl.style.display !== 'none') {
+                        const boxesPerSet = boxesPerSetEl.value;
+                        if (!boxesPerSet) {
+                            showValidationError('boxesPerSet', 'تکایە ژمارەی کارتۆن لە سێت بنووسە');
+                            isValid = false;
+                        } else {
+                            clearValidationError('boxesPerSet');
+                        }
+                    }
                 }
             }
         }
@@ -355,6 +390,8 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (currentTabId === 'price-info') {
             const buyingPrice = document.getElementById('buyingPrice').value;
             const sellingPrice = document.getElementById('sellingPrice').value;
+            const minQuantity = document.getElementById('min_quantity').value;
+            const currentQuantity = document.getElementById('current_quantity').value;
             
             if (!buyingPrice) {
                 showValidationError('buyingPrice', 'تکایە نرخی کڕین بنووسە');
@@ -368,6 +405,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 isValid = false;
             } else {
                 clearValidationError('sellingPrice');
+            }
+            
+            if (!minQuantity) {
+                showValidationError('min_quantity', 'تکایە کەمترین بڕ بنووسە');
+                isValid = false;
+            } else {
+                clearValidationError('min_quantity');
+            }
+            
+            if (!currentQuantity) {
+                showValidationError('current_quantity', 'تکایە بڕی بەردەست بنووسە');
+                isValid = false;
+            } else {
+                clearValidationError('current_quantity');
             }
         }
         
@@ -595,6 +646,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // زیادکردنی فانکشن بۆ پاککردنەوەی کۆماکان لە ژمارەکان
     function cleanNumberInputs() {
+        // پاککردنەوەی داتای ژمارەکان لە کۆما
         const numberFields = [
             'buyingPrice',
             'sellingPrice',
@@ -602,7 +654,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'piecesPerBox',
             'boxesPerSet',
             'min_quantity',
-            'initialQuantity'
+            'current_quantity'
         ];
         
         numberFields.forEach(field => {
@@ -631,6 +683,13 @@ document.addEventListener('DOMContentLoaded', function() {
             // Prevent double submission
             if (isSubmitting) {
                 return;
+            }
+            
+            // Validate the form with browser's built-in validation
+            if (!this.checkValidity()) {
+                // Trigger browser's validation UI
+                this.reportValidity();
+                return false;
             }
             
             isSubmitting = true;
@@ -667,6 +726,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
                 
+                // Log the form data being sent
+                console.log('Submitting form data:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(`${key}: ${value}`);
+                }
+                
                 // Submit form using fetch
                 const response = await fetch('../../process/add_product.php', {
                     method: 'POST',
@@ -674,6 +739,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Server response:', errorText);
                     throw new Error(`Server responded with status: ${response.status}`);
                 }
                 

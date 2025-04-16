@@ -529,8 +529,7 @@ $suppliers = $supplierModel->getAll();
                                                                         <div class="action-buttons">
                                                                             <button type="button"
                                                                                 class="btn btn-sm btn-outline-primary rounded-circle edit-btn"
-                                                                                data-id="<?php echo $supplier['id']; ?>" data-bs-toggle="modal"
-                                                                                data-bs-target="#editSupplierModal">
+                                                                                data-id="<?php echo $supplier['id']; ?>">
                                                                                 <i class="fas fa-edit"></i>
                                                                             </button>
                                                                             <button type="button"
@@ -1513,6 +1512,366 @@ $suppliers = $supplierModel->getAll();
                 
                 // Reapply pagination
                 applySupplierPagination(1);
+            });
+
+            // Add customer table search functionality
+            document.getElementById('customerTableSearch').addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const customerRows = document.querySelectorAll('#customerTable tbody tr');
+                
+                customerRows.forEach(row => {
+                    let match = false;
+                    // Search in all cells except the last one (actions column)
+                    for (let i = 1; i < row.cells.length - 1; i++) {
+                        const cellText = row.cells[i].textContent.toLowerCase();
+                        if (cellText.includes(searchTerm)) {
+                            match = true;
+                            break;
+                        }
+                    }
+                    
+                    row.dataset.searchMatch = match ? 'true' : 'false';
+                    applyCustomerFilters();
+                });
+            });
+
+            // Add supplier table search functionality
+            document.getElementById('supplierTableSearch').addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const supplierRows = document.querySelectorAll('#supplierTable tbody tr');
+                
+                supplierRows.forEach(row => {
+                    let match = false;
+                    // Search in all cells except the last one (actions column)
+                    for (let i = 1; i < row.cells.length - 1; i++) {
+                        const cellText = row.cells[i].textContent.toLowerCase();
+                        if (cellText.includes(searchTerm)) {
+                            match = true;
+                            break;
+                        }
+                    }
+                    
+                    row.dataset.searchMatch = match ? 'true' : 'false';
+                    applySupplierFilters();
+                });
+            });
+
+            // Customer name filter functionality
+            document.getElementById('customerName').addEventListener('change', function() {
+                const selectedName = this.value.toLowerCase();
+                const customerRows = document.querySelectorAll('#customerTable tbody tr');
+                
+                customerRows.forEach(row => {
+                    const nameCell = row.cells[1]; // Name is in the second column
+                    const name = nameCell.textContent.toLowerCase();
+                    
+                    // Match if filter is empty or name matches
+                    const match = !selectedName || name === selectedName;
+                    row.dataset.nameFilterMatch = match ? 'true' : 'false';
+                    
+                    applyCustomerFilters();
+                });
+            });
+
+            // Customer phone filter functionality
+            document.getElementById('customerPhone').addEventListener('input', function() {
+                const phoneFilter = this.value.toLowerCase();
+                const customerRows = document.querySelectorAll('#customerTable tbody tr');
+                
+                customerRows.forEach(row => {
+                    const phoneCell = row.cells[2]; // Phone is in the third column
+                    const phone = phoneCell.textContent.toLowerCase();
+                    
+                    // Match if filter is empty or phone includes the filter
+                    const match = !phoneFilter || phone.includes(phoneFilter);
+                    row.dataset.phoneFilterMatch = match ? 'true' : 'false';
+                    
+                    applyCustomerFilters();
+                });
+            });
+
+            // Supplier name filter functionality
+            document.getElementById('supplierName').addEventListener('change', function() {
+                const selectedName = this.value.toLowerCase();
+                const supplierRows = document.querySelectorAll('#supplierTable tbody tr');
+                
+                supplierRows.forEach(row => {
+                    const nameCell = row.cells[1]; // Name is in the second column
+                    const name = nameCell.textContent.toLowerCase();
+                    
+                    // Match if filter is empty or name matches
+                    const match = !selectedName || name === selectedName;
+                    row.dataset.nameFilterMatch = match ? 'true' : 'false';
+                    
+                    applySupplierFilters();
+                });
+            });
+
+            // Supplier phone filter functionality
+            document.getElementById('supplierPhone').addEventListener('input', function() {
+                const phoneFilter = this.value.toLowerCase();
+                const supplierRows = document.querySelectorAll('#supplierTable tbody tr');
+                
+                supplierRows.forEach(row => {
+                    const phoneCell = row.cells[2]; // Phone is in the third column
+                    const phone = phoneCell.textContent.toLowerCase();
+                    
+                    // Match if filter is empty or phone includes the filter
+                    const match = !phoneFilter || phone.includes(phoneFilter);
+                    row.dataset.phoneFilterMatch = match ? 'true' : 'false';
+                    
+                    applySupplierFilters();
+                });
+            });
+
+            // Function to apply all customer filters
+            function applyCustomerFilters() {
+                const customerRows = document.querySelectorAll('#customerTable tbody tr');
+                let visibleCount = 0;
+                
+                customerRows.forEach(row => {
+                    // Default all filters to true if not set
+                    const nameMatch = row.dataset.nameFilterMatch !== 'false';
+                    const phoneMatch = row.dataset.phoneFilterMatch !== 'false';
+                    const searchMatch = row.dataset.searchMatch !== 'false';
+                    
+                    // Show row only if it matches all filters
+                    const isVisible = nameMatch && phoneMatch && searchMatch;
+                    row.style.display = isVisible ? '' : 'none';
+                    
+                    if (isVisible) {
+                        visibleCount++;
+                    }
+                });
+                
+                // Update pagination after filtering
+                applyCustomerPagination(1);
+            }
+
+            // Function to apply all supplier filters
+            function applySupplierFilters() {
+                const supplierRows = document.querySelectorAll('#supplierTable tbody tr');
+                let visibleCount = 0;
+                
+                supplierRows.forEach(row => {
+                    // Default all filters to true if not set
+                    const nameMatch = row.dataset.nameFilterMatch !== 'false';
+                    const phoneMatch = row.dataset.phoneFilterMatch !== 'false';
+                    const searchMatch = row.dataset.searchMatch !== 'false';
+                    
+                    // Show row only if it matches all filters
+                    const isVisible = nameMatch && phoneMatch && searchMatch;
+                    row.style.display = isVisible ? '' : 'none';
+                    
+                    if (isVisible) {
+                        visibleCount++;
+                    }
+                });
+                
+                // Update pagination after filtering
+                applySupplierPagination(1);
+            }
+
+            // Customer pagination functionality
+            function applyCustomerPagination(page) {
+                const recordsPerPage = parseInt(document.getElementById('customerRecordsPerPage').value);
+                const customerRows = document.querySelectorAll('#customerTable tbody tr');
+                const visibleRows = Array.from(customerRows).filter(row => row.style.display !== 'none');
+                const totalVisibleRecords = visibleRows.length;
+                
+                // Calculate total pages
+                const totalPages = Math.ceil(totalVisibleRecords / recordsPerPage);
+                
+                // Ensure page is within bounds
+                page = Math.min(Math.max(1, page), totalPages || 1);
+                
+                // Show only rows for current page
+                visibleRows.forEach((row, index) => {
+                    const startIndex = (page - 1) * recordsPerPage;
+                    const endIndex = startIndex + recordsPerPage - 1;
+                    
+                    row.style.display = (index >= startIndex && index <= endIndex) ? '' : 'none';
+                });
+                
+                // Update pagination info
+                const startRecord = totalVisibleRecords > 0 ? (page - 1) * recordsPerPage + 1 : 0;
+                const endRecord = Math.min(page * recordsPerPage, totalVisibleRecords);
+                
+                document.getElementById('customerStartRecord').textContent = startRecord;
+                document.getElementById('customerEndRecord').textContent = endRecord;
+                document.getElementById('customerTotalRecords').textContent = totalVisibleRecords;
+                
+                // Update pagination buttons
+                const prevPageBtn = document.getElementById('customerPrevPageBtn');
+                const nextPageBtn = document.getElementById('customerNextPageBtn');
+                
+                prevPageBtn.disabled = page === 1;
+                nextPageBtn.disabled = page === totalPages || totalPages === 0;
+                
+                // Update pagination numbers
+                const paginationNumbers = document.getElementById('customerPaginationNumbers');
+                paginationNumbers.innerHTML = '';
+                
+                for (let i = 1; i <= totalPages; i++) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.className = `btn btn-sm ${i === page ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2`;
+                    pageBtn.textContent = i;
+                    pageBtn.addEventListener('click', () => applyCustomerPagination(i));
+                    paginationNumbers.appendChild(pageBtn);
+                }
+                
+                return page;
+            }
+
+            // Supplier pagination functionality
+            function applySupplierPagination(page) {
+                const recordsPerPage = parseInt(document.getElementById('supplierRecordsPerPage').value);
+                const supplierRows = document.querySelectorAll('#supplierTable tbody tr');
+                const visibleRows = Array.from(supplierRows).filter(row => row.style.display !== 'none');
+                const totalVisibleRecords = visibleRows.length;
+                
+                // Calculate total pages
+                const totalPages = Math.ceil(totalVisibleRecords / recordsPerPage);
+                
+                // Ensure page is within bounds
+                page = Math.min(Math.max(1, page), totalPages || 1);
+                
+                // Show only rows for current page
+                visibleRows.forEach((row, index) => {
+                    const startIndex = (page - 1) * recordsPerPage;
+                    const endIndex = startIndex + recordsPerPage - 1;
+                    
+                    row.style.display = (index >= startIndex && index <= endIndex) ? '' : 'none';
+                });
+                
+                // Update pagination info
+                const startRecord = totalVisibleRecords > 0 ? (page - 1) * recordsPerPage + 1 : 0;
+                const endRecord = Math.min(page * recordsPerPage, totalVisibleRecords);
+                
+                document.getElementById('supplierStartRecord').textContent = startRecord;
+                document.getElementById('supplierEndRecord').textContent = endRecord;
+                document.getElementById('supplierTotalRecords').textContent = totalVisibleRecords;
+                
+                // Update pagination buttons
+                const prevPageBtn = document.getElementById('supplierPrevPageBtn');
+                const nextPageBtn = document.getElementById('supplierNextPageBtn');
+                
+                prevPageBtn.disabled = page === 1;
+                nextPageBtn.disabled = page === totalPages || totalPages === 0;
+                
+                // Update pagination numbers
+                const paginationNumbers = document.getElementById('supplierPaginationNumbers');
+                paginationNumbers.innerHTML = '';
+                
+                for (let i = 1; i <= totalPages; i++) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.className = `btn btn-sm ${i === page ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2`;
+                    pageBtn.textContent = i;
+                    pageBtn.addEventListener('click', () => applySupplierPagination(i));
+                    paginationNumbers.appendChild(pageBtn);
+                }
+                
+                return page;
+            }
+
+            // Add records per page change handlers
+            document.getElementById('customerRecordsPerPage').addEventListener('change', function() {
+                applyCustomerPagination(1);
+            });
+            
+            document.getElementById('supplierRecordsPerPage').addEventListener('change', function() {
+                applySupplierPagination(1);
+            });
+            
+            // Add pagination next/prev button handlers
+            document.getElementById('customerPrevPageBtn').addEventListener('click', function() {
+                const currentActivePage = document.querySelector('#customerPaginationNumbers .btn-primary');
+                if (currentActivePage) {
+                    const currentPage = parseInt(currentActivePage.textContent);
+                    applyCustomerPagination(currentPage - 1);
+                }
+            });
+            
+            document.getElementById('customerNextPageBtn').addEventListener('click', function() {
+                const currentActivePage = document.querySelector('#customerPaginationNumbers .btn-primary');
+                if (currentActivePage) {
+                    const currentPage = parseInt(currentActivePage.textContent);
+                    applyCustomerPagination(currentPage + 1);
+                }
+            });
+            
+            document.getElementById('supplierPrevPageBtn').addEventListener('click', function() {
+                const currentActivePage = document.querySelector('#supplierPaginationNumbers .btn-primary');
+                if (currentActivePage) {
+                    const currentPage = parseInt(currentActivePage.textContent);
+                    applySupplierPagination(currentPage - 1);
+                }
+            });
+            
+            document.getElementById('supplierNextPageBtn').addEventListener('click', function() {
+                const currentActivePage = document.querySelector('#supplierPaginationNumbers .btn-primary');
+                if (currentActivePage) {
+                    const currentPage = parseInt(currentActivePage.textContent);
+                    applySupplierPagination(currentPage + 1);
+                }
+            });
+            
+            // Initialize customer and supplier pagination
+            applyCustomerPagination(1);
+            applySupplierPagination(1);
+
+            // Add supplier edit button click handlers
+            document.querySelectorAll('#supplierTable .edit-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault(); // Prevent the default modal opening behavior
+                    const supplierId = this.getAttribute('data-id');
+                    
+                    // Show loading
+                    Swal.fire({
+                        title: 'تکایە چاوەڕێ بکە...',
+                        text: 'زانیاری دابینکەر بار دەکرێت',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    // Fetch supplier data
+                    fetch(`../../process/get_supplier.php?id=${supplierId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            Swal.close();
+                            if (data.success) {
+                                // Fill the edit form with supplier data
+                                document.getElementById('editSupplierId').value = data.supplier.id;
+                                document.getElementById('editSupplierName').value = data.supplier.name;
+                                document.getElementById('editSupplierPhone1').value = data.supplier.phone1;
+                                document.getElementById('editSupplierPhone2').value = data.supplier.phone2 || '';
+                                document.getElementById('editSupplierDebt').value = data.supplier.debt_on_myself || 0;
+                                document.getElementById('editSupplierNotes').value = data.supplier.notes || '';
+                                
+                                // Open the modal
+                                const editSupplierModal = new bootstrap.Modal(document.getElementById('editSupplierModal'));
+                                editSupplierModal.show();
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'هەڵە!',
+                                    text: data.message || 'دابینکەر نەدۆزرایەوە',
+                                    confirmButtonText: 'باشە'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'هەڵە!',
+                                text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە',
+                                confirmButtonText: 'باشە'
+                            });
+                        });
+                });
             });
         });
     </script>

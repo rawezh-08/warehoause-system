@@ -6,18 +6,42 @@ require_once '../../includes/auth.php';
 require_once '../../config/database.php';
 
 try {
-    // Get current date and previous period date
+    // Set the default filter period to 'today'
+    $filterPeriod = isset($_GET['period']) ? $_GET['period'] : 'today';
+
+    // Define date ranges based on filter period
     $currentDate = date('Y-m-d');
-    $previousPeriodStart = date('Y-m-d', strtotime('-30 days'));
+    
+    switch($filterPeriod) {
+        case 'today':
+            $startDate = $currentDate;
+            $previousPeriodStart = date('Y-m-d', strtotime('-1 day'));
+            $previousPeriodEnd = date('Y-m-d', strtotime('-1 day'));
+            break;
+        case 'month':
+            $startDate = date('Y-m-01'); // First day of current month
+            $previousPeriodStart = date('Y-m-d', strtotime('first day of previous month'));
+            $previousPeriodEnd = date('Y-m-d', strtotime('last day of previous month'));
+            break;
+        case 'year':
+            $startDate = date('Y-01-01'); // First day of current year
+            $previousPeriodStart = date('Y-m-d', strtotime('first day of january last year'));
+            $previousPeriodEnd = date('Y-m-d', strtotime('last day of december last year'));
+            break;
+        default:
+            $startDate = $currentDate;
+            $previousPeriodStart = date('Y-m-d', strtotime('-1 day'));
+            $previousPeriodEnd = date('Y-m-d', strtotime('-1 day'));
+    }
 
     // Fetch current period cash sales
     $currentCashSalesQuery = "SELECT COALESCE(SUM(si.total_price), 0) as total 
                              FROM sales s 
                              JOIN sale_items si ON s.id = si.sale_id 
                              WHERE s.payment_type = 'cash'
-                             AND s.date >= :previousPeriodStart";
+                             AND s.date >= :startDate";
     $stmt = $conn->prepare($currentCashSalesQuery);
-    $stmt->execute(['previousPeriodStart' => $previousPeriodStart]);
+    $stmt->execute(['startDate' => $startDate]);
     $cashSales = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
     // Fetch previous period cash sales
@@ -25,10 +49,13 @@ try {
                               FROM sales s 
                               JOIN sale_items si ON s.id = si.sale_id 
                               WHERE s.payment_type = 'cash'
-                              AND s.date < :previousPeriodStart
-                              AND s.date >= DATE_SUB(:previousPeriodStart, INTERVAL 30 DAY)";
+                              AND s.date >= :previousPeriodStart
+                              AND s.date <= :previousPeriodEnd";
     $stmt = $conn->prepare($previousCashSalesQuery);
-    $stmt->execute(['previousPeriodStart' => $previousPeriodStart]);
+    $stmt->execute([
+        'previousPeriodStart' => $previousPeriodStart,
+        'previousPeriodEnd' => $previousPeriodEnd
+    ]);
     $previousCashSales = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
     // Calculate cash sales percentage change
@@ -40,9 +67,9 @@ try {
                                FROM sales s 
                                JOIN sale_items si ON s.id = si.sale_id 
                                WHERE s.payment_type = 'credit'
-                               AND s.date >= :previousPeriodStart";
+                               AND s.date >= :startDate";
     $stmt = $conn->prepare($currentCreditSalesQuery);
-    $stmt->execute(['previousPeriodStart' => $previousPeriodStart]);
+    $stmt->execute(['startDate' => $startDate]);
     $creditSales = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
     // Fetch previous period credit sales
@@ -50,10 +77,13 @@ try {
                                 FROM sales s 
                                 JOIN sale_items si ON s.id = si.sale_id 
                                 WHERE s.payment_type = 'credit'
-                                AND s.date < :previousPeriodStart
-                                AND s.date >= DATE_SUB(:previousPeriodStart, INTERVAL 30 DAY)";
+                                AND s.date >= :previousPeriodStart
+                                AND s.date <= :previousPeriodEnd";
     $stmt = $conn->prepare($previousCreditSalesQuery);
-    $stmt->execute(['previousPeriodStart' => $previousPeriodStart]);
+    $stmt->execute([
+        'previousPeriodStart' => $previousPeriodStart,
+        'previousPeriodEnd' => $previousPeriodEnd
+    ]);
     $previousCreditSales = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
     // Calculate credit sales percentage change
@@ -65,9 +95,9 @@ try {
                                  FROM purchases p 
                                  JOIN purchase_items pi ON p.id = pi.purchase_id 
                                  WHERE p.payment_type = 'cash'
-                                 AND p.date >= :previousPeriodStart";
+                                 AND p.date >= :startDate";
     $stmt = $conn->prepare($currentCashPurchasesQuery);
-    $stmt->execute(['previousPeriodStart' => $previousPeriodStart]);
+    $stmt->execute(['startDate' => $startDate]);
     $cashPurchases = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
     // Fetch previous period cash purchases
@@ -75,10 +105,13 @@ try {
                                   FROM purchases p 
                                   JOIN purchase_items pi ON p.id = pi.purchase_id 
                                   WHERE p.payment_type = 'cash'
-                                  AND p.date < :previousPeriodStart
-                                  AND p.date >= DATE_SUB(:previousPeriodStart, INTERVAL 30 DAY)";
+                                  AND p.date >= :previousPeriodStart
+                                  AND p.date <= :previousPeriodEnd";
     $stmt = $conn->prepare($previousCashPurchasesQuery);
-    $stmt->execute(['previousPeriodStart' => $previousPeriodStart]);
+    $stmt->execute([
+        'previousPeriodStart' => $previousPeriodStart,
+        'previousPeriodEnd' => $previousPeriodEnd
+    ]);
     $previousCashPurchases = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
     // Calculate cash purchases percentage change
@@ -90,9 +123,9 @@ try {
                                    FROM purchases p 
                                    JOIN purchase_items pi ON p.id = pi.purchase_id 
                                    WHERE p.payment_type = 'credit'
-                                   AND p.date >= :previousPeriodStart";
+                                   AND p.date >= :startDate";
     $stmt = $conn->prepare($currentCreditPurchasesQuery);
-    $stmt->execute(['previousPeriodStart' => $previousPeriodStart]);
+    $stmt->execute(['startDate' => $startDate]);
     $creditPurchases = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
     // Fetch previous period credit purchases
@@ -100,17 +133,95 @@ try {
                                     FROM purchases p 
                                     JOIN purchase_items pi ON p.id = pi.purchase_id 
                                     WHERE p.payment_type = 'credit'
-                                    AND p.date < :previousPeriodStart
-                                    AND p.date >= DATE_SUB(:previousPeriodStart, INTERVAL 30 DAY)";
+                                    AND p.date >= :previousPeriodStart
+                                    AND p.date <= :previousPeriodEnd";
     $stmt = $conn->prepare($previousCreditPurchasesQuery);
-    $stmt->execute(['previousPeriodStart' => $previousPeriodStart]);
+    $stmt->execute([
+        'previousPeriodStart' => $previousPeriodStart,
+        'previousPeriodEnd' => $previousPeriodEnd
+    ]);
     $previousCreditPurchases = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
     // Calculate credit purchases percentage change
     $creditPurchasesPercentage = $previousCreditPurchases > 0 ?
         round((($creditPurchases - $previousCreditPurchases) / $previousCreditPurchases) * 100, 1) : 0;
 
-    // Fetch low stock products with unit information
+    // Calculate total customer debt (from customers table)
+    $totalCustomerDebtQuery = "SELECT COALESCE(SUM(debit_on_business), 0) as total 
+                              FROM customers";
+    $stmt = $conn->prepare($totalCustomerDebtQuery);
+    $stmt->execute();
+    $totalCustomerDebt = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+    // Calculate total supplier debt (from suppliers table)
+    $totalSupplierDebtQuery = "SELECT COALESCE(SUM(debt_on_myself), 0) as total 
+                              FROM suppliers";
+    $stmt = $conn->prepare($totalSupplierDebtQuery);
+    $stmt->execute();
+    $totalSupplierDebt = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+    // Calculate percentage changes for debts
+    // For customer debt - compare current debt with previous period
+    $customerDebtPercentage = 0;
+    try {
+        $previousPeriodCustomerDebtQuery = "SELECT COALESCE(SUM(amount), 0) as total 
+                                           FROM debt_transactions 
+                                           WHERE transaction_type IN ('sale', 'purchase')
+                                           AND created_at < :startDate
+                                           AND created_at >= :previousPeriodStart";
+        $stmt = $conn->prepare($previousPeriodCustomerDebtQuery);
+        $stmt->execute([
+            'startDate' => $startDate,
+            'previousPeriodStart' => $previousPeriodStart
+        ]);
+        $previousPeriodCustomerDebt = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        
+        $currentPeriodCustomerDebtQuery = "SELECT COALESCE(SUM(amount), 0) as total 
+                                          FROM debt_transactions 
+                                          WHERE transaction_type IN ('sale', 'purchase')
+                                          AND created_at >= :startDate";
+        $stmt = $conn->prepare($currentPeriodCustomerDebtQuery);
+        $stmt->execute(['startDate' => $startDate]);
+        $currentPeriodCustomerDebt = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        
+        if ($previousPeriodCustomerDebt > 0) {
+            $customerDebtPercentage = round((($currentPeriodCustomerDebt - $previousPeriodCustomerDebt) / $previousPeriodCustomerDebt) * 100, 1);
+        }
+    } catch (PDOException $e) {
+        $customerDebtPercentage = 0;
+    }
+
+    // For supplier debt - compare current debt with previous period
+    $supplierDebtPercentage = 0;
+    try {
+        $previousPeriodSupplierDebtQuery = "SELECT COALESCE(SUM(amount), 0) as total 
+                                           FROM supplier_debt_transactions 
+                                           WHERE transaction_type = 'purchase'
+                                           AND created_at < :startDate
+                                           AND created_at >= :previousPeriodStart";
+        $stmt = $conn->prepare($previousPeriodSupplierDebtQuery);
+        $stmt->execute([
+            'startDate' => $startDate,
+            'previousPeriodStart' => $previousPeriodStart
+        ]);
+        $previousPeriodSupplierDebt = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        
+        $currentPeriodSupplierDebtQuery = "SELECT COALESCE(SUM(amount), 0) as total 
+                                          FROM supplier_debt_transactions 
+                                          WHERE transaction_type = 'purchase'
+                                          AND created_at >= :startDate";
+        $stmt = $conn->prepare($currentPeriodSupplierDebtQuery);
+        $stmt->execute(['startDate' => $startDate]);
+        $currentPeriodSupplierDebt = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        
+        if ($previousPeriodSupplierDebt > 0) {
+            $supplierDebtPercentage = round((($currentPeriodSupplierDebt - $previousPeriodSupplierDebt) / $previousPeriodSupplierDebt) * 100, 1);
+        }
+    } catch (PDOException $e) {
+        $supplierDebtPercentage = 0;
+    }
+
+    // Fetch low stock products with unit information - limit to 4
     $lowStockQuery = "SELECT p.*, c.name as category_name, u.name as unit_name 
                       FROM products p 
                       JOIN categories c ON p.category_id = c.id 
@@ -120,7 +231,7 @@ try {
                       LIMIT 4";
     $lowStockProducts = $conn->query($lowStockQuery)->fetchAll(PDO::FETCH_ASSOC);
 
-    // Fetch top selling products with unit information
+    // Fetch top selling products with unit information - limit to 4
     $topSellingQuery = "SELECT p.*, c.name as category_name, u.name as unit_name,
                         SUM(si.quantity) as total_sold,
                         si.unit_type
@@ -237,6 +348,79 @@ try {
         $jsonError = json_last_error_msg();
         error_log("JSON encoding error: " . $jsonError);
     }
+
+    // Calculate total expenses (employee payments + expenses)
+    $totalExpensesQuery = "SELECT 
+        (SELECT COALESCE(SUM(amount), 0) FROM employee_payments WHERE created_at >= :startDate) +
+        (SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE created_at >= :startDate) as total";
+    $stmt = $conn->prepare($totalExpensesQuery);
+    $stmt->execute(['startDate' => $startDate]);
+    $totalExpenses = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+    // Get previous period expenses for percentage calculation
+    $previousExpensesQuery = "SELECT 
+        (SELECT COALESCE(SUM(amount), 0) FROM employee_payments 
+         WHERE created_at >= :previousPeriodStart AND created_at < :startDate) +
+        (SELECT COALESCE(SUM(amount), 0) FROM expenses 
+         WHERE created_at >= :previousPeriodStart AND created_at < :startDate) as total";
+    $stmt = $conn->prepare($previousExpensesQuery);
+    $stmt->execute([
+        'startDate' => $startDate,
+        'previousPeriodStart' => $previousPeriodStart
+    ]);
+    $previousExpenses = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+    // Calculate expenses percentage change
+    $expensesPercentage = $previousExpenses > 0 ?
+        round((($totalExpenses - $previousExpenses) / $previousExpenses) * 100, 1) : 0;
+
+    // Calculate total profit
+    // Total Sales - (Total Purchases + Total Expenses)
+    $totalProfitQuery = "SELECT 
+        (SELECT COALESCE(SUM(si.total_price), 0) 
+         FROM sales s 
+         JOIN sale_items si ON s.id = si.sale_id 
+         WHERE s.date >= :startDate) -
+        ((SELECT COALESCE(SUM(pi.total_price), 0) 
+          FROM purchases p 
+          JOIN purchase_items pi ON p.id = pi.purchase_id 
+          WHERE p.date >= :startDate) +
+         (SELECT COALESCE(SUM(amount), 0) 
+          FROM expenses 
+          WHERE created_at >= :startDate) +
+         (SELECT COALESCE(SUM(amount), 0) 
+          FROM employee_payments 
+          WHERE created_at >= :startDate)) as total";
+    $stmt = $conn->prepare($totalProfitQuery);
+    $stmt->execute(['startDate' => $startDate]);
+    $totalProfit = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+    // Get previous period profit for percentage calculation
+    $previousProfitQuery = "SELECT 
+        (SELECT COALESCE(SUM(si.total_price), 0) 
+         FROM sales s 
+         JOIN sale_items si ON s.id = si.sale_id 
+         WHERE s.date >= :previousPeriodStart AND s.date < :startDate) -
+        ((SELECT COALESCE(SUM(pi.total_price), 0) 
+          FROM purchases p 
+          JOIN purchase_items pi ON p.id = pi.purchase_id 
+          WHERE p.date >= :previousPeriodStart AND p.date < :startDate) +
+         (SELECT COALESCE(SUM(amount), 0) 
+          FROM expenses 
+          WHERE created_at >= :previousPeriodStart AND created_at < :startDate) +
+         (SELECT COALESCE(SUM(amount), 0) 
+          FROM employee_payments 
+          WHERE created_at >= :previousPeriodStart AND created_at < :startDate)) as total";
+    $stmt = $conn->prepare($previousProfitQuery);
+    $stmt->execute([
+        'startDate' => $startDate,
+        'previousPeriodStart' => $previousPeriodStart
+    ]);
+    $previousProfit = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+    // Calculate profit percentage change
+    $profitPercentage = $previousProfit > 0 ?
+        round((($totalProfit - $previousProfit) / $previousProfit) * 100, 1) : 0;
 } catch (PDOException $e) {
     die("Connection failed: " . $e->getMessage());
 }

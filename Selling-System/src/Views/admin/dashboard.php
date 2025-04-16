@@ -25,6 +25,28 @@ require_once '../../process/dashboard_logic.php';
     <link rel="stylesheet" href="../../css/global.css">
     <!-- Dashboard Specific Styles -->
     <link rel="stylesheet" href="../../css/dashboard_styles.css">
+    <style>
+        .filter-buttons {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+        .filter-buttons .btn {
+            padding: 8px 15px;
+            font-size: 14px;
+            margin: 0 5px;
+            border-radius: 20px;
+        }
+        .kpi-value {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 5px;
+            direction: ltr;
+        }
+        .kpi-value .currency {
+            order: -1;
+        }
+    </style>
 </head>
 
 <body>
@@ -68,6 +90,18 @@ require_once '../../process/dashboard_logic.php';
                                     </div>
                                     <span class="quick-access-text">هەژمارەکان</span>
                                 </a>
+                            </div>
+                        </div>
+                    </div>
+           
+                    
+                    <!-- Period Filter -->
+                    <div class="row mb-4 mt-4">
+                        <div class="col-12">
+                            <div class="filter-buttons">
+                                <a href="?period=today" class="btn <?php echo (!isset($_GET['period']) || $_GET['period'] == 'today') ? 'btn-primary' : 'btn-outline-primary'; ?>">ئەمڕۆ</a>
+                                <a href="?period=month" class="btn <?php echo (isset($_GET['period']) && $_GET['period'] == 'month') ? 'btn-primary' : 'btn-outline-primary'; ?>">ئەم مانگە</a>
+                                <a href="?period=year" class="btn <?php echo (isset($_GET['period']) && $_GET['period'] == 'year') ? 'btn-primary' : 'btn-outline-primary'; ?>">ئەم ساڵ</a>
                             </div>
                         </div>
                     </div>
@@ -144,7 +178,7 @@ require_once '../../process/dashboard_logic.php';
                             </div>
                         </div>
 
-                        <!-- KPI Card 5 -->
+                        <!-- KPI Card 5 - Customer Debt -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
                             <div class="kpi-card h-100">
                                 <div class="kpi-icon-wrapper">
@@ -154,27 +188,64 @@ require_once '../../process/dashboard_logic.php';
                                     </div>
                                 </div>
                                 <div class="kpi-content">
-                                    <div class="kpi-value"><?php echo number_format($creditPurchases, 0, '.', ','); ?> <span class="currency">د.ع</span></div>
-                                    <div class="kpi-comparison <?php echo $creditPurchasesPercentage >= 0 ? 'positive' : 'negative'; ?>">
-                                        <i class="fas fa-arrow-<?php echo $creditPurchasesPercentage >= 0 ? 'up' : 'down'; ?>"></i> <?php echo abs($creditPurchasesPercentage); ?>%
+                                    <div class="kpi-value"><?php echo number_format($totalCustomerDebt, 0, '.', ','); ?> <span class="currency">د.ع</span></div>
+                                    <div class="kpi-comparison <?php echo $customerDebtPercentage >= 0 ? 'positive' : 'negative'; ?>">
+                                        <i class="fas fa-arrow-<?php echo $customerDebtPercentage >= 0 ? 'up' : 'down'; ?>"></i> <?php echo abs($customerDebtPercentage); ?>%
                                     </div>
                                 </div>
                             </div>
                         </div>
 
 
-                        <!-- KPI Card ٦ -->
+                        <!-- KPI Card 6 - Supplier Debt -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
                             <div class="kpi-card h-100">
                                 <div class="kpi-icon-wrapper">
                                     <h3 class="kpi-title">قەرزی دابینکەر لەسەر ئێمە</h3>
                                     <div class="kpi-icon purple">
-                                    <img src="../../assets/icons/seller-money.svg" alt="">                                       </div>
+                                        <img src="../../assets/icons/seller-money.svg" alt="">
+                                    </div>
                                 </div>
                                 <div class="kpi-content">
-                                    <div class="kpi-value"><?php echo number_format($creditPurchases, 0, '.', ','); ?> <span class="currency">د.ع</span></div>
-                                    <div class="kpi-comparison <?php echo $creditPurchasesPercentage >= 0 ? 'positive' : 'negative'; ?>">
-                                        <i class="fas fa-arrow-<?php echo $creditPurchasesPercentage >= 0 ? 'up' : 'down'; ?>"></i> <?php echo abs($creditPurchasesPercentage); ?>%
+                                    <div class="kpi-value"><?php echo number_format($totalSupplierDebt, 0, '.', ','); ?> <span class="currency">د.ع</span></div>
+                                    <div class="kpi-comparison <?php echo $supplierDebtPercentage >= 0 ? 'positive' : 'negative'; ?>">
+                                        <i class="fas fa-arrow-<?php echo $supplierDebtPercentage >= 0 ? 'up' : 'down'; ?>"></i> <?php echo abs($supplierDebtPercentage); ?>%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI Card 7 - Total Expenses -->
+                        <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
+                            <div class="kpi-card h-100">
+                                <div class="kpi-icon-wrapper">
+                                    <h3 class="kpi-title">کۆی مەسروفات</h3>
+                                    <div class="kpi-icon red">
+                                        <img src="../../assets/icons/expenses.svg" alt="">
+                                    </div>
+                                </div>
+                                <div class="kpi-content">
+                                    <div class="kpi-value"><?php echo number_format($totalExpenses, 0, '.', ','); ?> <span class="currency">د.ع</span></div>
+                                    <div class="kpi-comparison <?php echo $expensesPercentage >= 0 ? 'positive' : 'negative'; ?>">
+                                        <i class="fas fa-arrow-<?php echo $expensesPercentage >= 0 ? 'up' : 'down'; ?>"></i> <?php echo abs($expensesPercentage); ?>%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI Card 8 - Total Profit -->
+                        <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
+                            <div class="kpi-card h-100">
+                                <div class="kpi-icon-wrapper">
+                                    <h3 class="kpi-title">کۆی قازانج</h3>
+                                    <div class="kpi-icon green">
+                                        <img src="../../assets/icons/profit.svg" alt="">
+                                    </div>
+                                </div>
+                                <div class="kpi-content">
+                                    <div class="kpi-value"><?php echo number_format($totalProfit, 0, '.', ','); ?> <span class="currency">د.ع</span></div>
+                                    <div class="kpi-comparison <?php echo $profitPercentage >= 0 ? 'positive' : 'negative'; ?>">
+                                        <i class="fas fa-arrow-<?php echo $profitPercentage >= 0 ? 'up' : 'down'; ?>"></i> <?php echo abs($profitPercentage); ?>%
                                     </div>
                                 </div>
                             </div>
@@ -189,25 +260,6 @@ require_once '../../process/dashboard_logic.php';
                                 <div class="card-header bg-transparent border-0">
                                     <div class="chart-header d-flex justify-content-between align-items-center flex-wrap">
                                         <h5 class="chart-title mb-2 mb-md-0">شیکاری فرۆش و کڕین</h5>
-                                        <div class="chart-actions">
-                                            <button class="btn btn-sm btn-outline-primary me-2">
-                                                <i class="fas fa-download"></i> <span class="d-none d-md-inline">داگرتن</span>
-                                            </button>
-                                            <div class="dropdown d-inline-block">
-                                                <button class="btn btn-sm btn-light" type="button" id="chartOptionsDropdown"
-                                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                                    <i class="fas fa-ellipsis-v"></i>
-                                                </button>
-                                                <ul class="dropdown-menu" aria-labelledby="chartOptionsDropdown">
-                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-sync me-2"></i>
-                                                            نوێکردنەوە</a></li>
-                                                    <li><a class="dropdown-item" href="#"><i
-                                                                class="fas fa-share-alt me-2"></i> هاوبەشکردن</a></li>
-                                                    <li><a class="dropdown-item" href="#" id="changeChartType"><i
-                                                                class="fas fa-chart-pie me-2"></i> گۆڕینی جۆری چارت</a></li>
-                                                </ul>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                                 <div class="card-body">
