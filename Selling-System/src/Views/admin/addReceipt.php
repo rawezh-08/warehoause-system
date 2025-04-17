@@ -27,19 +27,18 @@ require_once '../../config/database.php';
 <body>
     <!-- Top Navigation -->
     <div class="main-content">
-    <div class="container-fluid px-0">
+   
         <div id="navbar-container"></div>
 
-    <div class="top-nav px-3">
+ 
        
 <!-- Sidebar container - will be populated by JavaScript -->
 <div id="sidebar-container"></div>
     
-            <div class="d-flex justify-content-between align-items-center" style="background-color: transparent;">
+<div class="d-flex justify-content-between align-items-center mt-5" style="background-color: transparent;">
                 <?php include 'receipt_type_section.php'; ?>
             </div>
-        </div>
-    </div>
+  
 
     <div class="container-fluid px-0">
         <!-- Tabs Navigation -->
@@ -207,7 +206,10 @@ require_once '../../config/database.php';
 
                     <!-- Submit Button -->
                     <div class="mt-4 text-start">
-                        <button type="submit" class="btn btn-primary save-btn cta-btn ">
+                        <button type="button" class="btn btn-outline-primary draft-btn">
+                            <i class="fas fa-file-alt"></i> ڕەشنووس
+                        </button>
+                        <button type="button" class="btn btn-primary save-btn cta-btn ">
                             پاشەکەوتکردن <i class="fas fa-save"></i>
                         </button>
                     </div>
@@ -359,8 +361,11 @@ require_once '../../config/database.php';
 
             <!-- Submit Button -->
             <div class="mt-4 text-start">
-                <button type="submit" class="btn btn-primary save-btn cta-btn">
-                پاشەکەوتکردن   <i class="fas fa-save"></i> 
+                <button type="button" class="btn btn-outline-primary draft-btn">
+                    <i class="fas fa-file-alt"></i> ڕەشنووس
+                </button>
+                <button type="button" class="btn btn-primary save-btn cta-btn">
+                    پاشەکەوتکردن   <i class="fas fa-save"></i> 
                 </button>
             </div>
         </div>
@@ -483,7 +488,10 @@ require_once '../../config/database.php';
 
             <!-- Submit Button -->
             <div class="mt-4 text-start">
-                <button type="submit" class="btn btn-primary save-btn">
+                <button type="button" class="btn btn-outline-primary draft-btn">
+                    <i class="fas fa-file-alt"></i> ڕەشنووس
+                </button>
+                <button type="button" class="btn btn-primary save-btn">
                     <i class="fas fa-save"></i> پاشەکەوتکردن
                 </button>
             </div>
@@ -638,7 +646,10 @@ require_once '../../config/database.php';
 
             <!-- Submit Button -->
             <div class="mt-4 text-start">
-                <button type="submit" class="btn btn-primary save-btn">
+                <button type="button" class="btn btn-outline-primary draft-btn">
+                    <i class="fas fa-file-alt"></i> ڕەشنووس
+                </button>
+                <button type="button" class="btn btn-primary save-btn">
                     <i class="fas fa-save"></i> پاشەکەوتکردن
                 </button>
             </div>

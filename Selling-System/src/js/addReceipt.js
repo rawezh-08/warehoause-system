@@ -907,7 +907,7 @@ $(document).ready(function() {
         
         // Save button handler
         $(`#${tabId} .save-btn`).on('click', function() {
-            saveReceipt(tabId, tabType);
+            saveReceipt(tabId, tabType, false);
         });
 
         // Add costs and profits button for selling tab
@@ -922,6 +922,11 @@ $(document).ready(function() {
             // Add the button next to the save button
             $(`#${tabId} .save-btn`).before(costsBtn);
         }
+        
+        // Add draft button click handler
+        $(`#${tabId} .draft-btn`).on('click', function() {
+            saveReceipt(tabId, tabType, true);
+        });
     }
 
     // Add a new row to the items table
@@ -1511,145 +1516,91 @@ $(document).ready(function() {
         tabPane.find('.remaining-amount').val(remainingAmount.toFixed(2));
     }
 
-    // Save receipt
-    function saveReceipt(tabId, tabType) {
-        console.log(`Saving receipt for tab ${tabId}, type: ${tabType}`);
-        
+    // Function to save receipt (either as draft or normal)
+    function saveReceipt(tabId, tabType, isDraft = false) {
+        console.log(`Saving ${tabType} receipt ${tabId}. Is draft: ${isDraft}`);
         const tabPane = $(`#${tabId}`);
-        const formData = collectReceiptData(tabPane, tabType);
         
-        if (!formData) {
+        // Collect data from the form
+        let receiptData = collectReceiptData(tabPane, tabType);
+        
+        if (!receiptData) {
             console.error('Failed to collect form data');
             return;
         }
         
-        if (!formData.invoice_number) {
-            Swal.fire({
-                title: 'هەڵە!',
-                text: 'ژمارەی پسوڵە پێویستە',
-                icon: 'error',
-                confirmButtonText: 'باشە'
-            });
-            return;
+        // Set the draft flag if needed
+        if (isDraft) {
+            receiptData.is_draft = true;
+            console.log('Setting receipt as DRAFT');
         }
         
-        if (!formData.payment_type) {
-            Swal.fire({
-                title: 'هەڵە!',
-                text: 'جۆری پارەدان پێویستە',
-                icon: 'error',
-                confirmButtonText: 'باشە'
-            });
-            return;
-        }
+        // Convert to JSON
+        const jsonData = JSON.stringify(receiptData);
+        console.log('Receipt data:', jsonData);
         
-        if (tabType === RECEIPT_TYPES.SELLING && !formData.customer_id) {
-            Swal.fire({
-                title: 'هەڵە!',
-                text: 'کڕیار پێویستە',
-                icon: 'error',
-                confirmButtonText: 'باشە'
-            });
-            return;
-        } else if (tabType === RECEIPT_TYPES.BUYING && !formData.supplier_id) {
-            Swal.fire({
-                title: 'هەڵە!',
-                text: 'فرۆشیار پێویستە',
-                icon: 'error',
-                confirmButtonText: 'باشە'
-            });
-            return;
-        }
-        
-        if (!formData.products || formData.products.length === 0) {
-            Swal.fire({
-                title: 'هەڵە!',
-                text: 'کاڵاکان پێویستن',
-                icon: 'error',
-                confirmButtonText: 'باشە'
-            });
-            return;
-        }
-        
-        // Show loading state
-        const saveBtn = tabPane.find('.save-btn');
-        saveBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> جاری پاشەکەوتکردن...');
-        
-        // Log the data being sent
-        console.log('Sending data to server:', formData);
+        // Show loading indicator
+        Swal.fire({
+            title: isDraft ? 'پاشەکەوتکردنی ڕەشنووس...' : 'پاشەکەوتکردن...',
+            text: isDraft ? 'ڕەشنووسی پسووڵە پاشەکەوت دەکرێت' : 'پسووڵە پاشەکەوت دەکرێت',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
         
         // Send data to server
         $.ajax({
             url: '../../api/save_receipt.php',
             type: 'POST',
+            data: jsonData,
             contentType: 'application/json',
-            data: JSON.stringify(formData),
             success: function(response) {
+                console.log('Server response:', response);
                 if (response.success) {
-                    // For selling receipts only, show the print confirmation dialog
-                    if (tabType === RECEIPT_TYPES.SELLING) {
-                        // Store the receipt ID in the tab's data for later use
-                        tabPane.data('saved-receipt-id', response.receipt_id);
+                    // Store the receipt ID in the tab
+                    tabPane.data('saved-receipt-id', response.receipt_id);
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: isDraft ? 'ڕەشنووس پاشەکەوت کرا' : 'پاشەکەوت کرا',
+                        text: response.message,
+                        showCancelButton: true,
+                        confirmButtonText: 'بەڵێ، چاپی بکە',
+                        cancelButtonText: 'نەخێر',
+                        reverseButtons: true,
+                        customClass: {
+                            confirmButton: 'btn btn-success ms-2',
+                            cancelButton: 'btn btn-secondary'
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Open print window
+                            window.open(`../../views/receipt/print_receipt.php?sale_id=${response.receipt_id}`, '_blank');
+                        }
                         
-                        Swal.fire({
-                            title: 'سەرکەوتوو بوو!',
-                            text: 'پسوڵەی فرۆشتن بە سەرکەوتووی پاشەکەوت کرا. دەتەوێت پسوڵەکە چاپ بکەیت؟',
-                            icon: 'success',
-                            showCancelButton: true,
-                            confirmButtonText: 'بەڵێ، چاپی بکە',
-                            cancelButtonText: 'نەخێر'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                // Open the print receipt page in a new window/tab with the sale_id
-                                window.open(`../../views/receipt/print_receipt.php?sale_id=${response.receipt_id}`, '_blank');
-                            }
-                            // Reset the form after printing or if user chooses not to print
-                            resetForm(tabPane, tabType);
-                        });
-                    } else {
-                        // For other receipt types, just show a success message
-                        Swal.fire({
-                            title: 'سەرکەوتوو بوو!',
-                            text: 'پسوڵە بە سەرکەوتووی پاشەکەوت کرا.',
-                            icon: 'success',
-                            confirmButtonText: 'باشە'
-                        }).then(() => {
-                            resetForm(tabPane, tabType);
-                        });
-                    }
+                        // Reset form after handling print dialog
+                        resetForm(tabPane, tabType);
+                        // Fetch new invoice number
+                        fetchNextInvoiceNumber(tabType);
+                    });
                 } else {
                     Swal.fire({
-                        title: 'هەڵە!',
-                        text: response.message || 'هەڵەیەکی ڕوویدا لەکاتی پاشەکەوتکردن.',
                         icon: 'error',
+                        title: 'هەڵە!',
+                        text: response.message,
                         confirmButtonText: 'باشە'
                     });
                 }
             },
             error: function(xhr, status, error) {
-                console.error('Error:', error);
-                console.error('Response:', xhr.responseText);
-                
-                let errorMessage = 'هەڵەیەکی پەیوەندی ڕوویدا.';
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    if (response.message) {
-                        errorMessage = response.message;
-                    }
-                } catch (e) {
-                    // If JSON parsing fails, use the default error message
-                    console.error('Failed to parse error response:', e);
-                }
-                
+                console.error('Error saving receipt:', error);
                 Swal.fire({
-                    title: 'هەڵە!',
-                    text: errorMessage,
                     icon: 'error',
+                    title: 'هەڵە!',
+                    text: 'هەڵەیەک ڕوویدا لە کاتی پاشەکەوتکردن. تکایە دووبارە هەوڵ بدەوە.',
                     confirmButtonText: 'باشە'
                 });
-            },
-            complete: function() {
-                saveBtn.prop('disabled', false).html('<i class="fas fa-save me-2"></i> پاشەکەوتکردن');
             }
         });
     }
@@ -2419,4 +2370,193 @@ $(document).ready(function() {
             `)
             .appendTo('head');
     }
+
+    // Add CSS styles to the head
+    $('head').append(`
+        <style>
+            /* Action Column Styles */
+            .action-column {
+                min-width: 140px !important;
+            }
+            
+            .action-buttons {
+                display: flex;
+                gap: 8px;
+                justify-content: flex-end;
+            }
+            
+            .action-buttons .btn {
+                width: 36px;
+                height: 36px;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 8px;
+                transition: all 0.3s ease;
+                border: none;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            
+            .action-buttons .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            }
+            
+            .action-buttons .btn i {
+                font-size: 16px;
+            }
+            
+            /* Info Button */
+            .action-buttons .btn-info {
+                background: linear-gradient(145deg, #0dcaf0, #0b96b2);
+                color: white;
+            }
+            
+            .action-buttons .btn-info:hover {
+                background: linear-gradient(145deg, #0dd3fc, #0ba3c2);
+            }
+            
+            /* Success Button (Profit) */
+            .action-buttons .btn-success {
+                background: linear-gradient(145deg, #198754, #157347);
+                color: white;
+            }
+            
+            .action-buttons .btn-success:hover {
+                background: linear-gradient(145deg, #1a9358, #168049);
+            }
+            
+            /* Danger Button */
+            .action-buttons .btn-danger {
+                background: linear-gradient(145deg, #dc3545, #bb2d3b);
+                color: white;
+            }
+            
+            .action-buttons .btn-danger:hover {
+                background: linear-gradient(145deg, #e1394a, #c43340);
+            }
+            
+            /* Main Action Buttons */
+            .draft-btn,
+            .costs-btn,
+            .save-btn {
+                padding: 10px 20px;
+                border-radius: 8px;
+                font-weight: 500;
+                transition: all 0.3s ease;
+                border: none;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                margin: 0 5px;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .draft-btn {
+                background: linear-gradient(145deg, #6c757d, #5c636a);
+                color: white;
+            }
+            
+            .draft-btn:hover {
+                background: linear-gradient(145deg, #757f88, #636b74);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            }
+            
+            .costs-btn {
+                background: linear-gradient(145deg, #0dcaf0, #0b96b2);
+                color: white;
+            }
+            
+            .costs-btn:hover {
+                background: linear-gradient(145deg, #0dd3fc, #0ba3c2);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            }
+            
+            .save-btn {
+                background: linear-gradient(145deg, #0d6efd, #0b5ed7);
+                color: white;
+            }
+            
+            .save-btn:hover {
+                background: linear-gradient(145deg, #0d76ff, #0b64e4);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            }
+            
+            .draft-btn i,
+            .costs-btn i,
+            .save-btn i {
+                font-size: 16px;
+            }
+            
+            /* Button Group Container */
+            .mt-4.text-start {
+                display: flex;
+                gap: 10px;
+                justify-content: flex-end;
+                align-items: center;
+            }
+            
+            /* Tooltip Styles */
+            [title] {
+                position: relative;
+            }
+            
+            [title]:hover::after {
+                content: attr(title);
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 5px 10px;
+                background: rgba(0,0,0,0.8);
+                color: white;
+                font-size: 12px;
+                border-radius: 4px;
+                white-space: nowrap;
+                z-index: 1000;
+                margin-bottom: 5px;
+            }
+            
+            /* Product Image Cell Styles */
+            .product-image-cell {
+                width: 120px;
+                padding: 5px !important;
+            }
+            
+            .product-image-container {
+                width: 100px;
+                height: 100px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background-color: #fff;
+                border-radius: 8px;
+                border: 1px solid #dee2e6;
+                overflow: hidden;
+                margin: 0 auto;
+            }
+            
+            .product-table-image {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+                border-radius: 6px;
+            }
+            
+            .no-image-placeholder {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background-color: #f8f9fa;
+                color: #adb5bd;
+                font-size: 24px;
+            }
+        </style>
+    `);
 });
