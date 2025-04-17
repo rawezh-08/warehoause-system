@@ -35,7 +35,7 @@ require_once '../../config/database.php';
 <!-- Sidebar container - will be populated by JavaScript -->
 <div id="sidebar-container"></div>
     
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between align-items-center" style="background-color: transparent;">
                 <?php include 'receipt_type_section.php'; ?>
             </div>
         </div>
