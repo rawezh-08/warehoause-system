@@ -51,10 +51,73 @@
         }
         
         .total-balances {
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .total-balances:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .total-balances .card-body {
+            padding: 2rem 1.5rem;
+        }
+        
+        .total-balances .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+        
+        .total-balances .balance-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+        
+        .total-balances.overall-balance {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .total-balances.positive-card {
+            background: linear-gradient(135deg, #48c6ef 0%, #6f86d6 100%);
+        }
+        
+        .total-balances.negative-card {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+        }
+        
+        .total-balances.overall-balance *,
+        .total-balances.positive-card *,
+        .total-balances.negative-card * {
+            color: white !important;
+        }
+        
+        .balance-amount {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+        
+        .balance-amount.animate {
+            animation: numberChange 0.5s ease-out;
+        }
+        
+        @keyframes numberChange {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .small-text {
+            font-size: 0.85rem;
+            opacity: 0.9;
         }
         
         .view-toggle-btn {
@@ -64,148 +127,153 @@
         /* Card styles */
         .supplier-cards-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.25rem;
+            padding: 0.75rem;
         }
         
         .supplier-card {
-            width: 100%;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            background: white;
+            border: 1px solid #e5e7eb;
             border-radius: 10px;
-            margin-bottom: 0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
             cursor: pointer;
         }
         
         .supplier-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
         
-        .supplier-card.positive {
-            border-left: 5px solid #198754;
+        .supplier-card .card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid #f3f4f6;
+            background: #f9fafb;
+            border-radius: 10px 10px 0 0;
         }
         
-        .supplier-card.negative {
-            border-left: 5px solid #dc3545;
-        }
-        
-        .supplier-card.zero {
-            border-left: 5px solid #6c757d;
-        }
-        
-        .card-icons {
-            font-size: 1.2rem;
-            margin-left: 5px;
-        }
-        
-        .card-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-        
-        .card-actions .btn {
-            flex: 1;
-            min-width: 120px;
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            background-color: #f8f9fa;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-        }
-        
-        .card-title {
-            margin: 0;
+        .supplier-card .card-title {
             font-size: 1.1rem;
-            flex: 1;
-            font-weight: bold;
-        }
-        
-        .card-badge {
-            font-size: 0.8rem;
-            padding: 5px 10px;
-            border-radius: 5px;
-        }
-        
-        .card-body {
-            padding: 15px;
-        }
-        
-        .card-text {
-            margin-bottom: 10px;
+            font-weight: 600;
+            color: #111827;
             display: flex;
             align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
         }
         
-        .card-balance {
-            font-size: 1.2rem;
-            font-weight: bold;
+        .supplier-card .card-title i {
+            color: #6b7280;
+            font-size: 1rem;
         }
         
-        .debt-info {
-            background-color: #f8f9fa;
+        .supplier-card .contact-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
+        .supplier-card .card-body {
+            padding: 1.25rem;
+        }
+        
+        .supplier-card .balance-section {
+            text-align: center;
+            padding: 1rem;
+            margin-bottom: 1rem;
             border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 15px;
         }
         
-        .debt-info p {
-            margin-bottom: 8px;
+        .supplier-card .balance-amount {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
         }
         
-        .debt-info p:last-child {
-            margin-bottom: 0;
-            padding-top: 8px;
-            border-top: 1px dashed #dee2e6;
+        .supplier-card .balance-amount i {
+            font-size: 1.25rem;
+        }
+        
+        .supplier-card .balance-positive {
+            color: #059669;
+            background: #ecfdf5;
+        }
+        
+        .supplier-card .balance-negative {
+            color: #dc2626;
+            background: #fef2f2;
+        }
+        
+        .supplier-card .balance-zero {
+            color: #6b7280;
+            background: #f3f4f6;
+        }
+        
+        .supplier-card .balance-label {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        
+        .supplier-card .card-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+        
+        .supplier-card .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1rem;
+            font-size: 0.875rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        
+        .supplier-card .btn i {
+            font-size: 0.875rem;
+        }
+        
+        .supplier-card .btn-primary {
+            background: #3b82f6;
+            border: none;
+            color: white;
+        }
+        
+        .supplier-card .btn-primary:hover {
+            background: #2563eb;
+        }
+        
+        .supplier-card .btn-secondary {
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            color: #4b5563;
+        }
+        
+        .supplier-card .btn-secondary:hover {
+            background: #e5e7eb;
         }
         
         @media (max-width: 768px) {
             .supplier-cards-container {
                 grid-template-columns: 1fr;
-                gap: 15px;
+                gap: 1rem;
             }
             
-            .card-actions .btn {
-                min-width: 100px;
+            .supplier-card .card-actions {
+                grid-template-columns: 1fr;
             }
             
-            .card-title {
-                font-size: 1rem;
-            }
-            
-            .card-balance {
-                font-size: 1.1rem;
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .supplier-cards-container {
-                gap: 10px;
-            }
-            
-            .card-actions {
-                flex-direction: column;
-            }
-            
-            .card-actions .btn {
-                width: 100%;
-            }
-            
-            .card-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .card-badge {
-                align-self: flex-start;
+            .supplier-card .card-header,
+            .supplier-card .card-body {
+                padding: 1rem;
             }
         }
     </style>
@@ -232,31 +300,34 @@
                 </div>
 
                 <!-- Summary Cards -->
-                <div class="row mb-4">
+                <div class="row g-4 mb-4">
                     <div class="col-md-4">
-                        <div class="card bg-light total-balances">
+                        <div class="card total-balances overall-balance">
                             <div class="card-body text-center">
-                                <h5 class="card-title">باڵانسی گشتی</h5>
-                                <h2 class="mt-3" id="totalBalance">0 دینار</h2>
-                                <p id="balanceDescription" class="mb-0"></p>
+                                <i class="fas fa-balance-scale balance-icon"></i>
+                                <h5 class="card-title">کۆی باڵانس</h5>
+                                <p class="text-muted small-text mb-2">(جیاوازی نێوان قەرزی ئێمە و ئەوان)</p>
+                                <h2 class="balance-amount" id="totalBalance">0 دینار</h2>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card bg-light total-balances">
+                        <div class="card total-balances positive-card">
                             <div class="card-body text-center">
+                                <i class="fas fa-arrow-circle-down balance-icon"></i>
                                 <h5 class="card-title">پارەی لای ئێمە</h5>
-                                <p class="text-muted small mb-2">(ئەو پارەیەی کە دابینکەرەکان دەبێت بیدەن بە ئێمە)</p>
-                                <h2 class="mt-3 positive-balance" id="totalTheyOweUs">0 دینار</h2>
+                                <p class="text-muted small-text mb-2">(ئەو پارەیەی کە دابینکەرەکان دەبێت بیدەن بە ئێمە)</p>
+                                <h2 class="balance-amount" id="totalTheyOweUs">0 دینار</h2>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card bg-light total-balances">
+                        <div class="card total-balances negative-card">
                             <div class="card-body text-center">
+                                <i class="fas fa-arrow-circle-up balance-icon"></i>
                                 <h5 class="card-title">پارەی لای ئەوان</h5>
-                                <p class="text-muted small mb-2">(ئەو پارەیەی کە ئێمە دەبێت بیدەین بە دابینکەرەکان)</p>
-                                <h2 class="mt-3 negative-balance" id="totalWeOweThem">0 دینار</h2>
+                                <p class="text-muted small-text mb-2">(ئەو پارەیەی کە ئێمە دەبێت بیدەین بە دابینکەرەکان)</p>
+                                <h2 class="balance-amount" id="totalWeOweThem">0 دینار</h2>
                             </div>
                         </div>
                     </div>
@@ -299,7 +370,38 @@
                 <!-- Card View for supplier balances -->
                 <div id="supplierCardsView" class="mb-4">
                     <div class="supplier-cards-container" id="supplierCardsContainer">
-                        <!-- Supplier cards will be loaded dynamically -->
+                        <!-- Example of enhanced supplier card structure -->
+                        <div class="supplier-card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fas fa-store"></i>
+                                    <span>ناوی فرۆشیار</span>
+                                </div>
+                                <div class="contact-info">
+                                    <i class="fas fa-phone"></i>
+                                    <span>ژمارە تەلەفۆن</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="balance-section balance-positive">
+                                    <div class="balance-amount">
+                                        <i class="fas fa-arrow-up"></i>
+                                        <span>1,500,000 دینار</span>
+                                    </div>
+                                    <div class="balance-label">باڵانسی کۆتایی</div>
+                                </div>
+                                <div class="card-actions">
+                                    <button type="button" class="btn btn-primary" onclick="openPaymentModal('1')">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                        <span>زیادکردنی پارەدان</span>
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="viewHistory('1')">
+                                        <i class="fas fa-history"></i>
+                                        <span>مێژووی پارەدان</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
