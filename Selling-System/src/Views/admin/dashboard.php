@@ -221,7 +221,7 @@ require_once '../../process/dashboard_logic.php';
                                 <div class="kpi-icon-wrapper">
                                     <h3 class="kpi-title">کۆی مەسروفات</h3>
                                     <div class="kpi-icon red">
-                                        <img src="../../assets/icons/expenses.svg" alt="">
+                                        <img src="../../assets/icons/spending-icon.svg" alt="">
                                     </div>
                                 </div>
                                 <div class="kpi-content">
@@ -239,7 +239,7 @@ require_once '../../process/dashboard_logic.php';
                                 <div class="kpi-icon-wrapper">
                                     <h3 class="kpi-title">کۆی قازانج</h3>
                                     <div class="kpi-icon green">
-                                        <img src="../../assets/icons/profit.svg" alt="">
+                                        <img src="../../assets/icons/profit-icon.svg" alt="">
                                     </div>
                                 </div>
                                 <div class="kpi-content">
