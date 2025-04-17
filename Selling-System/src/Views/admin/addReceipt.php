@@ -36,18 +36,7 @@ require_once '../../config/database.php';
 <div id="sidebar-container"></div>
     
             <div class="d-flex justify-content-between align-items-center">
-                <div class="receipt-type-container">
-                    <h5 class="mb-0 ms-2">جۆری پسوڵە</h5>
-                    <div class="btn-group receipt-types" role="group">
-                        <button class="btn receipt-type-btn active" data-type="selling">فرۆشتن</button>
-                        <button class="btn receipt-type-btn" data-type="buying">کڕین</button>
-                        <button class="btn receipt-type-btn" data-type="wasting">بەفیڕۆچوو</button>
-                    </div>
-                </div>
-                <!-- <div class="checkbox-group">
-                    <input type="checkbox" id="showCanceled" class="form-check-input">
-                    <label for="showCanceled">کارەکانی هەڵوەشاوە</label>
-                </div> -->
+                <?php include 'receipt_type_section.php'; ?>
             </div>
         </div>
     </div>
@@ -411,7 +400,7 @@ require_once '../../config/database.php';
                             <th>کاڵا</th>
                             <th>وێنە</th>
                             <th>بڕی بەردەست</th>
-                            <th>بڕی ڕێکخراو</th>
+                            <th>بڕی بەفیڕۆچوو</th>
                             <th>نرخی یەکە</th>
                             <th>وەسفکردن</th>
                             <th>کۆی گشتی</th>
@@ -450,7 +439,7 @@ require_once '../../config/database.php';
                     <input type="date" class="form-control adjustment-date">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">هۆکاری ڕێکخستنەوە</label>
+                    <label class="form-label">هۆکاری زیان</label>
                     <select class="form-select adjustment-reason">
                         <option value="damaged">کاڵای زیانمەند</option>
                         <option value="expired">کاڵای بەسەرچوو</option>
@@ -695,11 +684,15 @@ require_once '../../config/database.php';
             $('.sale-date, .purchase-date, .adjustment-date').val(today);
 
             // Initialize receipt type buttons
-            $('.receipt-type-btn').on('click', function() {
-                $('.receipt-type-btn').removeClass('active');
-                $(this).addClass('active');
-                const type = $(this).data('type');
-                updateReceiptType(type);
+            const buttons = document.querySelectorAll('.receipt-type-btn');
+            
+            buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    buttons.forEach(btn => btn.classList.remove('active'));
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                });
             });
 
             // Initialize the first tab
