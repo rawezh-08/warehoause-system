@@ -276,6 +276,84 @@
                 padding: 1rem;
             }
         }
+
+        /* Add these styles for the tabs */
+        .nav-tabs {
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .nav-tabs .nav-link {
+            color: #6b7280;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-tabs .nav-link:hover {
+            border: none;
+            color: #3b82f6;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #3b82f6;
+            border: none;
+            border-bottom: 2px solid #3b82f6;
+            margin-bottom: -2px;
+        }
+
+        .nav-tabs .nav-link i {
+            font-size: 1rem;
+        }
+
+        /* Modal styles */
+        .modal-lg {
+            max-width: 800px;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .input-group-text {
+            background-color: #f3f4f6;
+            color: #6b7280;
+            border-color: #e5e7eb;
+        }
+
+        /* Add these styles for select2 enhancement */
+        .select2-container--bootstrap-5 {
+            width: 100% !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            min-height: 38px;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single {
+            padding: 0.375rem 0.75rem;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection__rendered {
+            color: #212529;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection__arrow {
+            height: 36px;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option--highlighted[aria-selected] {
+            background-color: #0d6efd;
+        }
     </style>
 </head>
 <body>
@@ -358,9 +436,12 @@
                                     <option value="we-owe-them">ئەوانەی قەرزمان لایانە</option>
                                 </select>
                             </div>
-                            <div class="col-md-2">
-                                <button class="btn btn-secondary w-100 mb-2" id="resetFilterBtn">
+                            <div class="col-md-2 d-flex gap-2">
+                                <button class="btn btn-secondary flex-grow-1" id="resetFilterBtn">
                                     <i class="fas fa-undo"></i> ڕیسێت
+                                </button>
+                                <button class="btn btn-primary" id="addNewBalanceBtn" data-bs-toggle="modal" data-bs-target="#addBalanceModal">
+                                    <i class="fas fa-plus"></i>
                                 </button>
                             </div>
                         </div>
@@ -461,6 +542,104 @@
         </div>
     </div>
 
+    <!-- Add New Balance Modal -->
+    <div class="modal fade" id="addBalanceModal" tabindex="-1" aria-labelledby="addBalanceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addBalanceModalLabel">زیادکردنی باڵانسی نوێ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Tabs -->
+                    <ul class="nav nav-tabs mb-3" id="balanceTypeTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="supplier-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#supplier-tab-pane" type="button" role="tab">
+                                <i class="fas fa-truck"></i> دابینکەر
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="client-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#client-tab-pane" type="button" role="tab">
+                                <i class="fas fa-user"></i> کڕیار
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="balanceTypeContent">
+                        <!-- Supplier Tab -->
+                        <div class="tab-pane fade show active" id="supplier-tab-pane" role="tabpanel" tabindex="0">
+                            <form id="addSupplierBalanceForm">
+                                <div class="mb-3">
+                                    <label for="supplierSelect" class="form-label">دابینکەر</label>
+                                    <select class="form-select" id="supplierSelect" required>
+                                        <option value="">هەڵبژاردنی دابینکەر</option>
+                                        <!-- Suppliers will be loaded dynamically -->
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="initialBalance" class="form-label">باڵانسی سەرەتایی</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="initialBalance" required>
+                                        <span class="input-group-text">دینار</span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="balanceType" class="form-label">جۆری باڵانس</label>
+                                    <select class="form-select" id="balanceType" required>
+                                        <option value="we_owe">ئێمە قەرزارین (ئێمە دەبێت بیدەینەوە)</option>
+                                        <option value="they_owe">ئەوان قەرزارن (ئەوان دەبێت بیدەنەوە)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="supplierNote" class="form-label">تێبینی</label>
+                                    <textarea class="form-control" id="supplierNote" rows="2"></textarea>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Client Tab -->
+                        <div class="tab-pane fade" id="client-tab-pane" role="tabpanel" tabindex="0">
+                            <form id="addClientBalanceForm">
+                                <div class="mb-3">
+                                    <label for="clientSelect" class="form-label">کڕیار</label>
+                                    <select class="form-select" id="clientSelect" required>
+                                        <option value="">هەڵبژاردنی کڕیار</option>
+                                        <!-- Clients will be loaded dynamically -->
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="clientInitialBalance" class="form-label">باڵانسی سەرەتایی</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="clientInitialBalance" required>
+                                        <span class="input-group-text">دینار</span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="clientBalanceType" class="form-label">جۆری باڵانس</label>
+                                    <select class="form-select" id="clientBalanceType" required>
+                                        <option value="they_owe">ئەوان قەرزارن (ئەوان دەبێت بیدەنەوە)</option>
+                                        <option value="we_owe">ئێمە قەرزارین (ئێمە دەبێت بیدەینەوە)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="clientNote" class="form-label">تێبینی</label>
+                                    <textarea class="form-control" id="clientNote" rows="2"></textarea>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">پاشگەزبوونەوە</button>
+                    <button type="button" class="btn btn-primary" id="saveNewBalance">پاشەکەوتکردن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -486,6 +665,98 @@
             $(document).on('click', '.view-history-btn', function() {
                 const supplierId = $(this).data('id');
                 window.location.href = `supplier_detail.php?id=${supplierId}`;
+            });
+
+            // Initialize the modal
+            const addBalanceModal = new bootstrap.Modal(document.getElementById('addBalanceModal'));
+            
+            // Initialize select2 for enhanced dropdowns
+            $('#supplierSelect, #clientSelect').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'گەڕان و هەڵبژاردن...',
+                allowClear: true
+            });
+
+            // Load suppliers into dropdown
+            function loadSuppliers() {
+                // Example AJAX call - replace with your actual API endpoint
+                $.get('/api/suppliers', function(suppliers) {
+                    const select = $('#supplierSelect');
+                    select.empty().append('<option value="">هەڵبژاردنی دابینکەر</option>');
+                    suppliers.forEach(supplier => {
+                        select.append(`<option value="${supplier.id}">${supplier.name}</option>`);
+                    });
+                });
+            }
+
+            // Load clients into dropdown
+            function loadClients() {
+                // Example AJAX call - replace with your actual API endpoint
+                $.get('/api/clients', function(clients) {
+                    const select = $('#clientSelect');
+                    select.empty().append('<option value="">هەڵبژاردنی کڕیار</option>');
+                    clients.forEach(client => {
+                        select.append(`<option value="${client.id}">${client.name}</option>`);
+                    });
+                });
+            }
+
+            // Load data when modal opens
+            $('#addBalanceModal').on('show.bs.modal', function () {
+                loadSuppliers();
+                loadClients();
+            });
+
+            // Handle form submission
+            $('#saveNewBalance').click(function() {
+                const activeTab = $('#balanceTypeTabs .nav-link.active').attr('id');
+                let formData;
+                
+                if (activeTab === 'supplier-tab') {
+                    formData = {
+                        type: 'supplier',
+                        supplierId: $('#supplierSelect').val(),
+                        initialBalance: $('#initialBalance').val(),
+                        balanceType: $('#balanceType').val(),
+                        note: $('#supplierNote').val()
+                    };
+                } else {
+                    formData = {
+                        type: 'client',
+                        clientId: $('#clientSelect').val(),
+                        initialBalance: $('#clientInitialBalance').val(),
+                        balanceType: $('#clientBalanceType').val(),
+                        note: $('#clientNote').val()
+                    };
+                }
+                
+                // Validate required fields
+                const form = activeTab === 'supplier-tab' ? 
+                    $('#addSupplierBalanceForm')[0] : 
+                    $('#addClientBalanceForm')[0];
+                    
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+                
+                // Here you would typically send the data to your server
+                console.log('Form Data:', formData);
+                
+                // Show success message
+                Swal.fire({
+                    icon: 'success',
+                    title: 'سەرکەوتوو بوو',
+                    text: 'باڵانسی نوێ زیاد کرا',
+                    confirmButtonText: 'باشە'
+                }).then(() => {
+                    // Close modal and reset form
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addBalanceModal'));
+                    modal.hide();
+                    form.reset();
+                    $('#supplierSelect, #clientSelect').val('').trigger('change');
+                });
             });
         });
     </script>
