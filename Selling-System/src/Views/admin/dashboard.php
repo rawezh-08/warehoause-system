@@ -46,6 +46,35 @@ require_once '../../process/dashboard_logic.php';
         .kpi-value .currency {
             order: -1;
         }
+        /* New styles for better spacing */
+        .quick-access-item {
+            margin: 0.5rem !important;
+        }
+        .kpi-card {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .chart-card, .product-card {
+            margin-bottom: 0.5rem;
+        }
+        .product-table-container {
+            margin: 0;
+            padding: 0.5rem;
+        }
+        .main-content {
+            padding: 1rem;
+        }
+        .dashboard-container {
+            padding: 0.5rem;
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 0.5rem;
+            }
+            .dashboard-container {
+                padding: 0.25rem;
+            }
+        }
     </style>
 </head>
 
@@ -60,12 +89,12 @@ require_once '../../process/dashboard_logic.php';
 
         <!-- Main Content Area -->
         <div class="main-content">
-            <div class="dashboard-container" id="content" style="margin: 0px;">
+            <div class="dashboard-container" id="content" style="margin: 0; margin-top: 65px;">
                 <div class="container-fluid p-0">
                     <!-- Quick Access Section -->
-                    <div class="row mb-4">
+                    <div class="row g-3 mb-3">
                         <div class="col-12">
-                            <div class="quick-access-section d-flex flex-wrap justify-content-center justify-content-md-start">
+                            <div class="quick-access-section d-flex flex-wrap justify-content-center justify-content-md-start gap-2">
                                 <a href="addProduct.php" class="quick-access-item m-2">
                                     <div class="quick-access-icon blue">
                                         <img src="../../assets/icons/box.svg" alt="">
@@ -96,7 +125,7 @@ require_once '../../process/dashboard_logic.php';
            
                     
                     <!-- Period Filter -->
-                    <div class="row mb-4 mt-4">
+                    <div class="row g-3 mb-3">
                         <div class="col-12">
                             <div class="filter-buttons">
                                 <a href="?period=today" class="btn <?php echo (!isset($_GET['period']) || $_GET['period'] == 'today') ? 'btn-primary' : 'btn-outline-primary'; ?>">ئەمڕۆ</a>
@@ -107,7 +136,7 @@ require_once '../../process/dashboard_logic.php';
                     </div>
 
                     <!-- KPI Cards Section -->
-                    <div class="row mb-4">
+                    <div class="row g-3 mb-3">
                         <!-- KPI Card 1 -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
                             <div class="kpi-card h-100">
@@ -253,7 +282,7 @@ require_once '../../process/dashboard_logic.php';
                     </div>
 
                     <!-- Chart Sections -->
-                    <div class="row mb-4">
+                    <div class="row g-3 mb-3">
                         <!-- Sales Chart -->
                         <div class="col-lg-8 col-md-12 mb-4">
                             <div class="card chart-card h-100">
@@ -296,7 +325,7 @@ require_once '../../process/dashboard_logic.php';
                     </div>
 
                     <!-- Products Section -->
-                    <div class="row">
+                    <div class="row g-3">
                         <!-- Low Stock Products -->
                         <div class="col-lg-6 col-md-12 mb-4">
                             <div class="card product-card low-stock h-100">
