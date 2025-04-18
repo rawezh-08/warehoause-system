@@ -27,29 +27,37 @@ try {
     $db->beginTransaction();
     
     try {
-        // Get current supplier debt
-        $query = "SELECT debt_on_myself FROM suppliers WHERE id = :supplier_id";
+        // Get current supplier debt information
+        $query = "SELECT debt_on_myself, debt_on_supplier FROM suppliers WHERE id = :supplier_id";
         $stmt = $db->prepare($query);
         $stmt->bindParam(':supplier_id', $supplierId);
         $stmt->execute();
-        $currentDebt = $stmt->fetchColumn();
+        $supplier = $stmt->fetch(PDO::FETCH_ASSOC);
         $stmt->closeCursor(); // Close the cursor to avoid PDO issues
+        
+        if (!$supplier) {
+            throw new Exception('دابینکەر نەدۆزرایەوە');
+        }
+        
+        $currentDebtOnMyself = $supplier['debt_on_myself'];
         
         // Calculate payment breakdown
         $paymentAmount = 0;
         $advanceAmount = 0;
         
-        if ($amount > $currentDebt) {
-            $paymentAmount = $currentDebt;
-            $advanceAmount = $amount - $currentDebt;
+        if ($amount > $currentDebtOnMyself) {
+            // If paying more than we owe, split the amount
+            $paymentAmount = $currentDebtOnMyself;
+            $advanceAmount = $amount - $currentDebtOnMyself;
         } else {
+            // Just paying some or all of what we owe
             $paymentAmount = $amount;
             $advanceAmount = 0;
         }
         
         // Process debt payment if there is any
         if ($paymentAmount > 0) {
-            // 1. Record in transactions
+            // 1. Record in transactions with proper transaction_type
             $query = "INSERT INTO supplier_debt_transactions (
                             supplier_id, amount, transaction_type, notes, created_by
                         ) VALUES (
@@ -66,7 +74,7 @@ try {
             $stmt->execute();
             $stmt->closeCursor();
             
-            // 2. Update supplier debt
+            // 2. Update supplier debt - DECREASE debt_on_myself when we pay them
             $query = "UPDATE suppliers 
                       SET debt_on_myself = debt_on_myself - :payment_amount
                       WHERE id = :supplier_id";
@@ -79,7 +87,7 @@ try {
         
         // Process advance payment if there is any
         if ($advanceAmount > 0) {
-            // 1. Record in transactions
+            // 1. Record in transactions with proper transaction_type
             $query = "INSERT INTO supplier_debt_transactions (
                             supplier_id, amount, transaction_type, notes, created_by
                         ) VALUES (
@@ -96,7 +104,7 @@ try {
             $stmt->execute();
             $stmt->closeCursor();
             
-            // 2. Update supplier advance balance
+            // 2. Update supplier advance balance - INCREASE debt_on_supplier for advance payments
             $query = "UPDATE suppliers 
                       SET debt_on_supplier = debt_on_supplier + :advance_amount
                       WHERE id = :supplier_id";

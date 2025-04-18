@@ -171,7 +171,18 @@ $(document).ready(function() {
         // Populate modal fields
         $('#supplierId').val(supplierId);
         $('#supplierName').val(supplierName);
-        $('#currentBalance').val(formatCurrency(netBalance));
+        
+        // Check if we owe them money (negative net balance)
+        if (netBalance < 0) {
+            // Display how much we owe them as a positive number with the right text
+            $('#currentBalance').val(formatCurrency(Math.abs(netBalance)) + ' - پارەمان لای ئەوانە');
+        } else if (netBalance > 0) {
+            // Display how much they owe us as a positive number with the right text
+            $('#currentBalance').val(formatCurrency(netBalance) + ' - پارەیان لای ئێمەیە');
+        } else {
+            // Zero balance
+            $('#currentBalance').val('0 دینار - هیچ پارەیەک نییە');
+        }
         
         // Update payment direction options based on the two-way balance
         updatePaymentDirectionOptions(debtOnMyself, debtOnSupplier);

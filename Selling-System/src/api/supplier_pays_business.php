@@ -51,6 +51,7 @@ try {
         $stmt->bindParam(':created_by', $createdBy);
         
         $stmt->execute();
+        $stmt->closeCursor(); // Close the cursor after stored procedure execution
         
         // Commit transaction
         $db->commit();

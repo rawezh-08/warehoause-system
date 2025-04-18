@@ -185,14 +185,28 @@ $(document).ready(function() {
     // Add payment button
     $('#add-payment-btn').on('click', function() {
         const supplierName = $('#supplier-name-display span').text();
-        const netBalance = $('#net-balance span').text();
+        const netBalanceText = $('#net-balance span').text();
         const debtOnMyself = $('#debt-on-myself span').text();
         const debtOnSupplier = $('#debt-on-supplier span').text();
+        
+        // Convert net balance text to number
+        const netBalanceValue = parseFloat(netBalanceText.replace(/[^\d.-]/g, ''));
         
         // Populate modal fields
         $('#supplierId').val(supplierId);
         $('#supplierName').val(supplierName);
-        $('#currentBalance').val(netBalance);
+        
+        // Format balance display with appropriate text
+        if (netBalanceValue < 0) {
+            // We owe them money
+            $('#currentBalance').val(formatCurrency(Math.abs(netBalanceValue)) + ' - پارەمان لای ئەوانە');
+        } else if (netBalanceValue > 0) {
+            // They owe us money
+            $('#currentBalance').val(formatCurrency(netBalanceValue) + ' - پارەیان لای ئێمەیە');
+        } else {
+            // Zero balance
+            $('#currentBalance').val('0 دینار - هیچ پارەیەک نییە');
+        }
         
         // Call updatePaymentDirectionOptions for proper setup of the select
         updatePaymentDirectionOptions(

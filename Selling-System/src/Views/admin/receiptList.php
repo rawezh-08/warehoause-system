@@ -246,6 +246,12 @@ function numberFormat($number) {
                                                                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="<?php echo $sale['id']; ?>">
                                                                         <i class="fas fa-print"></i>
                                                                     </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-warning rounded-circle return-btn" data-id="<?php echo $sale['id']; ?>">
+                                                                        <i class="fas fa-undo"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="<?php echo $sale['id']; ?>">
+                                                                        <i class="fas fa-trash"></i>
+                                                                    </button>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -441,6 +447,12 @@ function numberFormat($number) {
                                                                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="<?php echo $purchase['id']; ?>">
                                                                         <i class="fas fa-print"></i>
                                                                     </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-warning rounded-circle return-btn" data-id="<?php echo $purchase['id']; ?>">
+                                                                        <i class="fas fa-undo"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="<?php echo $purchase['id']; ?>">
+                                                                        <i class="fas fa-trash"></i>
+                                                                    </button>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -600,6 +612,9 @@ function numberFormat($number) {
                                                                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="1">
                                                                         <i class="fas fa-print"></i>
                                                                     </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="1">
+                                                                        <i class="fas fa-trash"></i>
+                                                                    </button>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -621,6 +636,9 @@ function numberFormat($number) {
                                                                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="2">
                                                                         <i class="fas fa-print"></i>
                                                                     </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="2">
+                                                                        <i class="fas fa-trash"></i>
+                                                                    </button>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -641,6 +659,9 @@ function numberFormat($number) {
                                                                     </button>
                                                                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="3">
                                                                         <i class="fas fa-print"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="3">
+                                                                        <i class="fas fa-trash"></i>
                                                                     </button>
                                                                 </div>
                                                             </td>
@@ -692,11 +713,11 @@ function numberFormat($number) {
                                             <div class="col-md-3">
                                                 <label for="draftStartDate" class="form-label">بەرواری دەستپێک</label>
                                                 <input type="date" class="form-control auto-filter" id="draftStartDate">
-                                            </div>
+                </div>
                                             <div class="col-md-3">
                                                 <label for="draftEndDate" class="form-label">بەرواری کۆتایی</label>
                                                 <input type="date" class="form-control auto-filter" id="draftEndDate">
-                                            </div>
+            </div>
                                             <div class="col-md-4">
                                                 <label for="draftCustomer" class="form-label">کڕیار</label>
                                                 <select class="form-select auto-filter" id="draftCustomer">
@@ -1146,6 +1167,50 @@ function numberFormat($number) {
         </div>
     </div>
 
+    <!-- Return Modal -->
+    <div class="modal fade" id="returnModal" tabindex="-1" aria-labelledby="returnModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="returnModalLabel">گەڕاندنەوەی کاڵا</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="returnForm">
+                        <input type="hidden" id="returnReceiptId">
+                        <input type="hidden" id="returnReceiptType">
+                        <div class="mb-3">
+                            <label class="form-label">کاڵاکان</label>
+                            <div id="returnItemsContainer" class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>ناوی کاڵا</th>
+                                            <th>یەکە</th>
+                                            <th>بڕی کڕدراو</th>
+                                            <th>بڕی گەڕاوە</th>
+                                            <th>بڕی گەڕاندنەوە</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="returnItemsList">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="returnNotes" class="form-label">تێبینی</label>
+                            <textarea class="form-control" id="returnNotes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" id="saveReturn">پاشەکەوتکردن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
@@ -1479,6 +1544,266 @@ function numberFormat($number) {
                     tbody.html('<tr><td colspan="7" class="text-center">هیچ ڕەشنووسێک نەدۆزرایەوە</td></tr>');
                 }
             }
+
+            // Handle delete button click for sales
+            $('#employeeHistoryTable').on('click', '.delete-btn', function() {
+                const saleId = $(this).data('id');
+                const row = $(this).closest('tr');
+                
+                Swal.fire({
+                    title: 'دڵنیای؟',
+                    text: 'ئەم پسووڵەیە دەسڕێتەوە و ناتوانرێت بگەڕێنرێتەوە',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'بەڵێ، بیسڕەوە',
+                    cancelButtonText: 'نەخێر',
+                    customClass: {
+                        popup: 'swal-rtl'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '../../api/delete_receipt.php',
+                            type: 'POST',
+                            data: {
+                                id: saleId,
+                                type: 'sale'
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'سڕایەوە!',
+                                        text: 'پسووڵەکە بە سەرکەوتوویی سڕایەوە',
+                                        customClass: {
+                                            popup: 'swal-rtl'
+                                        }
+                                    }).then(() => {
+                                        row.fadeOut(400, function() {
+                                            $(this).remove();
+                                        });
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'هەڵە!',
+                                        text: response.message,
+                                        customClass: {
+                                            popup: 'swal-rtl'
+                                        }
+                                    });
+                                }
+                            },
+                            error: function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'هەڵە!',
+                                    text: 'هەڵەیەک ڕوویدا لە سڕینەوەی پسووڵە',
+                                    customClass: {
+                                        popup: 'swal-rtl'
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Handle delete button click for purchases
+            $('#shippingHistoryTable').on('click', '.delete-btn', function() {
+                const purchaseId = $(this).data('id');
+                const row = $(this).closest('tr');
+                
+                Swal.fire({
+                    title: 'دڵنیای؟',
+                    text: 'ئەم پسووڵەیە دەسڕێتەوە و ناتوانرێت بگەڕێنرێتەوە',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'بەڵێ، بیسڕەوە',
+                    cancelButtonText: 'نەخێر',
+                    customClass: {
+                        popup: 'swal-rtl'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '../../api/delete_receipt.php',
+                            type: 'POST',
+                            data: {
+                                id: purchaseId,
+                                type: 'purchase'
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'سڕایەوە!',
+                                        text: 'پسووڵەکە بە سەرکەوتوویی سڕایەوە',
+                                        customClass: {
+                                            popup: 'swal-rtl'
+                                        }
+                                    }).then(() => {
+                                        row.fadeOut(400, function() {
+                                            $(this).remove();
+                                        });
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'هەڵە!',
+                                        text: response.message,
+                                        customClass: {
+                                            popup: 'swal-rtl'
+                                        }
+                                    });
+                                }
+                            },
+                            error: function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'هەڵە!',
+                                    text: 'هەڵەیەک ڕوویدا لە سڕینەوەی پسووڵە',
+                                    customClass: {
+                                        popup: 'swal-rtl'
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Handle return button click
+            $('.return-btn').on('click', function() {
+                const receiptId = $(this).data('id');
+                const receiptType = $(this).closest('table').attr('id') === 'employeeHistoryTable' ? 'sale' : 'purchase';
+                
+                // Get receipt items
+                $.ajax({
+                    url: '../../api/get_receipt_items.php',
+                    type: 'POST',
+                    data: {
+                        id: receiptId,
+                        type: receiptType
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $('#returnReceiptId').val(receiptId);
+                            $('#returnReceiptType').val(receiptType);
+                            populateReturnItems(response.data);
+                            $('#returnModal').modal('show');
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'هەڵە!',
+                                text: response.message
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیاری'
+                        });
+                    }
+                });
+            });
+
+            function populateReturnItems(items) {
+                const tbody = $('#returnItemsList');
+                tbody.empty();
+
+                items.forEach(item => {
+                    const row = `
+                        <tr data-product-id="${item.product_id}" data-unit-type="${item.unit_type}">
+                            <td>${item.product_name}</td>
+                            <td>${getUnitTypeText(item.unit_type)}</td>
+                            <td>${item.quantity}</td>
+                            <td>${item.returned_quantity || 0}</td>
+                            <td>
+                                <input type="number" class="form-control return-quantity" 
+                                       min="0" 
+                                       max="${item.quantity - (item.returned_quantity || 0)}"
+                                       value="0">
+                            </td>
+                        </tr>
+                    `;
+                    tbody.append(row);
+                });
+            }
+
+            function getUnitTypeText(unitType) {
+                switch(unitType) {
+                    case 'piece': return 'دانە';
+                    case 'box': return 'کارتۆن';
+                    case 'set': return 'سێت';
+                    default: return unitType;
+                }
+            }
+
+            // Handle save return
+            $('#saveReturn').on('click', function() {
+                const returnItems = [];
+                let hasReturns = false;
+
+                $('#returnItemsList tr').each(function() {
+                    const quantity = parseFloat($(this).find('.return-quantity').val());
+                    if (quantity > 0) {
+                        hasReturns = true;
+                        returnItems.push({
+                            product_id: $(this).data('product-id'),
+                            quantity: quantity,
+                            unit_type: $(this).data('unit-type')
+                        });
+                    }
+                });
+
+                if (!hasReturns) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'ئاگاداری',
+                        text: 'تکایە بڕی گەڕاندنەوە دیاری بکە'
+                    });
+                    return;
+                }
+
+                $.ajax({
+                    url: '../../api/return_items.php',
+                    type: 'POST',
+                    data: {
+                        receipt_id: $('#returnReceiptId').val(),
+                        receipt_type: $('#returnReceiptType').val(),
+                        items: JSON.stringify(returnItems),
+                        notes: $('#returnNotes').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'سەرکەوتوو بوو!',
+                                text: response.message
+                            }).then(() => {
+                                $('#returnModal').modal('hide');
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'هەڵە!',
+                                text: response.message
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە گەڕاندنەوەی کاڵاکان'
+                        });
+                    }
+                });
+            });
         });
     </script>
 
