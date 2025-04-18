@@ -110,8 +110,8 @@ require_once '../../config/database.php';
                                         </select>
                                     </td>
                                     <td><input type="number" class="form-control unit-price" step="1"></td>
-                                    <td><input type="number" class="form-control quantity" min="1" onchange="checkProductStock(this)"></td>
-                                    <td><input type="number" class="form-control total" readonly></td>
+                                    <td><input type="number" class="form-control quantity" min="1" step="1" onchange="checkProductStock(this)"></td>
+                                    <td><input type="number" class="form-control total" step="1" readonly></td>
                                     <td>
                                         <button type="button" class="btn btn-danger btn-sm remove-row">
                                             <i class="fas fa-times"></i>
@@ -131,11 +131,11 @@ require_once '../../config/database.php';
                     <div class="row mb-4 credit-payment-fields" style="display: none;">
                         <div class="col-md-6">
                             <label class="form-label">بڕی پارەی دراو</label>
-                            <input type="number" class="form-control paid-amount" value="0" min="0">
+                            <input type="number" class="form-control paid-amount" value="0" min="0" step="1">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">بڕی ماوە</label>
-                            <input type="number" class="form-control remaining-amount" value="0" readonly>
+                            <input type="number" class="form-control remaining-amount" value="0" step="1" readonly>
                         </div>
                     </div>
 
@@ -150,11 +150,11 @@ require_once '../../config/database.php';
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">تێچووی گواستنەوە</label>
-                            <input type="number" class="form-control shipping-cost" value="0">
+                            <input type="number" class="form-control shipping-cost" value="0" step="1">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">تێچووی تر</label>
-                            <input type="number" class="form-control other-cost" value="0">
+                            <input type="number" class="form-control other-cost" value="0" step="1">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">بەروار</label>
@@ -171,42 +171,33 @@ require_once '../../config/database.php';
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="action-buttons">
-                        <button class="btn btn-outline-primary refresh-btn">
-                            <i class="fas fa-sync"></i>
-                            نوێکردنەوە
-                        </button>
-                        <button class="btn btn-outline-primary print-btn">
-                            <i class="fas fa-print"></i>
-                            چاپکردن
-                        </button>
-                    </div>
+                
 
                     <!-- Totals Section -->
                     <div class="total-section">
                         <div class="row">
                             <div class="col-md-3">
                                 <label class="total-label">کۆ</label>
-                                <input type="number" class="form-control subtotal" readonly>
+                                <input type="number" class="form-control subtotal" step="1" readonly>
                             </div>
                             <div class="col-md-3">
                                 <label class="total-label">داشکاندن</label>
-                                <input type="number" class="form-control discount" value="0">
+                                <input type="number" class="form-control discount" value="0" step="1">
                             </div>
                             <div class="col-md-3">
                                 <label class="total-label">تێچووی گواستنەوە</label>
-                                <input type="number" class="form-control shipping-cost-total" readonly>
+                                <input type="number" class="form-control shipping-cost-total" step="1" readonly>
                             </div>
                             <div class="col-md-3">
                                 <label class="total-label">کۆی گشتی</label>
-                                <input type="number" class="form-control grand-total" readonly>
+                                <input type="number" class="form-control grand-total" step="1" readonly>
                             </div>
                         </div>
                     </div>
 
                     <!-- Submit Button -->
-                    <div class="mt-4 text-start">
-                        <button type="button" class="btn btn-outline-primary draft-btn">
+                    <div class="mt-4 text-start d-flex justify-content-start align-items-center">
+                        <button type="button" class="btn btn-outline-primary draft-btn ">
                             <i class="fas fa-file-alt"></i> ڕەشنووس
                         </button>
                         <button type="button" class="btn btn-primary save-btn cta-btn ">
@@ -269,9 +260,9 @@ require_once '../../config/database.php';
                                     <option value="set">سێت</option>
                                 </select>
                             </td>
-                            <td><input type="number" class="form-control unit-price" min="0"></td>
-                            <td><input type="number" class="form-control quantity" min="0"></td>
-                            <td><input type="number" class="form-control total" readonly></td>
+                            <td><input type="number" class="form-control unit-price" min="0" step="1"></td>
+                            <td><input type="number" class="form-control quantity" min="0" step="1"></td>
+                            <td><input type="number" class="form-control total" step="1" readonly></td>
                             <td>
                                 <button type="button" class="btn btn-danger btn-sm remove-row">
                                     <i class="fas fa-times"></i>
@@ -291,11 +282,11 @@ require_once '../../config/database.php';
             <div class="row mb-4 credit-payment-fields" style="display: none;">
                 <div class="col-md-6">
                     <label class="form-label">بڕی پارەی دراو</label>
-                    <input type="number" class="form-control paid-amount" value="0" min="0">
+                    <input type="number" class="form-control paid-amount" value="0" min="0" step="1">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">بڕی ماوە</label>
-                    <input type="number" class="form-control remaining-amount" value="0" readonly>
+                    <input type="number" class="form-control remaining-amount" value="0" step="1" readonly>
                 </div>
             </div>
 
@@ -304,14 +295,14 @@ require_once '../../config/database.php';
                 <div class="col-md-3">
                     <label class="form-label">کرێی بار</label>
                     <div class="input-group">
-                        <input type="number" class="form-control shipping-cost" value="0" min="0">
+                        <input type="number" class="form-control shipping-cost" value="0" min="0" step="1">
                         <span class="input-group-text">دینار</span>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">تێچووی تر</label>
                     <div class="input-group">
-                        <input type="number" class="form-control other-cost" value="0" min="0">
+                        <input type="number" class="form-control other-cost" value="0" min="0" step="1">
                         <span class="input-group-text">دینار</span>
                     </div>
                 </div>
@@ -325,42 +316,31 @@ require_once '../../config/database.php';
                 </div>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="action-buttons">
-                <button class="btn btn-outline-primary refresh-btn">
-                    <i class="fas fa-sync"></i>
-                    نوێکردنەوە
-                </button>
-                <button class="btn btn-outline-primary print-btn">
-                    <i class="fas fa-print"></i>
-                    چاپکردن
-                </button>
-            </div>
-
+           
             <!-- Totals Section -->
             <div class="total-section">
                 <div class="row">
                     <div class="col-md-3">
                         <label class="total-label">کۆ</label>
-                        <input type="number" class="form-control subtotal" readonly>
+                        <input type="number" class="form-control subtotal" step="1" readonly>
                     </div>
                     <div class="col-md-3">
                         <label class="total-label">داشکاندن</label>
-                        <input type="number" class="form-control discount" value="0" min="0">
+                        <input type="number" class="form-control discount" value="0" min="0" step="1">
                     </div>
                     <div class="col-md-3">
                         <label class="total-label">کرێی بار</label>
-                        <input type="number" class="form-control shipping-cost-total" readonly>
+                        <input type="number" class="form-control shipping-cost-total" step="1" readonly>
                     </div>
                     <div class="col-md-3">
                         <label class="total-label">کۆی گشتی</label>
-                        <input type="number" class="form-control grand-total" readonly>
+                        <input type="number" class="form-control grand-total" step="1" readonly>
                     </div>
                 </div>
             </div>
 
-            <!-- Submit Button -->
-            <div class="mt-4 text-start">
+            <!-- Submit Button --> 
+            <div class="mt-4 text-star  d-flex justify-content-start align-items-center">
                 <button type="button" class="btn btn-outline-primary draft-btn">
                     <i class="fas fa-file-alt"></i> ڕەشنووس
                 </button>
@@ -417,11 +397,11 @@ require_once '../../config/database.php';
                             <td>1</td>
                             <td><select class="form-control product-select" style="width: 100%"></select></td>
                             <td class="product-image-cell"></td>
-                            <td><input type="number" class="form-control current-quantity" readonly></td>
-                            <td><input type="number" class="form-control adjusted-quantity"></td>
+                            <td><input type="number" class="form-control current-quantity" step="1" readonly></td>
+                            <td><input type="number" class="form-control adjusted-quantity" step="1"></td>
                             <td><input type="number" class="form-control price" step="1"></td>
                             <td><input type="text" class="form-control" placeholder="وەسفکردن"></td>
-                            <td><input type="number" class="form-control total" readonly></td>
+                            <td><input type="number" class="form-control total" step="1" readonly></td>
                             <td>
                                 <button type="button" class="btn btn-danger btn-sm remove-row">
                                     <i class="fas fa-times"></i>
@@ -463,31 +443,20 @@ require_once '../../config/database.php';
             </div>
 
             <!-- Action Buttons -->
-            <div class="action-buttons">
-                <button class="btn btn-outline-primary refresh-btn">
-                    <i class="fas fa-sync"></i>
-                    نوێکردنەوە
-                </button>
-                
-                <button class="btn btn-outline-primary print-btn">
-                    <i class="fas fa-print"></i>
-                    چاپکردن
-                </button>
-              
-            </div>
+        
 
             <!-- Totals Section -->
             <div class="total-section">
                 <div class="row">
                     <div class="col-md-12">
                         <label class="total-label">کۆی گشتی زیان</label>
-                        <input type="number" class="form-control grand-total" readonly>
+                        <input type="number" class="form-control grand-total" step="1" readonly>
                     </div>
                 </div>
             </div>
 
             <!-- Submit Button -->
-            <div class="mt-4 text-start">
+            <div class="mt-4 text-start  d-flex justify-content-start align-items-center">
                 <button type="button" class="btn btn-outline-primary draft-btn">
                     <i class="fas fa-file-alt"></i> ڕەشنووس
                 </button>
@@ -526,11 +495,11 @@ require_once '../../config/database.php';
             <div class="row mb-4 credit-payment-fields" style="display: none;">
                 <div class="col-md-6">
                     <label class="form-label">بڕی پارەی دراو</label>
-                    <input type="number" class="form-control paid-amount" value="0" min="0">
+                    <input type="number" class="form-control paid-amount" value="0" min="0" step="1">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">بڕی ماوە</label>
-                    <input type="number" class="form-control remaining-amount" value="0" readonly>
+                    <input type="number" class="form-control remaining-amount" value="0" step="1" readonly>
                 </div>
             </div>
 
@@ -562,8 +531,8 @@ require_once '../../config/database.php';
                                 </select>
                             </td>
                             <td><input type="number" class="form-control unit-price" step="1"></td>
-                            <td><input type="number" class="form-control quantity" min="1" onchange="checkProductStock(this)"></td>
-                            <td><input type="number" class="form-control total" readonly></td>
+                            <td><input type="number" class="form-control quantity" min="1" step="1" onchange="checkProductStock(this)"></td>
+                            <td><input type="number" class="form-control total" step="1" readonly></td>
                             <td>
                                 <button type="button" class="btn btn-danger btn-sm remove-row">
                                     <i class="fas fa-times"></i>
@@ -590,11 +559,11 @@ require_once '../../config/database.php';
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">تێچووی گواستنەوە</label>
-                    <input type="number" class="form-control shipping-cost" value="0">
+                    <input type="number" class="form-control shipping-cost" value="0" step="1">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">تێچووی تر</label>
-                    <input type="number" class="form-control other-cost" value="0">
+                    <input type="number" class="form-control other-cost" value="0" step="1">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">بەروار</label>
@@ -611,41 +580,32 @@ require_once '../../config/database.php';
             </div>
 
             <!-- Action Buttons -->
-            <div class="action-buttons">
-                <button class="btn btn-outline-primary refresh-btn">
-                    <i class="fas fa-sync"></i>
-                    نوێکردنەوە
-                </button>
-                <button class="btn btn-outline-primary print-btn">
-                    <i class="fas fa-print"></i>
-                    چاپکردن
-                </button>
-            </div>
+      
 
             <!-- Totals Section -->
             <div class="total-section">
                 <div class="row">
                     <div class="col-md-3">
                         <label class="total-label">کۆ</label>
-                        <input type="number" class="form-control subtotal" readonly>
+                        <input type="number" class="form-control subtotal" step="1" readonly>
                     </div>
                     <div class="col-md-3">
                         <label class="total-label">داشکاندن</label>
-                        <input type="number" class="form-control discount" value="0">
+                        <input type="number" class="form-control discount" value="0" step="1">
                     </div>
                     <div class="col-md-3">
                         <label class="total-label">تێچووی گواستنەوە</label>
-                        <input type="number" class="form-control shipping-cost-total" readonly>
+                        <input type="number" class="form-control shipping-cost-total" step="1" readonly>
                     </div>
                     <div class="col-md-3">
                         <label class="total-label">کۆی گشتی</label>
-                        <input type="number" class="form-control grand-total" readonly>
+                        <input type="number" class="form-control grand-total" step="1" readonly>
                     </div>
                 </div>
             </div>
 
             <!-- Submit Button -->
-            <div class="mt-4 text-start">
+            <div class="mt-4 text-start  d-flex justify-content-start align-items-center">
                 <button type="button" class="btn btn-outline-primary draft-btn">
                     <i class="fas fa-file-alt"></i> ڕەشنووس
                 </button>

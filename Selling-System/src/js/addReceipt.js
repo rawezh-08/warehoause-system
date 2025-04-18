@@ -1495,10 +1495,10 @@ $(document).ready(function() {
         // Calculate grand total
         const grandTotal = subtotal - discount + shippingCost + otherCost;
         
-        // Update form fields
-        tabPane.find('.subtotal').val(subtotal.toFixed(2));
-        tabPane.find('.shipping-cost-total').val(shippingCost.toFixed(2));
-        tabPane.find('.grand-total').val(grandTotal.toFixed(2));
+        // Update form fields without decimal places
+        tabPane.find('.subtotal').val(Math.round(subtotal));
+        tabPane.find('.shipping-cost-total').val(Math.round(shippingCost));
+        tabPane.find('.grand-total').val(Math.round(grandTotal));
         
         // If this tab has payment type as credit, update the remaining amount
         if (tabPane.find('.payment-type').val() === PAYMENT_TYPES.CREDIT) {
@@ -1513,7 +1513,7 @@ $(document).ready(function() {
         const grandTotal = parseFloat(tabPane.find('.grand-total').val()) || 0;
         const paidAmount = parseFloat(tabPane.find('.paid-amount').val()) || 0;
         const remainingAmount = grandTotal - paidAmount;
-        tabPane.find('.remaining-amount').val(remainingAmount.toFixed(2));
+        tabPane.find('.remaining-amount').val(Math.round(remainingAmount));
     }
 
     // Function to save receipt (either as draft or normal)
@@ -2376,65 +2376,166 @@ $(document).ready(function() {
         <style>
             /* Action Column Styles */
             .action-column {
-                min-width: 140px !important;
+                min-width: 160px !important;
+                text-align: center;
             }
             
             .action-buttons {
                 display: flex;
-                gap: 8px;
-                justify-content: flex-end;
+                gap: 5px;
+                justify-content: center;
             }
             
             .action-buttons .btn {
-                width: 36px;
-                height: 36px;
+                width: 34px;
+                height: 34px;
                 padding: 0;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                border-radius: 8px;
-                transition: all 0.3s ease;
+                border-radius: 50%;
+                transition: all 0.2s ease;
+                position: relative;
                 border: none;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                background: #f8f9fa;
+                color: #6c757d;
             }
             
             .action-buttons .btn:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
             }
             
             .action-buttons .btn i {
-                font-size: 16px;
+                font-size: 15px;
+                line-height: 1;
+            }
+
+            /* Remove/Delete Button Specific Styles */
+            .remove-row,
+            .action-buttons .btn-danger {
+                background: #fee2e2 !important;
+                color: #ef4444 !important;
+                transition: all 0.2s ease !important;
+            }
+
+            .remove-row:hover,
+            .action-buttons .btn-danger:hover {
+                background: #ef4444 !important;
+                color: #ffffff !important;
+                box-shadow: 0 4px 8px rgba(239, 68, 68, 0.2) !important;
+            }
+
+            .remove-row i,
+            .action-buttons .btn-danger i {
+                font-size: 15px;
+                transition: transform 0.2s ease;
+            }
+
+            .remove-row:hover i,
+            .action-buttons .btn-danger:hover i {
+                transform: rotate(90deg);
             }
             
             /* Info Button */
             .action-buttons .btn-info {
-                background: linear-gradient(145deg, #0dcaf0, #0b96b2);
-                color: white;
+                background: #e3f2fd;
+                color: #0d6efd;
             }
             
             .action-buttons .btn-info:hover {
-                background: linear-gradient(145deg, #0dd3fc, #0ba3c2);
+                background: #0d6efd;
+                color: #fff;
+                box-shadow: 0 4px 8px rgba(13, 110, 253, 0.2);
             }
             
             /* Success Button (Profit) */
             .action-buttons .btn-success {
-                background: linear-gradient(145deg, #198754, #157347);
-                color: white;
+                background: #e8f5e9;
+                color: #198754;
             }
             
             .action-buttons .btn-success:hover {
-                background: linear-gradient(145deg, #1a9358, #168049);
+                background: #198754;
+                color: #fff;
+                box-shadow: 0 4px 8px rgba(25, 135, 84, 0.2);
             }
-            
-            /* Danger Button */
-            .action-buttons .btn-danger {
-                background: linear-gradient(145deg, #dc3545, #bb2d3b);
+
+            /* Tooltip Styles */
+            .action-buttons .btn::before {
+                content: attr(title);
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 5px 10px;
+                background: rgba(0, 0, 0, 0.8);
                 color: white;
+                font-size: 12px;
+                border-radius: 4px;
+                white-space: nowrap;
+                visibility: hidden;
+                opacity: 0;
+                transition: all 0.2s ease;
+                margin-bottom: 5px;
+                z-index: 1000;
             }
-            
-            .action-buttons .btn-danger:hover {
-                background: linear-gradient(145deg, #e1394a, #c43340);
+
+            .action-buttons .btn:hover::before {
+                visibility: visible;
+                opacity: 1;
+            }
+
+            /* Responsive Styles */
+            @media screen and (max-width: 768px) {
+                .action-column {
+                    min-width: 130px !important;
+                }
+                
+                .action-buttons .btn,
+                .remove-row {
+                    width: 30px;
+                    height: 30px;
+                }
+                
+                .action-buttons .btn i,
+                .remove-row i {
+                    font-size: 14px;
+                }
+            }
+
+            @media screen and (max-width: 480px) {
+                .action-column {
+                    min-width: 110px !important;
+                }
+                
+                .action-buttons .btn,
+                .remove-row {
+                    width: 28px;
+                    height: 28px;
+                }
+                
+                .action-buttons .btn i,
+                .remove-row i {
+                    font-size: 13px;
+                }
+                
+                .action-buttons {
+                    gap: 3px;
+                }
+            }
+        </style>
+    `);
+
+    $('head').append(`
+        <style>
+            /* Main Action Buttons Container */
+            .mt-4.text-start {
+                display: flex;
+                gap: 10px;
+                justify-content: flex-end;
+                align-items: center;
+                flex-wrap: wrap;
+                padding: 10px;
             }
             
             /* Main Action Buttons */
@@ -2451,111 +2552,126 @@ $(document).ready(function() {
                 display: inline-flex;
                 align-items: center;
                 gap: 8px;
-            }
-            
-            .draft-btn {
-                background: linear-gradient(145deg, #6c757d, #5c636a);
-                color: white;
-            }
-            
-            .draft-btn:hover {
-                background: linear-gradient(145deg, #757f88, #636b74);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-            }
-            
-            .costs-btn {
-                background: linear-gradient(145deg, #0dcaf0, #0b96b2);
-                color: white;
-            }
-            
-            .costs-btn:hover {
-                background: linear-gradient(145deg, #0dd3fc, #0ba3c2);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-            }
-            
-            .save-btn {
-                background: linear-gradient(145deg, #0d6efd, #0b5ed7);
-                color: white;
-            }
-            
-            .save-btn:hover {
-                background: linear-gradient(145deg, #0d76ff, #0b64e4);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-            }
-            
-            .draft-btn i,
-            .costs-btn i,
-            .save-btn i {
-                font-size: 16px;
-            }
-            
-            /* Button Group Container */
-            .mt-4.text-start {
-                display: flex;
-                gap: 10px;
-                justify-content: flex-end;
-                align-items: center;
-            }
-            
-            /* Tooltip Styles */
-            [title] {
-                position: relative;
-            }
-            
-            [title]:hover::after {
-                content: attr(title);
-                position: absolute;
-                bottom: 100%;
-                left: 50%;
-                transform: translateX(-50%);
-                padding: 5px 10px;
-                background: rgba(0,0,0,0.8);
-                color: white;
-                font-size: 12px;
-                border-radius: 4px;
+                flex: 1;
+                justify-content: center;
+                min-width: 120px;
                 white-space: nowrap;
-                z-index: 1000;
-                margin-bottom: 5px;
             }
-            
-            /* Product Image Cell Styles */
-            .product-image-cell {
-                width: 120px;
-                padding: 5px !important;
+
+            /* Responsive Styles */
+            @media screen and (max-width: 768px) {
+                .mt-4.text-start {
+                    justify-content: center;
+                    gap: 8px;
+                    padding: 10px 5px;
+                }
+
+                .draft-btn,
+                .costs-btn,
+                .save-btn {
+                    padding: 8px 15px;
+                    font-size: 14px;
+                    margin: 0;
+                    min-width: 100px;
+                }
+
+                .action-buttons {
+                    justify-content: center;
+                }
+
+                .action-buttons .btn {
+                    width: 32px;
+                    height: 32px;
+                }
+
+                .action-buttons .btn i {
+                    font-size: 14px;
+                }
+
+                /* Make table responsive */
+                .table-responsive {
+                    margin: 0 -10px;
+                    width: calc(100% + 20px);
+                    overflow-x: auto;
+                }
+
+                .table {
+                    min-width: 800px;
+                }
+
+                /* Adjust product image size on mobile */
+                .product-image-container {
+                    width: 80px;
+                    height: 80px;
+                }
+
+                /* Fix input groups on mobile */
+                .input-group {
+                    flex-wrap: nowrap;
+                }
+
+                .input-group > .form-control {
+                    width: 1%;
+                }
+
+                /* Total section responsive */
+                .total-section .row {
+                    margin: 0 -5px;
+                }
+
+                .total-section .col-md-3 {
+                    padding: 0 5px;
+                    margin-bottom: 10px;
+                }
+
+                /* Fix Select2 dropdown on mobile */
+                .select2-container {
+                    width: 100% !important;
+                }
+
+                /* Adjust form groups spacing */
+                .form-group {
+                    margin-bottom: 15px;
+                }
+
+                /* Make labels and inputs full width on mobile */
+                .form-label {
+                    width: 100%;
+                    margin-bottom: 5px;
+                }
+
+                .form-control,
+                .form-select {
+                    width: 100%;
+                }
             }
-            
-            .product-image-container {
-                width: 100px;
-                height: 100px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background-color: #fff;
-                border-radius: 8px;
-                border: 1px solid #dee2e6;
-                overflow: hidden;
-                margin: 0 auto;
-            }
-            
-            .product-table-image {
-                max-width: 100%;
-                max-height: 100%;
-                object-fit: contain;
-                border-radius: 6px;
-            }
-            
-            .no-image-placeholder {
-                width: 100%;
-                height: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background-color: #f8f9fa;
-                color: #adb5bd;
-                font-size: 24px;
+
+            /* Small mobile devices */
+            @media screen and (max-width: 480px) {
+                .mt-4.text-start {
+                    flex-direction: column;
+                    width: 100%;
+                }
+
+                .draft-btn,
+                .costs-btn,
+                .save-btn {
+                    width: 100%;
+                    margin: 5px 0;
+                }
+
+                .action-buttons {
+                    gap: 5px;
+                }
+
+                .action-buttons .btn {
+                    width: 28px;
+                    height: 28px;
+                }
+
+                .action-buttons .btn i {
+                    font-size: 12px;
+                }
             }
         </style>
     `);
