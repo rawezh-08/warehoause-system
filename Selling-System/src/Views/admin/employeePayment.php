@@ -131,14 +131,7 @@ try {
                                             </div>
                                             
                                             <div class="row mb-4">
-                                                <div class="col-md-6 mb-3">
-                                                    <label for="paymentAmount" class="form-label">بڕی پارە</label>
-                                                    <div class="input-group">
-                                                        <input type="text" id="paymentAmount" name="amount" class="form-control number-format" placeholder="بڕی پارە" required>
-                                                        <span class="input-group-text">$</span>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
+                                            <div class="col-md-6 mb-3">
                                                     <label for="paymentType" class="form-label">جۆری پارەدان</label>
                                                     <select id="paymentType" name="paymentType" class="form-select" required>
                                                         <option value="" selected disabled>جۆری پارەدان</option>
@@ -148,6 +141,14 @@ try {
                                                       
                                                     </select>
                                                 </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label for="paymentAmount" class="form-label">بڕی پارە</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="paymentAmount" name="amount" class="form-control number-format" placeholder="بڕی پارە" required>
+                                                        <span class="input-group-text">$</span>
+                                                    </div>
+                                                </div>
+                                             
                                             </div>
                                             
                                             <div class="row mb-4">
@@ -224,8 +225,8 @@ try {
                                         <form id="addWithdrawalForm">
                                         <div class="row mb-4">
                                                 <div class="col-md-12 mb-3">
-                                                    <label for="withdrawalNotes" class="form-label">هۆکاری دەرکردنی پارە <span class="text-danger">*</span></label>
-                                                    <textarea id="withdrawalNotes" name="withdrawalNotes" class="form-control" rows="3" placeholder="هۆکاری دەرکردنی پارە لە دەخیلە بنووسە..." required></textarea>
+                                                    <label for="withdrawalNotes" class="form-label">ناوی ئەو کەسەی پارە دەردەکات و هۆکاری دەرکردنی پارە بنووسە<span class="text-danger">*</span></label>
+                                                    <textarea id="withdrawalNotes" name="withdrawalNotes" class="form-control" rows="3" placeholder="ناوی ئەو کەسەی پارە دەردەکات و هۆکاری دەرکردنی پارە بنووسە" required></textarea>
                                                 </div>
                                             </div>
                                             <div class="row mb-4">
@@ -319,11 +320,73 @@ try {
     <script>
         // Format numbers with commas as thousands separators
         document.addEventListener('DOMContentLoaded', function() {
+            const employeeSelect = document.getElementById('employeeName');
+            const paymentTypeSelect = document.getElementById('paymentType');
+            const paymentAmountInput = document.getElementById('paymentAmount');
+            let currentEmployeeSalary = 0;
+
+            // Function to fetch employee salary
+            function fetchEmployeeSalary(employeeId) {
+                return fetch(`../../process/get_employee_salary.php?employee_id=${employeeId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            currentEmployeeSalary = parseFloat(data.salary);
+                            return currentEmployeeSalary;
+                        } else {
+                            throw new Error(data.message);
+                        }
+                    });
+            }
+
+            // Handle employee selection change
+            employeeSelect.addEventListener('change', function() {
+                if (this.value && paymentTypeSelect.value === 'salary') {
+                    fetchEmployeeSalary(this.value)
+                        .then(salary => {
+                            paymentAmountInput.value = salary.toLocaleString();
+                            paymentAmountInput.readOnly = true;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching salary:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'هەڵە',
+                                text: 'کێشەیەک هەیە لە وەرگرتنی مووچەی کارمەند'
+                            });
+                        });
+                }
+            });
+
+            // Handle payment type change
+            paymentTypeSelect.addEventListener('change', function() {
+                if (this.value === 'salary' && employeeSelect.value) {
+                    fetchEmployeeSalary(employeeSelect.value)
+                        .then(salary => {
+                            paymentAmountInput.value = salary.toLocaleString();
+                            paymentAmountInput.readOnly = true;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching salary:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'هەڵە',
+                                text: 'کێشەیەک هەیە لە وەرگرتنی مووچەی کارمەند'
+                            });
+                        });
+                } else {
+                    paymentAmountInput.value = '';
+                    paymentAmountInput.readOnly = false;
+                }
+            });
+
             // Format number inputs
             const formatNumberInputs = document.querySelectorAll('.number-format');
             
             formatNumberInputs.forEach(input => {
                 input.addEventListener('input', function(e) {
+                    if (this.readOnly) return; // Skip formatting if readonly
+                    
                     // Remove non-numeric characters except decimal point
                     let value = this.value.replace(/[^\d.]/g, '');
                     

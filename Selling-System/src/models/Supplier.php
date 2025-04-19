@@ -30,8 +30,8 @@ class Supplier {
             $this->conn->beginTransaction();
             
             // Insert supplier data
-            $sql = "INSERT INTO suppliers (name, phone1, phone2, debt_on_myself, notes) 
-                    VALUES (:name, :phone1, :phone2, :debt_on_myself, :notes)";
+            $sql = "INSERT INTO suppliers (name, phone1, phone2, debt_on_myself, debt_on_supplier, notes) 
+                    VALUES (:name, :phone1, :phone2, :debt_on_myself, :debt_on_supplier, :notes)";
             
             $stmt = $this->conn->prepare($sql);
             $stmt->execute([
@@ -39,6 +39,7 @@ class Supplier {
                 ':phone1' => $data['phone1'],
                 ':phone2' => $data['phone2'] ?? '',
                 ':debt_on_myself' => $data['debt_on_myself'] ?? 0,
+                ':debt_on_supplier' => $data['debt_on_supplier'] ?? 0,
                 ':notes' => $data['notes'] ?? null
             ]);
             
@@ -53,6 +54,13 @@ class Supplier {
                 
                 // Example:
                 // $this->addDebtTransaction($supplierId, $data['debt_on_myself'], 'initial');
+            }
+            
+            // If supplier owes debt to us, add a debt transaction if needed
+            if (!empty($data['debt_on_supplier']) && $data['debt_on_supplier'] > 0) {
+                // Record supplier debt transaction
+                // Example:
+                // $this->addDebtTransaction($supplierId, $data['debt_on_supplier'], 'supplier_debt');
             }
             
             // Commit the transaction
@@ -148,7 +156,8 @@ class Supplier {
                     name = :name, 
                     phone1 = :phone1, 
                     phone2 = :phone2, 
-                    debt_on_myself = :debt_on_myself, 
+                    debt_on_myself = :debt_on_myself,
+                    debt_on_supplier = :debt_on_supplier,
                     notes = :notes 
                     WHERE id = :id";
             
@@ -159,13 +168,21 @@ class Supplier {
                 ':phone1' => $data['phone1'],
                 ':phone2' => $data['phone2'] ?? '',
                 ':debt_on_myself' => $data['debt_on_myself'] ?? 0,
+                ':debt_on_supplier' => $data['debt_on_supplier'] ?? 0,
                 ':notes' => $data['notes'] ?? null
             ]);
             
             // Handle debt changes if needed
             if ($currentSupplier['debt_on_myself'] != $data['debt_on_myself']) {
-                // Here you would add code to record a debt transaction
-                // Similar to how you'd handle customer debt changes
+                // Here you could add code to record a debt transaction
+                // Similar to how customer debt transactions are handled
+                error_log("Supplier debt to us changed: " . $currentSupplier['debt_on_myself'] . " -> " . $data['debt_on_myself']);
+            }
+            
+            // Handle supplier debt changes if needed
+            if ($currentSupplier['debt_on_supplier'] != $data['debt_on_supplier']) {
+                // Here you could add code to record a debt transaction
+                error_log("Our debt to supplier changed: " . $currentSupplier['debt_on_supplier'] . " -> " . $data['debt_on_supplier']);
             }
             
             // Commit the transaction

@@ -28,7 +28,7 @@ $suppliers = $supplierModel->getAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لیستی هاوکارەکان - سیستەمی بەڕێوەبردنی کۆگا</title>
+    <title>لیستی هەژمارەکان - سیستەمی بەڕێوەبردنی کۆگا</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -1873,6 +1873,105 @@ $suppliers = $supplierModel->getAll();
                         });
                 });
             });
+
+            // Add employee table search functionality
+            document.getElementById('employeeTableSearch').addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const employeeRows = document.querySelectorAll('#employeeTable tbody tr');
+                
+                employeeRows.forEach(row => {
+                    let match = false;
+                    // Search in all cells except the last one (actions column)
+                    for (let i = 1; i < row.cells.length - 1; i++) {
+                        const cellText = row.cells[i].textContent.toLowerCase();
+                        if (cellText.includes(searchTerm)) {
+                            match = true;
+                            break;
+                        }
+                    }
+                    
+                    row.dataset.searchMatch = match ? 'true' : 'false';
+                    row.style.display = match ? '' : 'none';
+                });
+
+                // Update pagination after search
+                applyEmployeePagination(1);
+            });
+
+            // Function to apply employee pagination
+            function applyEmployeePagination(page) {
+                const recordsPerPage = parseInt(document.getElementById('employeeRecordsPerPage').value);
+                const employeeRows = document.querySelectorAll('#employeeTable tbody tr');
+                const visibleRows = Array.from(employeeRows).filter(row => row.style.display !== 'none');
+                const totalVisibleRecords = visibleRows.length;
+                
+                // Calculate total pages
+                const totalPages = Math.ceil(totalVisibleRecords / recordsPerPage);
+                
+                // Ensure page is within bounds
+                page = Math.min(Math.max(1, page), totalPages || 1);
+                
+                // Show only rows for current page
+                visibleRows.forEach((row, index) => {
+                    const startIndex = (page - 1) * recordsPerPage;
+                    const endIndex = startIndex + recordsPerPage - 1;
+                    
+                    row.style.display = (index >= startIndex && index <= endIndex) ? '' : 'none';
+                });
+                
+                // Update pagination info
+                const startRecord = totalVisibleRecords > 0 ? (page - 1) * recordsPerPage + 1 : 0;
+                const endRecord = Math.min(page * recordsPerPage, totalVisibleRecords);
+                
+                document.getElementById('employeeStartRecord').textContent = startRecord;
+                document.getElementById('employeeEndRecord').textContent = endRecord;
+                document.getElementById('employeeTotalRecords').textContent = totalVisibleRecords;
+                
+                // Update pagination buttons
+                const prevPageBtn = document.getElementById('employeePrevPageBtn');
+                const nextPageBtn = document.getElementById('employeeNextPageBtn');
+                
+                prevPageBtn.disabled = page === 1;
+                nextPageBtn.disabled = page === totalPages || totalPages === 0;
+                
+                // Update pagination numbers
+                const paginationNumbers = document.getElementById('employeePaginationNumbers');
+                paginationNumbers.innerHTML = '';
+                
+                for (let i = 1; i <= totalPages; i++) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.className = `btn btn-sm ${i === page ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2`;
+                    pageBtn.textContent = i;
+                    pageBtn.addEventListener('click', () => applyEmployeePagination(i));
+                    paginationNumbers.appendChild(pageBtn);
+                }
+                
+                return page;
+            }
+
+            // Add employee pagination controls
+            document.getElementById('employeeRecordsPerPage').addEventListener('change', function() {
+                applyEmployeePagination(1);
+            });
+
+            document.getElementById('employeePrevPageBtn').addEventListener('click', function() {
+                const currentActivePage = document.querySelector('#employeePaginationNumbers .btn-primary');
+                if (currentActivePage) {
+                    const currentPage = parseInt(currentActivePage.textContent);
+                    applyEmployeePagination(currentPage - 1);
+                }
+            });
+
+            document.getElementById('employeeNextPageBtn').addEventListener('click', function() {
+                const currentActivePage = document.querySelector('#employeePaginationNumbers .btn-primary');
+                if (currentActivePage) {
+                    const currentPage = parseInt(currentActivePage.textContent);
+                    applyEmployeePagination(currentPage + 1);
+                }
+            });
+
+            // Initialize employee pagination
+            applyEmployeePagination(1);
         });
     </script>
 </body>

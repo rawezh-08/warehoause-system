@@ -24,6 +24,38 @@ require_once '../../process/products_logic.php';
     <link rel="stylesheet" href="../../css/products.css">
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
+    <style>
+        .badge {
+            font-size: 0.85rem;
+            padding: 6px 12px;
+            letter-spacing: 0.3px;
+            font-weight: 500;
+        }
+        
+        .badge.rounded-pill {
+            border-radius: 50rem;
+            padding-right: 12px;
+            padding-left: 12px;
+        }
+        
+        .badge.bg-danger {
+            background-color: rgba(220, 53, 69, 0.2) !important;
+            color: #dc3545 !important;
+            border: 1px solid rgba(220, 53, 69, 0.4);
+        }
+        
+        .badge.bg-warning {
+            background-color: rgba(255, 193, 7, 0.2) !important;
+            color: #e0a800 !important;
+            border: 1px solid rgba(255, 193, 7, 0.4);
+        }
+        
+        .badge.bg-success {
+            background-color: rgba(25, 135, 84, 0.2) !important;
+            color: #198754 !important;
+            border: 1px solid rgba(25, 135, 84, 0.4);
+        }
+    </style>
 </head>
 
 <body>
@@ -145,6 +177,7 @@ require_once '../../process/products_logic.php';
                                             <th style="background-color: #cde1ff; border: none;">نرخی فرۆشتن</th>
                                             <th style="background-color: #cde1ff; border: none;">نرخی فرۆشتن (کۆمەڵ)</th>
                                             <th style="background-color: #cde1ff; border: none;">بڕی کەمترین</th>
+                                            <th style="background-color: #cde1ff; border: none;">بارودۆخی کۆگا</th>
                                             <th style="background-color: #cde1ff; border: none;">کردارەکان</th>
                                         </tr>
                                     </thead>
@@ -164,10 +197,11 @@ require_once '../../process/products_logic.php';
                                                     <img src="<?php echo $imageUrl; ?>" 
                                                          alt="<?php echo htmlspecialchars($product['name']); ?>" 
                                                          class="product-image"
+                                                         style="cursor: pointer;"
+                                                         onclick="showLargeImage(this.src, '<?php echo htmlspecialchars($product['name']); ?>')"
                                                          data-bs-toggle="tooltip"
                                                          data-bs-placement="top"
-                                                         title="<?php echo htmlspecialchars($product['name']); ?>"
-                                                         aria-label="<?php echo htmlspecialchars($product['name']); ?>">
+                                                         title="<?php echo htmlspecialchars($product['name']); ?>">
                                                 <?php else: ?>
                                                     <div class="no-image-placeholder">
                                                         <i class="fas fa-image"></i>
@@ -185,6 +219,17 @@ require_once '../../process/products_logic.php';
                                             <td><?php echo number_format($product['selling_price_single'], 0); ?> د.ع</td>
                                             <td><?php echo number_format($product['selling_price_wholesale'], 0); ?> د.ع</td>
                                             <td><?php echo $product['min_quantity']; ?></td>
+                                            <td>
+                                                <?php 
+                                                $current_quantity = isset($product['current_quantity']) ? (int)$product['current_quantity'] : 0;
+                                                if ($current_quantity < 10): ?>
+                                                    <span class="badge bg-danger rounded-pill">مەترسیدارە (<?php echo $current_quantity; ?>)</span>
+                                                <?php elseif ($current_quantity >= 10 && $current_quantity <= 50): ?>
+                                                    <span class="badge bg-warning rounded-pill">بڕێکی کەم بەردەستە (<?php echo $current_quantity; ?>)</span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-success rounded-pill">کۆنتڕۆڵ (<?php echo $current_quantity; ?>)</span>
+                                                <?php endif; ?>
+                                            </td>
                                             <td>
                                                 <div class="btn-group">
                                                     <button class="btn btn-sm btn-outline-primary rounded-circle edit-product" 
@@ -354,6 +399,14 @@ require_once '../../process/products_logic.php';
                             <div class="col-md-6 mb-3">
                                 <label for="edit_min_quantity" class="form-label">کەمترین بڕ</label>
                                 <input type="number" class="form-control" id="edit_min_quantity" name="min_quantity" required autocomplete="off">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_image" class="form-label">وێنەی کاڵا</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="file" class="form-control" id="edit_image" name="image" accept="image/*">
+                                    <img id="current_product_image" src="" alt="وێنەی کاڵا" style="width: 50px; height: 50px; object-fit: contain; display: none;">
+                                </div>
+                                <small class="text-muted">بۆ گۆڕینی وێنە، وێنەیەکی نوێ هەڵبژێرە</small>
                             </div>
                         </div>
                         <div class="row">

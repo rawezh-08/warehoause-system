@@ -34,45 +34,53 @@ require_once '../includes/navbar_logic.php';
                     </div>
                     <div>
                         <?php if ($lowStockCount > 0): ?>
-                        <div class="p-3 border-bottom" style="transition: background-color 0.2s;">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                                <span class="fw-bold"><?php echo $lowStockCount; ?> کاڵا بڕەکەی کەمە</span>
+                        <a href="notifications.php#low-stock" class="text-decoration-none text-dark">
+                            <div class="p-3 border-bottom" style="transition: background-color 0.2s;">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                    <span class="fw-bold"><?php echo $lowStockCount; ?> کاڵا بڕەکەی کەمە</span>
+                                </div>
                             </div>
-                        </div>
+                        </a>
                         <?php endif; ?>
                         
                         <?php if ($outOfStockCount > 0): ?>
-                        <div class="p-3 border-bottom" style="transition: background-color 0.2s;">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-exclamation-circle text-danger me-2"></i>
-                                <span class="fw-bold"><?php echo $outOfStockCount; ?> کاڵا نەماوە لە کۆگادا</span>
+                        <a href="notifications.php#out-of-stock" class="text-decoration-none text-dark">
+                            <div class="p-3 border-bottom" style="transition: background-color 0.2s;">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                    <span class="fw-bold"><?php echo $outOfStockCount; ?> کاڵا نەماوە لە کۆگادا</span>
+                                </div>
                             </div>
-                        </div>
+                        </a>
                         <?php endif; ?>
                         
                         <?php if ($todaySales['count'] > 0): ?>
-                        <div class="p-3 border-bottom" style="transition: background-color 0.2s;">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="fas fa-shopping-cart text-success me-2"></i>
-                                <span class="fw-bold">فرۆشتن لە ئەمڕۆدا</span>
+                        <a href="notifications.php#today-sales" class="text-decoration-none text-dark">
+                            <div class="p-3 border-bottom" style="transition: background-color 0.2s;">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-shopping-cart text-success me-2"></i>
+                                    <span class="fw-bold">فرۆشتن لە ئەمڕۆدا</span>
+                                </div>
+                                <div>
+                                    <p class="mb-0 small"><?php echo $todaySales['count']; ?> فرۆشتن بە بڕی <?php echo number_format($todaySales['total'] ?? 0, 0, '.', ','); ?> دینار</p>
+                                </div>
                             </div>
-                            <div>
-                                <p class="mb-0 small"><?php echo $todaySales['count']; ?> فرۆشتن بە بڕی <?php echo number_format($todaySales['total'] ?? 0, 0, '.', ','); ?> دینار</p>
-                            </div>
-                        </div>
+                        </a>
                         <?php endif; ?>
                         
                         <?php if ($todayPurchases['count'] > 0): ?>
-                        <div class="p-3 border-bottom" style="transition: background-color 0.2s;">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="fas fa-truck text-primary me-2"></i>
-                                <span class="fw-bold">کڕین لە ئەمڕۆدا</span>
+                        <a href="notifications.php#today-purchases" class="text-decoration-none text-dark">
+                            <div class="p-3 border-bottom" style="transition: background-color 0.2s;">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-truck text-primary me-2"></i>
+                                    <span class="fw-bold">کڕین لە ئەمڕۆدا</span>
+                                </div>
+                                <div>
+                                    <p class="mb-0 small"><?php echo $todayPurchases['count']; ?> کڕین بە بڕی <?php echo number_format($todayPurchases['total'] ?? 0, 0, '.', ','); ?> دینار</p>
+                                </div>
                             </div>
-                            <div>
-                                <p class="mb-0 small"><?php echo $todayPurchases['count']; ?> کڕین بە بڕی <?php echo number_format($todayPurchases['total'] ?? 0, 0, '.', ','); ?> دینار</p>
-                            </div>
-                        </div>
+                        </a>
                         <?php endif; ?>
                         
                         <?php if ($totalNotifications == 0): ?>
@@ -80,6 +88,9 @@ require_once '../includes/navbar_logic.php';
                             <p class="text-center mb-0">هیچ ئاگادارکردنەوەیەک نییە</p>
                         </div>
                         <?php endif; ?>
+                    </div>
+                    <div class="p-2 border-top text-center">
+                        <a href="notifications.php" class="btn btn-sm btn-primary w-100">هەموو ئاگادارکردنەوەکان</a>
                     </div>
                 </div>
             </div>

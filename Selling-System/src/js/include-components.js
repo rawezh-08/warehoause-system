@@ -152,10 +152,24 @@ function loadNavbarAndSidebar() {
                                 if (dropdownIcon) {
                                     dropdownIcon.classList.toggle('rotate');
                                 }
+                                
+                                // Store submenu state in localStorage
+                                const submenuIdWithoutHash = submenuId.substring(1);
+                                if (submenu.classList.contains('show')) {
+                                    localStorage.setItem('submenu_' + submenuIdWithoutHash, 'open');
+                                } else {
+                                    localStorage.removeItem('submenu_' + submenuIdWithoutHash);
+                                }
                             }
                         });
                     }
                 });
+                
+                // Restore submenu state from localStorage
+                restoreSubmenuState();
+                
+                // Set active menu based on current page
+                setActiveMenuItem();
             })
             .catch(error => {
                 console.error('هەڵە لە بارکردنی سایدبار:', error);
@@ -168,6 +182,70 @@ function loadNavbarAndSidebar() {
                     </div>
                 `;
             });
+    }
+}
+
+/**
+ * Restore submenu state from localStorage
+ */
+function restoreSubmenuState() {
+    // Get all submenus
+    const submenus = document.querySelectorAll('.submenu');
+    const currentPage = window.location.pathname.split('/').pop() || 'index.php';
+    let activeSubmenuFound = false;
+    
+    // First check if the current page is in a submenu
+    // If so, we'll prioritize opening that submenu
+    submenus.forEach(submenu => {
+        const submenuLinks = submenu.querySelectorAll('a');
+        submenuLinks.forEach(link => {
+            if (link.getAttribute('href') === currentPage) {
+                submenu.classList.add('show');
+                link.classList.add('active');
+                
+                // Also rotate the dropdown icon
+                const parentLink = document.querySelector(`a[href="#${submenu.id}"]`);
+                if (parentLink) {
+                    const dropdownIcon = parentLink.querySelector('.dropdown-icon');
+                    if (dropdownIcon) {
+                        dropdownIcon.classList.add('rotate');
+                    }
+                    // Mark parent menu item as active
+                    const parentItem = parentLink.closest('.menu-item');
+                    if (parentItem) {
+                        parentItem.classList.add('active');
+                    }
+                }
+                
+                // Store this state
+                localStorage.setItem('submenu_' + submenu.id, 'open');
+                localStorage.setItem('active_page', currentPage);
+                
+                activeSubmenuFound = true;
+            }
+        });
+    });
+    
+    // If we didn't find the active page in a submenu,
+    // restore any previously opened submenus from localStorage
+    if (!activeSubmenuFound) {
+        submenus.forEach(submenu => {
+            const submenuId = submenu.id;
+            const isOpen = localStorage.getItem('submenu_' + submenuId);
+            
+            if (isOpen === 'open') {
+                submenu.classList.add('show');
+                
+                // Also rotate the dropdown icon
+                const parentLink = document.querySelector(`a[href="#${submenuId}"]`);
+                if (parentLink) {
+                    const dropdownIcon = parentLink.querySelector('.dropdown-icon');
+                    if (dropdownIcon) {
+                        dropdownIcon.classList.add('rotate');
+                    }
+                }
+            }
+        });
     }
 }
 
@@ -221,6 +299,10 @@ function setActiveMenuItem() {
                     if (dropdownIcon) {
                         dropdownIcon.classList.add('rotate');
                     }
+                    
+                    // Store this submenu state in localStorage to persist between page loads
+                    localStorage.setItem('submenu_' + submenu.id, 'open');
+                    localStorage.setItem('active_page', currentPage);
                     
                     // Remove the click event that would toggle the submenu
                     parentLink.removeEventListener('click', toggleSubmenu);

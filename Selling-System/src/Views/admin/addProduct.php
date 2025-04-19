@@ -61,12 +61,17 @@ require_once '../../process/addProduct_logic.php';
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label for="category_id" class="form-label">جۆری کاڵا</label>
-                                                    <select id="category_id" name="category_id" class="form-select" required>
-                                                        <option value="" selected disabled>جۆر</option>
-                                                        <?php foreach ($categories as $category): ?>
-                                                            <option value="<?php echo $category['id']; ?>"><?php echo $category['name']; ?></option>
-                                                        <?php endforeach; ?>
-                                                    </select>
+                                                    <div class="input-group">
+                                                        <select id="category_id" name="category_id" class="form-select" required>
+                                                            <option value="" selected disabled>جۆر</option>
+                                                            <?php foreach ($categories as $category): ?>
+                                                                <option value="<?php echo $category['id']; ?>"><?php echo $category['name']; ?></option>
+                                                            <?php endforeach; ?>
+                                                        </select>
+                                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                                                            <i class="fas fa-plus"></i>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                             
@@ -276,5 +281,107 @@ require_once '../../process/addProduct_logic.php';
     <script src="../../js/include-components.js"></script>
     <!-- Add Product Script -->
     <script src="../../js/addProduct.js"></script>
+
+    <!-- Add Category Modal -->
+    <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addCategoryModalLabel">زیادکردنی جۆری نوێ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addCategoryForm">
+                        <div class="mb-3">
+                            <label for="categoryName" class="form-label">ناوی جۆر</label>
+                            <input type="text" class="form-control" id="categoryName" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="categoryDescription" class="form-label">وەسف (ئارەزوومەندانە)</label>
+                            <textarea class="form-control" id="categoryDescription" name="description" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" id="saveCategoryBtn">زیادکردن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Management Script -->
+    <script>
+        $(document).ready(function() {
+            // Save category button click handler
+            $('#saveCategoryBtn').on('click', function() {
+                const categoryName = $('#categoryName').val();
+                const categoryDescription = $('#categoryDescription').val();
+                
+                if (!categoryName) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: 'تکایە ناوی جۆر بنووسە'
+                    });
+                    return;
+                }
+                
+                // Send AJAX request to add the category
+                $.ajax({
+                    url: '../../api/add_category.php',
+                    type: 'POST',
+                    data: {
+                        name: categoryName,
+                        description: categoryDescription
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            // Close the modal
+                            $('#addCategoryModal').modal('hide');
+                            
+                            // Add the new category to the dropdown
+                            $('#category_id').append(
+                                $('<option>', {
+                                    value: response.category_id,
+                                    text: categoryName,
+                                    selected: true
+                                })
+                            );
+                            
+                            // Show success message
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'سەرکەوتوو',
+                                text: 'جۆر بە سەرکەوتوویی زیادکرا'
+                            });
+                            
+                            // Reset the form
+                            $('#addCategoryForm')[0].reset();
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'هەڵە',
+                                text: response.message || 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی جۆر'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'هەڵە',
+                            text: 'هەڵەیەک ڕوویدا لە پەیوەندی بە سێرڤەر'
+                        });
+                    }
+                });
+            });
+            
+            // Clear the form when the modal is closed
+            $('#addCategoryModal').on('hidden.bs.modal', function() {
+                $('#addCategoryForm')[0].reset();
+            });
+        });
+    </script>
 </body>
 </html> 

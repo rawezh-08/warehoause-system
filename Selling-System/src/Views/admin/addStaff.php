@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>زیادکردنی هاوکارەکان - سیستەمی بەڕێوەبردنی کۆگا</title>
+    <title>زیادکردنی هەژمارەکان - سیستەمی بەڕێوەبردنی کۆگا</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -35,7 +35,7 @@
             <div class="container-fluid">
                 <div class="row mb-4">
                     <div class="col-12">
-                        <h3 class="page-title">زیادکردنی هاوکارەکان</h3>
+                        <h3 class="page-title">زیادکردنی هەژمارەکان</h3>
                     </div>
                 </div>
 
@@ -127,7 +127,7 @@
                             <div class="col-md-10 mx-auto">
                                 <div class="card shadow-sm" style="border: 1px solid var(--blue-border-color); border-radius: 18px;">
                                     <div class="card-header bg-transparent">
-                                        <h5 class="card-title mb-0">زانیاری بازرگان</h5>
+                                        <h5 class="card-title mb-0">زانیاری کڕیار</h5>
                                     </div>
                                     <div class="card-body">
                                         <form id="customerForm" action="../../process/add_customer.php" method="POST" class="needs-validation" novalidate>
@@ -160,9 +160,16 @@
                                                     <input type="tel" class="form-control" id="guarantorPhone" placeholder="07xxxxxxxxx" name="guarantorPhone" pattern="07[0-9]{9}">
                                                 </div>
                                                 <div class="col-md-6 mb-4">
-                                                    <label for="debitOnBusiness" class="form-label">قەرز بەسەر کڕیار</label>
+                                                    <label for="debitOnBusiness" class="form-label">ئەو بڕەی کڕیار قەرزارە</label>
                                                     <div class="input-group">
                                                         <input type="text" id="debitOnBusiness" name="debitOnBusiness" class="form-control" placeholder="بڕی قەرز لە سەر کڕیار" oninput="formatNumber(this)">
+                                                        <span class="input-group-text">د.ع</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 mb-4">
+                                                    <label for="debt_on_customer" class="form-label">بری پێشەکی کە کڕیار بە ئێمەی داوە</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="debt_on_customer" name="debt_on_customer" class="form-control" placeholder="بڕی پێشەکی" oninput="formatNumber(this)">
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
@@ -225,9 +232,16 @@
                                                     <input type="tel" class="form-control" id="supplierPhone2" name="supplierPhone2" placeholder="07xxxxxxxxx" pattern="07[0-9]{9}">
                                                 </div>
                                                 <div class="col-md-6 mb-4">
-                                                    <label for="debt_on_myself" class="form-label">قەرز بەسەر من</label>
+                                                    <label for="debt_on_myself" class="form-label">ئەو بڕە پارەی قەرزارم</label>
                                                     <div class="input-group">
-                                                        <input type="text" class="form-control" id="debt_on_myself" name="debt_on_myself" placeholder="بڕی قەرز بەسەر من" oninput="formatNumber(this)">
+                                                        <input type="text" class="form-control" id="debt_on_myself" name="debt_on_myself" placeholder=" بڕ بنووسە" oninput="formatNumber(this)">
+                                                        <span class="input-group-text">د.ع</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 mb-4">
+                                                    <label for="debt_on_supplier" class="form-label">پارەی پێشەکی لە ئێمە داومانە بە دابینکەر</label>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" id="debt_on_supplier" name="debt_on_supplier" placeholder="بڕی پێشەکی" oninput="formatNumber(this)">
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>

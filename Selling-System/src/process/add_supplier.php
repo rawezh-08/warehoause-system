@@ -26,12 +26,17 @@ try {
         ? str_replace(',', '', $_POST['debt_on_myself']) 
         : 0;
     
+    $debtOnSupplier = isset($_POST['debt_on_supplier']) && $_POST['debt_on_supplier'] !== '' 
+        ? str_replace(',', '', $_POST['debt_on_supplier']) 
+        : 0;
+    
     // Prepare data
     $data = [
         'name' => $_POST['supplierName'],
         'phone1' => $_POST['supplierPhone'],
         'phone2' => $_POST['supplierPhone2'] ?? '',
         'debt_on_myself' => $debtOnMyself,
+        'debt_on_supplier' => $debtOnSupplier,
         'notes' => $_POST['supplierNotes'] ?? null
     ];
 

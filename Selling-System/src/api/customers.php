@@ -32,6 +32,7 @@ try {
                 guarantor_phone, 
                 address,
                 debit_on_business,
+                debt_on_customer,
                 notes
             FROM customers";
 
@@ -92,6 +93,7 @@ try {
             'guarantor_phone' => $row['guarantor_phone'],
             'address' => $row['address'],
             'debit_on_business' => $row['debit_on_business'],
+            'debt_on_customer' => $row['debt_on_customer'],
             'notes' => $row['notes']
         ];
     }

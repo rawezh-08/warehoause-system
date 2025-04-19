@@ -38,6 +38,7 @@ try {
 
     // Clean comma from numerical values
     $debitOnBusiness = isset($_POST['debitOnBusiness']) && $_POST['debitOnBusiness'] !== '' ? str_replace(',', '', $_POST['debitOnBusiness']) : 0;
+    $debtOnCustomer = isset($_POST['debt_on_customer']) && $_POST['debt_on_customer'] !== '' ? str_replace(',', '', $_POST['debt_on_customer']) : 0;
     
     // Prepare data
     $data = [
@@ -48,6 +49,7 @@ try {
         'guarantor_phone' => $_POST['guarantorPhone'] ?? null,
         'address' => $_POST['customerAddress'] ?? null,
         'debit_on_business' => $debitOnBusiness,
+        'debt_on_customer' => $debtOnCustomer,
         'notes' => $_POST['customerNotes'] ?? null
     ];
 

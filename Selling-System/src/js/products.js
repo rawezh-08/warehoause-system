@@ -218,6 +218,9 @@ function changePage(page) {
                 
                 // Reinitialize event handlers and tooltips
                 initializeEventHandlers();
+                
+                // Reinitialize tooltips
+                $('[data-bs-toggle="tooltip"]').tooltip();
             } else {
                 Swal.fire({
                     title: 'هەڵە!',
@@ -318,6 +321,19 @@ function initializeEventHandlers() {
         $('#edit_selling_price_wholesale').val(data.sellingWholesale);
         $('#edit_min_quantity').val(data.minQty);
         $('#edit_notes').val(data.notes);
+
+        // Handle image preview
+        const productImage = $(this).closest('tr').find('.product-image');
+        if (productImage.length > 0 && productImage.attr('src')) {
+            $('#current_product_image')
+                .attr('src', productImage.attr('src'))
+                .css('display', 'block');
+        } else {
+            $('#current_product_image').css('display', 'none');
+        }
+        
+        // Reset file input
+        $('#edit_image').val('');
         
         // Show/hide unit-specific inputs based on selected unit
         toggleUnitInputs($('#edit_unit').val());
@@ -325,6 +341,20 @@ function initializeEventHandlers() {
         // Show the modal
         const editModal = new bootstrap.Modal(document.getElementById('editProductModal'));
         editModal.show();
+    });
+
+    // Handle image preview when a new file is selected
+    $('#edit_image').on('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#current_product_image')
+                    .attr('src', e.target.result)
+                    .css('display', 'block');
+            };
+            reader.readAsDataURL(file);
+        }
     });
 
     // Handle unit change in edit modal
@@ -468,6 +498,17 @@ function updateTableContent(data) {
     let tableHtml = '';
     data.products.forEach((product, index) => {
         const rowNumber = (data.pagination.current_page - 1) * data.pagination.records_per_page + index + 1;
+        const current_quantity = parseInt(product.current_quantity) || 0;
+        let statusBadge = '';
+        
+        if (current_quantity < 10) {
+            statusBadge = `<span class="badge bg-danger rounded-pill">مەترسیدارە (${current_quantity})</span>`;
+        } else if (current_quantity >= 10 && current_quantity <= 50) {
+            statusBadge = `<span class="badge bg-warning rounded-pill">بڕێکی کەم بەردەستە (${current_quantity})</span>`;
+        } else {
+            statusBadge = `<span class="badge bg-success rounded-pill">کۆنتڕۆڵ (${current_quantity})</span>`;
+        }
+
         tableHtml += `
             <tr>
                 <td>${rowNumber}</td>
@@ -476,11 +517,11 @@ function updateTableContent(data) {
                         `<img src="../../api/product_image.php?filename=${encodeURIComponent(product.image.split('/').pop())}" 
                               alt="${product.name}" 
                               class="product-image"
+                              style="cursor: pointer;"
+                              onclick="showLargeImage(this.src, '${product.name}')"
                               data-bs-toggle="tooltip"
                               data-bs-placement="top"
-                              title="${product.name}"
-                              onclick="showLargeImage(this.src, '${product.name}')"
-                              aria-label="${product.name}">` :
+                              title="${product.name}">` :
                         `<div class="no-image-placeholder">
                             <i class="fas fa-image"></i>
                         </div>`
@@ -497,6 +538,7 @@ function updateTableContent(data) {
                 <td>${numberFormat(product.selling_price_single)} د.ع</td>
                 <td>${numberFormat(product.selling_price_wholesale)} د.ع</td>
                 <td>${product.min_quantity}</td>
+                <td>${statusBadge}</td>
                 <td>
                     <div class="btn-group">
                         <button class="btn btn-sm btn-outline-primary rounded-circle edit-product" 
@@ -536,6 +578,9 @@ function updateTableContent(data) {
         `;
     });
     $('#productsTableBody').html(tableHtml);
+    
+    // Reinitialize tooltips after updating table content
+    $('[data-bs-toggle="tooltip"]').tooltip();
 }
 
 $(document).ready(function() {
@@ -580,6 +625,21 @@ $(document).ready(function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                // Update the image in the table if a new image was uploaded
+                if (data.image_url) {
+                    productRow.find('.product-image')
+                        .attr('src', data.image_url)
+                        .closest('td')
+                        .html(`<img src="${data.image_url}" 
+                                   alt="${formData.get('name')}" 
+                                   class="product-image"
+                                   style="cursor: pointer;"
+                                   onclick="showLargeImage(this.src, '${formData.get('name')}')"
+                                   data-bs-toggle="tooltip"
+                                   data-bs-placement="top"
+                                   title="${formData.get('name')}">`);
+                }
+
                 // Collect updated values
                 const updatedData = {
                     name: formData.get('name'),

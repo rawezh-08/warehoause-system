@@ -228,7 +228,11 @@ try {
             ], true));
             
             // For regular (non-draft) sales, call the stored procedure
-            $stmt = $conn->prepare("CALL add_sale(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            if ($data['payment_type'] === 'credit') {
+                $stmt = $conn->prepare("CALL add_sale_with_advance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            } else {
+                $stmt = $conn->prepare("CALL add_sale(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            }
             $stmt->bindParam(1, $data['invoice_number'], PDO::PARAM_STR);
             $stmt->bindParam(2, $data['customer_id'], PDO::PARAM_INT);
             $stmt->bindParam(3, $data['date'], PDO::PARAM_STR);

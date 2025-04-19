@@ -70,9 +70,12 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
                p.code as product_code, 
                p.image as product_image,
                p.pieces_per_box,
-               p.boxes_per_set
+               p.boxes_per_set,
+               u.name as unit_name,
+               u.is_piece, u.is_box, u.is_set
         FROM sale_items si
         JOIN products p ON si.product_id = p.id
+        LEFT JOIN units u ON p.unit_id = u.id
         WHERE si.sale_id = ?
     ");
     $stmt->execute([$sale['id']]);
@@ -292,6 +295,12 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
             font-weight: bold;
         }
 
+        .total-pieces-cell {
+            font-weight: bold;
+            color: var(--primary-color);
+            white-space: nowrap;
+        }
+
         /* Summary section */
         .summary-section {
             padding: 20px 25px;
@@ -442,7 +451,7 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
             <div class="logo-section">
                 <img src="../../assets/images/company-logo.svg" alt="کۆگای ئەشکان" class="company-logo">
                 <div class="company-info">
-                    <h1>کۆگای ئەشکان</h1>
+                    <h1>کۆگای احمد و ئەشکان</h1>
                     <p>ناونیشان: سلێمانی - کۆگاکانی غرفة تجارة - کۆگای 288</p>
                     <p>ژمارە تەلەفۆن: 5678 123 0770</p>
                 </div>
@@ -480,6 +489,7 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
                         <th>کۆد</th>
                         <th>ناوی کاڵا</th>
                         <th>بڕ</th>
+                        <th>کۆی دانەکان</th>
                         <th>نرخی یەکە</th>
                         <th>کۆی گشتی</th>
                     </tr>
@@ -491,6 +501,29 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
                     foreach ($products as $product): 
                         $count++;
                         $total_items += $product['quantity'];
+
+                        // Determine the unit type based on the sale_items unit_type or units table
+                        $unit_type = isset($product['unit_type']) ? $product['unit_type'] : 'piece';
+                        
+                        // Use units table data if available
+                        if (isset($product['is_piece']) && isset($product['is_box']) && isset($product['is_set'])) {
+                            if ($product['is_set']) {
+                                $unit_type = 'set';
+                            } elseif ($product['is_box']) {
+                                $unit_type = 'box';
+                            } else {
+                                $unit_type = 'piece';
+                            }
+                        }
+
+                        // Calculate total pieces based on unit type
+                        $total_pieces = $product['quantity']; // Default for single pieces
+                        if ($unit_type == 'box' && isset($product['pieces_per_box']) && $product['pieces_per_box'] > 0) {
+                            $total_pieces = $product['quantity'] * $product['pieces_per_box'];
+                        } elseif ($unit_type == 'set' && isset($product['pieces_per_box']) && isset($product['boxes_per_set']) && 
+                                 $product['pieces_per_box'] > 0 && $product['boxes_per_set'] > 0) {
+                            $total_pieces = $product['quantity'] * $product['boxes_per_set'] * $product['pieces_per_box'];
+                        }
                     ?>
                     <tr>
                         <td><?php echo $count; ?></td>
@@ -516,7 +549,7 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
                         <td class="quantity-cell">
                             <?php 
                             echo $product['quantity'] . ' ';
-                            switch($product['unit_type']) {
+                            switch($unit_type) {
                                 case 'box':
                                     echo '<span class="unit-type">کارتۆن</span>';
                                     break;
@@ -525,6 +558,21 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
                                     break;
                                 default:
                                     echo '<span class="unit-type">دانە</span>';
+                            }
+                            ?>
+                        </td>
+                        <td class="total-pieces-cell">
+                            <?php 
+                            if ($unit_type == 'piece') {
+                                echo $total_pieces . ' دانە';
+                            } else if ($unit_type == 'box' && isset($product['pieces_per_box']) && $product['pieces_per_box'] > 0) {
+                                echo $product['quantity'] . ' کارتۆن، ' . $total_pieces . ' دانە';
+                            } else if ($unit_type == 'set' && isset($product['pieces_per_box']) && isset($product['boxes_per_set']) && 
+                                    $product['pieces_per_box'] > 0 && $product['boxes_per_set'] > 0) {
+                                $total_boxes = $product['quantity'] * $product['boxes_per_set'];
+                                echo $product['quantity'] . ' سێت، ' . $total_boxes . ' کارتۆن، ' . $total_pieces . ' دانە';
+                            } else {
+                                echo $total_pieces . ' دانە';
                             }
                             ?>
                         </td>

@@ -72,6 +72,9 @@ require_once '../../config/database.php';
                             <select class="form-select customer-select">
                                 <option value="" selected disabled>کڕیار هەڵبژێرە</option>
                             </select>
+                            <div class="customer-advance-info mt-2" style="display: none;">
+                                <small class="text-muted">پارەی پێشەکی: <span class="advance-amount">0</span> دینار</small>
+                            </div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">جۆری پارەدان</label>
@@ -668,6 +671,35 @@ require_once '../../config/database.php';
 
             // Initialize the first tab
             updateReceiptType('selling');
+
+            // Initialize Select2 for customer select with advance payment info
+            $('.customer-select').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                ajax: {
+                    url: '../../api/customers.php',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            search: params.term,
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function(data, params) {
+                        params.page = params.page || 1;
+                        return {
+                            results: data.customers,
+                            pagination: {
+                                more: (params.page * 10) < data.total_count
+                            }
+                        };
+                    },
+                    cache: true
+                },
+                templateResult: formatCustomer,
+                templateSelection: formatCustomerSelection
+            });
         });
 
         // Function to update receipt type
@@ -746,6 +778,98 @@ require_once '../../config/database.php';
                 default: return 'دانە';
             }
         }
+
+        // Format customer display in dropdown
+        function formatCustomer(customer) {
+            if (!customer.id) return customer.text;
+            
+            let advanceInfo = '';
+            if (customer.debt_on_customer > 0) {
+                advanceInfo = `<div class="text-success" style="font-size: 0.9em;">
+                    <i class="fas fa-money-bill-wave"></i> پارەی پێشەکی: ${customer.debt_on_customer.toLocaleString()} دینار
+                </div>`;
+            }
+            
+            let debtInfo = '';
+            if (customer.debit_on_business > 0) {
+                debtInfo = `<div class="text-danger" style="font-size: 0.9em;">
+                    <i class="fas fa-file-invoice-dollar"></i> قەرز: ${customer.debit_on_business.toLocaleString()} دینار
+                </div>`;
+            }
+            
+            return $(`
+                <div class="customer-option">
+                    <div class="customer-name" style="font-weight: bold;">${customer.text}</div>
+                    <div class="customer-phone text-muted" style="font-size: 0.9em;">
+                        <i class="fas fa-phone"></i> ${customer.phone1}
+                    </div>
+                    ${advanceInfo}
+                    ${debtInfo}
+                </div>
+            `);
+        }
+
+        // Format selected customer
+        function formatCustomerSelection(customer) {
+            if (!customer.id) return customer.text;
+            
+            // Show/hide advance payment info
+            const advanceInfoDiv = $('.customer-advance-info');
+            const advanceAmountSpan = $('.advance-amount');
+            
+            if (customer.debt_on_customer > 0) {
+                advanceInfoDiv.show();
+                advanceAmountSpan.text(customer.debt_on_customer.toLocaleString());
+            } else {
+                advanceInfoDiv.hide();
+            }
+            
+            return customer.text;
+        }
+
+        // Add CSS styles for the dropdown
+        const style = `
+        <style>
+            .customer-option {
+                padding: 8px;
+                border-bottom: 1px solid #eee;
+            }
+            .customer-option:last-child {
+                border-bottom: none;
+            }
+            .customer-name {
+                margin-bottom: 2px;
+            }
+            .select2-results__option {
+                padding: 0 !important;
+            }
+            .select2-results__option--highlighted .customer-option {
+                background-color: #f0f0f0;
+            }
+            .customer-advance-info {
+                margin-top: 5px;
+                padding: 5px;
+                background-color: #f8f9fa;
+                border-radius: 4px;
+                font-size: 0.9em;
+            }
+        </style>
+        `;
+        $('head').append(style);
+
+        // Handle customer selection change
+        $('.customer-select').on('change', function() {
+            const selectedCustomer = $(this).select2('data')[0];
+            if (selectedCustomer && selectedCustomer.debt_on_customer > 0) {
+                // Show warning if customer has advance payment
+                Swal.fire({
+                    title: 'ئاگاداری',
+                    text: `ئەم کڕیارە ${selectedCustomer.debt_on_customer.toLocaleString()} دینار پارەی پێشەکی هەیە. ئەگەر کاڵا بە قەرز بکڕێت، لەم پارە پێشەکییە دەبڕدرێتەوە.`,
+                    icon: 'info',
+                    confirmButtonText: 'باشە'
+                });
+            }
+        });
     </script>
 </body>
 </html> 

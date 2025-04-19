@@ -195,10 +195,63 @@ justify-content: start;
 .submenu li{
   color: #383838;
   padding: 6px;
-
 }
 
+/* Active menu item styles */
+.sidebar-menu a.active {
+  color: var(--primary-color);
+  font-weight: bold;
+}
 
+.submenu li a.active {
+  color: var(--primary-color);
+  font-weight: bold;
+  position: relative;
+}
+
+.submenu li a.active::before {
+  content: '';
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 5px;
+  height: 5px;
+  background-color: var(--primary-color);
+  border-radius: 50%;
+}
+
+/* Change the active item styling to only fill icon */
+.sidebar-menu .menu-item.active > .item-link .icon-cont {
+  background-color: var(--primary-color);
+}
+
+.sidebar-menu .menu-item.active > .item-link .icon-cont img {
+  filter: invert(1) sepia(1) hue-rotate(180deg);
+}
+
+/* Remove background color from active menu item */
+.sidebar-menu .menu-item.active > .item-link {
+  background-color: transparent;
+}
+
+/* For dropdown rotation */
+.dropdown-icon {
+  transition: transform 0.3s ease;
+}
+
+.dropdown-icon.rotate {
+  transform: rotate(180deg);
+}
+
+/* Show submenu */
+.submenu.show {
+  display: block;
+}
+
+.submenu {
+  display: none;
+}
 
 @media (max-width: 400px) {
   .sidebar {

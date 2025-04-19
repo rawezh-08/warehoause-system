@@ -496,7 +496,7 @@ foreach ($purchases as $purchase) {
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="debt-payment-tab" data-bs-toggle="tab" data-bs-target="#debt-payment-content" type="button" role="tab" aria-controls="debt-payment-content" aria-selected="false">
-                                    <i class="fas fa-hand-holding-dollar"></i>پارەدانی قەرز
+                                    <i class="fas fa-hand-holding-dollar"></i>قەرزدانەوە
                                 </button>
                             </li>
                         </ul>

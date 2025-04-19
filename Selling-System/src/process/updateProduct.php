@@ -32,11 +32,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $selling_price_wholesale = $_POST['selling_price_wholesale'] ?? null;
         $min_quantity = $_POST['min_quantity'] ?? 0;
 
+        // Handle image upload
+        $image_url = null;
+        if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+            $upload_dir = dirname(__DIR__) . '/uploads/products/';
+            
+            // Create directory if it doesn't exist
+            if (!file_exists($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
+
+            // Get file extension
+            $file_extension = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+            
+            // Allowed file types
+            $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
+            
+            if (!in_array($file_extension, $allowed_types)) {
+                throw new Exception('جۆری فایلەکە ڕێگەپێدراو نییە. تەنها jpg, jpeg, png, gif ڕێگەپێدراون.');
+            }
+            
+            // Generate unique filename
+            $new_filename = uniqid('product_') . '.' . $file_extension;
+            $upload_path = $upload_dir . $new_filename;
+            
+            // Move uploaded file
+            if (move_uploaded_file($_FILES['image']['tmp_name'], $upload_path)) {
+                // Get the old image path from database
+                $stmt = $conn->prepare("SELECT image FROM products WHERE id = ?");
+                $stmt->execute([$id]);
+                $old_image = $stmt->fetchColumn();
+                
+                // Delete old image if exists
+                if ($old_image && file_exists(dirname(__DIR__) . '/' . $old_image)) {
+                    unlink(dirname(__DIR__) . '/' . $old_image);
+                }
+                
+                // Update image path in database
+                $image_path = 'uploads/products/' . $new_filename;
+                $image_url = "../../api/product_image.php?filename=" . urlencode($new_filename);
+            } else {
+                throw new Exception('کێشەیەک هەیە لە باکردنی وێنەکە');
+            }
+        }
+
+        // Update SQL query to include image if uploaded
         $sql = "UPDATE products SET 
                 name = ?, 
                 code = ?,
                 barcode = ?,
-    
                 notes = ?,
                 category_id = ?,
                 unit_id = ?,
@@ -45,15 +89,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 purchase_price = ?,
                 selling_price_single = ?,
                 selling_price_wholesale = ?,
-                min_quantity = ?
-                WHERE id = ?";
+                min_quantity = ?" .
+                ($image_url ? ", image = ?" : "") .
+                " WHERE id = ?";
 
-        $stmt = $conn->prepare($sql);
-        $result = $stmt->execute([
+        $params = [
             $name,
             $code,
             $barcode,
-
             $notes,
             $category_id,
             $unit_id,
@@ -62,12 +105,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $purchase_price,
             $selling_price_single,
             $selling_price_wholesale,
-            $min_quantity,
-            $id
-        ]);
+            $min_quantity
+        ];
+
+        // Add image path to params if uploaded
+        if ($image_url) {
+            $params[] = $image_path;
+        }
+        
+        // Add id as last parameter
+        $params[] = $id;
+
+        $stmt = $conn->prepare($sql);
+        $result = $stmt->execute($params);
 
         if ($result) {
-            echo json_encode(['success' => true]);
+            echo json_encode([
+                'success' => true,
+                'image_url' => $image_url
+            ]);
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to update product']);
         }
