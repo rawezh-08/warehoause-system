@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>باڵانسی ئێمە لەگەڵ فرۆشیارەکان</title>
+    <title>باڵانسی ئێمە لەگەڵ کڕیارەکان</title>
     <!-- Bootstrap RTL CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
     <!-- Font Awesome -->
@@ -11,6 +11,9 @@
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="../../css/dashboard.css">
     <link rel="stylesheet" href="../../css/global.css">
     <style>
@@ -125,14 +128,14 @@
         }
         
         /* Card styles */
-        .supplier-cards-container {
+        .customer-cards-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 1.25rem;
             padding: 0.75rem;
         }
         
-        .supplier-card {
+        .customer-card {
             background: white;
             border: 1px solid #e5e7eb;
             border-radius: 10px;
@@ -140,19 +143,19 @@
             cursor: pointer;
         }
         
-        .supplier-card:hover {
+        .customer-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
         
-        .supplier-card .card-header {
+        .customer-card .card-header {
             padding: 1rem 1.25rem;
             border-bottom: 1px solid #f3f4f6;
             background: #f9fafb;
             border-radius: 10px 10px 0 0;
         }
         
-        .supplier-card .card-title {
+        .customer-card .card-title {
             font-size: 1.1rem;
             font-weight: 600;
             color: #111827;
@@ -162,12 +165,12 @@
             margin-bottom: 0.5rem;
         }
         
-        .supplier-card .card-title i {
+        .customer-card .card-title i {
             color: #6b7280;
             font-size: 1rem;
         }
         
-        .supplier-card .contact-info {
+        .customer-card .contact-info {
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -175,18 +178,18 @@
             font-size: 0.9rem;
         }
         
-        .supplier-card .card-body {
+        .customer-card .card-body {
             padding: 1.25rem;
         }
         
-        .supplier-card .balance-section {
+        .customer-card .balance-section {
             text-align: center;
             padding: 1rem;
             margin-bottom: 1rem;
             border-radius: 8px;
         }
         
-        .supplier-card .balance-amount {
+        .customer-card .balance-amount {
             font-size: 1.75rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
@@ -196,37 +199,37 @@
             gap: 0.75rem;
         }
         
-        .supplier-card .balance-amount i {
+        .customer-card .balance-amount i {
             font-size: 1.25rem;
         }
         
-        .supplier-card .balance-positive {
+        .customer-card .balance-positive {
             color: #059669;
             background: #ecfdf5;
         }
         
-        .supplier-card .balance-negative {
+        .customer-card .balance-negative {
             color: #dc2626;
             background: #fef2f2;
         }
         
-        .supplier-card .balance-zero {
+        .customer-card .balance-zero {
             color: #6b7280;
             background: #f3f4f6;
         }
         
-        .supplier-card .balance-label {
+        .customer-card .balance-label {
             color: #6b7280;
             font-size: 0.875rem;
         }
         
-        .supplier-card .card-actions {
+        .customer-card .card-actions {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 0.75rem;
         }
         
-        .supplier-card .btn {
+        .customer-card .btn {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -237,122 +240,44 @@
             transition: all 0.2s ease;
         }
         
-        .supplier-card .btn i {
+        .customer-card .btn i {
             font-size: 0.875rem;
         }
         
-        .supplier-card .btn-primary {
+        .customer-card .btn-primary {
             background: #3b82f6;
             border: none;
             color: white;
         }
         
-        .supplier-card .btn-primary:hover {
+        .customer-card .btn-primary:hover {
             background: #2563eb;
         }
         
-        .supplier-card .btn-secondary {
+        .customer-card .btn-secondary {
             background: #f3f4f6;
             border: 1px solid #e5e7eb;
             color: #4b5563;
         }
         
-        .supplier-card .btn-secondary:hover {
+        .customer-card .btn-secondary:hover {
             background: #e5e7eb;
         }
         
         @media (max-width: 768px) {
-            .supplier-cards-container {
+            .customer-cards-container {
                 grid-template-columns: 1fr;
                 gap: 1rem;
             }
             
-            .supplier-card .card-actions {
+            .customer-card .card-actions {
                 grid-template-columns: 1fr;
             }
             
-            .supplier-card .card-header,
-            .supplier-card .card-body {
+            .customer-card .card-header,
+            .customer-card .card-body {
                 padding: 1rem;
             }
-        }
-
-        /* Add these styles for the tabs */
-        .nav-tabs {
-            border-bottom: 2px solid #e5e7eb;
-        }
-
-        .nav-tabs .nav-link {
-            color: #6b7280;
-            border: none;
-            padding: 0.75rem 1.25rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .nav-tabs .nav-link:hover {
-            border: none;
-            color: #3b82f6;
-        }
-
-        .nav-tabs .nav-link.active {
-            color: #3b82f6;
-            border: none;
-            border-bottom: 2px solid #3b82f6;
-            margin-bottom: -2px;
-        }
-
-        .nav-tabs .nav-link i {
-            font-size: 1rem;
-        }
-
-        /* Modal styles */
-        .modal-lg {
-            max-width: 800px;
-        }
-
-        .modal-body {
-            padding: 1.5rem;
-        }
-
-        .form-label {
-            font-weight: 500;
-            color: #374151;
-        }
-
-        .input-group-text {
-            background-color: #f3f4f6;
-            color: #6b7280;
-            border-color: #e5e7eb;
-        }
-
-        /* Add these styles for select2 enhancement */
-        .select2-container--bootstrap-5 {
-            width: 100% !important;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection {
-            border: 1px solid #dee2e6;
-            border-radius: 0.375rem;
-            min-height: 38px;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single {
-            padding: 0.375rem 0.75rem;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection__rendered {
-            color: #212529;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection__arrow {
-            height: 36px;
-        }
-
-        .select2-container--bootstrap-5 .select2-results__option--highlighted[aria-selected] {
-            background-color: #0d6efd;
         }
     </style>
 </head>
@@ -369,7 +294,7 @@
         <div class="main-content mt-5">
             <div class="container-fluid">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 class="mb-0">باڵانسی ئێمە لەگەڵ فرۆشیارەکان</h4>
+                    <h4 class="mb-0">باڵانسی ئێمە لەگەڵ کڕیارەکان</h4>
                     <div class="d-flex">
                         <button class="btn btn-outline-secondary" id="refreshBtn">
                             <i class="fas fa-sync-alt"></i> نوێکردنەوە
@@ -384,7 +309,7 @@
                             <div class="card-body text-center">
                                 <i class="fas fa-balance-scale balance-icon"></i>
                                 <h5 class="card-title">کۆی باڵانس</h5>
-                                <p class="text-muted small-text mb-2">(جیاوازی نێوان قەرزی ئێمە و ئەوان)</p>
+                                <p class="text-muted small-text mb-2">(جیاوازی نێوان قەرزی ئێمە و کڕیارەکان)</p>
                                 <h2 class="balance-amount" id="totalBalance">0 دینار</h2>
                             </div>
                         </div>
@@ -394,7 +319,7 @@
                             <div class="card-body text-center">
                                 <i class="fas fa-arrow-circle-down balance-icon"></i>
                                 <h5 class="card-title">پارەی لای ئێمە</h5>
-                                <p class="text-muted small-text mb-2">(ئەو پارەیەی کە دابینکەرەکان دەبێت بیدەن بە ئێمە)</p>
+                                <p class="text-muted small-text mb-2">(ئەو پارەیەی کە کڕیارەکان دەبێت بیدەن بە ئێمە)</p>
                                 <h2 class="balance-amount" id="totalTheyOweUs">0 دینار</h2>
                             </div>
                         </div>
@@ -403,19 +328,19 @@
                         <div class="card total-balances negative-card">
                             <div class="card-body text-center">
                                 <i class="fas fa-arrow-circle-up balance-icon"></i>
-                                <h5 class="card-title">پارەی لای ئەوان</h5>
-                                <p class="text-muted small-text mb-2">(ئەو پارەیەی کە ئێمە دەبێت بیدەین بە دابینکەرەکان)</p>
+                                <h5 class="card-title">پارەی لای کڕیارەکان</h5>
+                                <p class="text-muted small-text mb-2">(ئەو پارەیەی کە ئێمە دەبێت بیدەین بە کڕیارەکان)</p>
                                 <h2 class="balance-amount" id="totalWeOweThem">0 دینار</h2>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card total-balances" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <div class="card total-balances" style="background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);">
                             <div class="card-body text-center">
-                                <i class="fas fa-hand-holding-usd balance-icon"></i>
-                                <h5 class="card-title">کۆی پارەی پێشەکی</h5>
-                                <p class="text-muted small-text mb-2">(کۆی پارەی پێشەکییەکان)</p>
-                                <h2 class="balance-amount" id="totalInitialPayments">0 دینار</h2>
+                                <i class="fas fa-wallet balance-icon"></i>
+                                <h5 class="card-title">پارەی پێشەکی</h5>
+                                <p class="text-muted small-text mb-2">(ئەو پارەیەی کە کڕیارەکان بە پێشەکی داویانە)</p>
+                                <h2 class="balance-amount" id="totalAdvancePayments">0 دینار</h2>
                             </div>
                         </div>
                     </div>
@@ -427,14 +352,14 @@
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="input-group mb-2">
-                                    <input type="text" class="form-control" id="searchInput" placeholder="گەڕان بە ناوی فرۆشیار، ژمارە تەلەفۆن...">
+                                    <input type="text" class="form-control" id="searchInput" placeholder="گەڕان بە ناوی کڕیار، ژمارە تەلەفۆن...">
                                     <span class="input-group-text"><i class="fas fa-search"></i></span>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <select class="form-select mb-2" id="supplierFilter">
-                                    <option value="">هەموو دابینکەرەکان</option>
-                                    <!-- دابینکەرەکان بە دینامیکی زیاد دەکرێن -->
+                                <select class="form-select mb-2" id="customerFilter">
+                                    <option value="">هەموو کڕیارەکان</option>
+                                    <!-- کڕیارەکان بە دینامیکی زیاد دەکرێن -->
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -458,15 +383,15 @@
                     </div>
                 </div>
 
-                <!-- Card View for supplier balances -->
-                <div id="supplierCardsView" class="mb-4">
-                    <div class="supplier-cards-container" id="supplierCardsContainer">
-                        <!-- Example of enhanced supplier card structure -->
-                        <div class="supplier-card">
+                <!-- Card View for customer balances -->
+                <div id="customerCardsView" class="mb-4">
+                    <div class="customer-cards-container" id="customerCardsContainer">
+                        <!-- Example of enhanced customer card structure -->
+                        <div class="customer-card">
                             <div class="card-header">
                                 <div class="card-title">
-                                    <i class="fas fa-store"></i>
-                                    <span>ناوی فرۆشیار</span>
+                                    <i class="fas fa-user"></i>
+                                    <span>ناوی کڕیار</span>
                                 </div>
                                 <div class="contact-info">
                                     <i class="fas fa-phone"></i>
@@ -510,14 +435,24 @@
                 </div>
                 <div class="modal-body">
                     <form id="addPaymentForm">
-                        <input type="hidden" id="supplierId">
+                        <input type="hidden" id="customerId">
                         <div class="mb-3">
-                            <label for="supplierName" class="form-label">ناوی فرۆشیار</label>
-                            <input type="text" class="form-control" id="supplierName" readonly>
+                            <label for="customerName" class="form-label">ناوی کڕیار</label>
+                            <input type="text" class="form-control" id="customerName" readonly>
                         </div>
-                        <div class="mb-3">
-                            <label for="currentBalance" class="form-label">باڵانسی ئێستا</label>
-                            <input type="text" class="form-control" id="currentBalance" readonly>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="currentBalance" class="form-label">قەرزی ئێستا</label>
+                                    <input type="text" class="form-control" id="currentBalance" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="currentAdvancePayment" class="form-label">پارەی پێشەکی</label>
+                                    <input type="text" class="form-control" id="currentAdvancePayment" readonly>
+                                </div>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label for="paymentAmount" class="form-label">بڕی پارەدان</label>
@@ -526,14 +461,12 @@
                         <div class="mb-3">
                             <label for="paymentDirection" class="form-label">جۆری پارەدان</label>
                             <select class="form-select" id="paymentDirection" required>
-                                <option value="to_supplier">پارەدان بە دابینکەر (کەمکردنەوەی قەرزی ئێمە لەسەر دابینکەر)</option>
-                                <option value="from_supplier">وەرگرتنی پارە لە دابینکەر (کەمکردنەوەی قەرزی دابینکەر لەسەر ئێمە)</option>
-                                <option value="adjust_balance">ڕێکخستنی باڵانس (ڕاستکردنەوەی هەڵە)</option>
+                                <!-- Options will be populated dynamically -->
                             </select>
                             <div class="form-text text-muted mt-2">
                                 <ul class="mb-0 small">
-                                    <li>پارەدان بە دابینکەر: کاتێک ئێمە پارە دەدەین بە دابینکەر بۆ کەمکردنەوەی قەرزی خۆمان</li>
-                                    <li>وەرگرتنی پارە لە دابینکەر: کاتێک دابینکەر پارە دەدات بە ئێمە بۆ کەمکردنەوەی قەرزی خۆی</li>
+                                    <li>وەرگرتنی پارە لە کڕیار: کاتێک کڕیار پارە دەدات (بۆ قەرز یان پێشەکی)</li>
+                                    <li>پارەدان بە کڕیار: کاتێک ئێمە پارە دەدەین (بۆ قەرزی خۆمان یان گەڕاندنەوەی پێشەکی)</li>
                                     <li>ڕێکخستنی باڵانس: بۆ ڕاستکردنەوەی هەر هەڵەیەک لە تۆمارکردنی قەرزەکان</li>
                                 </ul>
                             </div>
@@ -561,86 +494,33 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <!-- Tabs -->
-                    <ul class="nav nav-tabs mb-3" id="balanceTypeTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="supplier-tab" data-bs-toggle="tab" 
-                                    data-bs-target="#supplier-tab-pane" type="button" role="tab">
-                                <i class="fas fa-truck"></i> دابینکەر
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="client-tab" data-bs-toggle="tab" 
-                                    data-bs-target="#client-tab-pane" type="button" role="tab">
-                                <i class="fas fa-user"></i> کڕیار
-                            </button>
-                        </li>
-                    </ul>
-
-                    <!-- Tab Content -->
-                    <div class="tab-content" id="balanceTypeContent">
-                        <!-- Supplier Tab -->
-                        <div class="tab-pane fade show active" id="supplier-tab-pane" role="tabpanel" tabindex="0">
-                            <form id="addSupplierBalanceForm">
-                                <div class="mb-3">
-                                    <label for="supplierSelect" class="form-label">دابینکەر</label>
-                                    <select class="form-select" id="supplierSelect" required>
-                                        <option value="">هەڵبژاردنی دابینکەر</option>
-                                        <!-- Suppliers will be loaded dynamically -->
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="initialBalance" class="form-label">باڵانسی سەرەتایی</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="initialBalance" required>
-                                        <span class="input-group-text">دینار</span>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="balanceType" class="form-label">جۆری باڵانس</label>
-                                    <select class="form-select" id="balanceType" required>
-                                        <option value="we_owe">ئێمە قەرزارین (ئێمە دەبێت بیدەینەوە)</option>
-                                        <option value="they_owe">ئەوان قەرزارن (ئەوان دەبێت بیدەنەوە)</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="supplierNote" class="form-label">تێبینی</label>
-                                    <textarea class="form-control" id="supplierNote" rows="2"></textarea>
-                                </div>
-                            </form>
+                    <form id="addCustomerBalanceForm">
+                        <div class="mb-3">
+                            <label for="customerSelect" class="form-label">کڕیار</label>
+                            <select class="form-select" id="customerSelect" required>
+                                <option value="">هەڵبژاردنی کڕیار</option>
+                                <!-- کڕیارەکان بە دینامیکی زیاد دەکرێن -->
+                            </select>
                         </div>
-
-                        <!-- Client Tab -->
-                        <div class="tab-pane fade" id="client-tab-pane" role="tabpanel" tabindex="0">
-                            <form id="addClientBalanceForm">
-                                <div class="mb-3">
-                                    <label for="clientSelect" class="form-label">کڕیار</label>
-                                    <select class="form-select" id="clientSelect" required>
-                                        <option value="">هەڵبژاردنی کڕیار</option>
-                                        <!-- Clients will be loaded dynamically -->
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="clientInitialBalance" class="form-label">باڵانسی سەرەتایی</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="clientInitialBalance" required>
-                                        <span class="input-group-text">دینار</span>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="clientBalanceType" class="form-label">جۆری باڵانس</label>
-                                    <select class="form-select" id="clientBalanceType" required>
-                                        <option value="they_owe">ئەوان قەرزارن (ئەوان دەبێت بیدەنەوە)</option>
-                                        <option value="we_owe">ئێمە قەرزارین (ئێمە دەبێت بیدەینەوە)</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="clientNote" class="form-label">تێبینی</label>
-                                    <textarea class="form-control" id="clientNote" rows="2"></textarea>
-                                </div>
-                            </form>
+                        <div class="mb-3">
+                            <label for="initialBalance" class="form-label">باڵانسی سەرەتایی</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="initialBalance" required>
+                                <span class="input-group-text">دینار</span>
+                            </div>
                         </div>
-                    </div>
+                        <div class="mb-3">
+                            <label for="balanceType" class="form-label">جۆری باڵانس</label>
+                            <select class="form-select" id="balanceType" required>
+                                <option value="they_owe">ئەوان قەرزارن (ئەوان دەبێت بیدەنەوە)</option>
+                                <option value="we_owe">ئێمە قەرزارین (ئێمە دەبێت بیدەینەوە)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="customerNote" class="form-label">تێبینی</label>
+                            <textarea class="form-control" id="customerNote" rows="2"></textarea>
+                        </div>
+                    </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">پاشگەزبوونەوە</button>
@@ -653,99 +533,71 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../../js/include-components.js"></script>
-    <script src="../../js/bank/script.js"></script>
+    <script src="../../js/customerBalances/script.js"></script>
     <script>
         $(document).ready(function() {
-            // Make the supplier cards clickable to view supplier details
-            $(document).on('click', '.supplier-card', function(e) {
+            // Make the customer cards clickable to view customer details
+            $(document).on('click', '.customer-card', function(e) {
                 // Check if the click was on a button or within a button
                 if (!$(e.target).closest('button').length) {
-                    const supplierId = $(this).data('id');
-                    window.location.href = `supplier_detail.php?id=${supplierId}`;
+                    const customerId = $(this).data('id');
+                    window.location.href = `customer_detail.php?id=${customerId}`;
                 }
             });
             
-            // Make view-history button open supplier details page
+            // Make view-history button open customer details page
             $(document).on('click', '.view-history-btn', function() {
-                const supplierId = $(this).data('id');
-                window.location.href = `supplier_detail.php?id=${supplierId}`;
+                const customerId = $(this).data('id');
+                window.location.href = `customer_detail.php?id=${customerId}`;
             });
 
             // Initialize the modal
             const addBalanceModal = new bootstrap.Modal(document.getElementById('addBalanceModal'));
             
             // Initialize select2 for enhanced dropdowns
-            $('#supplierSelect, #clientSelect').select2({
+            $('#customerSelect').select2({
                 theme: 'bootstrap-5',
                 width: '100%',
                 placeholder: 'گەڕان و هەڵبژاردن...',
                 allowClear: true
             });
 
-            // Load suppliers into dropdown
-            function loadSuppliers() {
+            // Load customers into dropdown
+            function loadCustomers() {
                 // Example AJAX call - replace with your actual API endpoint
-                $.get('/api/suppliers', function(suppliers) {
-                    const select = $('#supplierSelect');
-                    select.empty().append('<option value="">هەڵبژاردنی دابینکەر</option>');
-                    suppliers.forEach(supplier => {
-                        select.append(`<option value="${supplier.id}">${supplier.name}</option>`);
-                    });
-                });
-            }
-
-            // Load clients into dropdown
-            function loadClients() {
-                // Example AJAX call - replace with your actual API endpoint
-                $.get('/api/clients', function(clients) {
-                    const select = $('#clientSelect');
+                $.get('/api/customers', function(customers) {
+                    const select = $('#customerSelect');
                     select.empty().append('<option value="">هەڵبژاردنی کڕیار</option>');
-                    clients.forEach(client => {
-                        select.append(`<option value="${client.id}">${client.name}</option>`);
+                    customers.forEach(customer => {
+                        select.append(`<option value="${customer.id}">${customer.name}</option>`);
                     });
                 });
             }
 
             // Load data when modal opens
             $('#addBalanceModal').on('show.bs.modal', function () {
-                loadSuppliers();
-                loadClients();
+                loadCustomers();
             });
 
             // Handle form submission
             $('#saveNewBalance').click(function() {
-                const activeTab = $('#balanceTypeTabs .nav-link.active').attr('id');
-                let formData;
-                
-                if (activeTab === 'supplier-tab') {
-                    formData = {
-                        type: 'supplier',
-                        supplierId: $('#supplierSelect').val(),
-                        initialBalance: $('#initialBalance').val(),
-                        balanceType: $('#balanceType').val(),
-                        note: $('#supplierNote').val()
-                    };
-                } else {
-                    formData = {
-                        type: 'client',
-                        clientId: $('#clientSelect').val(),
-                        initialBalance: $('#clientInitialBalance').val(),
-                        balanceType: $('#clientBalanceType').val(),
-                        note: $('#clientNote').val()
-                    };
-                }
+                const formData = {
+                    customerId: $('#customerSelect').val(),
+                    initialBalance: $('#initialBalance').val(),
+                    balanceType: $('#balanceType').val(),
+                    note: $('#customerNote').val()
+                };
                 
                 // Validate required fields
-                const form = activeTab === 'supplier-tab' ? 
-                    $('#addSupplierBalanceForm')[0] : 
-                    $('#addClientBalanceForm')[0];
-                    
+                const form = $('#addCustomerBalanceForm')[0];
                 if (!form.checkValidity()) {
                     form.reportValidity();
                     return;
@@ -765,7 +617,7 @@
                     const modal = bootstrap.Modal.getInstance(document.getElementById('addBalanceModal'));
                     modal.hide();
                     form.reset();
-                    $('#supplierSelect, #clientSelect').val('').trigger('change');
+                    $('#customerSelect').val('').trigger('change');
                 });
             });
         });

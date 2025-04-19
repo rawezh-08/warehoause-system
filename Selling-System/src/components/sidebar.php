@@ -98,20 +98,27 @@
 
 
             <!-- Reports -->
+         
+
+            <!-- Balances -->
+            <li class="menu-item">
+                <a href="#balancesSubmenu" class="item-link">
+                <div class="icon-cont">
+                        <img src="../../assets/icons/balance.svg" alt="">
+                    </div>                    
+                    <span>باڵانسەکان</span>
+                    <i class="fas fa-chevron-down dropdown-icon"></i>
+                </a>
+                <ul class="submenu" id="balancesSubmenu">
+                    <li><a href="bank.php">باڵانسی دابینکەرەکان</a></li>
+                    <li><a href="customerBalances.php">باڵانسی کڕیارەکان</a></li>
+                </ul>
+            </li>
             <li class="menu-item">
                 <a href="report.php" class="item-link">
                 <div class="icon-cont">
                         <img src="../../assets/icons/report.svg" alt="">
                     </div>                    <span>ڕاپۆرتەکان</span>
-                </a>
-            </li>
-
-            <!-- Settings -->
-            <li class="menu-item">
-                <a href="bank.php" class="item-link">
-                <div class="icon-cont">
-                        <img src="../../assets/icons/balance.svg" alt="">
-                    </div>                    <span>باڵانسەکان</span>
                 </a>
             </li>
         </ul>

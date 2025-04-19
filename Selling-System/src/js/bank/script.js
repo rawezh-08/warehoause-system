@@ -384,6 +384,7 @@ function loadSupplierBalances() {
                 const suppliers = response.data;
                 let totalDebtOnMyself = 0;
                 let totalDebtOnSupplier = 0;
+                let totalInitialPayments = 0;
                 
                 // Clear existing cards
                 $('#supplierCardsContainer').empty();
@@ -397,19 +398,25 @@ function loadSupplierBalances() {
                     totalDebtOnMyself += debtOnMyself;
                     totalDebtOnSupplier += debtOnSupplier;
                     
+                    // Calculate initial payments (positive balances)
+                    if (debtOnSupplier > debtOnMyself) {
+                        totalInitialPayments += (debtOnSupplier - debtOnMyself);
+                    }
+                    
                     // Create and append supplier card
                     createSupplierCard(supplier, debtOnMyself, debtOnSupplier);
                 });
                 
-                // Update summary cards - FIXED: Swapped the display to show correct relationships
+                // Update summary cards
                 $('#totalWeOweThem').text(formatCurrency(totalDebtOnMyself) + ' دینار');  // ئێمە قەرزداری ئەوانین
                 $('#totalTheyOweUs').text(formatCurrency(totalDebtOnSupplier) + ' دینار');  // ئەوان قەرزداری ئێمەن
+                $('#totalInitialPayments').text(formatCurrency(totalInitialPayments) + ' دینار');  // کۆی پارەی پێشەکی
                 
                 // Calculate and display net balance
                 const netBalance = totalDebtOnSupplier - totalDebtOnMyself;  // ئەگەر موجەب بێت ئەوان قەرزدارن، ئەگەر سالب بێت ئێمە قەرزدارین
                 $('#totalBalance').text(formatCurrency(Math.abs(netBalance)) + ' دینار');
                 
-                // Update balance description - FIXED: Updated text to reflect correct relationships
+                // Update balance description
                 if (netBalance > 0) {
                     $('#balanceDescription').text('پارەیان لای ئێمەیە');
                     $('#totalBalance').removeClass('negative-balance').addClass('positive-balance');
@@ -463,29 +470,22 @@ function createSupplierCard(supplier, debtOnMyself, debtOnSupplier) {
                 <h5 class="card-title">${supplier.name}</h5>
                 <span class="card-badge ${balanceClass === 'positive' ? 'bg-success' : 
                     (balanceClass === 'negative' ? 'bg-danger' : 'bg-secondary')} text-white">
-                    ${balanceClass === 'positive' ? 'پارەیان لای ئێمەیە' : 
-                      (balanceClass === 'negative' ? 'پارەمان لای ئەوانە' : 'هیچ پارەیەک نییە')}
+                    ${balanceClass === 'positive' ? 'پارەی پێشەکی' : 
+                      (balanceClass === 'negative' ? 'قەرزی ئێمە لە دابینکەر' : 'هیچ پارەیەک نییە')}
                 </span>
             </div>
             <div class="card-body">
-                <div class="debt-info">
-                    <p class="mb-2">
-                        <i class="fas fa-arrow-up text-danger"></i>
-                        پارەی لای ئەوان: ${formatCurrency(debtOnMyself)} دینار
-                        <small class="text-muted d-block">(ئەو پارەیەی کە ئێمە دەبێت بیدەین)</small>
-                    </p>
-                    <p class="mb-2">
-                        <i class="fas fa-arrow-down text-success"></i>
-                        پارەی لای ئێمە: ${formatCurrency(debtOnSupplier)} دینار
-                        <small class="text-muted d-block">(ئەو پارەیەی کە ئەوان دەبێت بیدەن)</small>
-                    </p>
-                    <p class="mb-0">
-                        <i class="fas fa-balance-scale"></i>
-                        باڵانسی کۆتایی: <span class="${getAmountClass(netBalance)}">
-                            ${formatCurrency(Math.abs(netBalance))} دینار
-                            ${netBalance > 0 ? '(پارەیان لای ئێمەیە)' : (netBalance < 0 ? '(پارەمان لای ئەوانە)' : '')}
-                        </span>
-                    </p>
+                <div class="balance-section ${balanceClass === 'positive' ? 'balance-positive' : 
+                    (balanceClass === 'negative' ? 'balance-negative' : 'balance-zero')}">
+                    <div class="balance-amount">
+                        <i class="fas ${balanceClass === 'positive' ? 'fa-arrow-down' : 
+                            (balanceClass === 'negative' ? 'fa-arrow-up' : 'fa-balance-scale')}"></i>
+                        <span>${formatCurrency(Math.abs(netBalance))}</span>
+                    </div>
+                    <div class="balance-label">
+                        ${balanceClass === 'positive' ? 'پارەی پێشەکی' : 
+                          (balanceClass === 'negative' ? 'قەرزی ئێمە لە دابینکەر' : 'هیچ پارەیەک نییە')}
+                    </div>
                 </div>
                 <div class="card-actions">
                     <button class="btn btn-primary add-payment-btn" data-id="${supplier.id}" 
