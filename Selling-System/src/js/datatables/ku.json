@@ -1,0 +1,23 @@
+{
+    "sEmptyTable":     "هیچ داتایەک نیە لە تەیبڵەکە",
+    "sInfo":           "نیشاندانی _START_ تا _END_ لە کۆی _TOTAL_ تۆمار",
+    "sInfoEmpty":      "نیشاندانی 0 تا 0 لە کۆی 0 تۆمار",
+    "sInfoFiltered":   "(فلتەرکراو لە کۆی _MAX_ تۆمار)",
+    "sInfoPostFix":    "",
+    "sInfoThousands":  ",",
+    "sLengthMenu":     "نیشاندانی _MENU_ تۆمار",
+    "sLoadingRecords": "بارکردن...",
+    "sProcessing":     "پڕۆسەکردن...",
+    "sSearch":         "گەڕان:",
+    "sZeroRecords":    "هیچ تۆمارێک نەدۆزرایەوە",
+    "oPaginate": {
+        "sFirst":    "یەکەم",
+        "sLast":     "کۆتایی",
+        "sNext":     "دواتر",
+        "sPrevious": "پێشوو"
+    },
+    "oAria": {
+        "sSortAscending":  ": چالاککردنی ڕیزکردن بە پێشکەوتن",
+        "sSortDescending": ": چالاککردنی ڕیزکردن بە پاشەکەوت"
+    }
+} 

@@ -38,6 +38,68 @@
     margin-bottom: 15px;
 }
 
+/* Loading indicator */
+.table-container {
+    position: relative;
+}
+
+.table-container.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.7);
+    z-index: 1;
+}
+
+.table-container.loading::before {
+    content: 'Loading...';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #007bff;
+    z-index: 2;
+}
+
+/* Error message styling */
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    display: none;
+}
+
+.error-message.show {
+    display: block;
+}
+
+/* Edit modal styling */
+.swal-wide {
+    min-width: 800px !important;
+    max-width: 900px !important;
+}
+
+.swal-rtl {
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+.swal-rtl .swal2-title,
+.swal-rtl .swal2-content {
+    text-align: right !important;
+}
+
+.text-start {
+    text-align: right !important;
+}
+
 /* Status badges */
 .badge {
     padding: 8px 12px;

@@ -320,6 +320,12 @@ try {
         
         // Close the cursor to prevent "Cannot execute queries while there are pending result sets" error
         $stmt->closeCursor();
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'جۆری پسووڵە نادروستە'
+        ]);
+        exit;
     }
     
     // Commit transaction

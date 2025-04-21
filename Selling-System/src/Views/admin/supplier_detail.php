@@ -89,110 +89,210 @@
         .custom-table {
             border-collapse: separate;
             border-spacing: 0;
+            width: 100%;
+            margin-bottom: 1rem;
+            background-color: transparent;
+            border-radius: 8px;
+            overflow: hidden;
         }
         
-        .custom-table th {
+        .custom-table thead th {
             background-color: #f8f9fa;
             font-weight: 600;
+            color: #4a5568;
             text-align: center;
-            padding: 12px;
-            border: 1px solid #dee2e6;
+            padding: 1rem;
+            border: none;
+            border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap;
         }
         
-        .custom-table td {
-            padding: 12px;
+        .custom-table tbody td {
+            padding: 1rem;
             text-align: center;
-            border: 1px solid #dee2e6;
+            border: none;
+            border-bottom: 1px solid #e2e8f0;
+            color: #2d3748;
             vertical-align: middle;
+            word-wrap: break-word;
+            word-break: break-word;
+            max-width: 200px;
         }
         
         .custom-table tbody tr:hover {
-            background-color: rgba(0, 0, 0, 0.075);
+            background-color: #f7fafc;
+            transition: all 0.2s ease;
+        }
+        
+        .custom-table tbody tr:last-child td {
+            border-bottom: none;
         }
         
         .action-buttons {
             display: flex;
             justify-content: center;
-            gap: 8px;
+            gap: 0.5rem;
         }
         
         .action-buttons .btn {
-            padding: 4px 8px;
-            font-size: 14px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .action-buttons .btn i {
+            font-size: 0.875rem;
         }
         
         .badge {
-            font-size: 12px;
-            padding: 6px 10px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
             font-weight: 500;
-        }
-        
-        .card {
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-        
-        .card-header {
-            border-bottom: 1px solid rgba(0, 0, 0, 0.125);
-            padding: 1rem;
-        }
-        
-        .refresh-btn {
-            width: 32px;
-            height: 32px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .pagination {
-            margin-bottom: 0;
-        }
-        
-        .pagination .page-item .page-link {
-            padding: 6px 12px;
-            font-size: 14px;
-        }
-        
-        .pagination-info {
-            font-size: 14px;
-            color: #6c757d;
-        }
-        
-        .amount-positive {
-            color: #198754;
-            font-weight: 500;
-        }
-        
-        .amount-negative {
-            color: #dc3545;
-            font-weight: 500;
+            border-radius: 6px;
         }
         
         .badge-payment {
-            background-color: #0d6efd;
+            background-color: #3b82f6;
             color: white;
         }
         
         .badge-debt {
-            background-color: #dc3545;
+            background-color: #ef4444;
             color: white;
         }
         
         .badge-adjustment {
-            background-color: #ffc107;
-            color: black;
+            background-color: #f59e0b;
+            color: white;
         }
         
         .badge-effect-increase {
-            background-color: #198754;
+            background-color: #10b981;
             color: white;
         }
         
         .badge-effect-decrease {
-            background-color: #dc3545;
+            background-color: #ef4444;
             color: white;
+        }
+        
+        .amount-positive {
+            color: #10b981;
+            font-weight: 600;
+        }
+        
+        .amount-negative {
+            color: #ef4444;
+            font-weight: 600;
+        }
+        
+        .pagination {
+            display: flex;
+            padding-left: 0;
+            list-style: none;
+            border-radius: 0.375rem;
+        }
+        
+        .pagination .page-item .page-link {
+            position: relative;
+            display: block;
+            padding: 0.5rem 0.75rem;
+            margin-left: -1px;
+            line-height: 1.25;
+            color: #3b82f6;
+            background-color: #fff;
+            border: 1px solid #e2e8f0;
+            font-size: 0.875rem;
+        }
+        
+        .pagination .page-item.active .page-link {
+            z-index: 3;
+            color: #fff;
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        
+        .pagination .page-item.disabled .page-link {
+            color: #9ca3af;
+            pointer-events: none;
+            background-color: #fff;
+            border-color: #e2e8f0;
+        }
+        
+        .pagination-info {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        /* Table responsive styles */
+        @media (max-width: 768px) {
+            .custom-table {
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .custom-table thead th {
+                padding: 0.75rem;
+                font-size: 0.875rem;
+            }
+
+            .custom-table tbody td {
+                padding: 0.75rem;
+                font-size: 0.875rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .action-buttons .btn {
+                width: 100%;
+            }
+        }
+        
+        /* Fix for table header and data alignment */
+        #transactionsTable th,
+        #transactionsTable td {
+            text-align: center;
+            vertical-align: middle;
+            word-wrap: break-word;
+            word-break: break-word;
+            white-space: normal;
+        }
+
+        #transactionsTable td:nth-child(6) {
+            max-width: 200px;
+            text-align: right;
+        }
+        
+        /* Card and table container styles */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            background: #fff;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.25rem 1.5rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .table-responsive {
+            border-radius: 8px;
+            overflow: hidden;
         }
     </style>
 </head>

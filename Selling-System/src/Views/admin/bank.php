@@ -127,77 +127,120 @@
         /* Card styles */
         .supplier-cards-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 1.25rem;
-            padding: 0.75rem;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 1.5rem;
+            padding: 1rem;
         }
         
         .supplier-card {
             background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: none;
+            border-radius: 16px;
+            transition: all 0.3s ease;
             cursor: pointer;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
         
         .supplier-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
         }
         
         .supplier-card .card-header {
-            padding: 1rem 1.25rem;
-            border-bottom: 1px solid #f3f4f6;
-            background: #f9fafb;
-            border-radius: 10px 10px 0 0;
+            padding: 1.5rem;
+            background: #ffffff;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            position: relative;
         }
         
         .supplier-card .card-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #111827;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 0.75rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
+            gap: 0.75rem;
         }
         
         .supplier-card .card-title i {
-            color: #6b7280;
-            font-size: 1rem;
+            color: #4a5568;
+            font-size: 1.1rem;
         }
         
         .supplier-card .contact-info {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            color: #6b7280;
-            font-size: 0.9rem;
+            gap: 0.75rem;
+            color: #718096;
+            font-size: 0.95rem;
+        }
+        
+        .supplier-card .status-badge {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .supplier-card .status-badge.positive {
+            background: #def7ec;
+            color: #03543f;
+        }
+        
+        .supplier-card .status-badge.negative {
+            background: #fde8e8;
+            color: #9b1c1c;
+        }
+        
+        .supplier-card .status-badge.neutral {
+            background: #e5e7eb;
+            color: #4b5563;
         }
         
         .supplier-card .card-body {
-            padding: 1.25rem;
+            padding: 1.5rem;
         }
         
         .supplier-card .balance-section {
             text-align: center;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .supplier-card .balance-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0.1;
+            z-index: 0;
+            background: linear-gradient(45deg, transparent, currentColor);
         }
         
         .supplier-card .balance-amount {
-            font-size: 1.75rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
+            position: relative;
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.75rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.75rem;
+            gap: 1rem;
+            z-index: 1;
         }
         
         .supplier-card .balance-amount i {
-            font-size: 1.25rem;
+            font-size: 1.5rem;
         }
         
         .supplier-card .balance-positive {
@@ -212,33 +255,39 @@
         
         .supplier-card .balance-zero {
             color: #6b7280;
-            background: #f3f4f6;
+            background: #f9fafb;
         }
         
         .supplier-card .balance-label {
-            color: #6b7280;
-            font-size: 0.875rem;
+            position: relative;
+            color: currentColor;
+            font-size: 1rem;
+            font-weight: 500;
+            opacity: 0.9;
+            z-index: 1;
         }
         
         .supplier-card .card-actions {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
+            gap: 1rem;
+            padding: 0 0.5rem;
         }
         
         .supplier-card .btn {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
-            padding: 0.625rem 1rem;
-            font-size: 0.875rem;
-            border-radius: 6px;
+            gap: 0.75rem;
+            padding: 0.875rem 1.25rem;
+            font-size: 0.95rem;
+            border-radius: 12px;
             transition: all 0.2s ease;
+            font-weight: 600;
         }
         
         .supplier-card .btn i {
-            font-size: 0.875rem;
+            font-size: 1.1rem;
         }
         
         .supplier-card .btn-primary {
@@ -249,6 +298,7 @@
         
         .supplier-card .btn-primary:hover {
             background: #2563eb;
+            transform: translateY(-2px);
         }
         
         .supplier-card .btn-secondary {
@@ -259,12 +309,14 @@
         
         .supplier-card .btn-secondary:hover {
             background: #e5e7eb;
+            transform: translateY(-2px);
         }
         
         @media (max-width: 768px) {
             .supplier-cards-container {
                 grid-template-columns: 1fr;
                 gap: 1rem;
+                padding: 0.75rem;
             }
             
             .supplier-card .card-actions {
@@ -273,7 +325,18 @@
             
             .supplier-card .card-header,
             .supplier-card .card-body {
-                padding: 1rem;
+                padding: 1.25rem;
+            }
+            
+            .supplier-card .balance-amount {
+                font-size: 1.75rem;
+            }
+
+            .supplier-card .status-badge {
+                top: 1.25rem;
+                right: 1.25rem;
+                padding: 0.375rem 0.75rem;
+                font-size: 0.8125rem;
             }
         }
 
@@ -450,9 +513,7 @@
                                 <button class="btn btn-secondary flex-grow-1" id="resetFilterBtn">
                                     <i class="fas fa-undo"></i> ڕیسێت
                                 </button>
-                                <button class="btn btn-primary" id="addNewBalanceBtn" data-bs-toggle="modal" data-bs-target="#addBalanceModal">
-                                    <i class="fas fa-plus"></i>
-                                </button>
+                               
                             </div>
                         </div>
                     </div>

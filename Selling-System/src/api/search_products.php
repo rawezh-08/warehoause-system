@@ -5,8 +5,9 @@ require_once '../config/database.php';
 // Set header to return JSON
 header('Content-Type: application/json');
 
-// Get search query
+// Get search query and show_initial parameter
 $query = isset($_GET['q']) ? $_GET['q'] : '';
+$show_initial = isset($_GET['show_initial']) && $_GET['show_initial'] == '1';
 
 try {
     // Build search query
@@ -30,15 +31,21 @@ try {
                 u.is_set
             FROM products p
             LEFT JOIN categories c ON p.category_id = c.id
-            LEFT JOIN units u ON p.unit_id = u.id
-            WHERE p.name LIKE :query OR p.barcode LIKE :query OR p.code LIKE :query
-            ORDER BY p.name ASC
-            LIMIT 10";
+            LEFT JOIN units u ON p.unit_id = u.id";
+
+    if (empty($query) && $show_initial) {
+        // Show recently added products when no search term
+        $sql .= " ORDER BY p.id DESC LIMIT 10";
+        $stmt = $conn->prepare($sql);
+    } else {
+        // Search by name, barcode, or code
+        $sql .= " WHERE p.name LIKE :query OR p.barcode LIKE :query OR p.code LIKE :query
+                 ORDER BY p.name ASC LIMIT 10";
+        $stmt = $conn->prepare($sql);
+        $stmt->bindValue(':query', '%' . $query . '%');
+    }
     
-    $stmt = $conn->prepare($sql);
-    $stmt->bindValue(':query', '%' . $query . '%');
     $stmt->execute();
-    
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Format products for Select2

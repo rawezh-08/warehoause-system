@@ -24,9 +24,9 @@ function getSalesData($limit = 0, $offset = 0, $filters = []) {
                     LEFT JOIN products p ON si.product_id = p.id 
                     WHERE si.sale_id = s.id
                 ) as products_list,
-                SUM(si.total_price) as subtotal,
+                SUM((si.quantity - COALESCE(si.returned_quantity, 0)) * si.unit_price) as subtotal,
                 s.shipping_cost + s.other_costs as additional_costs,
-                SUM(si.total_price) + s.shipping_cost + s.other_costs - s.discount as total_amount
+                SUM((si.quantity - COALESCE(si.returned_quantity, 0)) * si.unit_price) + s.shipping_cost + s.other_costs - s.discount as total_amount
             FROM sales s 
             LEFT JOIN customers c ON s.customer_id = c.id 
             LEFT JOIN sale_items si ON s.id = si.sale_id
@@ -96,8 +96,8 @@ function getPurchasesData($limit = 0, $offset = 0, $filters = []) {
                     LEFT JOIN products pr ON pi.product_id = pr.id 
                     WHERE pi.purchase_id = p.id
                 ) as products_list,
-                SUM(pi.total_price) as subtotal,
-                SUM(pi.total_price) - p.discount as total_amount
+                SUM((pi.quantity - COALESCE(pi.returned_quantity, 0)) * pi.unit_price) as subtotal,
+                SUM((pi.quantity - COALESCE(pi.returned_quantity, 0)) * pi.unit_price) - p.discount as total_amount
             FROM purchases p 
             LEFT JOIN suppliers s ON p.supplier_id = s.id 
             LEFT JOIN purchase_items pi ON p.id = pi.purchase_id

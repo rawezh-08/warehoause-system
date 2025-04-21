@@ -497,6 +497,20 @@ foreach ($debtTransactions as $debtTransaction) {
                                 <i class="fas fa-history"></i>مێژووی گەڕاندنەوەی قەرز
                             </button>
                         </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="advance-payment-tab" data-bs-toggle="tab"
+                                data-bs-target="#advance-payment-content" type="button" role="tab"
+                                aria-controls="advance-payment-content" aria-selected="false">
+                                <i class="fas fa-coins"></i>پارەی پێشەکی
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="advance-payment-history-tab" data-bs-toggle="tab"
+                                data-bs-target="#advance-payment-history-content" type="button" role="tab"
+                                aria-controls="advance-payment-history-content" aria-selected="false">
+                                <i class="fas fa-history"></i>مێژووی پارەی پێشەکی
+                            </button>
+                        </li>
                     </ul>
                 </div>
 
@@ -1065,6 +1079,188 @@ foreach ($debtTransactions as $debtTransaction) {
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Advance Payment Tab -->
+                        <div class="tab-pane fade" id="advance-payment-content" role="tabpanel"
+                            aria-labelledby="advance-payment-tab">
+                            <div class="row">
+                                <!-- Customer Information Section -->
+                                <div class="col-md-6 mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="card-title mb-0">زانیاری کڕیار</h5>
+                                    </div>
+                                    <div class="card border-0 bg-light p-3 mb-4">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <h6 class="text-muted mb-2">ناوی کڕیار</h6>
+                                                <p class="h5"><?php echo htmlspecialchars($customer['name']); ?></p>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <h6 class="text-muted mb-2">ژمارەی مۆبایل</h6>
+                                                <p class="h5"><?php echo htmlspecialchars($customer['phone1']); ?></p>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <h6 class="text-muted mb-2">دۆخی ئێستا</h6>
+                                                <?php if ($customer['debit_on_business'] > 0): ?>
+                                                <p class="h4 text-danger">
+                                                    <?php echo number_format($customer['debit_on_business']); ?> دینار قەرز
+                                                </p>
+                                                <?php elseif ($customer['debit_on_business'] < 0): ?>
+                                                <p class="h4 text-success">
+                                                    <?php echo number_format(abs($customer['debit_on_business'])); ?> دینار پێشەکی
+                                                </p>
+                                                <?php else: ?>
+                                                <p class="h4 text-secondary">
+                                                    هاوسەنگ
+                                                </p>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <h6 class="text-muted mb-2">کۆی گەڕاندنەوە</h6>
+                                                <p class="h4 text-success"><?php echo number_format($totalReturns); ?>
+                                                    دینار</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Advance Payment Form Section -->
+                                <div class="col-md-6 mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="card-title mb-0">وەرگرتنی پارەی پێشەکی</h5>
+                                    </div>
+                                    <form id="advancePaymentForm">
+                                        <input type="hidden" name="customer_id" value="<?php echo $customer['id']; ?>">
+                                        <input type="hidden" name="transaction_type" value="advance_payment">
+
+                                        <div class="mb-3">
+                                            <label for="advanceAmount" class="form-label">بڕی پارەی پێشەکی</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="advanceAmount"
+                                                    name="amount" min="1" required>
+                                                <span class="input-group-text">دینار</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="advanceDate" class="form-label">بەرواری وەرگرتن</label>
+                                            <input type="date" class="form-control" id="advanceDate" name="advance_date"
+                                                value="<?php echo date('Y-m-d'); ?>" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="advanceNotes" class="form-label">تێبینی</label>
+                                            <textarea class="form-control" id="advanceNotes" name="notes"
+                                                rows="3"></textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="advancePaymentMethod" class="form-label">شێوازی پارەدان</label>
+                                            <select class="form-select" id="advancePaymentMethod" name="payment_method">
+                                                <option value="cash">نەقد</option>
+                                                <option value="transfer">FIB یان FastPay</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="text-end">
+                                            <button type="reset" class="btn btn-outline-secondary me-2">
+                                                <i class="fas fa-undo me-2"></i> ڕیسێت
+                                            </button>
+                                            <button type="button" id="saveAdvancePaymentBtn" class="btn btn-primary">
+                                                <i class="fas fa-save me-2"></i> تۆمارکردن
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Advance Payment History Tab -->
+                        <div class="tab-pane fade" id="advance-payment-history-content" role="tabpanel"
+                            aria-labelledby="advance-payment-history-tab">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">مێژووی پارەی پێشەکی</h5>
+                                <button class="btn btn-sm btn-outline-primary refresh-btn">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table id="advancePaymentTable" class="table table-bordered custom-table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>بەروار</th>
+                                            <th>بڕی پارە</th>
+                                            <th>تێبینی</th>
+                                            <th>شێوازی پارەدان</th>
+                                            <th>کردارەکان</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        $advanceTransactions = array_filter($debtTransactions, function ($transaction) {
+                                            return $transaction['transaction_type'] == 'advance_payment';
+                                        });
+
+                                        if (count($advanceTransactions) > 0):
+                                            $counter = 1;
+                                            foreach ($advanceTransactions as $transaction):
+                                                $notesData = json_decode($transaction['notes'], true);
+                                                $paymentMethod = isset($notesData['payment_method']) ? $notesData['payment_method'] : 'cash';
+                                                $displayNotes = isset($notesData['notes']) ? $notesData['notes'] : $transaction['notes'];
+                                                ?>
+                                                <tr>
+                                                    <td><?php echo $counter++; ?></td>
+                                                    <td><?php echo date('Y/m/d', strtotime($transaction['created_at'])); ?>
+                                                    </td>
+                                                    <td class="text-primary">
+                                                        <?php echo number_format($transaction['amount']); ?> دینار</td>
+                                                    <td><?php echo !empty($displayNotes) ? htmlspecialchars($displayNotes) : '-'; ?>
+                                                    </td>
+                                                    <td>
+                                                        <?php
+                                                        switch ($paymentMethod) {
+                                                            case 'cash':
+                                                                echo '<span class="badge bg-success">نەقد</span>';
+                                                                break;
+                                                            case 'transfer':
+                                                                echo '<span class="badge bg-info">FIB یان FastPay</span>';
+                                                                break;
+                                                            default:
+                                                                echo '<span class="badge bg-secondary">هی تر</span>';
+                                                        }
+                                                        ?>
+                                                    </td>
+                                                    <td>
+                                                        <div class="action-buttons">
+                                                            <a href="../../views/receipt/customer_advance_receipt.php?transaction_id=<?php echo $transaction['id']; ?>"
+                                                                class="btn btn-sm btn-outline-warning rounded-circle"
+                                                                target="_blank"
+                                                                title="بینینی مێژوو">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </a>
+                                                            <a href="#"
+                                                                class="btn btn-sm btn-outline-info rounded-circle print-receipt-btn"
+                                                                data-id="<?php echo $transaction['id']; ?>" title="چاپکردن">
+                                                                <i class="fas fa-print"></i>
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <tr>
+                                                <td colspan="6" class="text-center">هیچ پارەی پێشەکی تۆمار نەکراوە
+                                                </td>
+                                            </tr>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -1657,6 +1853,94 @@ foreach ($debtTransactions as $debtTransaction) {
                 console.error('Error: ' + msg + '\nURL: ' + url + '\nLine: ' + lineNo + '\nColumn: ' + columnNo + '\nError object: ' + JSON.stringify(error));
                 return false;
             };
+
+            // Save advance payment button handler
+            $('#saveAdvancePaymentBtn').on('click', function () {
+                const advanceAmount = parseInt($('#advanceAmount').val());
+
+                // Validate form
+                if (!advanceAmount || advanceAmount <= 0) {
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'تکایە بڕی پارەی پێشەکی بەدروستی داخل بکە',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                    return;
+                }
+
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('customer_id', <?php echo $customer['id']; ?>);
+                formData.append('transaction_type', 'advance_payment');
+                formData.append('amount', advanceAmount);
+
+                // Create JSON notes to store additional information
+                const notesObj = {
+                    payment_method: $('#advancePaymentMethod').val(),
+                    notes: $('#advanceNotes').val(),
+                    advance_date: $('#advanceDate').val()
+                };
+
+                formData.append('notes', JSON.stringify(notesObj));
+
+                // Send AJAX request
+                $.ajax({
+                    url: '../../ajax/save_debt_transaction.php',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        const data = JSON.parse(response);
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'سەرکەوتوو بوو!',
+                                text: 'پارەی پێشەکی بەسەرکەوتوویی تۆمارکرا',
+                                icon: 'success',
+                                confirmButtonText: 'باشە'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: data.message || 'هەڵەیەک ڕوویدا لە تۆمارکردنی پارەی پێشەکی',
+                                icon: 'error',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    },
+                    error: function () {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                });
+            });
+
+            // Print advance payment receipt handler
+            $(document).on('click', '.print-receipt-btn', function(e) {
+                e.preventDefault(); // Prevent default action
+                const transactionId = $(this).data('id');
+                const printWindow = window.open(`../../views/receipt/customer_advance_receipt.php?transaction_id=${transactionId}`, '_blank');
+                
+                if (printWindow) {
+                    printWindow.addEventListener('load', function() {
+                        printWindow.print();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'ئاگاداری',
+                        text: 'تکایە ڕێگە بدە بە کردنەوەی پەنجەرەی نوێ بۆ چاپکردن',
+                        icon: 'warning',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            });
         });
     </script>
 </body>

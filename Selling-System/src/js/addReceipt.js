@@ -54,6 +54,42 @@ $(document).ready(function() {
         $('#addNewTab').on('click', function() {
             addNewTab();
         });
+        
+        // Fix for tab navigation in Bootstrap
+        setupTabNavigation();
+    }
+
+    // Setup proper tab navigation
+    function setupTabNavigation() {
+        // Disable Bootstrap's built-in tab handling for our custom tabs
+        // and override with our own implementation
+        $('.nav-tabs').on('click', '.receipt-tab', function(e) {
+            // Prevent default bootstrap behavior
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('Nav tab clicked: Custom handler');
+            
+            const tabTarget = $(this).attr('data-bs-target');
+            const tabId = tabTarget.replace('#', '');
+            
+            // Deactivate all tabs and panes first
+            $('.receipt-tab').removeClass('active');
+            $('.tab-pane').removeClass('show active');
+            
+            // Activate this tab and its corresponding pane
+            $(this).addClass('active');
+            $(tabTarget).addClass('show active');
+            
+            // Initialize selects for this tab
+            setTimeout(() => {
+                console.log('Reinitializing selects after nav tab click for:', tabId);
+                initializeSelectsForTab(tabId);
+            }, 50);
+            
+            console.log('Custom tab navigation - Active tabs:', $('.receipt-tab.active').length);
+            console.log('Custom tab navigation - Active panes:', $('.tab-pane.show.active').length);
+        });
     }
 
     // Initialize selects specifically for a given tab
@@ -171,20 +207,23 @@ $(document).ready(function() {
             
             console.log(`Initializing product select in ${tabId}`);
             $(this).select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-            ajax: {
+                theme: 'bootstrap-5',
+                width: '100%',
+                ajax: {
                     url: '../../api/search_products.php',
-                dataType: 'json',
-                delay: 250,
-                data: function(params) {
-                        return { q: params.term || '' };
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return { 
+                            q: params.term || '',
+                            show_initial: !params.term ? '1' : '0'  // Show initial results if no search term
+                        };
                     },
                     processResults: function(data) {
                         return { results: data };
+                    },
+                    cache: false  // Disable caching to always get fresh results
                 },
-                cache: true
-            },
                 placeholder: 'کاڵا هەڵبژێرە...',
                 minimumInputLength: 0,
                 allowClear: true,
@@ -201,468 +240,12 @@ $(document).ready(function() {
                 },
                 templateResult: formatProductOption,
                 templateSelection: formatProductSelection
-        }).on('select2:open', function() {
-            setTimeout(function() {
+            }).on('select2:open', function() {
+                setTimeout(function() {
                     $('.select2-search__field:visible').focus();
+                    // Trigger search to show initial results
+                    $('.select2-search__field:visible').trigger('input');
                 }, 100);
-            }).on('select2:select', function(e) {
-                const data = e.params.data;
-                const row = $(this).closest('tr');
-                
-                // Set product image
-                if (data.image) {
-                    row.find('.product-image-cell').html(`
-                        <div class="product-image-container">
-                            <img src="${data.image}" alt="${data.text}" class="product-table-image">
-                        </div>
-                    `);
-                } else {
-                    row.find('.product-image-cell').html(`
-                        <div class="product-image-container">
-                            <div class="no-image-placeholder">
-                                <i class="fas fa-box"></i>
-                            </div>
-                        </div>
-                    `);
-                }
-                
-                // Update unit type dropdown based on product data
-                const unitTypeSelect = row.find('.unit-type');
-                unitTypeSelect.empty(); // Clear existing options
-                
-                // Always add piece/unit option
-                unitTypeSelect.append(`<option value="piece">دانە</option>`);
-                
-                // Add box option if pieces_per_box exists and greater than 0
-                if (data.pieces_per_box && parseInt(data.pieces_per_box) > 0) {
-                    unitTypeSelect.append(`<option value="box">کارتۆن</option>`);
-                    
-                    // Add set option if boxes_per_set exists and greater than 0
-                    if (data.boxes_per_set && parseInt(data.boxes_per_set) > 0) {
-                        unitTypeSelect.append(`<option value="set">سێت</option>`);
-                    }
-                }
-                
-                // Set default unit type to piece
-                unitTypeSelect.val('piece');
-                
-                // Trigger change event to update the price based on the unit type
-                unitTypeSelect.trigger('change');
-                
-                // Set product price based on price type and unit type
-                const tabPane = row.closest('.tab-pane');
-                const priceType = tabPane.find('.price-type').val();
-                
-                // Get base price based on price type (single unit price)
-                let basePrice = priceType === PRICE_TYPES.WHOLESALE ? 
-                    parseFloat(data.wholesale_price || 0) : 
-                    parseFloat(data.retail_price || 0);
-                
-                // Adjust price based on unit type
-                const unitType = row.find('.unit-type').val();
-                
-                console.log(`Product selected: ${data.text}`);
-                console.log(`Base price (${priceType}): ${basePrice}`);
-                console.log(`Pieces per box: ${data.pieces_per_box}`);
-                console.log(`Boxes per set: ${data.boxes_per_set}`);
-                console.log(`Current unit type: ${unitType}`);
-                
-                if (unitType === 'box' && data.pieces_per_box) {
-                    basePrice = Math.round(basePrice * parseInt(data.pieces_per_box || 0));
-                    console.log(`Box price calculated: ${basePrice}`);
-                } else if (unitType === 'set' && data.pieces_per_box && data.boxes_per_set) {
-                    basePrice = Math.round(basePrice * parseInt(data.pieces_per_box || 0) * parseInt(data.boxes_per_set || 0));
-                    console.log(`Set price calculated: ${basePrice}`);
-                }
-                
-                row.find('.unit-price').val(basePrice);
-                
-                // Add info button to action column if not already added
-                if (row.find('.product-info-btn').length === 0) {
-                    const actionCell = row.find('td:last');
-                    actionCell.addClass('action-column');
-                    
-                    // Create action buttons container
-                    const actionButtonsContainer = $('<div class="action-buttons"></div>');
-                    
-                    // Create info button
-                    const infoBtn = $(`<button type="button" class="btn btn-info btn-sm" title="زانیاری بەرهەم">
-                        <i class="fas fa-info-circle"></i>
-                    </button>`);
-                    
-                    // Store product data for the info button
-                    infoBtn.data('product', data);
-                    
-                    // Add profit calculation button only for selling tabs
-                    const tabPane = row.closest('.tab-pane');
-                    const tabType = tabPane.attr('data-receipt-type');
-                    
-                    // Create remove button
-                    const removeBtn = $(`<button type="button" class="btn btn-danger btn-sm remove-row" title="ڕەشکردنەوە">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>`);
-                    
-                    // Add buttons to container
-                    actionButtonsContainer.append(infoBtn);
-                    
-                    // Insert buttons for selling tabs
-                    if (tabType === RECEIPT_TYPES.SELLING) {
-                        // Create profit calculation button
-                        const profitBtn = $(`<button type="button" class="btn btn-success btn-sm profit-info-btn" title="زانیاری قازانجی فرۆشتن">
-                            <i class="fas fa-chart-line"></i>
-                        </button>`);
-                        
-                        // Add profit button to container
-                        actionButtonsContainer.append(profitBtn);
-                        
-                        // Add click event for profit calculation button
-                        profitBtn.on('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            
-                            const productData = infoBtn.data('product');
-                            const quantity = parseFloat(row.find('.quantity').val()) || 0;
-                            const unitType = row.find('.unit-type').val();
-                            const piecesPerBox = parseInt(productData.pieces_per_box) || 0;
-                            const boxesPerSet = parseInt(productData.boxes_per_set) || 0;
-                            
-                            // Calculate purchase and selling prices based on unit type
-                            const purchasePrice = parseFloat(productData.purchase_price) || 0;
-                            const tabPane = row.closest('.tab-pane');
-                            const priceType = tabPane.find('.price-type').val() || PRICE_TYPES.SINGLE;
-                            const retailPrice = parseFloat(productData.retail_price) || 0;
-                            const wholesalePrice = parseFloat(productData.wholesale_price) || 0;
-                            
-                            // Get actual unit price from the form
-                            const unitPrice = parseFloat(row.find('.unit-price').val()) || 0;
-                            
-                            // Calculate total purchase cost and selling price based on unit type and quantity
-                            let totalPurchaseCost = 0;
-                            let totalSellingPrice = 0;
-                            let unitLabel = "دانە";
-                            let totalUnits = quantity;
-                            
-                            if (unitType === 'piece') {
-                                totalPurchaseCost = purchasePrice * quantity;
-                                totalSellingPrice = unitPrice * quantity;
-                                unitLabel = "دانە";
-                            } else if (unitType === 'box' && piecesPerBox > 0) {
-                                totalPurchaseCost = (purchasePrice * piecesPerBox) * quantity;
-                                totalSellingPrice = unitPrice * quantity;
-                                totalUnits = quantity * piecesPerBox;
-                                unitLabel = "کارتۆن";
-                            } else if (unitType === 'set' && piecesPerBox > 0 && boxesPerSet > 0) {
-                                totalPurchaseCost = (purchasePrice * piecesPerBox * boxesPerSet) * quantity;
-                                totalSellingPrice = unitPrice * quantity;
-                                totalUnits = quantity * piecesPerBox * boxesPerSet;
-                                unitLabel = "سێت";
-                            }
-                            
-                            // Calculate profit
-                            const totalProfit = totalSellingPrice - totalPurchaseCost;
-                            
-                            // Create HTML content for the modal
-                            let htmlContent = `
-                                <div class="card border-primary mb-3">
-                                    <div class="card-header bg-primary text-white">
-                                        <h5 class="mb-0">زانیاری قازانجی فرۆشتنی ${productData.text}</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="profit-details">
-                                            <div class="row text-center mb-4">
-                                                <div class="col-md-4">
-                                                    <div class="card inventory-card">
-                                                        <div class="card-body">
-                                                            <h3>${quantity}</h3>
-                                                            <p>${unitLabel}</p>
-                                                            ${unitType !== 'piece' ? `<small>(${totalUnits} دانە)</small>` : ''}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <div class="card inventory-card">
-                                                        <div class="card-body">
-                                                            <h3>${totalPurchaseCost.toLocaleString()}</h3>
-                                                            <p>نرخی کڕین</p>
-                                                            <small>دینار</small>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <div class="card inventory-card">
-                                                        <div class="card-body">
-                                                            <h3>${totalSellingPrice.toLocaleString()}</h3>
-                                                            <p>نرخی فرۆشتن</p>
-                                                            <small>دینار</small>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="table-responsive mb-4">
-                                                <table class="table table-bordered">
-                                                    <thead class="table-light">
-                                                        <tr>
-                                                            <th>بڕی کاڵا</th>
-                                                            <th>نرخی کڕین</th>
-                                                            <th>نرخی فرۆشتن</th>
-                                                            <th>بڕی قازانج</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr>
-                                                            <td>${quantity} ${unitLabel} (${totalUnits} دانە)</td>
-                                                            <td>${totalPurchaseCost.toLocaleString()} دینار</td>
-                                                            <td>${totalSellingPrice.toLocaleString()} دینار</td>
-                                                            <td class="${totalProfit >= 0 ? 'text-success' : 'text-danger'}">${totalProfit.toLocaleString()} دینار</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            
-                                            <div class="row">
-                                                <div class="col-12">
-                                                    <div class="alert ${totalProfit >= 0 ? 'alert-success' : 'alert-danger'}">
-                                                        <h5 class="mb-0 text-center">
-                                                            <i class="fas ${totalProfit >= 0 ? 'fa-check-circle' : 'fa-exclamation-triangle'} me-2"></i>
-                                                            قازانجی نێوان نرخی کڕین و فرۆشتن: <strong>${totalProfit.toLocaleString()} دینار</strong>
-                                                        </h5>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                            
-                            // Show SweetAlert2 modal
-                            Swal.fire({
-                                title: 'زانیاری قازانج',
-                                html: htmlContent,
-                                width: 800,
-                                showCloseButton: true,
-                                showConfirmButton: false,
-                                customClass: {
-                                    container: 'inventory-alert'
-                                }
-                            });
-                        });
-                    } else {
-                        // For buying tabs, only add the info button
-                        actionButtonsContainer.append(infoBtn);
-                    }
-                    
-                    // Add click event to the info button
-                    infoBtn.on('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        const productData = $(this).data('product');
-                        const piecesInStock = parseInt(productData.current_quantity);
-                        const piecesPerBox = parseInt(productData.pieces_per_box) || 0;
-                        const boxesPerSet = parseInt(productData.boxes_per_set) || 0;
-                        
-                        // Calculate profit percentages and amounts
-                        const purchasePrice = parseFloat(productData.purchase_price) || 0;
-                        const retailPrice = parseFloat(productData.retail_price) || 0;
-                        const wholesalePrice = parseFloat(productData.wholesale_price) || 0;
-                        
-                        // Calculate profits per piece
-                        const retailProfitPerPiece = retailPrice - purchasePrice;
-                        const wholesaleProfitPerPiece = wholesalePrice - purchasePrice;
-                        
-                        // Calculate box and set prices and profits
-                        const purchasePricePerBox = purchasePrice * piecesPerBox;
-                        const retailPricePerBox = retailPrice * piecesPerBox;
-                        const wholesalePricePerBox = wholesalePrice * piecesPerBox;
-                        
-                        const retailProfitPerBox = retailPricePerBox - purchasePricePerBox;
-                        const wholesaleProfitPerBox = wholesalePricePerBox - purchasePricePerBox;
-                        
-                        // Calculate set prices and profits if applicable
-                        const purchasePricePerSet = purchasePricePerBox * boxesPerSet;
-                        const retailPricePerSet = retailPricePerBox * boxesPerSet;
-                        const wholesalePricePerSet = wholesalePricePerBox * boxesPerSet;
-                        
-                        const retailProfitPerSet = retailPricePerSet - purchasePricePerSet;
-                        const wholesaleProfitPerSet = wholesalePricePerSet - purchasePricePerSet;
-                        
-                        let boxesInStock = 0;
-                        let setsInStock = 0;
-                        
-                        if (piecesPerBox > 0) {
-                            boxesInStock = Math.floor(piecesInStock / piecesPerBox);
-                            
-                            if (boxesPerSet > 0) {
-                                setsInStock = Math.floor(boxesInStock / boxesPerSet);
-                            }
-                        }
-                        
-                        // Create HTML content for the modal
-                        let htmlContent = `
-                            <div class="card border-primary mb-3">
-                                <div class="card-header bg-primary text-white">
-                                    <h5 class="mb-0">${productData.text}</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row text-center mb-4">
-                                        <div class="col-md-4">
-                                            <div class="card inventory-card">
-                                                <div class="card-body">
-                                                    <h3>${piecesInStock}</h3>
-                                                    <p>دانە</p>
-                                                </div>
-                                            </div>
-                                        </div>`;
-                
-                        if (piecesPerBox > 0) {
-                            htmlContent += `
-                                        <div class="col-md-4">
-                                            <div class="card inventory-card">
-                                                <div class="card-body">
-                                                    <h3>${boxesInStock}</h3>
-                                                    <p>کارتۆن</p>
-                                                    <small>(${piecesPerBox} دانە)</small>
-                                                </div>
-                                            </div>
-                                        </div>`;
-                        }
-                        
-                        if (boxesPerSet > 0) {
-                            htmlContent += `
-                                        <div class="col-md-4">
-                                            <div class="card inventory-card">
-                                                <div class="card-body">
-                                                    <h3>${setsInStock}</h3>
-                                                    <p>سێت</p>
-                                                    <small>(${boxesPerSet} کارتۆن)</small>
-                                                </div>
-                                            </div>
-                                        </div>`;
-                        }
-                        
-                        htmlContent += `
-                                    </div>
-                            <div class="profit-details">
-                                <h6 class="text-primary mb-3">زانیاری نرخ و قازانج بە دانە</h6>
-                                <div class="table-responsive mb-4">
-                                    <table class="table table-bordered">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>جۆری نرخ</th>
-                                                <th>نرخی کڕین</th>
-                                                <th>نرخی فرۆشتن</th>
-                                                <th>بڕی قازانج</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>تاک</td>
-                                                <td>${purchasePrice.toLocaleString()} دینار</td>
-                                                <td>${retailPrice.toLocaleString()} دینار</td>
-                                                <td class="${retailProfitPerPiece >= 0 ? 'text-success' : 'text-danger'}">${retailProfitPerPiece.toLocaleString()} دینار</td>
-                                            </tr>
-                                            <tr>
-                                                <td>کۆمەڵ</td>
-                                                <td>${purchasePrice.toLocaleString()} دینار</td>
-                                                <td>${wholesalePrice.toLocaleString()} دینار</td>
-                                                <td class="${wholesaleProfitPerPiece >= 0 ? 'text-success' : 'text-danger'}">${wholesaleProfitPerPiece.toLocaleString()} دینار</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>`;
-                        
-                        if (piecesPerBox > 0) {
-                            htmlContent += `
-                                <h6 class="text-primary mb-3">زانیاری نرخ و قازانج بە کارتۆن (${piecesPerBox} دانە)</h6>
-                                <div class="table-responsive mb-4">
-                                    <table class="table table-bordered">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>جۆری نرخ</th>
-                                                <th>نرخی کڕین</th>
-                                                <th>نرخی فرۆشتن</th>
-                                                <th>بڕی قازانج</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>تاک</td>
-                                                <td>${purchasePricePerBox.toLocaleString()} دینار</td>
-                                                <td>${retailPricePerBox.toLocaleString()} دینار</td>
-                                                <td class="${retailProfitPerBox >= 0 ? 'text-success' : 'text-danger'}">${retailProfitPerBox.toLocaleString()} دینار</td>
-                                            </tr>
-                                            <tr>
-                                                <td>کۆمەڵ</td>
-                                                <td>${purchasePricePerBox.toLocaleString()} دینار</td>
-                                                <td>${wholesalePricePerBox.toLocaleString()} دینار</td>
-                                                <td class="${wholesaleProfitPerBox >= 0 ? 'text-success' : 'text-danger'}">${wholesaleProfitPerBox.toLocaleString()} دینار</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>`;
-                        }
-                        
-                        if (boxesPerSet > 0) {
-                            htmlContent += `
-                                <h6 class="text-primary mb-3">زانیاری نرخ و قازانج بە سێت (${boxesPerSet} کارتۆن)</h6>
-                                <div class="table-responsive mb-4">
-                                    <table class="table table-bordered">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>جۆری نرخ</th>
-                                                <th>نرخی کڕین</th>
-                                                <th>نرخی فرۆشتن</th>
-                                                <th>بڕی قازانج</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>تاک</td>
-                                                <td>${purchasePricePerSet.toLocaleString()} دینار</td>
-                                                <td>${retailPricePerSet.toLocaleString()} دینار</td>
-                                                <td class="${retailProfitPerSet >= 0 ? 'text-success' : 'text-danger'}">${retailProfitPerSet.toLocaleString()} دینار</td>
-                                            </tr>
-                                            <tr>
-                                                <td>کۆمەڵ</td>
-                                                <td>${purchasePricePerSet.toLocaleString()} دینار</td>
-                                                <td>${wholesalePricePerSet.toLocaleString()} دینار</td>
-                                                <td class="${wholesaleProfitPerSet >= 0 ? 'text-success' : 'text-danger'}">${wholesaleProfitPerSet.toLocaleString()} دینار</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>`;
-                        }
-                        
-                        htmlContent += `
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        
-                        // Show SweetAlert2 modal
-                        Swal.fire({
-                            title: 'زانیاری وردی کاڵا',
-                            html: htmlContent,
-                            width: 800,
-                            showCloseButton: true,
-                            showConfirmButton: false,
-                            customClass: {
-                                container: 'inventory-alert'
-                            }
-                        });
-                    });
-                    
-                    // Add remove button to container and append container to cell
-                    actionButtonsContainer.append(removeBtn);
-                    actionCell.html(actionButtonsContainer);
-                } else {
-                    // Update product data for existing info button
-                    row.find('.product-info-btn').data('product', data);
-                }
-                
-                // Update totals
-                calculateRowTotal(row);
             });
         });
     }
@@ -680,27 +263,53 @@ $(document).ready(function() {
 
     // Update receipt type
     function updateReceiptType(type) {
+        console.log('updateReceiptType called with type:', type);
+        console.log('Current active tabs:', $('.receipt-tab.active').length);
+        console.log('Current active panes:', $('.tab-pane.show.active').length);
+        
         // Remove active class from all receipt type buttons
         $('.receipt-type-btn').removeClass('active');
         
         // Add active class to clicked button
         $(`.receipt-type-btn[data-type="${type}"]`).addClass('active');
         
+        // Update active receipt type
+        activeReceiptType = type;
+        
         // Check if there's an existing tab of this type
-        let hasTabOfType = false;
+        let existingTab = null;
         $('.receipt-tab').each(function() {
             const tabId = $(this).attr('data-bs-target').replace('#', '');
+            console.log('Checking tab:', tabId);
             if (tabId.startsWith(type)) {
-                hasTabOfType = true;
-                $(this).tab('show');
+                existingTab = $(this);
+                console.log('Found existing tab:', tabId);
                 return false;
             }
         });
         
         // If no tab exists for this type, create one
-        if (!hasTabOfType) {
+        if (!existingTab) {
+            console.log('No existing tab found, creating new tab');
             addNewTab();
+        } else {
+            console.log('Showing existing tab');
+            // First deactivate all tabs and panes
+            $('.receipt-tab').removeClass('active');
+            $('.tab-pane').removeClass('show active');
+            
+            // Show existing tab
+            existingTab.addClass('active');
+            const tabId = existingTab.attr('data-bs-target');
+            console.log('Activating tab and pane:', tabId);
+            $(tabId).addClass('show active');
+            
+            // Update receipt number for the active tab
+            fetchNextInvoiceNumber(type);
         }
+        
+        console.log('After update - Active tabs:', $('.receipt-tab.active').length);
+        console.log('After update - Active panes:', $('.tab-pane.show.active').length);
     }
 
     // Get receipt type label
@@ -775,7 +384,42 @@ $(document).ready(function() {
         if (tabType === RECEIPT_TYPES.SELLING) {
             $(`#${tabId} .price-type`).on('change', function() {
                 const priceType = $(this).val();
-                // Any price type specific logic here
+                const tabPane = $(this).closest('.tab-pane');
+                
+                // Update prices for all existing products
+                tabPane.find('.items-list tr').each(function() {
+                    const row = $(this);
+                    const productSelect = row.find('.product-select');
+                    
+                    if (productSelect.val()) {
+                        const productData = productSelect.select2('data')[0];
+                        if (productData) {
+                            // Get base price based on price type
+                            const basePrice = priceType === PRICE_TYPES.WHOLESALE ? 
+                                parseFloat(productData.wholesale_price || 0) : 
+                                parseFloat(productData.retail_price || 0);
+                            
+                            // Adjust price based on unit type
+                            const unitType = row.find('.unit-type').val();
+                            let finalPrice = basePrice;
+                            
+                            if (unitType === 'box' && productData.pieces_per_box) {
+                                finalPrice = Math.round(basePrice * parseInt(productData.pieces_per_box || 0));
+                            } else if (unitType === 'set' && productData.pieces_per_box && productData.boxes_per_set) {
+                                finalPrice = Math.round(basePrice * parseInt(productData.pieces_per_box || 0) * parseInt(productData.boxes_per_set || 0));
+                            }
+                            
+                            // Update the unit price
+                            row.find('.unit-price').val(finalPrice);
+                            
+                            // Recalculate row total
+                            calculateRowTotal(row);
+                        }
+                    }
+                });
+                
+                // Recalculate grand total
+                calculateGrandTotal(tabId);
             });
         }
         
@@ -830,44 +474,45 @@ $(document).ready(function() {
             if (!productData) return;
             
             // Update unit price based on unit type
-            const unitPriceField = row.find('.unit-price');
             let newPrice = 0;
+            const tabPane = row.closest('.tab-pane');
+            const tabType = tabPane.attr('data-receipt-type');
+            const priceType = tabPane.find('.price-type').val();
             
+            // Get base price based on tab type and price type
+            let basePrice;
             if (tabType === RECEIPT_TYPES.SELLING) {
-                const priceType = $(`#${tabId} .price-type`).val();
-                const basePrice = priceType === PRICE_TYPES.WHOLESALE ? 
-                    parseFloat(productData.wholesale_price) : 
-                    parseFloat(productData.retail_price);
-                
-                if (unitType === 'piece') {
-                    newPrice = basePrice;
-                } else if (unitType === 'box' && productData.pieces_per_box) {
-                    newPrice = basePrice * parseInt(productData.pieces_per_box);
-                } else if (unitType === 'set' && productData.pieces_per_box && productData.boxes_per_set) {
-                    newPrice = basePrice * parseInt(productData.pieces_per_box) * parseInt(productData.boxes_per_set);
-                }
+                basePrice = priceType === PRICE_TYPES.WHOLESALE ? 
+                    parseFloat(productData.wholesale_price || 0) : 
+                    parseFloat(productData.retail_price || 0);
             } else if (tabType === RECEIPT_TYPES.BUYING) {
-                const basePrice = parseFloat(productData.purchase_price) || 0;
-                
-                if (unitType === 'piece') {
-                    newPrice = basePrice;
-                } else if (unitType === 'box' && productData.pieces_per_box) {
-                    newPrice = basePrice * parseInt(productData.pieces_per_box);
-                } else if (unitType === 'set' && productData.pieces_per_box && productData.boxes_per_set) {
-                    newPrice = basePrice * parseInt(productData.pieces_per_box) * parseInt(productData.boxes_per_set);
-                }
+                basePrice = parseFloat(productData.purchase_price || 0);
+            } else if (tabType === RECEIPT_TYPES.WASTING) {
+                basePrice = parseFloat(productData.purchase_price || 0);
             }
             
-            // Update the unit price field
-            if (newPrice > 0) {
-                unitPriceField.val(newPrice);
-                // Recalculate row total
-                calculateRowTotal(row);
+            // Adjust price based on unit type
+            if (unitType === 'piece') {
+                newPrice = basePrice;
+            } else if (unitType === 'box' && productData.pieces_per_box) {
+                newPrice = Math.round(basePrice * parseInt(productData.pieces_per_box));
+            } else if (unitType === 'set' && productData.pieces_per_box && productData.boxes_per_set) {
+                newPrice = Math.round(basePrice * parseInt(productData.pieces_per_box) * parseInt(productData.boxes_per_set));
             }
+            
+            // Update the appropriate price field based on tab type
+            if (tabType === RECEIPT_TYPES.WASTING) {
+                row.find('.price').val(newPrice);
+            } else {
+                row.find('.unit-price').val(newPrice);
+            }
+            
+            // Recalculate row total
+            calculateRowTotal(row);
         });
         
         // Unit price, quantity change handlers
-        $(`#${tabId}`).on('input', '.unit-price, .quantity', function() {
+        $(`#${tabId}`).on('input', '.unit-price, .quantity, .price, .adjusted-quantity', function() {
             const row = $(this).closest('tr');
             calculateRowTotal(row);
         });
@@ -910,8 +555,9 @@ $(document).ready(function() {
             saveReceipt(tabId, tabType, false);
         });
 
-        // Add costs and profits button for selling tab
+        // Add special buttons for selling tab
         if (tabType === RECEIPT_TYPES.SELLING) {
+            // Add costs and profits button
             const costsBtn = $('<button>')
                 .addClass('btn btn-info costs-btn')
                 .html('<i class="fas fa-calculator me-2"></i>نرخ و قازانج')
@@ -919,14 +565,14 @@ $(document).ready(function() {
                     showProductCostsAndProfits(tabId);
                 });
             
-            // Add the button next to the save button
+            // Add the costs button next to the save button
             $(`#${tabId} .save-btn`).before(costsBtn);
+
+            // Add draft button handler
+            $(`#${tabId} .draft-btn`).on('click', function() {
+                saveReceipt(tabId, tabType, true);
+            });
         }
-        
-        // Add draft button click handler
-        $(`#${tabId} .draft-btn`).on('click', function() {
-            saveReceipt(tabId, tabType, true);
-        });
     }
 
     // Add a new row to the items table
@@ -1046,12 +692,20 @@ $(document).ready(function() {
             
             // Set product price based on price type and unit type
             const tabPane = row.closest('.tab-pane');
+            const tabType = tabPane.attr('data-receipt-type');
             const priceType = tabPane.find('.price-type').val();
             
             // Get base price based on price type (single unit price)
-            let basePrice = priceType === PRICE_TYPES.WHOLESALE ? 
-                parseFloat(data.wholesale_price || 0) : 
-                parseFloat(data.retail_price || 0);
+            let basePrice;
+            if (tabType === RECEIPT_TYPES.SELLING) {
+                basePrice = priceType === PRICE_TYPES.WHOLESALE ? 
+                    parseFloat(data.wholesale_price || 0) : 
+                    parseFloat(data.retail_price || 0);
+            } else if (tabType === RECEIPT_TYPES.BUYING) {
+                basePrice = parseFloat(data.purchase_price || 0);
+            } else if (tabType === RECEIPT_TYPES.WASTING) {
+                basePrice = parseFloat(data.purchase_price || 0);
+            }
             
             // Adjust price based on unit type
             const unitType = row.find('.unit-type').val();
@@ -1070,390 +724,11 @@ $(document).ready(function() {
                 console.log(`Set price calculated: ${basePrice}`);
             }
             
-            row.find('.unit-price').val(basePrice);
-            
-            // Add info button to action column if not already added
-            if (row.find('.product-info-btn').length === 0) {
-                const actionCell = row.find('td:last');
-                actionCell.addClass('action-column');
-                
-                // Create action buttons container
-                const actionButtonsContainer = $('<div class="action-buttons"></div>');
-                
-                // Create info button
-                const infoBtn = $(`<button type="button" class="btn btn-info btn-sm" title="زانیاری بەرهەم">
-                    <i class="fas fa-info-circle"></i>
-                </button>`);
-                
-                // Store product data for the info button
-                infoBtn.data('product', data);
-                
-                // Add profit calculation button only for selling tabs
-                const tabPane = row.closest('.tab-pane');
-                const tabType = tabPane.attr('data-receipt-type');
-                
-                // Create remove button
-                const removeBtn = $(`<button type="button" class="btn btn-danger btn-sm remove-row" title="ڕەشکردنەوە">
-                    <i class="fas fa-trash-alt"></i>
-                </button>`);
-                
-                // Add buttons to container
-                actionButtonsContainer.append(infoBtn);
-                
-                // Insert buttons for selling tabs
-                if (tabType === RECEIPT_TYPES.SELLING) {
-                    // Create profit calculation button
-                    const profitBtn = $(`<button type="button" class="btn btn-success btn-sm profit-info-btn" title="زانیاری قازانجی فرۆشتن">
-                        <i class="fas fa-chart-line"></i>
-                    </button>`);
-                    
-                    // Add profit button to container
-                    actionButtonsContainer.append(profitBtn);
-                    
-                    // Add click event for profit calculation button
-                    profitBtn.on('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        const productData = infoBtn.data('product');
-                        const quantity = parseFloat(row.find('.quantity').val()) || 0;
-                        const unitType = row.find('.unit-type').val();
-                        const piecesPerBox = parseInt(productData.pieces_per_box) || 0;
-                        const boxesPerSet = parseInt(productData.boxes_per_set) || 0;
-                        
-                        // Calculate purchase and selling prices based on unit type
-                        const purchasePrice = parseFloat(productData.purchase_price) || 0;
-                        const tabPane = row.closest('.tab-pane');
-                        const priceType = tabPane.find('.price-type').val() || PRICE_TYPES.SINGLE;
-                        const retailPrice = parseFloat(productData.retail_price) || 0;
-                        const wholesalePrice = parseFloat(productData.wholesale_price) || 0;
-                        
-                        // Get actual unit price from the form
-                        const unitPrice = parseFloat(row.find('.unit-price').val()) || 0;
-                        
-                        // Calculate total purchase cost and selling price based on unit type and quantity
-                        let totalPurchaseCost = 0;
-                        let totalSellingPrice = 0;
-                        let unitLabel = "دانە";
-                        let totalUnits = quantity;
-                        
-                        if (unitType === 'piece') {
-                            totalPurchaseCost = purchasePrice * quantity;
-                            totalSellingPrice = unitPrice * quantity;
-                            unitLabel = "دانە";
-                        } else if (unitType === 'box' && piecesPerBox > 0) {
-                            totalPurchaseCost = (purchasePrice * piecesPerBox) * quantity;
-                            totalSellingPrice = unitPrice * quantity;
-                            totalUnits = quantity * piecesPerBox;
-                            unitLabel = "کارتۆن";
-                        } else if (unitType === 'set' && piecesPerBox > 0 && boxesPerSet > 0) {
-                            totalPurchaseCost = (purchasePrice * piecesPerBox * boxesPerSet) * quantity;
-                            totalSellingPrice = unitPrice * quantity;
-                            totalUnits = quantity * piecesPerBox * boxesPerSet;
-                            unitLabel = "سێت";
-                        }
-                        
-                        // Calculate profit
-                        const totalProfit = totalSellingPrice - totalPurchaseCost;
-                        
-                        // Create HTML content for the modal
-                        let htmlContent = `
-                            <div class="card border-primary mb-3">
-                                <div class="card-header bg-primary text-white">
-                                    <h5 class="mb-0">زانیاری قازانجی فرۆشتنی ${productData.text}</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="profit-details">
-                                        <div class="row text-center mb-4">
-                                            <div class="col-md-4">
-                                                <div class="card inventory-card">
-                                                    <div class="card-body">
-                                                        <h3>${quantity}</h3>
-                                                        <p>${unitLabel}</p>
-                                                        ${unitType !== 'piece' ? `<small>(${totalUnits} دانە)</small>` : ''}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="card inventory-card">
-                                                    <div class="card-body">
-                                                        <h3>${totalPurchaseCost.toLocaleString()}</h3>
-                                                        <p>نرخی کڕین</p>
-                                                        <small>دینار</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="card inventory-card">
-                                                    <div class="card-body">
-                                                        <h3>${totalSellingPrice.toLocaleString()}</h3>
-                                                        <p>نرخی فرۆشتن</p>
-                                                        <small>دینار</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="table-responsive mb-4">
-                                            <table class="table table-bordered">
-                                                <thead class="table-light">
-                                                    <tr>
-                                                        <th>بڕی کاڵا</th>
-                                                        <th>نرخی کڕین</th>
-                                                        <th>نرخی فرۆشتن</th>
-                                                        <th>بڕی قازانج</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td>${quantity} ${unitLabel} (${totalUnits} دانە)</td>
-                                                        <td>${totalPurchaseCost.toLocaleString()} دینار</td>
-                                                        <td>${totalSellingPrice.toLocaleString()} دینار</td>
-                                                        <td class="${totalProfit >= 0 ? 'text-success' : 'text-danger'}">${totalProfit.toLocaleString()} دینار</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        
-                                        <div class="row">
-                                            <div class="col-12">
-                                                <div class="alert ${totalProfit >= 0 ? 'alert-success' : 'alert-danger'}">
-                                                    <h5 class="mb-0 text-center">
-                                                        <i class="fas ${totalProfit >= 0 ? 'fa-check-circle' : 'fa-exclamation-triangle'} me-2"></i>
-                                                        قازانجی نێوان نرخی کڕین و فرۆشتن: <strong>${totalProfit.toLocaleString()} دینار</strong>
-                                                    </h5>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        
-                        // Show SweetAlert2 modal
-                        Swal.fire({
-                            title: 'زانیاری قازانج',
-                            html: htmlContent,
-                            width: 800,
-                            showCloseButton: true,
-                            showConfirmButton: false,
-                            customClass: {
-                                container: 'inventory-alert'
-                            }
-                        });
-                    });
-                } else {
-                    // For buying tabs, only add the info button
-                    actionButtonsContainer.append(infoBtn);
-                }
-                
-                // Add click event to the info button
-                infoBtn.on('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const productData = $(this).data('product');
-                    const piecesInStock = parseInt(productData.current_quantity);
-                    const piecesPerBox = parseInt(productData.pieces_per_box) || 0;
-                    const boxesPerSet = parseInt(productData.boxes_per_set) || 0;
-                    
-                    // Calculate profit percentages and amounts
-                    const purchasePrice = parseFloat(productData.purchase_price) || 0;
-                    const retailPrice = parseFloat(productData.retail_price) || 0;
-                    const wholesalePrice = parseFloat(productData.wholesale_price) || 0;
-                    
-                    // Calculate profits per piece
-                    const retailProfitPerPiece = retailPrice - purchasePrice;
-                    const wholesaleProfitPerPiece = wholesalePrice - purchasePrice;
-                    
-                    // Calculate box and set prices and profits
-                    const purchasePricePerBox = purchasePrice * piecesPerBox;
-                    const retailPricePerBox = retailPrice * piecesPerBox;
-                    const wholesalePricePerBox = wholesalePrice * piecesPerBox;
-                    
-                    const retailProfitPerBox = retailPricePerBox - purchasePricePerBox;
-                    const wholesaleProfitPerBox = wholesalePricePerBox - purchasePricePerBox;
-                    
-                    // Calculate set prices and profits if applicable
-                    const purchasePricePerSet = purchasePricePerBox * boxesPerSet;
-                    const retailPricePerSet = retailPricePerBox * boxesPerSet;
-                    const wholesalePricePerSet = wholesalePricePerBox * boxesPerSet;
-                    
-                    const retailProfitPerSet = retailPricePerSet - purchasePricePerSet;
-                    const wholesaleProfitPerSet = wholesalePricePerSet - purchasePricePerSet;
-                    
-                    let boxesInStock = 0;
-                    let setsInStock = 0;
-                    
-                    if (piecesPerBox > 0) {
-                        boxesInStock = Math.floor(piecesInStock / piecesPerBox);
-                        
-                        if (boxesPerSet > 0) {
-                            setsInStock = Math.floor(boxesInStock / boxesPerSet);
-                        }
-                    }
-                    
-                    // Create HTML content for the modal
-                    let htmlContent = `
-                        <div class="card border-primary mb-3">
-                            <div class="card-header bg-primary text-white">
-                                <h5 class="mb-0">${productData.text}</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row text-center mb-4">
-                                    <div class="col-md-4">
-                                        <div class="card inventory-card">
-                                            <div class="card-body">
-                                                <h3>${piecesInStock}</h3>
-                                                <p>دانە</p>
-                                            </div>
-                                        </div>
-                                    </div>`;
-                
-                    if (piecesPerBox > 0) {
-                        htmlContent += `
-                                    <div class="col-md-4">
-                                        <div class="card inventory-card">
-                                            <div class="card-body">
-                                                <h3>${boxesInStock}</h3>
-                                                <p>کارتۆن</p>
-                                                <small>(${piecesPerBox} دانە)</small>
-                                            </div>
-                                        </div>
-                                    </div>`;
-                    }
-                    
-                    if (boxesPerSet > 0) {
-                        htmlContent += `
-                                    <div class="col-md-4">
-                                        <div class="card inventory-card">
-                                            <div class="card-body">
-                                                <h3>${setsInStock}</h3>
-                                                <p>سێت</p>
-                                                <small>(${boxesPerSet} کارتۆن)</small>
-                                            </div>
-                                        </div>
-                                    </div>`;
-                    }
-                    
-                    htmlContent += `
-                                </div>
-                        <div class="profit-details">
-                            <h6 class="text-primary mb-3">زانیاری نرخ و قازانج بە دانە</h6>
-                            <div class="table-responsive mb-4">
-                                <table class="table table-bordered">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>جۆری نرخ</th>
-                                            <th>نرخی کڕین</th>
-                                            <th>نرخی فرۆشتن</th>
-                                            <th>بڕی قازانج</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>تاک</td>
-                                            <td>${purchasePrice.toLocaleString()} دینار</td>
-                                            <td>${retailPrice.toLocaleString()} دینار</td>
-                                            <td class="${retailProfitPerPiece >= 0 ? 'text-success' : 'text-danger'}">${retailProfitPerPiece.toLocaleString()} دینار</td>
-                                        </tr>
-                                        <tr>
-                                            <td>کۆمەڵ</td>
-                                            <td>${purchasePrice.toLocaleString()} دینار</td>
-                                            <td>${wholesalePrice.toLocaleString()} دینار</td>
-                                            <td class="${wholesaleProfitPerPiece >= 0 ? 'text-success' : 'text-danger'}">${wholesaleProfitPerPiece.toLocaleString()} دینار</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>`;
-                    
-                    if (piecesPerBox > 0) {
-                        htmlContent += `
-                            <h6 class="text-primary mb-3">زانیاری نرخ و قازانج بە کارتۆن (${piecesPerBox} دانە)</h6>
-                            <div class="table-responsive mb-4">
-                                <table class="table table-bordered">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>جۆری نرخ</th>
-                                            <th>نرخی کڕین</th>
-                                            <th>نرخی فرۆشتن</th>
-                                            <th>بڕی قازانج</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>تاک</td>
-                                            <td>${purchasePricePerBox.toLocaleString()} دینار</td>
-                                            <td>${retailPricePerBox.toLocaleString()} دینار</td>
-                                            <td class="${retailProfitPerBox >= 0 ? 'text-success' : 'text-danger'}">${retailProfitPerBox.toLocaleString()} دینار</td>
-                                        </tr>
-                                        <tr>
-                                            <td>کۆمەڵ</td>
-                                            <td>${purchasePricePerBox.toLocaleString()} دینار</td>
-                                            <td>${wholesalePricePerBox.toLocaleString()} دینار</td>
-                                            <td class="${wholesaleProfitPerBox >= 0 ? 'text-success' : 'text-danger'}">${wholesaleProfitPerBox.toLocaleString()} دینار</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>`;
-                    }
-                    
-                    if (boxesPerSet > 0) {
-                        htmlContent += `
-                            <h6 class="text-primary mb-3">زانیاری نرخ و قازانج بە سێت (${boxesPerSet} کارتۆن)</h6>
-                            <div class="table-responsive mb-4">
-                                <table class="table table-bordered">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>جۆری نرخ</th>
-                                            <th>نرخی کڕین</th>
-                                            <th>نرخی فرۆشتن</th>
-                                            <th>بڕی قازانج</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>تاک</td>
-                                            <td>${purchasePricePerSet.toLocaleString()} دینار</td>
-                                            <td>${retailPricePerSet.toLocaleString()} دینار</td>
-                                            <td class="${retailProfitPerSet >= 0 ? 'text-success' : 'text-danger'}">${retailProfitPerSet.toLocaleString()} دینار</td>
-                                        </tr>
-                                        <tr>
-                                            <td>کۆمەڵ</td>
-                                            <td>${purchasePricePerSet.toLocaleString()} دینار</td>
-                                            <td>${wholesalePricePerSet.toLocaleString()} دینار</td>
-                                            <td class="${wholesaleProfitPerSet >= 0 ? 'text-success' : 'text-danger'}">${wholesaleProfitPerSet.toLocaleString()} دینار</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>`;
-                    }
-                    
-                    htmlContent += `
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    
-                    // Show SweetAlert2 modal
-                    Swal.fire({
-                        title: 'زانیاری وردی کاڵا',
-                        html: htmlContent,
-                        width: 800,
-                        showCloseButton: true,
-                        showConfirmButton: false,
-                        customClass: {
-                            container: 'inventory-alert'
-                        }
-                    });
-                });
-                
-                // Add remove button to container and append container to cell
-                actionButtonsContainer.append(removeBtn);
-                actionCell.html(actionButtonsContainer);
+            // Update the appropriate price field based on tab type
+            if (tabType === RECEIPT_TYPES.WASTING) {
+                row.find('.price').val(basePrice);
             } else {
-                // Update product data for existing info button
-                row.find('.product-info-btn').data('product', data);
+                row.find('.unit-price').val(basePrice);
             }
             
             // Update totals
@@ -1465,14 +740,24 @@ $(document).ready(function() {
 
     // Calculate row total
     function calculateRowTotal(row) {
-        const quantity = parseFloat(row.find('.quantity').val()) || 0;
-        const unitPrice = parseFloat(row.find('.unit-price').val()) || 0;
-        const total = Math.round(quantity * unitPrice);
+        const tabPane = row.closest('.tab-pane');
+        const tabType = tabPane.attr('data-receipt-type');
         
+        let quantity, price, total;
+        
+        if (tabType === RECEIPT_TYPES.WASTING) {
+            quantity = parseFloat(row.find('.adjusted-quantity').val()) || 0;
+            price = parseFloat(row.find('.price').val()) || 0;
+        } else {
+            quantity = parseFloat(row.find('.quantity').val()) || 0;
+            price = parseFloat(row.find('.unit-price').val()) || 0;
+        }
+        
+        total = Math.round(quantity * price);
         row.find('.total').val(total);
         
         // Update grand total
-        const tabId = row.closest('.tab-pane').attr('id');
+        const tabId = tabPane.attr('id');
         calculateGrandTotal(tabId);
     }
 
@@ -1521,6 +806,12 @@ $(document).ready(function() {
         console.log(`Saving ${tabType} receipt ${tabId}. Is draft: ${isDraft}`);
         const tabPane = $(`#${tabId}`);
         
+        // Only allow drafts for selling receipts
+        if (isDraft && tabType !== RECEIPT_TYPES.SELLING) {
+            console.error('Drafts are only allowed for selling receipts');
+            return;
+        }
+        
         // Collect data from the form
         let receiptData = collectReceiptData(tabPane, tabType);
         
@@ -1529,8 +820,8 @@ $(document).ready(function() {
             return;
         }
         
-        // Set the draft flag if needed
-        if (isDraft) {
+        // Set the draft flag if needed (only for selling receipts)
+        if (isDraft && tabType === RECEIPT_TYPES.SELLING) {
             receiptData.is_draft = true;
             console.log('Setting receipt as DRAFT');
         }
@@ -1550,8 +841,13 @@ $(document).ready(function() {
         });
         
         // Send data to server
+        let endpoint = '../../api/save_receipt.php';
+        if (tabType === RECEIPT_TYPES.WASTING) {
+            endpoint = '../../api/save_wasting.php';
+        }
+        
         $.ajax({
-            url: '../../api/save_receipt.php',
+            url: endpoint,
             type: 'POST',
             data: jsonData,
             contentType: 'application/json',
@@ -1561,29 +857,66 @@ $(document).ready(function() {
                     // Store the receipt ID in the tab
                     tabPane.data('saved-receipt-id', response.receipt_id);
                     
-                    Swal.fire({
-                        icon: 'success',
-                        title: isDraft ? 'ڕەشنووس پاشەکەوت کرا' : 'پاشەکەوت کرا',
-                        text: response.message,
-                        showCancelButton: true,
-                        confirmButtonText: 'بەڵێ، چاپی بکە',
-                        cancelButtonText: 'نەخێر',
-                        reverseButtons: true,
-                        customClass: {
-                            confirmButton: 'btn btn-success ms-2',
-                            cancelButton: 'btn btn-secondary'
-                        }
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            // Open print window
-                            window.open(`../../views/receipt/print_receipt.php?sale_id=${response.receipt_id}`, '_blank');
-                        }
+                    // Check if customer has advance payment and this is a credit sale
+                    if (tabType === RECEIPT_TYPES.SELLING && 
+                        receiptData.payment_type === PAYMENT_TYPES.CREDIT && 
+                        !isDraft) {
                         
-                        // Reset form after handling print dialog
-                        resetForm(tabPane, tabType);
-                        // Fetch new invoice number
-                        fetchNextInvoiceNumber(tabType);
-                    });
+                        // Calculate remaining amount after paid amount
+                        const grandTotal = parseFloat(tabPane.find('.grand-total').val()) || 0;
+                        const paidAmount = parseFloat(tabPane.find('.paid-amount').val()) || 0;
+                        const remainingAmount = grandTotal - paidAmount;
+                        
+                        if (remainingAmount > 0) {
+                            // Check if customer has advance payment
+                            checkCustomerAdvancePayment(receiptData.customer_id, function(result) {
+                                if (result.success && result.hasAdvance) {
+                                    // Ask user if they want to use advance payment
+                                    Swal.fire({
+                                        title: 'پارەی پێشەکی',
+                                        text: `کڕیار ${result.advanceAmount.toLocaleString()} دینار پارەی پێشەکی هەیە. ئایا دەتەوێت بەکاری بهێنیت بۆ ئەم پسووڵەیە؟`,
+                                        icon: 'question',
+                                        showCancelButton: true,
+                                        confirmButtonText: 'بەڵێ',
+                                        cancelButtonText: 'نەخێر',
+                                        reverseButtons: true
+                                    }).then((confirmResult) => {
+                                        if (confirmResult.isConfirmed) {
+                                            // Use advance payment
+                                            useAdvancePayment({
+                                                customerId: receiptData.customer_id,
+                                                saleId: response.receipt_id,
+                                                remainingAmount: remainingAmount,
+                                                invoiceNumber: receiptData.invoice_number,
+                                                paymentType: receiptData.payment_type
+                                            }, function(advanceResult) {
+                                                if (advanceResult.success) {
+                                                    // Show success message with advance payment info
+                                                    showPrintDialog(response.receipt_id, tabPane, tabType, 
+                                                                   `پاشەکەوت کرا. ${advanceResult.advanceUsed.toLocaleString()} دینار پارەی پێشەکی بەکارهێنرا.`);
+                                                } else {
+                                                    // Show regular success message
+                                                    showPrintDialog(response.receipt_id, tabPane, tabType, response.message);
+                                                }
+                                            });
+                                        } else {
+                                            // User chose not to use advance payment
+                                            showPrintDialog(response.receipt_id, tabPane, tabType, response.message);
+                                        }
+                                    });
+                                } else {
+                                    // No advance payment available, show regular success message
+                                    showPrintDialog(response.receipt_id, tabPane, tabType, response.message);
+                                }
+                            });
+                        } else {
+                            // No remaining amount, no need for advance payment
+                            showPrintDialog(response.receipt_id, tabPane, tabType, response.message);
+                        }
+                    } else {
+                        // Not a credit sale, show regular success message
+                        showPrintDialog(response.receipt_id, tabPane, tabType, response.message);
+                    }
                 } else {
                     Swal.fire({
                         icon: 'error',
@@ -1601,107 +934,225 @@ $(document).ready(function() {
                     text: 'هەڵەیەک ڕوویدا لە کاتی پاشەکەوتکردن. تکایە دووبارە هەوڵ بدەوە.',
                     confirmButtonText: 'باشە'
                 });
+            },
+            complete: function() {
+                // Reset button state
+                $(`#${tabId} .save-btn`).prop('disabled', false).html('<i class="fas fa-save me-2"></i> پاشەکەوتکردن');
             }
         });
+    }
+    
+    // Helper function to show the print dialog
+    function showPrintDialog(receiptId, tabPane, tabType, message) {
+        // Only show print dialog for selling receipts
+        if (tabType === RECEIPT_TYPES.SELLING) {
+            Swal.fire({
+                icon: 'success',
+                title: 'پاشەکەوت کرا',
+                text: message,
+                showCancelButton: true,
+                confirmButtonText: 'بەڵێ، چاپی بکە',
+                cancelButtonText: 'نەخێر',
+                reverseButtons: true,
+                customClass: {
+                    confirmButton: 'btn btn-success ms-2',
+                    cancelButton: 'btn btn-secondary'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Open print window
+                    window.open(`../../views/receipt/print_receipt.php?sale_id=${receiptId}`, '_blank');
+                }
+                
+                // Reset form after handling print dialog
+                resetForm(tabPane, tabType);
+                // Fetch new invoice number
+                fetchNextInvoiceNumber(tabType);
+            });
+        } else {
+            // For buying receipts, just show success message and reset form
+            Swal.fire({
+                icon: 'success',
+                title: 'پاشەکەوت کرا',
+                text: message,
+                confirmButtonText: 'باشە'
+            }).then(() => {
+                // Reset form
+                resetForm(tabPane, tabType);
+                // Fetch new invoice number
+                fetchNextInvoiceNumber(tabType);
+            });
+        }
     }
 
     // Collect receipt data
     function collectReceiptData(tabPane, tabType) {
         const products = [];
         let valid = true;
+        let insufficientProducts = [];
         
         // Collect product data
         tabPane.find('.items-list tr').each(function() {
             const row = $(this);
             const productId = row.find('.product-select').val();
-            const quantity = parseInt(row.find('.quantity').val()) || 0;
-            const unitPrice = parseFloat(row.find('.unit-price').val()) || 0;
             
-            // Skip empty rows
-            if (!productId || quantity <= 0) return;
-            
-            // Validate entered data
-            if (!productId) {
-                Swal.fire('خەتا', 'تکایە کاڵا هەڵبژێرە', 'error');
-                valid = false;
-                return false;
+            if (!productId) return;
+
+            if (tabType === RECEIPT_TYPES.WASTING) {
+                const adjustedQuantity = parseInt(row.find('.adjusted-quantity').val()) || 0;
+                const unitPrice = parseFloat(row.find('.price').val()) || 0;
+                const unitType = row.find('.unit-type').val() || 'piece';
+
+                if (adjustedQuantity <= 0) {
+                    Swal.fire({
+                        title: 'هەڵە',
+                        text: 'تکایە بڕی بەفیڕۆچوو بنووسە',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                    valid = false;
+                    return false;
+                }
+
+                products.push({
+                    product_id: productId,
+                    adjusted_quantity: adjustedQuantity,
+                    unit_price: unitPrice,
+                    unit_type: unitType
+                });
+            } else {
+                const quantity = parseInt(row.find('.quantity').val()) || 0;
+                const unitPrice = parseFloat(row.find('.unit-price').val()) || 0;
+                const unitType = row.find('.unit-type').val() || 'piece';
+                
+                if (!productId) {
+                    Swal.fire('خەتا', 'تکایە کاڵا هەڵبژێرە', 'error');
+                    valid = false;
+                    return false;
+                }
+                
+                if (unitPrice <= 0) {
+                    Swal.fire('خەتا', 'تکایە نرخی دروست بنووسە', 'error');
+                    valid = false;
+                    return false;
+                }
+                
+                if (quantity <= 0) {
+                    Swal.fire('خەتا', 'تکایە بڕی دروست بنووسە', 'error');
+                    valid = false;
+                    return false;
+                }
+
+                // Check available quantity for selling receipts
+                if (tabType === RECEIPT_TYPES.SELLING) {
+                    const productData = row.find('.product-select').select2('data')[0];
+                    const currentQuantity = parseInt(productData.current_quantity) || 0;
+                    let requiredQuantity = quantity;
+
+                    // Convert quantity based on unit type
+                    if (unitType === 'box' && productData.pieces_per_box) {
+                        requiredQuantity *= parseInt(productData.pieces_per_box);
+                    } else if (unitType === 'set' && productData.pieces_per_box && productData.boxes_per_set) {
+                        requiredQuantity *= parseInt(productData.pieces_per_box) * parseInt(productData.boxes_per_set);
+                    }
+
+                    if (requiredQuantity > currentQuantity) {
+                        insufficientProducts.push({
+                            name: productData.text,
+                            requested: requiredQuantity,
+                            available: currentQuantity
+                        });
+                        valid = false;
+                    }
+                }
+                
+                let productData = {
+                    product_id: productId,
+                    quantity: quantity,
+                    unit_price: unitPrice,
+                    unit_type: unitType
+                };
+                
+                products.push(productData);
             }
-            
-            if (unitPrice <= 0) {
-                Swal.fire('خەتا', 'تکایە نرخی دروست بنووسە', 'error');
-                valid = false;
-                return false;
-            }
-            
-            if (quantity <= 0) {
-                Swal.fire('خەتا', 'تکایە بڕی دروست بنووسە', 'error');
-                valid = false;
-                return false;
-            }
-            
-            let productData = {
-                product_id: productId,
-                quantity: quantity,
-                unit_price: unitPrice
-            };
-            
-            // Add unit_type for both selling and buying receipts
-            if (tabType === RECEIPT_TYPES.SELLING || tabType === RECEIPT_TYPES.BUYING) {
-                productData.unit_type = row.find('.unit-type').val() || 'piece';
-            }
-            
-            products.push(productData);
         });
         
-        if (!valid) return null;
-        
-        // Calculate the grand total directly from the form
-        const grandTotal = parseFloat(tabPane.find('.grand-total').val()) || 0;
-        const discount = parseFloat(tabPane.find('.discount').val()) || 0;
-        const shippingCost = parseFloat(tabPane.find('.shipping-cost').val()) || 0;
-        const otherCost = parseFloat(tabPane.find('.other-cost').val()) || 0;
-        
-        const formData = {
-            receipt_type: tabType,
-            invoice_number: tabPane.find('.receipt-number').val(),
-            payment_type: tabPane.find('.payment-type').val(),
-            date: tabPane.find(`.${tabType === RECEIPT_TYPES.SELLING ? 'sale' : 'purchase'}-date`).val(),
-            discount: discount,
-            notes: tabPane.find('.notes').val(),
-            products: products,
-            shipping_cost: shippingCost,
-            other_cost: otherCost,
-            paid_amount: 0 // Will be set based on payment type
-        };
-        
-        // Set paid amount based on payment type for both buying and selling
-        if (formData.payment_type === PAYMENT_TYPES.CREDIT) {
-            // For credit payments, use the paid amount entered by user
-            formData.paid_amount = parseFloat(tabPane.find('.paid-amount').val()) || 0;
+        if (!valid) {
+            if (insufficientProducts.length > 0) {
+                let errorMessage = 'بڕی کاڵاکان بەردەست نییە:<br><br>';
+                insufficientProducts.forEach(product => {
+                    errorMessage += `${product.name}:<br>`;
+                    errorMessage += `داواکراو: ${product.requested} دانە<br>`;
+                    errorMessage += `بەردەست: ${product.available} دانە<br><br>`;
+                });
+                
+                Swal.fire({
+                    title: 'بڕی کاڵا بەردەست نییە',
+                    html: errorMessage,
+                    icon: 'error',
+                    confirmButtonText: 'باشە'
+                });
+            }
+            return null;
+        }
+
+        if (products.length === 0) {
+            Swal.fire('خەتا', 'تکایە لانیکەم یەک کاڵا زیاد بکە', 'error');
+            return null;
+        }
+
+        // Get the date based on receipt type
+        let date;
+        if (tabType === RECEIPT_TYPES.WASTING) {
+            date = tabPane.find('.adjustment-date').val();
+        } else if (tabType === RECEIPT_TYPES.SELLING) {
+            date = tabPane.find('.sale-date').val();
         } else {
-            // For cash payments, paid amount equals grand total (all is paid)
-            formData.paid_amount = grandTotal;
+            date = tabPane.find('.purchase-date').val();
         }
-        
-        if (tabType === RECEIPT_TYPES.SELLING) {
-            const customerId = tabPane.find('.customer-select').val();
-            if (!customerId) {
-                Swal.fire('خەتا', 'تکایە کڕیار هەڵبژێرە', 'error');
-                return null;
-            }
-            
-            formData.customer_id = customerId;
-            formData.price_type = tabPane.find('.price-type').val();
-        } else if (tabType === RECEIPT_TYPES.BUYING) {
-            const supplierId = tabPane.find('.supplier-select').val();
-            if (!supplierId) {
-                Swal.fire('خەتا', 'تکایە فرۆشیار هەڵبژێرە', 'error');
-                return null;
-            }
-            
-            formData.supplier_id = supplierId;
+
+        // Validate date
+        if (!date) {
+            Swal.fire('خەتا', 'تکایە بەروار دیاری بکە', 'error');
+            return null;
         }
-        
+
+        // Build the form data object
+        const formData = {
+            date: date,
+            notes: tabPane.find('.notes').val() || '',
+            products: products
+        };
+
+        // Add receipt type specific data
+        if (tabType === RECEIPT_TYPES.SELLING || tabType === RECEIPT_TYPES.BUYING) {
+            formData.receipt_type = tabType;
+            formData.invoice_number = tabPane.find('.receipt-number').val();
+            formData.payment_type = tabPane.find('.payment-type').val();
+            formData.discount = parseFloat(tabPane.find('.discount').val()) || 0;
+            formData.shipping_cost = parseFloat(tabPane.find('.shipping-cost').val()) || 0;
+            formData.other_cost = parseFloat(tabPane.find('.other-cost').val()) || 0;
+            formData.paid_amount = tabPane.find('.payment-type').val() === PAYMENT_TYPES.CREDIT ? 
+                (parseFloat(tabPane.find('.paid-amount').val()) || 0) : 
+                parseFloat(tabPane.find('.grand-total').val()) || 0;
+
+            if (tabType === RECEIPT_TYPES.SELLING) {
+                formData.customer_id = tabPane.find('.customer-select').val();
+                formData.price_type = tabPane.find('.price-type').val();
+                if (!formData.customer_id) {
+                    Swal.fire('خەتا', 'تکایە کڕیار هەڵبژێرە', 'error');
+                    return null;
+                }
+            } else {
+                formData.supplier_id = tabPane.find('.supplier-select').val();
+                if (!formData.supplier_id) {
+                    Swal.fire('خەتا', 'تکایە فرۆشیار هەڵبژێرە', 'error');
+                    return null;
+                }
+            }
+        }
+
+        console.log('Form data:', formData);
         return formData;
     }
 
@@ -1747,21 +1198,32 @@ $(document).ready(function() {
         const newTabType = activeReceiptType;
         tabCounters[newTabType]++;
         
-        console.log(`Adding new tab: ${newTabType}-${tabCounters[newTabType]}`);
+        console.log('addNewTab called');
+        console.log('New tab type:', newTabType);
+        console.log('Tab counter:', tabCounters[newTabType]);
         
         // Create new tab
         const tabId = `${newTabType}-${tabCounters[newTabType]}`;
         const tabLabel = `${getReceiptTypeLabel(newTabType)} #${tabCounters[newTabType]}`;
         
+        console.log('Creating new tab with ID:', tabId);
+        
         // Create tab button
         const tabBtn = `
             <li class="nav-item" role="presentation">
-                <button class="nav-link receipt-tab" id="tab-${tabId}" data-bs-toggle="tab" data-bs-target="#${tabId}" type="button" role="tab">
+                <button class="nav-link receipt-tab active" id="tab-${tabId}" data-bs-toggle="tab" data-bs-target="#${tabId}" type="button" role="tab">
                     ${tabLabel}
                     <span class="close-tab"><i class="fas fa-times"></i></span>
                 </button>
             </li>
         `;
+        
+        console.log('Before adding new tab - Active tabs:', $('.receipt-tab.active').length);
+        console.log('Before adding new tab - Active panes:', $('.tab-pane.show.active').length);
+        
+        // Remove active class from all existing tabs and panes
+        $('.receipt-tab').removeClass('active');
+        $('.tab-pane').removeClass('show active');
         
         // Insert tab button before + button
         $(tabBtn).insertBefore($('#addNewTab').parent());
@@ -1776,15 +1238,35 @@ $(document).ready(function() {
             tabContent = $('#wasting-template').html();
         }
         
+        console.log('Template content length:', tabContent ? tabContent.length : 0);
+        
         // Create the tab content
         const tabContentHtml = `
-            <div class="tab-pane fade" id="${tabId}" role="tabpanel" data-receipt-type="${newTabType}">
+            <div class="tab-pane fade show active" id="${tabId}" role="tabpanel" data-receipt-type="${newTabType}">
                 ${tabContent}
             </div>
         `;
         
         // Add tab content
         $('#receiptTabsContent').append(tabContentHtml);
+        
+        console.log('After adding new tab - Active tabs:', $('.receipt-tab.active').length);
+        console.log('After adding new tab - Active panes:', $('.tab-pane.show.active').length);
+        
+        // Initialize Select2 for the new tab
+        $(`#${tabId} .customer-select, #${tabId} .supplier-select, #${tabId} .product-select`).select2({
+            theme: 'bootstrap-5',
+            width: '100%'
+        });
+        
+        // Set today's date
+        $(`#${tabId} .sale-date, #${tabId} .purchase-date, #${tabId} .adjustment-date`).val(new Date().toISOString().split('T')[0]);
+        
+        // Initialize event listeners for the new tab
+        initTabEventListeners(tabId, newTabType);
+        
+        // Get new receipt number
+        fetchNextInvoiceNumber(newTabType);
         
         // Ensure all selects in the new tab have unique IDs
         $(`#${tabId} select`).each(function() {
@@ -1793,34 +1275,44 @@ $(document).ready(function() {
             $(this).attr('id', uniqueId);
         });
         
-        // Set default date in the new tab
-        $(`#${tabId} .sale-date, #${tabId} .purchase-date, #${tabId} .adjustment-date`).val(new Date().toISOString().split('T')[0]);
-        
-        console.log(`New tab created: ${tabId}`);
-        
-        // Activate the new tab
-        $(`#tab-${tabId}`).tab('show');
-        
-        // Initialize Select2 and event listeners for the new tab only
-        setTimeout(function() {
-            console.log(`Setting up selects for new tab: ${tabId}`);
+        // Initialize the new tab's content
+        setTimeout(() => {
+            console.log('Initializing new tab content');
             initializeSelectsForTab(tabId);
-            initTabEventListeners(tabId, newTabType);
-            
-            // Fetch next invoice number for sales
-            if (newTabType === RECEIPT_TYPES.SELLING) {
-                fetchNextInvoiceNumber(newTabType);
-            }
-        }, 300);
+        }, 100);
     }
 
-    // Add tab shown event handler to initialize selects properly when tab is shown
+    // Add tab shown event handler
     $(document).on('shown.bs.tab', '.receipt-tab', function(e) {
         const tabId = $(e.target).attr('data-bs-target').replace('#', '');
-        console.log(`Tab shown: ${tabId}`);
+        console.log('Tab shown event fired');
+        console.log('Tab ID:', tabId);
+        console.log('Active tabs:', $('.receipt-tab.active').length);
+        console.log('Active panes:', $('.tab-pane.show.active').length);
+        
+        // Fix for missing active pane - ensure the pane is active
+        const targetPane = $($(e.target).attr('data-bs-target'));
+        if (!targetPane.hasClass('show active')) {
+            console.log('Forcing pane to be active:', tabId);
+            $('.tab-pane').removeClass('show active');
+            targetPane.addClass('show active');
+        }
+        
+        // Make sure only one tab is active
+        $('.receipt-tab').not(this).removeClass('active');
         
         // Make sure select2 instances in this tab are properly initialized
         initializeSelectsForTab(tabId);
+        
+        // Log after fixing
+        console.log('After fixing - Active panes:', $('.tab-pane.show.active').length);
+    });
+
+    // Add tab hide event handler
+    $(document).on('hide.bs.tab', '.receipt-tab', function(e) {
+        const tabId = $(e.target).attr('data-bs-target').replace('#', '');
+        console.log('Tab hide event fired');
+        console.log('Tab being hidden:', tabId);
     });
 
     // Initialize the page
@@ -2514,11 +2006,6 @@ $(document).ready(function() {
                     height: 28px;
                 }
                 
-                .action-buttons .btn i,
-                .remove-row i {
-                    font-size: 13px;
-                }
-                
                 .action-buttons {
                     gap: 3px;
                 }
@@ -2675,4 +2162,33 @@ $(document).ready(function() {
             }
         </style>
     `);
+
+    // Override the Bootstrap tab functionality with our own implementation
+    $(document).on('click', '.receipt-tab', function(e) {
+        e.preventDefault();
+        
+        const tabTarget = $(this).attr('data-bs-target');
+        const tabId = tabTarget.replace('#', '');
+        
+        console.log('Tab clicked manually:', tabId);
+        
+        // Deactivate all tabs and panes
+        $('.receipt-tab').removeClass('active');
+        $('.tab-pane').removeClass('show active');
+        
+        // Activate this tab and its pane
+        $(this).addClass('active');
+        $(tabTarget).addClass('show active');
+        
+        // Initialize selects
+        initializeSelectsForTab(tabId);
+        
+        console.log('After manual activation - Active tabs:', $('.receipt-tab.active').length);
+        console.log('After manual activation - Active panes:', $('.tab-pane.show.active').length);
+        
+        // Let other handlers know the tab was shown
+        $(this).trigger('shown.bs.tab', {
+            relatedTarget: $('.receipt-tab.active').not(this)[0]
+        });
+    });
 });

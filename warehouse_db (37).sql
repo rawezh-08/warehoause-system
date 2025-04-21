@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 19, 2025 at 11:36 AM
+-- Generation Time: Apr 21, 2025 at 12:08 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -442,7 +442,216 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_sale_return` (IN `p_sale_id` IN
     SELECT 'success' AS 'result';
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `add_supplier_debt_transaction` (IN `p_supplier_id` INT, IN `p_amount` DECIMAL(10,2), IN `p_transaction_type` ENUM('purchase','payment','return','supplier_payment','manual_adjustment','supplier_return'), IN `p_reference_id` INT, IN `p_notes` TEXT, IN `p_created_by` INT)   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `add_sale_with_advance` (IN `p_invoice_number` VARCHAR(50), IN `p_customer_id` INT, IN `p_date` TIMESTAMP, IN `p_payment_type` ENUM('cash','credit'), IN `p_discount` DECIMAL(10,2), IN `p_paid_amount` DECIMAL(10,2), IN `p_price_type` ENUM('single','wholesale'), IN `p_shipping_cost` DECIMAL(10,2), IN `p_other_costs` DECIMAL(10,2), IN `p_notes` TEXT, IN `p_created_by` INT, IN `p_products` JSON)   BEGIN
+    DECLARE sale_id INT;
+    DECLARE i INT DEFAULT 0;
+    DECLARE product_count INT;
+    DECLARE v_product_id INT;
+    DECLARE v_quantity INT;
+    DECLARE v_unit_type VARCHAR(10);
+    DECLARE v_pieces_count INT;
+    DECLARE v_unit_price DECIMAL(10,2);
+    DECLARE v_total_price DECIMAL(10,2);
+    DECLARE v_available_quantity INT;
+    DECLARE v_pieces_per_box INT;
+    DECLARE v_boxes_per_set INT;
+    DECLARE v_sale_item_id INT;
+    DECLARE total_sale_amount DECIMAL(10,2) DEFAULT 0;
+    DECLARE remaining_amount DECIMAL(10,2) DEFAULT 0;
+    DECLARE customer_advance DECIMAL(10,2);
+    
+    -- Get customer's advance payment amount
+    SELECT debt_on_customer INTO customer_advance FROM customers WHERE id = p_customer_id;
+    
+    -- Create sale record
+    INSERT INTO sales (
+        invoice_number, customer_id, date, payment_type, 
+        discount, paid_amount, price_type, shipping_cost, other_costs,
+        notes, created_by
+    ) VALUES (
+        p_invoice_number, p_customer_id, p_date, p_payment_type, 
+        p_discount, p_paid_amount, p_price_type, p_shipping_cost, p_other_costs,
+        p_notes, p_created_by
+    );
+    
+    SET sale_id = LAST_INSERT_ID();
+    SET product_count = JSON_LENGTH(p_products);
+    
+    -- Process products
+    WHILE i < product_count DO
+        -- Extract product data
+        SET v_product_id = JSON_EXTRACT(p_products, CONCAT('$[', i, '].product_id'));
+        SET v_quantity = JSON_EXTRACT(p_products, CONCAT('$[', i, '].quantity'));
+        
+        -- Get unit_type with default fallback to 'piece'
+        SET v_unit_type = JSON_UNQUOTE(IFNULL(JSON_EXTRACT(p_products, CONCAT('$[', i, '].unit_type')), '"piece"'));
+        IF v_unit_type IS NULL OR v_unit_type = '' OR v_unit_type = 'null' THEN
+            SET v_unit_type = 'piece';
+        END IF;
+        
+        SET v_unit_price = JSON_EXTRACT(p_products, CONCAT('$[', i, '].unit_price'));
+        SET v_total_price = v_quantity * v_unit_price;
+        
+        -- Add to total sale amount
+        SET total_sale_amount = total_sale_amount + v_total_price;
+        
+        -- Get product information
+        SELECT current_quantity, 
+               IFNULL(pieces_per_box, 1) AS pieces_per_box, 
+               IFNULL(boxes_per_set, 1) AS boxes_per_set 
+        INTO v_available_quantity, v_pieces_per_box, v_boxes_per_set 
+        FROM products WHERE id = v_product_id;
+        
+        -- Calculate actual pieces count based on unit type
+        IF v_unit_type = 'piece' THEN
+            SET v_pieces_count = v_quantity;
+        ELSEIF v_unit_type = 'box' THEN
+            IF v_pieces_per_box IS NULL OR v_pieces_per_box <= 0 THEN
+                SIGNAL SQLSTATE '45000' 
+                SET MESSAGE_TEXT = 'هەڵەیەک هەیە لە ژمارەی دانەکان لە کارتۆن بۆ ئەم کاڵایە';
+            END IF;
+            SET v_pieces_count = v_quantity * v_pieces_per_box;
+        ELSEIF v_unit_type = 'set' THEN
+            IF v_pieces_per_box IS NULL OR v_pieces_per_box <= 0 OR v_boxes_per_set IS NULL OR v_boxes_per_set <= 0 THEN
+                SIGNAL SQLSTATE '45000' 
+                SET MESSAGE_TEXT = 'هەڵەیەک هەیە لە ژمارەی دانەکان/کارتۆنەکان بۆ ئەم کاڵایە';
+            END IF;
+            SET v_pieces_count = v_quantity * v_pieces_per_box * v_boxes_per_set;
+        END IF;
+        
+        -- Check stock availability
+        IF v_available_quantity < v_pieces_count THEN
+            SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'بڕی پێویست لە کۆگا بەردەست نییە';
+        END IF;
+        
+        -- Add to sale items
+        INSERT INTO sale_items (
+            sale_id, product_id, quantity, unit_type, pieces_count, 
+            unit_price, total_price
+        ) VALUES (
+            sale_id, v_product_id, v_quantity, v_unit_type, v_pieces_count, 
+            v_unit_price, v_total_price
+        );
+        
+        SET v_sale_item_id = LAST_INSERT_ID();
+        
+        -- Update current quantity
+        UPDATE products 
+        SET current_quantity = current_quantity - v_pieces_count 
+        WHERE id = v_product_id;
+        
+        -- Record in inventory table
+        INSERT INTO inventory (
+            product_id, quantity, reference_type, reference_id
+        ) VALUES (
+            v_product_id, -v_pieces_count, 'sale', v_sale_item_id
+        );
+        
+        SET i = i + 1;
+    END WHILE;
+    
+    -- Add shipping and other costs to total
+    SET total_sale_amount = total_sale_amount + IFNULL(p_shipping_cost, 0) + IFNULL(p_other_costs, 0);
+    
+    -- Apply discount to total amount if applicable
+    IF p_discount > 0 THEN
+        SET total_sale_amount = total_sale_amount - p_discount;
+    END IF;
+    
+    -- Calculate remaining amount
+    IF p_payment_type = 'credit' THEN
+        SET remaining_amount = total_sale_amount - p_paid_amount;
+        
+        -- If customer has advance payment, deduct from it
+        IF customer_advance > 0 THEN
+            IF customer_advance >= remaining_amount THEN
+                -- Customer has enough advance to cover the remaining amount
+                UPDATE customers 
+                SET debt_on_customer = debt_on_customer - remaining_amount 
+                WHERE id = p_customer_id;
+                
+                -- Record the advance payment usage
+                INSERT INTO debt_transactions (
+                    customer_id, amount, transaction_type, reference_id, notes, created_by
+                ) VALUES (
+                    p_customer_id, -remaining_amount, 'prepayment_used', sale_id, 
+                    CONCAT('بەکارهێنانی پارەی پێشەکی بۆ پسوڵەی ', p_invoice_number), 
+                    p_created_by
+                );
+                
+                SET remaining_amount = 0;
+            ELSE
+                -- Customer has some advance but not enough to cover the full amount
+                UPDATE customers 
+                SET debt_on_customer = 0 
+                WHERE id = p_customer_id;
+                
+                -- Record the advance payment usage
+                INSERT INTO debt_transactions (
+                    customer_id, amount, transaction_type, reference_id, notes, created_by
+                ) VALUES (
+                    p_customer_id, -customer_advance, 'prepayment_used', sale_id, 
+                    CONCAT('بەکارهێنانی پارەی پێشەکی بۆ پسوڵەی ', p_invoice_number), 
+                    p_created_by
+                );
+                
+                SET remaining_amount = remaining_amount - customer_advance;
+            END IF;
+        END IF;
+        
+        -- If there's still remaining amount after using advance payment, record it as debt
+        IF remaining_amount > 0 THEN
+            CALL add_debt_transaction(
+                p_customer_id,
+                remaining_amount,
+                'sale',
+                sale_id,
+                p_notes,
+                p_created_by
+            );
+        END IF;
+    END IF;
+    
+    -- Update sale with remaining amount and ensure paid amount is correct
+    UPDATE sales 
+    SET remaining_amount = remaining_amount,
+        paid_amount = p_paid_amount
+    WHERE id = sale_id;
+    
+    SELECT sale_id AS 'result';
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `add_supplier_advance_payment` (IN `p_supplier_id` INT, IN `p_amount` DECIMAL(10,2), IN `p_notes` TEXT, IN `p_created_by` INT)   BEGIN
+    -- This procedure handles when the business gives advance payment to a supplier
+    DECLARE supplier_exists INT;
+    SELECT COUNT(*) INTO supplier_exists FROM suppliers WHERE id = p_supplier_id;
+    
+    IF supplier_exists = 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'دابینکەری داواکراو بوونی نییە';
+    END IF;
+    
+    -- Check if payment amount is valid
+    IF p_amount <= 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'بڕی پارەی دراو دەبێت گەورەتر بێت لە سفر';
+    END IF;
+    
+    -- Record advance payment in supplier debt transactions
+    CALL add_supplier_debt_transaction(
+        p_supplier_id,
+        p_amount,
+        'supplier_advance',
+        NULL,
+        p_notes,
+        p_created_by
+    );
+    
+    SELECT 'success' AS 'result';
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `add_supplier_debt_transaction` (IN `p_supplier_id` INT, IN `p_amount` DECIMAL(10,2), IN `p_transaction_type` ENUM('purchase','payment','return','supplier_payment','manual_adjustment','supplier_return','supplier_advance','advance_used'), IN `p_reference_id` INT, IN `p_notes` TEXT, IN `p_created_by` INT)   BEGIN
     -- Add supplier debt transaction
     INSERT INTO supplier_debt_transactions (
         supplier_id, amount, transaction_type, reference_id, notes, created_by
@@ -482,6 +691,16 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_supplier_debt_transaction` (IN 
             SET debt_on_supplier = debt_on_supplier - p_amount 
             WHERE id = p_supplier_id;
         END IF;
+    ELSEIF p_transaction_type = 'supplier_advance' THEN
+        -- Supplier advances money to the business
+        UPDATE suppliers 
+        SET debt_on_supplier = debt_on_supplier + p_amount 
+        WHERE id = p_supplier_id;
+    ELSEIF p_transaction_type = 'advance_used' THEN
+        -- Business uses advance payment
+        UPDATE suppliers 
+        SET debt_on_supplier = debt_on_supplier - p_amount 
+        WHERE id = p_supplier_id;
     END IF;
     
     SELECT LAST_INSERT_ID() AS 'result';
@@ -533,6 +752,119 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_supplier_return` (IN `p_supplie
     );
     
     SELECT 'success' AS 'result';
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `add_wasting` (IN `p_invoice_number` VARCHAR(50), IN `p_date` TIMESTAMP, IN `p_payment_type` ENUM('cash','credit'), IN `p_paid_amount` DECIMAL(10,2), IN `p_notes` TEXT, IN `p_created_by` INT, IN `p_products` JSON)   BEGIN
+    DECLARE wasting_id INT;
+    DECLARE i INT DEFAULT 0;
+    DECLARE product_count INT;
+    DECLARE v_product_id INT;
+    DECLARE v_quantity INT;
+    DECLARE v_unit_type VARCHAR(10);
+    DECLARE v_pieces_count INT;
+    DECLARE v_unit_price DECIMAL(10,2);
+    DECLARE v_total_price DECIMAL(10,2);
+    DECLARE v_available_quantity INT;
+    DECLARE v_pieces_per_box INT;
+    DECLARE v_boxes_per_set INT;
+    DECLARE v_wasting_item_id INT;
+    DECLARE total_amount DECIMAL(10,2) DEFAULT 0;
+    DECLARE remaining_amount DECIMAL(10,2) DEFAULT 0;
+    
+    -- Create wasting record
+    INSERT INTO wastings (
+        invoice_number, date, payment_type, notes, created_by
+    ) VALUES (
+        p_invoice_number, p_date, p_payment_type, p_notes, p_created_by
+    );
+    
+    SET wasting_id = LAST_INSERT_ID();
+    SET product_count = JSON_LENGTH(p_products);
+    
+    -- Process products
+    WHILE i < product_count DO
+        -- Extract product data
+        SET v_product_id = JSON_EXTRACT(p_products, CONCAT('$[', i, '].product_id'));
+        SET v_quantity = JSON_EXTRACT(p_products, CONCAT('$[', i, '].quantity'));
+        SET v_unit_type = JSON_UNQUOTE(IFNULL(JSON_EXTRACT(p_products, CONCAT('$[', i, '].unit_type')), '"piece"'));
+        SET v_unit_price = JSON_EXTRACT(p_products, CONCAT('$[', i, '].unit_price'));
+        SET v_total_price = v_quantity * v_unit_price;
+        
+        -- Add to total amount
+        SET total_amount = total_amount + v_total_price;
+        
+        -- Get product information
+        SELECT current_quantity, 
+               IFNULL(pieces_per_box, 1) AS pieces_per_box, 
+               IFNULL(boxes_per_set, 1) AS boxes_per_set 
+        INTO v_available_quantity, v_pieces_per_box, v_boxes_per_set 
+        FROM products WHERE id = v_product_id;
+        
+        -- Calculate actual pieces count based on unit type
+        IF v_unit_type = 'piece' THEN
+            SET v_pieces_count = v_quantity;
+        ELSEIF v_unit_type = 'box' THEN
+            IF v_pieces_per_box IS NULL OR v_pieces_per_box <= 0 THEN
+                SIGNAL SQLSTATE '45000' 
+                SET MESSAGE_TEXT = 'هەڵەیەک هەیە لە ژمارەی دانەکان لە کارتۆن بۆ ئەم کاڵایە';
+            END IF;
+            SET v_pieces_count = v_quantity * v_pieces_per_box;
+        ELSEIF v_unit_type = 'set' THEN
+            IF v_pieces_per_box IS NULL OR v_pieces_per_box <= 0 OR v_boxes_per_set IS NULL OR v_boxes_per_set <= 0 THEN
+                SIGNAL SQLSTATE '45000' 
+                SET MESSAGE_TEXT = 'هەڵەیەک هەیە لە ژمارەی دانەکان/کارتۆنەکان بۆ ئەم کاڵایە';
+            END IF;
+            SET v_pieces_count = v_quantity * v_pieces_per_box * v_boxes_per_set;
+        END IF;
+        
+        -- Check stock availability
+        IF v_available_quantity < v_pieces_count THEN
+            SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'بڕی پێویست لە کۆگا بەردەست نییە';
+        END IF;
+        
+        -- Add to wasting items
+        INSERT INTO wasting_items (
+            wasting_id, product_id, quantity, unit_type, pieces_count,
+            unit_price, total_price
+        ) VALUES (
+            wasting_id, v_product_id, v_quantity, v_unit_type, v_pieces_count,
+            v_unit_price, v_total_price
+        );
+        
+        SET v_wasting_item_id = LAST_INSERT_ID();
+        
+        -- Update current quantity
+        UPDATE products 
+        SET current_quantity = current_quantity - v_pieces_count 
+        WHERE id = v_product_id;
+        
+        -- Record in inventory table
+        INSERT INTO inventory (
+            product_id, quantity, reference_type, reference_id
+        ) VALUES (
+            v_product_id, -v_pieces_count, 'adjustment', v_wasting_item_id
+        );
+        
+        SET i = i + 1;
+    END WHILE;
+    
+    -- Calculate remaining amount for credit payment
+    IF p_payment_type = 'credit' THEN
+        SET remaining_amount = total_amount - p_paid_amount;
+    ELSE
+        -- For cash payments, paid amount should equal total
+        SET remaining_amount = 0;
+        SET p_paid_amount = total_amount;
+    END IF;
+    
+    -- Update wasting with payment information
+    UPDATE wastings 
+    SET paid_amount = p_paid_amount,
+        remaining_amount = remaining_amount
+    WHERE id = wasting_id;
+    
+    SELECT wasting_id AS 'result';
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `adjust_supplier_balance` (IN `p_supplier_id` INT, IN `p_amount` DECIMAL(10,2), IN `p_notes` TEXT, IN `p_created_by` INT)   BEGIN
@@ -943,199 +1275,67 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `pay_supplier` (IN `p_supplier_id` I
         advance_amount AS 'advance_payment';
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `add_sale_with_advance` (
-    IN `p_invoice_number` VARCHAR(50),
-    IN `p_customer_id` INT,
-    IN `p_date` TIMESTAMP,
-    IN `p_payment_type` ENUM('cash','credit'),
-    IN `p_discount` DECIMAL(10,2),
-    IN `p_paid_amount` DECIMAL(10,2),
-    IN `p_price_type` ENUM('single','wholesale'),
-    IN `p_shipping_cost` DECIMAL(10,2),
-    IN `p_other_costs` DECIMAL(10,2),
-    IN `p_notes` TEXT,
-    IN `p_created_by` INT,
-    IN `p_products` JSON
-)
-BEGIN
-    DECLARE sale_id INT;
-    DECLARE i INT DEFAULT 0;
-    DECLARE product_count INT;
-    DECLARE v_product_id INT;
-    DECLARE v_quantity INT;
-    DECLARE v_unit_type VARCHAR(10);
-    DECLARE v_pieces_count INT;
-    DECLARE v_unit_price DECIMAL(10,2);
-    DECLARE v_total_price DECIMAL(10,2);
-    DECLARE v_available_quantity INT;
-    DECLARE v_pieces_per_box INT;
-    DECLARE v_boxes_per_set INT;
-    DECLARE v_sale_item_id INT;
-    DECLARE total_sale_amount DECIMAL(10,2) DEFAULT 0;
-    DECLARE remaining_amount DECIMAL(10,2) DEFAULT 0;
-    DECLARE customer_advance DECIMAL(10,2);
+CREATE DEFINER=`root`@`localhost` PROCEDURE `use_supplier_advance_payment` (IN `p_supplier_id` INT, IN `p_purchase_id` INT, IN `p_amount` DECIMAL(10,2), IN `p_notes` TEXT, IN `p_created_by` INT)   BEGIN
+    -- This procedure handles when the business uses supplier advance payment for a purchase
+    DECLARE supplier_exists INT;
+    DECLARE advance_amount DECIMAL(10,2);
+    DECLARE purchase_exists INT;
+    DECLARE remaining_amount DECIMAL(10,2);
+    DECLARE amount_to_use DECIMAL(10,2);
     
-    -- Get customer's advance payment amount
-    SELECT debt_on_customer INTO customer_advance FROM customers WHERE id = p_customer_id;
+    -- Check if supplier exists
+    SELECT COUNT(*), debt_on_supplier INTO supplier_exists, advance_amount 
+    FROM suppliers 
+    WHERE id = p_supplier_id;
     
-    -- Create sale record
-    INSERT INTO sales (
-        invoice_number, customer_id, date, payment_type, 
-        discount, paid_amount, price_type, shipping_cost, other_costs,
-        notes, created_by
-    ) VALUES (
-        p_invoice_number, p_customer_id, p_date, p_payment_type, 
-        p_discount, p_paid_amount, p_price_type, p_shipping_cost, p_other_costs,
-        p_notes, p_created_by
+    IF supplier_exists = 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'دابینکەری داواکراو بوونی نییە';
+    END IF;
+    
+    -- Check if there is advance payment available
+    IF advance_amount <= 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'پارەی پێشەکی بەردەست نییە';
+    END IF;
+    
+    -- Check if purchase exists
+    SELECT COUNT(*), remaining_amount INTO purchase_exists, remaining_amount 
+    FROM purchases 
+    WHERE id = p_purchase_id;
+    
+    IF purchase_exists = 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'کڕینی داواکراو بوونی نییە';
+    END IF;
+    
+    -- Calculate amount to use
+    SET amount_to_use = LEAST(advance_amount, p_amount, remaining_amount);
+    
+    IF amount_to_use <= 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'بڕی پارەی بەکارهاتوو نابێت سفر یان کەمتر بێت';
+    END IF;
+    
+    -- Record the use of advance payment
+    CALL add_supplier_debt_transaction(
+        p_supplier_id,
+        amount_to_use,
+        'advance_used',
+        p_purchase_id,
+        p_notes,
+        p_created_by
     );
     
-    SET sale_id = LAST_INSERT_ID();
-    SET product_count = JSON_LENGTH(p_products);
+    -- Update purchase's remaining amount and paid amount
+    UPDATE purchases 
+    SET remaining_amount = remaining_amount - amount_to_use,
+        paid_amount = paid_amount + amount_to_use
+    WHERE id = p_purchase_id;
     
-    -- Process products
-    WHILE i < product_count DO
-        -- Extract product data
-        SET v_product_id = JSON_EXTRACT(p_products, CONCAT('$[', i, '].product_id'));
-        SET v_quantity = JSON_EXTRACT(p_products, CONCAT('$[', i, '].quantity'));
-        
-        -- Get unit_type with default fallback to 'piece'
-        SET v_unit_type = JSON_UNQUOTE(IFNULL(JSON_EXTRACT(p_products, CONCAT('$[', i, '].unit_type')), '"piece"'));
-        IF v_unit_type IS NULL OR v_unit_type = '' OR v_unit_type = 'null' THEN
-            SET v_unit_type = 'piece';
-        END IF;
-        
-        SET v_unit_price = JSON_EXTRACT(p_products, CONCAT('$[', i, '].unit_price'));
-        SET v_total_price = v_quantity * v_unit_price;
-        
-        -- Add to total sale amount
-        SET total_sale_amount = total_sale_amount + v_total_price;
-        
-        -- Get product information
-        SELECT current_quantity, 
-               IFNULL(pieces_per_box, 1) AS pieces_per_box, 
-               IFNULL(boxes_per_set, 1) AS boxes_per_set 
-        INTO v_available_quantity, v_pieces_per_box, v_boxes_per_set 
-        FROM products WHERE id = v_product_id;
-        
-        -- Calculate actual pieces count based on unit type
-        IF v_unit_type = 'piece' THEN
-            SET v_pieces_count = v_quantity;
-        ELSEIF v_unit_type = 'box' THEN
-            IF v_pieces_per_box IS NULL OR v_pieces_per_box <= 0 THEN
-                SIGNAL SQLSTATE '45000' 
-                SET MESSAGE_TEXT = 'هەڵەیەک هەیە لە ژمارەی دانەکان لە کارتۆن بۆ ئەم کاڵایە';
-            END IF;
-            SET v_pieces_count = v_quantity * v_pieces_per_box;
-        ELSEIF v_unit_type = 'set' THEN
-            IF v_pieces_per_box IS NULL OR v_pieces_per_box <= 0 OR v_boxes_per_set IS NULL OR v_boxes_per_set <= 0 THEN
-                SIGNAL SQLSTATE '45000' 
-                SET MESSAGE_TEXT = 'هەڵەیەک هەیە لە ژمارەی دانەکان/کارتۆنەکان بۆ ئەم کاڵایە';
-            END IF;
-            SET v_pieces_count = v_quantity * v_pieces_per_box * v_boxes_per_set;
-        END IF;
-        
-        -- Check stock availability
-        IF v_available_quantity < v_pieces_count THEN
-            SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'بڕی پێویست لە کۆگا بەردەست نییە';
-        END IF;
-        
-        -- Add to sale items
-        INSERT INTO sale_items (
-            sale_id, product_id, quantity, unit_type, pieces_count, 
-            unit_price, total_price
-        ) VALUES (
-            sale_id, v_product_id, v_quantity, v_unit_type, v_pieces_count, 
-            v_unit_price, v_total_price
-        );
-        
-        SET v_sale_item_id = LAST_INSERT_ID();
-        
-        -- Update current quantity
-        UPDATE products 
-        SET current_quantity = current_quantity - v_pieces_count 
-        WHERE id = v_product_id;
-        
-        -- Record in inventory table
-        INSERT INTO inventory (
-            product_id, quantity, reference_type, reference_id
-        ) VALUES (
-            v_product_id, -v_pieces_count, 'sale', v_sale_item_id
-        );
-        
-        SET i = i + 1;
-    END WHILE;
-    
-    -- Add shipping and other costs to total
-    SET total_sale_amount = total_sale_amount + IFNULL(p_shipping_cost, 0) + IFNULL(p_other_costs, 0);
-    
-    -- Apply discount to total amount if applicable
-    IF p_discount > 0 THEN
-        SET total_sale_amount = total_sale_amount - p_discount;
-    END IF;
-    
-    -- Calculate remaining amount
-    IF p_payment_type = 'credit' THEN
-        SET remaining_amount = total_sale_amount - p_paid_amount;
-        
-        -- If customer has advance payment, deduct from it
-        IF customer_advance > 0 THEN
-            IF customer_advance >= remaining_amount THEN
-                -- Customer has enough advance to cover the remaining amount
-                UPDATE customers 
-                SET debt_on_customer = debt_on_customer - remaining_amount 
-                WHERE id = p_customer_id;
-                
-                -- Record the advance payment usage
-                INSERT INTO debt_transactions (
-                    customer_id, amount, transaction_type, reference_id, notes, created_by
-                ) VALUES (
-                    p_customer_id, -remaining_amount, 'prepayment_used', sale_id, 
-                    CONCAT('بەکارهێنانی پارەی پێشەکی بۆ پسوڵەی ', p_invoice_number), 
-                    p_created_by
-                );
-                
-                SET remaining_amount = 0;
-            ELSE
-                -- Customer has some advance but not enough to cover the full amount
-                UPDATE customers 
-                SET debt_on_customer = 0 
-                WHERE id = p_customer_id;
-                
-                -- Record the advance payment usage
-                INSERT INTO debt_transactions (
-                    customer_id, amount, transaction_type, reference_id, notes, created_by
-                ) VALUES (
-                    p_customer_id, -customer_advance, 'prepayment_used', sale_id, 
-                    CONCAT('بەکارهێنانی پارەی پێشەکی بۆ پسوڵەی ', p_invoice_number), 
-                    p_created_by
-                );
-                
-                SET remaining_amount = remaining_amount - customer_advance;
-            END IF;
-        END IF;
-        
-        -- If there's still remaining amount after using advance payment, record it as debt
-        IF remaining_amount > 0 THEN
-            CALL add_debt_transaction(
-                p_customer_id,
-                remaining_amount,
-                'sale',
-                sale_id,
-                p_notes,
-                p_created_by
-            );
-        END IF;
-    END IF;
-    
-    -- Update sale with remaining amount and ensure paid amount is correct
-    UPDATE sales 
-    SET remaining_amount = remaining_amount,
-        paid_amount = p_paid_amount
-    WHERE id = sale_id;
-    
-    SELECT sale_id AS 'result';
+    SELECT 'success' AS 'result', amount_to_use AS 'amount_used';
 END$$
+
 DELIMITER ;
 
 -- --------------------------------------------------------
@@ -1177,8 +1377,8 @@ CREATE TABLE `categories` (
 
 INSERT INTO `categories` (`id`, `name`, `description`) VALUES
 (1, 'ناوماڵ', 'کاڵا ناوماڵەکان'),
-(2, 'ئەلیکترۆنیات', 'کاڵا ئەلیکترۆنیەکان'),
-(3, 'جلوبەرگ', 'جلوبەرگەکان');
+(4, 'شووشەوات', ''),
+(5, 'قوماش', '');
 
 -- --------------------------------------------------------
 
@@ -1206,26 +1406,8 @@ CREATE TABLE `customers` (
 --
 
 INSERT INTO `customers` (`id`, `name`, `phone1`, `phone2`, `guarantor_name`, `guarantor_phone`, `address`, `debit_on_business`, `notes`, `created_at`, `updated_at`, `debt_on_customer`) VALUES
-(8, 'ڕاوێژ ', '07709240894', '', 'جزا ', '07501211541', 'سلێمانی-بەکرەجۆی تازە', 1082000, '', '2025-04-06 07:51:02', '2025-04-17 19:59:53', 0),
-(9, 'دانا', '07709240897', '', 'جەلال', '', 'پیرەمۆگرون', 200000, '', '2025-04-07 08:37:06', '2025-04-19 07:40:34', 0),
-(10, 'دارا ', '07709248251', '', 'عسمان', '07501211541', 'سلێمانی-بەکرەجۆی تازە', 24500, '', '2025-04-11 15:43:48', '2025-04-19 09:35:04', 500000);
-
--- --------------------------------------------------------
-
---
--- Table structure for table `customer_debt_transactions`
---
-
-CREATE TABLE `customer_debt_transactions` (
-  `id` int(11) NOT NULL,
-  `customer_id` int(11) NOT NULL,
-  `amount` decimal(10,2) NOT NULL COMMENT 'Positive: debt to us increased, Negative: debt to us decreased',
-  `transaction_type` enum('sale','payment','return','customer_payment','manual_adjustment','customer_return') NOT NULL,
-  `reference_id` int(11) DEFAULT NULL COMMENT 'ID from sales or manual entry',
-  `notes` text DEFAULT NULL,
-  `created_by` int(11) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+(23, 'ڕاوێژ', '07709240894', '', '', '', '', 260000, '', '2025-04-20 09:26:03', '2025-04-21 10:07:40', 0),
+(24, 'کاروان', '07709240897', '', '', '', 'سلێمانی بەکرەجۆی تازە', 70000, '', '2025-04-21 06:29:43', '2025-04-21 09:35:32', 0);
 
 -- --------------------------------------------------------
 
@@ -1249,13 +1431,37 @@ CREATE TABLE `debt_transactions` (
 --
 
 INSERT INTO `debt_transactions` (`id`, `customer_id`, `amount`, `transaction_type`, `reference_id`, `notes`, `created_by`, `created_at`) VALUES
-(108, 10, 500, 'payment', NULL, '', 1, '2025-04-19 07:25:28'),
-(109, 10, 218000, 'payment', NULL, '', 1, '2025-04-19 07:25:50'),
-(110, 10, 500000, '', NULL, '', 1, '2025-04-19 07:34:50'),
-(111, 9, 100500, 'collection', NULL, '{\"payment_method\":\"cash\",\"notes\":\"\",\"return_date\":\"2025-04-19\"}', 1, '2025-04-19 07:40:34'),
-(112, 10, 500000, '', NULL, '', 1, '2025-04-19 08:22:20'),
-(113, 10, 500000, 'collection', NULL, '', 1, '2025-04-19 08:28:33'),
-(115, 10, 14500, 'sale', 116, '', 1, '2025-04-19 09:35:04');
+(154, 23, 0, '', 8, '', NULL, '2025-04-20 17:31:17'),
+(155, 23, 0, '', 12, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 06:08:55'),
+(156, 23, 125000, 'sale', 158, '', 1, '2025-04-21 07:30:07'),
+(157, 23, -125000, '', 20, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 07:53:53'),
+(158, 23, 125000, 'sale', 159, '', 1, '2025-04-21 07:56:55'),
+(159, 23, -13125, '', 27, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 08:42:55'),
+(160, 23, -39375, '', 28, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 08:44:15'),
+(161, 23, 0, '', 29, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 08:44:51'),
+(162, 23, -52500, '', 30, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 08:46:00'),
+(163, 23, 300000, 'sale', 160, '', 1, '2025-04-21 08:50:14'),
+(164, 23, -80000, '', 31, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 08:52:24'),
+(165, 23, -90000, '', 32, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 08:58:04'),
+(166, 24, 580000, 'sale', 161, '', 1, '2025-04-21 09:05:42'),
+(167, 24, -40000, '', 33, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 09:06:05'),
+(168, 23, -20000, '', 36, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 09:32:22'),
+(169, 24, -20000, '', 37, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 09:32:55'),
+(170, 24, -500000, '', 38, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 09:33:08'),
+(171, 24, -20000, '', 39, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 09:33:21'),
+(172, 24, 230000, 'sale', 162, '', 1, '2025-04-21 09:34:04'),
+(173, 24, -20000, '', 40, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 09:34:36'),
+(174, 24, -20000, '', 41, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 09:34:53'),
+(175, 24, -50000, '', 42, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 09:35:06'),
+(176, 24, -50000, '', 43, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 09:35:22'),
+(177, 24, -20000, '', 44, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 09:35:32'),
+(178, 23, 130000, 'sale', 163, '', 1, '2025-04-21 09:42:32'),
+(179, 23, -20000, '', 48, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 09:47:27'),
+(180, 23, -20000, '', 49, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 09:47:52'),
+(181, 23, -50000, '', 50, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 09:53:23'),
+(182, 23, 180000, 'sale', 165, '', 1, '2025-04-21 10:01:23'),
+(183, 23, -20000, '', 52, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 10:01:59'),
+(184, 23, -50000, '', 53, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-21 10:07:40');
 
 -- --------------------------------------------------------
 
@@ -1317,18 +1523,47 @@ CREATE TABLE `inventory` (
   `quantity` int(11) NOT NULL COMMENT 'Positive for additions, negative for removals',
   `reference_type` enum('purchase','sale','adjustment','return') NOT NULL,
   `reference_id` int(11) NOT NULL COMMENT 'ID reference to the source table',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `notes` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `inventory`
 --
 
-INSERT INTO `inventory` (`id`, `product_id`, `quantity`, `reference_type`, `reference_id`, `created_at`) VALUES
-(180, 49, 3, 'return', 2, '2025-04-18 16:15:36'),
-(192, 64, -2, 'sale', 181, '2025-04-19 09:05:45'),
-(193, 49, -2, 'sale', 184, '2025-04-19 09:35:04'),
-(194, 63, -7, 'sale', 185, '2025-04-19 09:35:04');
+INSERT INTO `inventory` (`id`, `product_id`, `quantity`, `reference_type`, `reference_id`, `created_at`, `notes`) VALUES
+(297, 69, -50, 'sale', 257, '2025-04-21 08:50:14', NULL),
+(298, 68, -60, 'sale', 258, '2025-04-21 08:50:14', NULL),
+(299, 69, 20, 'return', 31, '2025-04-21 08:52:24', 'گەڕاندنەوە: 20 piece (ئەسڵی: 20 piece)'),
+(300, 69, 10, 'return', 32, '2025-04-21 08:58:04', 'گەڕاندنەوە: 10 piece (ئەسڵی: 10 piece)'),
+(301, 68, 20, 'return', 32, '2025-04-21 08:58:04', 'گەڕاندنەوە: 1 box (ئەسڵی: 1 box)'),
+(302, 69, -20, 'sale', 259, '2025-04-21 09:05:42', NULL),
+(303, 68, -200, 'sale', 260, '2025-04-21 09:05:42', NULL),
+(304, 69, 10, 'return', 33, '2025-04-21 09:06:05', 'گەڕاندنەوە: 10 piece (ئەسڵی: 10 piece)'),
+(307, 69, 5, 'return', 36, '2025-04-21 09:32:22', 'گەڕاندنەوە: 5 piece (ئەسڵی: 5 piece)'),
+(308, 69, 5, 'return', 37, '2025-04-21 09:32:55', 'گەڕاندنەوە: 5 piece (ئەسڵی: 5 piece)'),
+(309, 68, 200, 'return', 38, '2025-04-21 09:33:08', 'گەڕاندنەوە: 1 set (ئەسڵی: 1 set)'),
+(310, 69, 5, 'return', 39, '2025-04-21 09:33:21', 'گەڕاندنەوە: 5 piece (ئەسڵی: 5 piece)'),
+(311, 69, -20, 'sale', 261, '2025-04-21 09:34:04', NULL),
+(312, 68, -60, 'sale', 262, '2025-04-21 09:34:04', NULL),
+(313, 69, 5, 'return', 40, '2025-04-21 09:34:36', 'گەڕاندنەوە: 5 piece (ئەسڵی: 5 piece)'),
+(314, 69, 5, 'return', 41, '2025-04-21 09:34:53', 'گەڕاندنەوە: 5 piece (ئەسڵی: 5 piece)'),
+(315, 68, 20, 'return', 42, '2025-04-21 09:35:06', 'گەڕاندنەوە: 1 box (ئەسڵی: 1 box)'),
+(316, 68, 20, 'return', 43, '2025-04-21 09:35:22', 'گەڕاندنەوە: 1 box (ئەسڵی: 1 box)'),
+(317, 69, 5, 'return', 44, '2025-04-21 09:35:32', 'گەڕاندنەوە: 5 piece (ئەسڵی: 5 piece)'),
+(319, 69, -20, 'sale', 263, '2025-04-21 09:42:32', NULL),
+(320, 68, -20, 'sale', 264, '2025-04-21 09:42:32', NULL),
+(323, 69, 5, 'return', 48, '2025-04-21 09:47:27', 'گەڕاندنەوە: 5 piece (ئەسڵی: 5 piece)'),
+(324, 69, 5, 'return', 49, '2025-04-21 09:47:52', 'گەڕاندنەوە: 5 piece (ئەسڵی: 5 piece)'),
+(325, 69, 50, 'purchase', 124, '2025-04-21 09:51:21', NULL),
+(326, 68, 200, 'purchase', 125, '2025-04-21 09:51:21', NULL),
+(327, 68, 20, 'return', 50, '2025-04-21 09:53:22', 'گەڕاندنەوە: 1 box (ئەسڵی: 1 box)'),
+(328, 69, -10, 'sale', 265, '2025-04-21 09:58:59', NULL),
+(329, 69, 10, 'return', 51, '2025-04-21 09:59:14', 'گەڕاندنەوە: 1 box (ئەسڵی: 1 box)'),
+(330, 69, -20, 'sale', 266, '2025-04-21 10:01:23', NULL),
+(331, 68, -40, 'sale', 267, '2025-04-21 10:01:23', NULL),
+(332, 69, 5, 'return', 52, '2025-04-21 10:01:59', 'گەڕاندنەوە: 5 piece (ئەسڵی: 5 piece)'),
+(333, 68, 20, 'return', 53, '2025-04-21 10:07:40', 'گەڕاندنەوە: 1 box (ئەسڵی: 1 box)');
 
 -- --------------------------------------------------------
 
@@ -1390,20 +1625,8 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`id`, `name`, `code`, `barcode`, `image`, `notes`, `category_id`, `unit_id`, `pieces_per_box`, `boxes_per_set`, `purchase_price`, `selling_price_single`, `selling_price_wholesale`, `min_quantity`, `current_quantity`, `created_at`, `updated_at`) VALUES
-(46, 'پیاڵە', 'A488', '1743956793191', 'uploads/products/67f2ab56e219b_1743956822.jpg', '', 1, 3, 20, 10, 1000, 1500, 1250, 10, 676, '2025-04-06 16:27:02', '2025-04-19 09:04:47'),
-(47, 'سوراحی', 'A475', '1744104685757', 'uploads/products/67f4ed09d8699_1744104713.png', '', 1, 2, 20, 0, 3000, 3500, 3250, 10, 12, '2025-04-08 09:31:53', '2025-04-19 09:05:23'),
-(49, 'test', 'A101', '1744387562014', 'uploads/products/67f940e7140f3_1744388327.jpg', '', 3, 1, 0, 0, 1000, 2000, 1500, 10, 143, '2025-04-11 16:18:47', '2025-04-19 09:35:04'),
-(50, 'test', 'A637', '1744388415539', 'uploads/products/67f94146d1a6a_1744388422.jpg', '', 3, 1, 0, 0, 1000, 2000, 1500, 10, 165, '2025-04-11 16:20:22', '2025-04-19 09:04:56'),
-(51, 'ژێر پیاڵە', 'A265', '1744388488429', 'uploads/products/67f94195bdaf4_1744388501.png', '', 3, 1, 0, 0, 1000, 1500, 1250, 10, 155, '2025-04-11 16:21:41', '2025-04-18 15:36:54'),
-(53, 'کەوچک ', 'A899', '1744477703301', 'uploads/products/67fa9e19dbe4c_1744477721.jpg', '', 1, 1, 0, 0, 1500, 2000, 1750, 10, 50, '2025-04-12 17:08:41', '2025-04-18 15:36:54'),
-(54, 'قەنەفە', 'A071', '1744649039110', 'uploads/products/67fd3b7bce1e3_1744649083.jpg', '', 1, 1, 0, 0, 1000, 1500, 1250, 10, 50, '2025-04-14 16:44:43', '2025-04-18 15:36:54'),
-(60, 'کەوچکە چایە', 'A259', '1744733397529', 'uploads/products/67fe85791e9f9_1744733561.jpg', '', 2, 3, 10, 5, 1500, 2500, 2000, 10, 20, '2025-04-15 16:12:41', '2025-04-15 16:12:41'),
-(61, 'کەوچکە چایە', 'A259', '1744733397529', 'uploads/products/67fe857921c84_1744733561.jpg', '', 2, 3, 10, 5, 1500, 2500, 2000, 10, 20, '2025-04-15 16:12:41', '2025-04-15 16:12:41'),
-(63, 'چەقۆ', 'A514', '1744733747323', 'uploads/products/67fe86483f2f1_1744733768.jpg', '', 1, 2, 10, 3, 1000, 1500, 1250, 10, 4, '2025-04-15 16:16:08', '2025-04-19 09:35:04'),
-(64, 'شەکردان', 'A154', '1744733963384', 'uploads/products/67fe87208bd49_1744733984.jpg', '', 1, 1, 10, 2, 1000, 2000, 1500, 20, 28, '2025-04-15 16:19:44', '2025-04-19 09:05:45'),
-(65, 'ژێر پیاڵە', 'A068', '1744736150007', 'uploads/products/67fe8fa3dcf6f_1744736163.jpg', '', 2, 1, 0, 0, 1000, 1500, 1250, 10, 10, '2025-04-15 16:56:03', '2025-04-15 16:56:03'),
-(66, 'test3', 'A153', '1744806789695', 'uploads/products/67ffa39aaae1c_1744806810.jpg', '', 1, 1, 0, 0, 1500, 2500, 2000, 10, 50, '2025-04-16 12:33:30', '2025-04-16 12:38:05'),
-(67, 'کەوگیر', 'A836', '1744815466323', 'uploads/products/67ffc57122721_1744815473.jpg', '', 1, 1, 0, 0, 1500, 2500, 2000, 10, 50, '2025-04-16 14:57:53', '2025-04-16 14:57:53');
+(68, 'پیاڵە', 'A018', '1745142214785', 'uploads/products/6804c1f59ca92_1745142261.jpg', '', 4, 3, 20, 10, 1500, 2500, 2000, 10, 416, '2025-04-20 09:44:21', '2025-04-21 10:07:40'),
+(69, 'کەوچک ', 'A474', '1745225304356', 'uploads/products/68060675a6e60_1745225333.png', '', 4, 3, 10, 20, 3000, 4000, 3500, 5, 105, '2025-04-21 08:48:53', '2025-04-21 10:01:59');
 
 -- --------------------------------------------------------
 
@@ -1427,7 +1650,24 @@ CREATE TABLE `product_returns` (
 --
 
 INSERT INTO `product_returns` (`id`, `receipt_id`, `receipt_type`, `return_date`, `reason`, `notes`, `created_at`, `updated_at`) VALUES
-(2, 103, '', '2025-04-18 19:15:36', 'other', '', '2025-04-18 16:15:36', '2025-04-18 16:15:36');
+(31, 160, 'selling', '2025-04-21 11:52:24', 'wrong_product', '', '2025-04-21 08:52:24', '2025-04-21 08:52:24'),
+(32, 160, 'selling', '2025-04-21 11:58:04', 'wrong_product', '', '2025-04-21 08:58:04', '2025-04-21 08:58:04'),
+(33, 161, 'selling', '2025-04-21 12:06:05', 'damaged', '', '2025-04-21 09:06:05', '2025-04-21 09:06:05'),
+(36, 160, 'selling', '2025-04-21 12:32:22', 'wrong_product', '', '2025-04-21 09:32:22', '2025-04-21 09:32:22'),
+(37, 161, 'selling', '2025-04-21 12:32:55', 'wrong_product', '', '2025-04-21 09:32:55', '2025-04-21 09:32:55'),
+(38, 161, 'selling', '2025-04-21 12:33:08', 'customer_request', '', '2025-04-21 09:33:08', '2025-04-21 09:33:08'),
+(39, 161, 'selling', '2025-04-21 12:33:21', 'wrong_product', '', '2025-04-21 09:33:21', '2025-04-21 09:33:21'),
+(40, 162, 'selling', '2025-04-21 12:34:36', 'other', '', '2025-04-21 09:34:36', '2025-04-21 09:34:36'),
+(41, 162, 'selling', '2025-04-21 12:34:53', 'wrong_product', '', '2025-04-21 09:34:53', '2025-04-21 09:34:53'),
+(42, 162, 'selling', '2025-04-21 12:35:06', 'damaged', '', '2025-04-21 09:35:06', '2025-04-21 09:35:06'),
+(43, 162, 'selling', '2025-04-21 12:35:21', 'wrong_product', '', '2025-04-21 09:35:21', '2025-04-21 09:35:21'),
+(44, 162, 'selling', '2025-04-21 12:35:32', 'wrong_product', '', '2025-04-21 09:35:32', '2025-04-21 09:35:32'),
+(48, 163, 'selling', '2025-04-21 12:47:27', 'wrong_product', '', '2025-04-21 09:47:27', '2025-04-21 09:47:27'),
+(49, 163, 'selling', '2025-04-21 12:47:52', 'wrong_product', '', '2025-04-21 09:47:52', '2025-04-21 09:47:52'),
+(50, 163, 'selling', '2025-04-21 12:53:22', 'customer_request', '', '2025-04-21 09:53:22', '2025-04-21 09:53:22'),
+(51, 164, 'selling', '2025-04-21 12:59:14', 'customer_request', '', '2025-04-21 09:59:14', '2025-04-21 09:59:14'),
+(52, 165, 'selling', '2025-04-21 13:01:59', 'other', '', '2025-04-21 10:01:59', '2025-04-21 10:01:59'),
+(53, 165, 'selling', '2025-04-21 13:07:40', 'wrong_product', '', '2025-04-21 10:07:40', '2025-04-21 10:07:40');
 
 -- --------------------------------------------------------
 
@@ -1452,6 +1692,13 @@ CREATE TABLE `purchases` (
   `remaining_amount` decimal(10,0) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `purchases`
+--
+
+INSERT INTO `purchases` (`id`, `invoice_number`, `supplier_id`, `date`, `payment_type`, `discount`, `shipping_cost`, `other_cost`, `notes`, `created_by`, `created_at`, `updated_at`, `paid_amount`, `remaining_amount`) VALUES
+(121, 'B-0001', 8, '2025-04-20 21:00:00', 'credit', 5000, 0, 0, '', 1, '2025-04-21 09:51:21', '2025-04-21 09:51:21', 0, 445000);
+
 -- --------------------------------------------------------
 
 --
@@ -1469,6 +1716,14 @@ CREATE TABLE `purchase_items` (
   `returned_quantity` int(11) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `purchase_items`
+--
+
+INSERT INTO `purchase_items` (`id`, `purchase_id`, `product_id`, `quantity`, `unit_type`, `unit_price`, `total_price`, `returned_quantity`) VALUES
+(124, 121, 69, 5, 'box', 30000, 150000, 0),
+(125, 121, 68, 1, 'set', 300000, 300000, 0);
+
 -- --------------------------------------------------------
 
 --
@@ -1482,15 +1737,38 @@ CREATE TABLE `return_items` (
   `quantity` decimal(10,2) NOT NULL,
   `unit_price` decimal(10,2) NOT NULL,
   `unit_type` enum('piece','box','set') DEFAULT 'piece',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `original_unit_type` enum('piece','box','set') DEFAULT 'piece',
+  `original_quantity` decimal(10,2) DEFAULT 0.00,
+  `reason` enum('damaged','wrong_product','customer_request','other') DEFAULT 'other',
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `total_price` decimal(10,2) DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `return_items`
 --
 
-INSERT INTO `return_items` (`id`, `return_id`, `product_id`, `quantity`, `unit_price`, `unit_type`, `created_at`) VALUES
-(2, 2, 49, 3.00, 2000.00, 'piece', '2025-04-18 16:15:36');
+INSERT INTO `return_items` (`id`, `return_id`, `product_id`, `quantity`, `unit_price`, `unit_type`, `original_unit_type`, `original_quantity`, `reason`, `notes`, `created_at`, `total_price`) VALUES
+(34, 31, 69, 20.00, 4000.00, 'piece', 'piece', 20.00, 'other', NULL, '2025-04-21 08:52:24', 0.00),
+(35, 32, 69, 10.00, 4000.00, 'piece', 'piece', 10.00, 'other', NULL, '2025-04-21 08:58:04', 0.00),
+(36, 32, 68, 1.00, 50000.00, 'box', 'box', 1.00, 'other', NULL, '2025-04-21 08:58:04', 0.00),
+(37, 33, 69, 10.00, 4000.00, 'piece', 'piece', 10.00, 'other', NULL, '2025-04-21 09:06:05', 40000.00),
+(40, 36, 69, 5.00, 4000.00, 'piece', 'piece', 5.00, 'other', NULL, '2025-04-21 09:32:22', 20000.00),
+(41, 37, 69, 5.00, 4000.00, 'piece', 'piece', 5.00, 'other', NULL, '2025-04-21 09:32:55', 20000.00),
+(42, 38, 68, 1.00, 500000.00, 'set', 'set', 1.00, 'other', NULL, '2025-04-21 09:33:08', 500000.00),
+(43, 39, 69, 5.00, 4000.00, 'piece', 'piece', 5.00, 'other', NULL, '2025-04-21 09:33:21', 20000.00),
+(44, 40, 69, 5.00, 4000.00, 'piece', 'piece', 5.00, 'other', NULL, '2025-04-21 09:34:36', 20000.00),
+(45, 41, 69, 5.00, 4000.00, 'piece', 'piece', 5.00, 'other', NULL, '2025-04-21 09:34:53', 20000.00),
+(46, 42, 68, 1.00, 50000.00, 'box', 'box', 1.00, 'other', NULL, '2025-04-21 09:35:06', 50000.00),
+(47, 43, 68, 1.00, 50000.00, 'box', 'box', 1.00, 'other', NULL, '2025-04-21 09:35:22', 50000.00),
+(48, 44, 69, 5.00, 4000.00, 'piece', 'piece', 5.00, 'other', NULL, '2025-04-21 09:35:32', 20000.00),
+(52, 48, 69, 5.00, 4000.00, 'piece', 'piece', 5.00, 'other', NULL, '2025-04-21 09:47:27', 20000.00),
+(53, 49, 69, 5.00, 4000.00, 'piece', 'piece', 5.00, 'other', NULL, '2025-04-21 09:47:52', 20000.00),
+(54, 50, 68, 1.00, 50000.00, 'box', 'box', 1.00, 'other', NULL, '2025-04-21 09:53:22', 50000.00),
+(55, 51, 69, 1.00, 40000.00, 'box', 'box', 1.00, 'other', NULL, '2025-04-21 09:59:14', 40000.00),
+(56, 52, 69, 5.00, 4000.00, 'piece', 'piece', 5.00, 'other', NULL, '2025-04-21 10:01:59', 20000.00),
+(57, 53, 68, 1.00, 50000.00, 'box', 'box', 1.00, 'other', NULL, '2025-04-21 10:07:40', 50000.00);
 
 -- --------------------------------------------------------
 
@@ -1522,8 +1800,12 @@ CREATE TABLE `sales` (
 --
 
 INSERT INTO `sales` (`id`, `invoice_number`, `customer_id`, `date`, `payment_type`, `discount`, `price_type`, `shipping_cost`, `other_costs`, `notes`, `created_by`, `created_at`, `updated_at`, `paid_amount`, `remaining_amount`, `is_draft`) VALUES
-(113, 'A-0002', 10, '2025-04-17 21:00:00', 'cash', 0, 'single', 0, 0, '', 1, '2025-04-18 16:18:35', '2025-04-19 09:05:45', 4000, 0, 0),
-(116, 'A-0003', 10, '2025-04-18 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-19 09:35:04', '2025-04-19 09:35:04', 0, 14500, 0);
+(160, 'A-0001', 23, '2025-04-20 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-21 08:50:14', '2025-04-21 09:32:22', 50000, 110000, 0),
+(161, 'A-0002', 24, '2025-04-20 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-21 09:05:42', '2025-04-21 09:33:21', 0, 0, 0),
+(162, 'A-0003', 24, '2025-04-20 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-21 09:34:04', '2025-04-21 09:35:32', 0, 70000, 0),
+(163, 'A-0004', 23, '2025-04-20 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-21 09:42:32', '2025-04-21 09:53:23', 0, 40000, 0),
+(164, 'A-0005', 23, '2025-04-20 21:00:00', 'cash', 0, 'single', 0, 0, '', 1, '2025-04-21 09:58:59', '2025-04-21 09:59:14', 40000, 0, 0),
+(165, 'A-0006', 23, '2025-04-20 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-21 10:01:23', '2025-04-21 10:07:40', 0, 110000, 0);
 
 -- --------------------------------------------------------
 
@@ -1548,9 +1830,17 @@ CREATE TABLE `sale_items` (
 --
 
 INSERT INTO `sale_items` (`id`, `sale_id`, `product_id`, `quantity`, `unit_type`, `pieces_count`, `unit_price`, `total_price`, `returned_quantity`) VALUES
-(181, 113, 64, 2, 'piece', 2, 2000, 4000, 0),
-(184, 116, 49, 2, 'piece', 2, 2000, 4000, 0),
-(185, 116, 63, 7, 'piece', 7, 1500, 10500, 0);
+(257, 160, 69, 50, 'piece', 50, 4000, 40000, 35),
+(258, 160, 68, 3, 'box', 60, 50000, 50000, 1),
+(259, 161, 69, 20, 'piece', 20, 4000, -20000, 20),
+(260, 161, 68, 1, 'set', 200, 500000, -500000, 1),
+(261, 162, 69, 20, 'piece', 20, 4000, 0, 15),
+(262, 162, 68, 3, 'box', 60, 50000, 0, 2),
+(263, 163, 69, 20, 'piece', 20, 4000, 20000, 10),
+(264, 163, 68, 1, 'box', 20, 50000, -50000, 1),
+(265, 164, 69, 1, 'box', 10, 40000, -40000, 1),
+(266, 165, 69, 20, 'piece', 20, 4000, 40000, 5),
+(267, 165, 68, 2, 'box', 40, 50000, 0, 1);
 
 -- --------------------------------------------------------
 
@@ -1575,9 +1865,7 @@ CREATE TABLE `suppliers` (
 --
 
 INSERT INTO `suppliers` (`id`, `name`, `phone1`, `phone2`, `debt_on_myself`, `debt_on_supplier`, `notes`, `created_at`, `updated_at`) VALUES
-(2, 'محمد ', '07708542838', '', 0, 40000, '', '2025-04-06 07:51:37', '2025-04-19 08:19:50'),
-(3, 'ڕاوێژ2', '07702183313', '', 0, 500000, '', '2025-04-06 16:28:52', '2025-04-19 07:29:16'),
-(4, 'شارۆ', '07701211541', '', 0, 8000, '', '2025-04-16 18:30:59', '2025-04-19 08:50:28');
+(8, 'دارا ', '07709240894', '', 445000, 0, '', '2025-04-20 09:26:09', '2025-04-21 09:51:21');
 
 -- --------------------------------------------------------
 
@@ -1588,7 +1876,7 @@ INSERT INTO `suppliers` (`id`, `name`, `phone1`, `phone2`, `debt_on_myself`, `de
 CREATE TABLE `supplier_debt_transactions` (
   `id` int(11) NOT NULL,
   `supplier_id` int(11) NOT NULL,
-  `amount` decimal(10,2) NOT NULL COMMENT 'Positive: debt to supplier increased, Negative: debt to supplier decreased',
+  `amount` decimal(10,0) NOT NULL DEFAULT 0 COMMENT 'Positive: debt to supplier increased, Negative: debt to supplier decreased',
   `transaction_type` enum('purchase','payment','return','supplier_payment','manual_adjustment','supplier_return') NOT NULL,
   `reference_id` int(11) DEFAULT NULL COMMENT 'ID from purchases or manual entry',
   `notes` text DEFAULT NULL,
@@ -1601,24 +1889,7 @@ CREATE TABLE `supplier_debt_transactions` (
 --
 
 INSERT INTO `supplier_debt_transactions` (`id`, `supplier_id`, `amount`, `transaction_type`, `reference_id`, `notes`, `created_by`, `created_at`) VALUES
-(17, 3, -6000.00, 'return', 2, '', NULL, '2025-04-18 16:15:36'),
-(18, 3, 4000.00, '', NULL, ' (پارەی پێشەکی)', 1, '2025-04-18 17:25:46'),
-(21, 3, 4000.00, '', NULL, ' (پارەی پێشەکی)', 1, '2025-04-18 17:26:20'),
-(22, 3, 10000.00, 'payment', NULL, '', 1, '2025-04-18 18:16:49'),
-(23, 3, 50000.00, '', NULL, ' (پارەی پێشەکی)', 1, '2025-04-18 18:17:19'),
-(32, 3, 50000.00, 'supplier_payment', NULL, '', 1, '2025-04-18 18:42:11'),
-(34, 4, 20000.00, 'payment', NULL, '', 1, '2025-04-18 18:42:59'),
-(35, 4, 100000.00, '', NULL, ' (پارەی پێشەکی)', 1, '2025-04-18 18:43:23'),
-(36, 4, 30000.00, 'supplier_return', 105, 'کڕین بە قەرز - کەمکردنەوە لە قەرزی دابینکەر', 1, '2025-04-18 18:44:05'),
-(37, 4, 70000.00, 'supplier_return', 106, 'کڕین بە قەرز - کەمکردنەوە لە قەرزی دابینکەر', 1, '2025-04-18 18:45:06'),
-(39, 4, 130000.00, 'payment', NULL, '', 1, '2025-04-18 18:54:11'),
-(40, 3, 500000.00, '', NULL, ' (پارەی پێشەکی)', 1, '2025-04-19 07:29:16'),
-(41, 4, 50000.00, '', NULL, ' (پارەی پێشەکی)', 1, '2025-04-19 08:16:39'),
-(43, 2, 60000.00, 'payment', NULL, ' (پارەدانی قەرز)', 1, '2025-04-19 08:19:50'),
-(44, 2, 40000.00, '', NULL, ' (پارەی پێشەکی)', 1, '2025-04-19 08:19:50'),
-(45, 4, 50000.00, 'supplier_return', 109, 'کڕین بە قەرز - کەمکردنەوە لە قەرزی دابینکەر', 1, '2025-04-19 08:49:18'),
-(47, 4, 92000.00, 'payment', NULL, ' (پارەدانی قەرز)', 1, '2025-04-19 08:50:28'),
-(48, 4, 8000.00, '', NULL, ' (پارەی پێشەکی)', 1, '2025-04-19 08:50:28');
+(72, 8, 445000, 'purchase', 121, '', 1, '2025-04-21 09:51:21');
 
 -- --------------------------------------------------------
 
@@ -1643,6 +1914,38 @@ INSERT INTO `units` (`id`, `name`, `is_piece`, `is_box`, `is_set`) VALUES
 (2, 'دانە و کارتۆن', 1, 1, 0),
 (3, 'دانە و کارتۆن و سێت', 1, 1, 1);
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `wastings`
+--
+
+CREATE TABLE `wastings` (
+  `id` int(11) NOT NULL,
+  `date` timestamp NOT NULL DEFAULT current_timestamp(),
+  `notes` text DEFAULT NULL,
+  `created_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `wasting_items`
+--
+
+CREATE TABLE `wasting_items` (
+  `id` int(11) NOT NULL,
+  `wasting_id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `unit_type` enum('piece','box','set') NOT NULL DEFAULT 'piece',
+  `pieces_count` int(11) NOT NULL COMMENT 'Actual number of pieces wasted',
+  `unit_price` decimal(10,0) NOT NULL,
+  `total_price` decimal(10,0) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 --
 -- Indexes for dumped tables
 --
@@ -1665,13 +1968,6 @@ ALTER TABLE `categories`
 --
 ALTER TABLE `customers`
   ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `customer_debt_transactions`
---
-ALTER TABLE `customer_debt_transactions`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `customer_id` (`customer_id`);
 
 --
 -- Indexes for table `debt_transactions`
@@ -1794,6 +2090,20 @@ ALTER TABLE `units`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `wastings`
+--
+ALTER TABLE `wastings`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `wasting_items`
+--
+ALTER TABLE `wasting_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `wasting_id` (`wasting_id`),
+  ADD KEY `product_id` (`product_id`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -1807,49 +2117,43 @@ ALTER TABLE `admin_accounts`
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
-
---
--- AUTO_INCREMENT for table `customer_debt_transactions`
---
-ALTER TABLE `customer_debt_transactions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `debt_transactions`
 --
 ALTER TABLE `debt_transactions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=116;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=185;
 
 --
 -- AUTO_INCREMENT for table `employees`
 --
 ALTER TABLE `employees`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `employee_payments`
 --
 ALTER TABLE `employee_payments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- AUTO_INCREMENT for table `expenses`
 --
 ALTER TABLE `expenses`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `inventory`
 --
 ALTER TABLE `inventory`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=195;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=334;
 
 --
 -- AUTO_INCREMENT for table `inventory_count`
@@ -1867,55 +2171,55 @@ ALTER TABLE `inventory_count_items`
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
 
 --
 -- AUTO_INCREMENT for table `product_returns`
 --
 ALTER TABLE `product_returns`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
 
 --
 -- AUTO_INCREMENT for table `purchases`
 --
 ALTER TABLE `purchases`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=110;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=122;
 
 --
 -- AUTO_INCREMENT for table `purchase_items`
 --
 ALTER TABLE `purchase_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=113;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=126;
 
 --
 -- AUTO_INCREMENT for table `return_items`
 --
 ALTER TABLE `return_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
 
 --
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=117;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=166;
 
 --
 -- AUTO_INCREMENT for table `sale_items`
 --
 ALTER TABLE `sale_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=186;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=268;
 
 --
 -- AUTO_INCREMENT for table `suppliers`
 --
 ALTER TABLE `suppliers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `supplier_debt_transactions`
 --
 ALTER TABLE `supplier_debt_transactions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
 
 --
 -- AUTO_INCREMENT for table `units`
@@ -1924,14 +2228,20 @@ ALTER TABLE `units`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- Constraints for dumped tables
+-- AUTO_INCREMENT for table `wastings`
 --
+ALTER TABLE `wastings`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- Constraints for table `customer_debt_transactions`
+-- AUTO_INCREMENT for table `wasting_items`
 --
-ALTER TABLE `customer_debt_transactions`
-  ADD CONSTRAINT `customer_debt_transactions_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `wasting_items`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- Constraints for dumped tables
+--
 
 --
 -- Constraints for table `debt_transactions`
@@ -1997,6 +2307,13 @@ ALTER TABLE `sale_items`
 --
 ALTER TABLE `supplier_debt_transactions`
   ADD CONSTRAINT `supplier_debt_transactions_ibfk_1` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`id`);
+
+--
+-- Constraints for table `wasting_items`
+--
+ALTER TABLE `wasting_items`
+  ADD CONSTRAINT `wasting_items_ibfk_1` FOREIGN KEY (`wasting_id`) REFERENCES `wastings` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `wasting_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

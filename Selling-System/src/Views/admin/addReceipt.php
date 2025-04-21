@@ -344,9 +344,6 @@ require_once '../../config/database.php';
 
             <!-- Submit Button --> 
             <div class="mt-4 text-star  d-flex justify-content-start align-items-center">
-                <button type="button" class="btn btn-outline-primary draft-btn">
-                    <i class="fas fa-file-alt"></i> ڕەشنووس
-                </button>
                 <button type="button" class="btn btn-primary save-btn cta-btn">
                     پاشەکەوتکردن   <i class="fas fa-save"></i> 
                 </button>
@@ -357,29 +354,7 @@ require_once '../../config/database.php';
     <!-- Template for Wasting Receipt Tab (Hidden) -->
     <div id="wasting-template" class="d-none">
         <div class="receipt-container card-qiuck-style">
-            <!-- Header Section -->
-            <div class="row mb-4">
-                <div class="col-md-4 col-sm-12">
-                    <label class="form-label">ژمارە</label>
-                    <input type="text" class="form-control receipt-number" placeholder="ژمارەی پسوڵە">
-                </div>
-                <div class="col-md-4 col-sm-12">
-                    <label class="form-label">ناونیشانی پسوڵە</label>
-                    <input type="text" class="form-control receipt-title" placeholder="ناونیشانی پسوڵە بنووسە">
-                </div>
-                <div class="col-md-4 col-sm-12">
-                    <label class="form-label">بەرپرسیار</label>
-                    <select class="form-select responsible-select">
-                        <option value="" selected disabled>بەرپرسیار هەڵبژێرە</option>
-                        <option value="1">هێمن عەبدوڵا</option>
-                        <option value="2">نەوزاد عەلی</option>
-                        <option value="3">کامەران حەسەن</option>
-                        <option value="new">بەرپرسیاری نوێ زیاد بکە...</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Items Table - Moved to top -->
+            <!-- Items Table -->
             <div class="table-responsive mb-4">
                 <table class="table table-bordered">
                     <thead>
@@ -387,10 +362,10 @@ require_once '../../config/database.php';
                             <th style="width: 50px">#</th>
                             <th>کاڵا</th>
                             <th>وێنە</th>
+                            <th>جۆری یەکە</th>
                             <th>بڕی بەردەست</th>
                             <th>بڕی بەفیڕۆچوو</th>
                             <th>نرخی یەکە</th>
-                            <th>وەسفکردن</th>
                             <th>کۆی گشتی</th>
                             <th style="width: 100px">کردار</th>
                         </tr>
@@ -400,10 +375,16 @@ require_once '../../config/database.php';
                             <td>1</td>
                             <td><select class="form-control product-select" style="width: 100%"></select></td>
                             <td class="product-image-cell"></td>
+                            <td>
+                                <select class="form-control unit-type">
+                                    <option value="piece">دانە</option>
+                                    <option value="box">کارتۆن</option>
+                                    <option value="set">سێت</option>
+                                </select>
+                            </td>
                             <td><input type="number" class="form-control current-quantity" step="1" readonly></td>
                             <td><input type="number" class="form-control adjusted-quantity" step="1"></td>
                             <td><input type="number" class="form-control price" step="1"></td>
-                            <td><input type="text" class="form-control" placeholder="وەسفکردن"></td>
                             <td><input type="number" class="form-control total" step="1" readonly></td>
                             <td>
                                 <button type="button" class="btn btn-danger btn-sm remove-row">
@@ -420,33 +401,13 @@ require_once '../../config/database.php';
                 <i class="fas fa-plus"></i> زیادکردنی ڕیز
             </button>
 
-            <!-- Date and Reason Info -->
+            <!-- Date Info -->
             <div class="row mb-4">
-                <div class="col-md-6">
+                <div class="col-md-12">
                     <label class="form-label">بەروار</label>
                     <input type="date" class="form-control adjustment-date">
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">هۆکاری زیان</label>
-                    <select class="form-select adjustment-reason">
-                        <option value="damaged">کاڵای زیانمەند</option>
-                        <option value="expired">کاڵای بەسەرچوو</option>
-                        <option value="inventory_correction">ڕاستکردنەوەی ئینڤێنتۆری</option>
-                        <option value="other">هۆکاری تر</option>
-                    </select>
-                </div>
             </div>
-
-            <!-- Notes Section -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <label class="form-label">تێبینی</label>
-                    <textarea class="form-control adjustment-notes" rows="3" placeholder="تێبینی لەسەر ڕێکخستنەوە"></textarea>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-        
 
             <!-- Totals Section -->
             <div class="total-section">
@@ -460,9 +421,6 @@ require_once '../../config/database.php';
 
             <!-- Submit Button -->
             <div class="mt-4 text-start  d-flex justify-content-start align-items-center">
-                <button type="button" class="btn btn-outline-primary draft-btn">
-                    <i class="fas fa-file-alt"></i> ڕەشنووس
-                </button>
                 <button type="button" class="btn btn-primary save-btn">
                     <i class="fas fa-save"></i> پاشەکەوتکردن
                 </button>
@@ -627,6 +585,7 @@ require_once '../../config/database.php';
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="../../js/debug_selects.js"></script>
     <script src="../../js/addReceipt.js"></script>
+    <script src="../../js/advance-payment.js"></script>
     <script src="../../js/include-components.js"></script>
     
     <script>

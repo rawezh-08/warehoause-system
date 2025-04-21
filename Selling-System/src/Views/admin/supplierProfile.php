@@ -499,6 +499,16 @@ foreach ($purchases as $purchase) {
                                     <i class="fas fa-hand-holding-dollar"></i>قەرزدانەوە
                                 </button>
                             </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="advance-payment-tab" data-bs-toggle="tab" data-bs-target="#advance-payment-content" type="button" role="tab" aria-controls="advance-payment-content" aria-selected="false">
+                                    <i class="fas fa-coins"></i>پارەی پێشەکی
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="advance-payment-history-tab" data-bs-toggle="tab" data-bs-target="#advance-payment-history-content" type="button" role="tab" aria-controls="advance-payment-history-content" aria-selected="false">
+                                    <i class="fas fa-history"></i>مێژووی پارەی پێشەکی
+                                </button>
+                            </li>
                         </ul>
                     </div>
                     
@@ -850,13 +860,248 @@ foreach ($purchases as $purchase) {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <tr>
-                                                        <td colspan="7" class="text-center">هیچ پارەدانێک نەدۆزرایەوە</td>
-                                                    </tr>
+                                                    <?php
+                                                    // Get supplier debt payment transactions
+                                                    $debtPaymentQuery = "SELECT * FROM supplier_debt_transactions 
+                                                                      WHERE supplier_id = :supplier_id 
+                                                                      AND transaction_type = 'payment'
+                                                                      ORDER BY created_at DESC";
+                                                    $debtPaymentStmt = $conn->prepare($debtPaymentQuery);
+                                                    $debtPaymentStmt->bindParam(':supplier_id', $supplierId);
+                                                    $debtPaymentStmt->execute();
+                                                    $debtPayments = $debtPaymentStmt->fetchAll(PDO::FETCH_ASSOC);
+                                                    
+                                                    if (count($debtPayments) > 0):
+                                                        $counter = 1;
+                                                        foreach ($debtPayments as $payment):
+                                                            $notesData = json_decode($payment['notes'], true);
+                                                            $paymentMethod = isset($notesData['paymentMethod']) ? $notesData['paymentMethod'] : 'cash';
+                                                            $referenceNumber = isset($notesData['referenceNumber']) ? $notesData['referenceNumber'] : '-';
+                                                            $displayNotes = isset($notesData['originalNotes']) ? $notesData['originalNotes'] : $payment['notes'];
+                                                            ?>
+                                                            <tr>
+                                                                <td><?php echo $counter++; ?></td>
+                                                                <td><?php echo date('Y/m/d', strtotime($payment['created_at'])); ?></td>
+                                                                <td class="text-success">
+                                                                    <?php echo number_format($payment['amount']); ?> دینار</td>
+                                                                <td><?php echo !empty($displayNotes) ? htmlspecialchars($displayNotes) : '-'; ?></td>
+                                                                <td>
+                                                                    <?php
+                                                                    switch ($paymentMethod) {
+                                                                        case 'cash':
+                                                                            echo '<span class="badge bg-success">نەقد</span>';
+                                                                            break;
+                                                                        case 'transfer':
+                                                                            echo '<span class="badge bg-info">FIB یان FastPay</span>';
+                                                                            break;
+                                                                        default:
+                                                                            echo '<span class="badge bg-secondary">هی تر</span>';
+                                                                    }
+                                                                    ?>
+                                                                </td>
+                                                                <td><?php echo htmlspecialchars($referenceNumber); ?></td>
+                                                                <td>
+                                                                    <div class="action-buttons">
+                                                                        <a href="../../views/receipt/supplier_payment_receipt.php?transaction_id=<?php echo $payment['id']; ?>"
+                                                                           class="btn btn-sm btn-outline-info rounded-circle print-receipt-btn"
+                                                                           target="_blank"
+                                                                           title="چاپکردن">
+                                                                            <i class="fas fa-print"></i>
+                                                                        </a>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        <?php endforeach; ?>
+                                                    <?php else: ?>
+                                                        <tr>
+                                                            <td colspan="7" class="text-center">هیچ پارەدانێک نەدۆزرایەوە</td>
+                                                        </tr>
+                                                    <?php endif; ?>
                                                 </tbody>
                                             </table>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+
+                            <!-- Advance Payment Tab -->
+                            <div class="tab-pane fade" id="advance-payment-content" role="tabpanel" aria-labelledby="advance-payment-tab">
+                                <div class="row">
+                                    <!-- Supplier Information Section -->
+                                    <div class="col-md-6 mb-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h5 class="card-title mb-0">زانیاری دابینکەر</h5>
+                                        </div>
+                                        <div class="card border-0 bg-light p-3 mb-4">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <h6 class="text-muted mb-2">ناوی دابینکەر</h6>
+                                                    <p class="h5"><?php echo htmlspecialchars($supplier['name']); ?></p>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <h6 class="text-muted mb-2">ژمارەی مۆبایل</h6>
+                                                    <p class="h5"><?php echo htmlspecialchars($supplier['phone1']); ?></p>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <h6 class="text-muted mb-2">دۆخی ئێستا</h6>
+                                                    <?php if ($supplier['debt_on_myself'] > 0): ?>
+                                                    <p class="h4 text-danger">
+                                                        <?php echo number_format($supplier['debt_on_myself']); ?> دینار قەرزمانە
+                                                    </p>
+                                                    <?php elseif ($supplier['debt_on_supplier'] > 0): ?>
+                                                    <p class="h4 text-success">
+                                                        <?php echo number_format($supplier['debt_on_supplier']); ?> دینار پێشەکیمان داوە
+                                                    </p>
+                                                    <?php else: ?>
+                                                    <p class="h4 text-secondary">
+                                                        هاوسەنگ
+                                                    </p>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <h6 class="text-muted mb-2">کۆی کڕینەکان</h6>
+                                                    <p class="h4 text-primary"><?php echo number_format($totalPurchases); ?>
+                                                        دینار</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Advance Payment Form Section -->
+                                    <div class="col-md-6 mb-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h5 class="card-title mb-0">پێدانی پارەی پێشەکی</h5>
+                                        </div>
+                                        <form id="supplierAdvancePaymentForm">
+                                            <input type="hidden" name="supplier_id" value="<?php echo $supplier['id']; ?>">
+                                            <input type="hidden" name="transaction_type" value="supplier_advance">
+
+                                            <div class="mb-3">
+                                                <label for="advanceAmount" class="form-label">بڕی پارەی پێشەکی</label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="advanceAmount"
+                                                        name="amount" min="1" required>
+                                                    <span class="input-group-text">دینار</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="advanceDate" class="form-label">بەرواری پێدان</label>
+                                                <input type="date" class="form-control" id="advanceDate" name="advance_date"
+                                                    value="<?php echo date('Y-m-d'); ?>" required>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="advanceNotes" class="form-label">تێبینی</label>
+                                                <textarea class="form-control" id="advanceNotes" name="notes"
+                                                    rows="3"></textarea>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="advancePaymentMethod" class="form-label">شێوازی پارەدان</label>
+                                                <select class="form-select" id="advancePaymentMethod" name="payment_method">
+                                                    <option value="cash">نەقد</option>
+                                                    <option value="transfer">FIB یان FastPay</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="text-end">
+                                                <button type="reset" class="btn btn-outline-secondary me-2">
+                                                    <i class="fas fa-undo me-2"></i> ڕیسێت
+                                                </button>
+                                                <button type="button" id="saveSupplierAdvancePaymentBtn" class="btn btn-primary">
+                                                    <i class="fas fa-save me-2"></i> تۆمارکردن
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Advance Payment History Tab -->
+                            <div class="tab-pane fade" id="advance-payment-history-content" role="tabpanel" aria-labelledby="advance-payment-history-tab">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="card-title mb-0">مێژووی پارەی پێشەکی</h5>
+                                    <button class="btn btn-sm btn-outline-primary refresh-advance-btn">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table id="supplierAdvancePaymentTable" class="table table-bordered custom-table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>بەروار</th>
+                                                <th>بڕی پارە</th>
+                                                <th>تێبینی</th>
+                                                <th>شێوازی پارەدان</th>
+                                                <th>کردارەکان</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php
+                                            // Get supplier advance payment transactions
+                                            $advanceQuery = "SELECT * FROM supplier_debt_transactions 
+                                                          WHERE supplier_id = :supplier_id 
+                                                          AND transaction_type = 'supplier_advance'
+                                                          ORDER BY created_at DESC";
+                                            $advanceStmt = $conn->prepare($advanceQuery);
+                                            $advanceStmt->bindParam(':supplier_id', $supplierId);
+                                            $advanceStmt->execute();
+                                            $advanceTransactions = $advanceStmt->fetchAll(PDO::FETCH_ASSOC);
+                                            
+                                            if (count($advanceTransactions) > 0):
+                                                $counter = 1;
+                                                foreach ($advanceTransactions as $transaction):
+                                                    $notesData = json_decode($transaction['notes'], true);
+                                                    $paymentMethod = isset($notesData['payment_method']) ? $notesData['payment_method'] : 'cash';
+                                                    $displayNotes = isset($notesData['notes']) ? $notesData['notes'] : $transaction['notes'];
+                                                    ?>
+                                                    <tr>
+                                                        <td><?php echo $counter++; ?></td>
+                                                        <td><?php echo date('Y/m/d', strtotime($transaction['created_at'])); ?>
+                                                        </td>
+                                                        <td class="text-primary">
+                                                            <?php echo number_format($transaction['amount']); ?> دینار</td>
+                                                        <td><?php echo !empty($displayNotes) ? htmlspecialchars($displayNotes) : '-'; ?>
+                                                        </td>
+                                                        <td>
+                                                            <?php
+                                                            switch ($paymentMethod) {
+                                                                case 'cash':
+                                                                    echo '<span class="badge bg-success">نەقد</span>';
+                                                                    break;
+                                                                case 'transfer':
+                                                                    echo '<span class="badge bg-info">FIB یان FastPay</span>';
+                                                                    break;
+                                                                default:
+                                                                    echo '<span class="badge bg-secondary">هی تر</span>';
+                                                            }
+                                                            ?>
+                                                        </td>
+                                                        <td>
+                                                            <div class="action-buttons">
+                                                                <a href="../../views/receipt/supplier_advance_receipt.php?transaction_id=<?php echo $transaction['id']; ?>"
+                                                                   class="btn btn-sm btn-outline-info rounded-circle print-receipt-btn"
+                                                                   target="_blank"
+                                                                   title="چاپکردن">
+                                                                    <i class="fas fa-print"></i>
+                                                                </a>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <tr>
+                                                    <td colspan="6" class="text-center">هیچ پارەی پێشەکی تۆمار نەکراوە
+                                                    </td>
+                                                </tr>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -874,7 +1119,14 @@ foreach ($purchases as $purchase) {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <!-- Initialize common elements -->
     <script src="../../js/include-components.js"></script>
-    
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Include Custom JS -->
+    <script src="../../js/include-components.js"></script>
+    <script src="../../js/supplier-advance-payment.js"></script>
+    <!-- Custom JS for this page -->
     <script>
         $(document).ready(function() {
             // Table pagination functionality for Purchases table

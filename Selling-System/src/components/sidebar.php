@@ -100,7 +100,7 @@
             <!-- Reports -->
          
 
-            <!-- Balances -->
+            <!-- Balances 
             <li class="menu-item">
                 <a href="#balancesSubmenu" class="item-link">
                 <div class="icon-cont">
@@ -114,6 +114,7 @@
                     <li><a href="customerBalances.php">باڵانسی کڕیارەکان</a></li>
                 </ul>
             </li>
+            -->
             <li class="menu-item">
                 <a href="report.php" class="item-link">
                 <div class="icon-cont">

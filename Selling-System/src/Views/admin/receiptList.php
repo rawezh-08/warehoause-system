@@ -1,13 +1,38 @@
 <?php
-require_once '../../controllers/receiptController.php';
+// Include controllers
+require_once '../../controllers/receipts/SaleReceiptsController.php';
+require_once '../../controllers/receipts/PurchaseReceiptsController.php';
+require_once '../../controllers/receipts/WastingReceiptsController.php';
+require_once '../../controllers/receipts/DraftReceiptsController.php';
 
 // Custom number formatting function for Iraqi Dinar
-function numberFormat($number) {
+function numberFormat($number)
+{
     return number_format($number, 0, '.', ',') . ' د.ع';
 }
+
+// Initialize controllers
+$saleReceiptsController = new SaleReceiptsController($conn);
+$purchaseReceiptsController = new PurchaseReceiptsController($conn);
+$wastingReceiptsController = new WastingReceiptsController($conn);
+$draftReceiptsController = new DraftReceiptsController($conn);
+
+// Get initial data for page load
+$today = date('Y-m-d');
+$startOfMonth = date('Y-m-01');
+
+$defaultFilters = [
+    'start_date' => $startOfMonth,
+    'end_date' => $today
+];
+
+// Get data using controllers
+$salesData = $saleReceiptsController->getSalesData(0, 0, $defaultFilters);
+$purchasesData = $purchaseReceiptsController->getPurchasesData(0, 0, $defaultFilters);
 ?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -40,17 +65,21 @@ function numberFormat($number) {
             font-size: 0.8rem;
             margin-right: 0.5rem;
         }
+
         .action-buttons .btn {
             margin: 0 2px;
         }
+
         .action-buttons .btn i {
             font-size: 0.875rem;
         }
+
         .table td {
             vertical-align: middle;
         }
     </style>
 </head>
+
 <body>
     <!-- Main Content Wrapper -->
     <div id="content">
@@ -74,22 +103,30 @@ function numberFormat($number) {
                     <div class="col-12">
                         <ul class="nav nav-tabs expenses-tabs" id="expensesTabs" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="employee-payment-tab" data-bs-toggle="tab" data-bs-target="#employee-payment-content" type="button" role="tab" aria-controls="employee-payment-content" aria-selected="true">
+                                <button class="nav-link active" id="employee-payment-tab" data-bs-toggle="tab"
+                                    data-bs-target="#employee-payment-content" type="button" role="tab"
+                                    aria-controls="employee-payment-content" aria-selected="true">
                                     <i class="fas fa-user-tie me-2"></i> پسووڵەکانی فرۆشتن 
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="shipping-tab" data-bs-toggle="tab" data-bs-target="#shipping-content" type="button" role="tab" aria-controls="shipping-content" aria-selected="false">
+                                <button class="nav-link" id="shipping-tab" data-bs-toggle="tab"
+                                    data-bs-target="#shipping-content" type="button" role="tab"
+                                    aria-controls="shipping-content" aria-selected="false">
                                     <i class="fas fa-truck me-2"></i> پسووڵەکانی کڕین
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="withdrawal-tab" data-bs-toggle="tab" data-bs-target="#withdrawal-content" type="button" role="tab" aria-controls="withdrawal-content" aria-selected="false">
-                                    <i class="fas fa-money-bill-wave me-2"></i>  بەفیڕۆچوو
+                                <button class="nav-link" id="withdrawal-tab" data-bs-toggle="tab"
+                                    data-bs-target="#withdrawal-content" type="button" role="tab"
+                                    aria-controls="withdrawal-content" aria-selected="false">
+                                    <i class="fas fa-money-bill-wave me-2"></i> بەفیڕۆچوو
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="draft-tab" data-bs-toggle="tab" data-bs-target="#draft-content" type="button" role="tab" aria-controls="draft-content" aria-selected="false">
+                                <button class="nav-link" id="draft-tab" data-bs-toggle="tab"
+                                    data-bs-target="#draft-content" type="button" role="tab"
+                                    aria-controls="draft-content" aria-selected="false">
                                     <i class="fas fa-file-alt me-2"></i> ڕەشنووسەکان
                                 </button>
                             </li>
@@ -100,7 +137,8 @@ function numberFormat($number) {
                 <!-- Tabs content -->
                 <div class="tab-content" id="expensesTabsContent">
                     <!-- Employee Payment Tab -->
-                    <div class="tab-pane fade show active" id="employee-payment-content" role="tabpanel" aria-labelledby="employee-payment-tab">
+                    <div class="tab-pane fade show active" id="employee-payment-content" role="tabpanel"
+                        aria-labelledby="employee-payment-tab">
                         <!-- Date Filter for Employee Payments -->
                         <div class="row mb-4">
                             <div class="col-12">
@@ -109,12 +147,16 @@ function numberFormat($number) {
                                         <h5 class="card-title mb-4">فلتەر بەپێی بەروار و ناو</h5>
                                         <form id="employeePaymentFilterForm" class="row g-3">
                                             <div class="col-md-3">
-                                                <label for="employeePaymentStartDate" class="form-label">بەرواری دەستپێک</label>
-                                                <input type="date" class="form-control auto-filter" id="employeePaymentStartDate">
+                                                <label for="employeePaymentStartDate" class="form-label">بەرواری
+                                                    دەستپێک</label>
+                                                <input type="date" class="form-control auto-filter"
+                                                    id="employeePaymentStartDate">
                                             </div>
                                             <div class="col-md-3">
-                                                <label for="employeePaymentEndDate" class="form-label">بەرواری کۆتایی</label>
-                                                <input type="date" class="form-control auto-filter" id="employeePaymentEndDate">
+                                                <label for="employeePaymentEndDate" class="form-label">بەرواری
+                                                    کۆتایی</label>
+                                                <input type="date" class="form-control auto-filter"
+                                                    id="employeePaymentEndDate">
                                             </div>
                                             <div class="col-md-3">
                                                 <label for="employeePaymentName" class="form-label">ناوی کڕیار</label>
@@ -129,12 +171,9 @@ function numberFormat($number) {
                                                     ?>
                                                 </select>
                                             </div>
-                                            <div class="col-md-2">
-                                                <label for="invoiceNumber" class="form-label">ژمارەی پسووڵە</label>
-                                                <input type="text" class="form-control auto-filter" id="invoiceNumber" placeholder="ژمارەی پسووڵە">
-                                            </div>
-                                            <div class="col-md-1 d-flex align-items-end">
-                                                <button type="button" class="btn btn-outline-secondary w-100" id="employeePaymentResetFilter">
+                                            <div class="col-md-3 d-flex align-items-end">
+                                                <button type="button" class="btn btn-outline-secondary w-100"
+                                                    id="employeePaymentResetFilter">
                                                     <i class="fas fa-redo me-2"></i> ڕیسێت
                                                 </button>
                                             </div>
@@ -148,7 +187,8 @@ function numberFormat($number) {
                         <div class="row">
                             <div class="col-12">
                                 <div class="card shadow-sm">
-                                    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                                    <div
+                                        class="card-header bg-transparent d-flex justify-content-between align-items-center">
                                         <h5 class="card-title mb-0">ئەو پسوووڵانەی کە تۆ فرۆشتووتن</h5>
                                         <div>
                                             <button class="btn btn-sm btn-outline-primary refresh-btn me-2">
@@ -165,7 +205,8 @@ function numberFormat($number) {
                                                         <div class="records-per-page">
                                                             <label class="me-2">نیشاندان:</label>
                                                             <div class="custom-select-wrapper">
-                                                                <select id="employeeRecordsPerPage" class="form-select form-select-sm rounded-pill">
+                                                                <select id="employeeRecordsPerPage"
+                                                                    class="form-select form-select-sm rounded-pill">
                                                                     <option value="5">5</option>
                                                                     <option value="10" selected>10</option>
                                                                     <option value="25">25</option>
@@ -177,8 +218,11 @@ function numberFormat($number) {
                                                     <div class="col-md-8 col-sm-6">
                                                         <div class="search-container">
                                                             <div class="input-group">
-                                                                <input type="text" id="employeeTableSearch" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
-                                                                <span class="input-group-text rounded-pill-end bg-light">
+                                                                <input type="text" id="employeeTableSearch"
+                                                                    class="form-control rounded-pill-start table-search-input"
+                                                                    placeholder="گەڕان لە تەیبڵدا...">
+                                                                <span
+                                                                    class="input-group-text rounded-pill-end bg-light">
                                                                     <i class="fas fa-search"></i>
                                                                 </span>
                                                             </div>
@@ -189,7 +233,8 @@ function numberFormat($number) {
                                             
                                             <!-- Table Content -->
                                             <div class="table-responsive">
-                                                <table id="employeeHistoryTable" class="table table-bordered custom-table table-hover">
+                                                <table id="employeeHistoryTable"
+                                                    class="table table-bordered custom-table table-hover">
                                                     <thead class="table-light">
                                                         <tr>
                                                             <th>#</th>
@@ -211,10 +256,14 @@ function numberFormat($number) {
                                                         <?php foreach ($salesData as $index => $sale): ?>
                                                         <tr data-id="<?php echo $sale['id']; ?>">
                                                             <td><?php echo $index + 1; ?></td>
-                                                            <td><?php echo htmlspecialchars($sale['invoice_number']); ?></td>
-                                                            <td><?php echo htmlspecialchars($sale['customer_name'] ?? 'N/A'); ?></td>
-                                                            <td><?php echo date('Y/m/d', strtotime($sale['date'])); ?></td>
-                                                            <td class="products-list-cell" data-products="<?php echo htmlspecialchars($sale['products_list'] ?? ''); ?>">
+                                                                <td><?php echo htmlspecialchars($sale['invoice_number']); ?>
+                                                                </td>
+                                                                <td><?php echo htmlspecialchars($sale['customer_name'] ?? 'N/A'); ?>
+                                                                </td>
+                                                                <td><?php echo date('Y/m/d', strtotime($sale['date'])); ?>
+                                                                </td>
+                                                                <td class="products-list-cell"
+                                                                    data-products="<?php echo htmlspecialchars($sale['products_list'] ?? ''); ?>">
                                                                 <?php echo htmlspecialchars($sale['products_list'] ?? ''); ?>
                                                                 <div class="products-popup"></div>
                                                             </td>
@@ -234,22 +283,33 @@ function numberFormat($number) {
                                                                     ?>
                                                                 </span>
                                                             </td>
-                                                            <td><?php echo htmlspecialchars($sale['notes'] ?? ''); ?></td>
+                                                                <td><?php echo htmlspecialchars($sale['notes'] ?? ''); ?>
+                                                                </td>
                                                             <td>
                                                                 <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="<?php echo $sale['id']; ?>">
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-primary rounded-circle edit-btn"
+                                                                            data-id="<?php echo $sale['id']; ?>">
                                                                         <i class="fas fa-edit"></i>
                                                                     </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="<?php echo $sale['id']; ?>">
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-info rounded-circle view-btn"
+                                                                            data-id="<?php echo $sale['id']; ?>">
                                                                         <i class="fas fa-eye"></i>
                                                                     </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="<?php echo $sale['id']; ?>">
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-secondary rounded-circle print-btn"
+                                                                            data-id="<?php echo $sale['id']; ?>">
                                                                         <i class="fas fa-print"></i>
                                                                     </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-warning rounded-circle return-btn" data-id="<?php echo $sale['id']; ?>">
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-warning rounded-circle return-btn"
+                                                                            data-id="<?php echo $sale['id']; ?>">
                                                                         <i class="fas fa-undo"></i>
                                                                     </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="<?php echo $sale['id']; ?>">
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-danger rounded-circle delete-btn"
+                                                                            data-id="<?php echo $sale['id']; ?>">
                                                                         <i class="fas fa-trash"></i>
                                                                     </button>
                                                                 </div>
@@ -258,7 +318,8 @@ function numberFormat($number) {
                                                         <?php endforeach; ?>
                                                         <?php if (empty($salesData)): ?>
                                                         <tr>
-                                                            <td colspan="13" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td>
+                                                                <td colspan="13" class="text-center">هیچ پسووڵەیەک
+                                                                    نەدۆزرایەوە</td>
                                                         </tr>
                                                         <?php endif; ?>
                                                     </tbody>
@@ -270,19 +331,26 @@ function numberFormat($number) {
                                                 <div class="row align-items-center">
                                                     <div class="col-md-6 mb-2 mb-md-0">
                                                         <div class="pagination-info">
-                                                            نیشاندانی <span id="employeeStartRecord">1</span> تا <span id="employeeEndRecord">3</span> لە کۆی <span id="employeeTotalRecords">3</span> تۆمار
+                                                            نیشاندانی <span id="employeeStartRecord">1</span> تا <span
+                                                                id="employeeEndRecord">3</span> لە کۆی <span
+                                                                id="employeeTotalRecords">3</span> تۆمار
                                                         </div>
                                                     </div>
                                                     <div class="col-md-6">
                                                         <div class="pagination-controls d-flex justify-content-md-end">
-                                                            <button id="employeePrevPageBtn" class="btn btn-sm btn-outline-primary rounded-circle me-2" disabled>
+                                                            <button id="employeePrevPageBtn"
+                                                                class="btn btn-sm btn-outline-primary rounded-circle me-2"
+                                                                disabled>
                                                                 <i class="fas fa-chevron-right"></i>
                                                             </button>
-                                                            <div id="employeePaginationNumbers" class="pagination-numbers d-flex">
+                                                            <div id="employeePaginationNumbers"
+                                                                class="pagination-numbers d-flex">
                                                                 <!-- Pagination numbers will be generated by JavaScript -->
-                                                                <button class="btn btn-sm btn-primary rounded-circle me-2 active">1</button>
+                                                                <button
+                                                                    class="btn btn-sm btn-primary rounded-circle me-2 active">1</button>
                                                             </div>
-                                                            <button id="employeeNextPageBtn" class="btn btn-sm btn-outline-primary rounded-circle">
+                                                            <button id="employeeNextPageBtn"
+                                                                class="btn btn-sm btn-outline-primary rounded-circle">
                                                                 <i class="fas fa-chevron-left"></i>
                                                             </button>
                                                         </div>
@@ -306,12 +374,15 @@ function numberFormat($number) {
                                         <h5 class="card-title mb-3">فلتەر بەپێی بەروار و ناو</h5>
                                         <form id="shippingFilterForm" class="row g-3">
                                             <div class="col-md-3">
-                                                <label for="shippingStartDate" class="form-label">بەرواری دەستپێک</label>
-                                                <input type="date" class="form-control auto-filter" id="shippingStartDate">
+                                                <label for="shippingStartDate" class="form-label">بەرواری
+                                                    دەستپێک</label>
+                                                <input type="date" class="form-control auto-filter"
+                                                    id="shippingStartDate">
                                             </div>
                                             <div class="col-md-3">
                                                 <label for="shippingEndDate" class="form-label">بەرواری کۆتایی</label>
-                                                <input type="date" class="form-control auto-filter" id="shippingEndDate">
+                                                <input type="date" class="form-control auto-filter"
+                                                    id="shippingEndDate">
                                             </div>
                                             <div class="col-md-2">
                                                 <label for="shippingProvider" class="form-label">دابینکەر</label>
@@ -327,11 +398,14 @@ function numberFormat($number) {
                                                 </select>
                                             </div>
                                             <div class="col-md-2">
-                                                <label for="shippingInvoiceNumber" class="form-label">ژمارەی پسووڵە</label>
-                                                <input type="text" class="form-control auto-filter" id="shippingInvoiceNumber" placeholder="ژمارەی پسووڵە">
+                                                <label for="shippingInvoiceNumber" class="form-label">ژمارەی
+                                                    پسووڵە</label>
+                                                <input type="text" class="form-control auto-filter"
+                                                    id="shippingInvoiceNumber" placeholder="ژمارەی پسووڵە">
                                             </div>
                                             <div class="col-md-2 d-flex align-items-end">
-                                                <button type="button" class="btn btn-outline-secondary w-100" id="shippingResetFilter">
+                                                <button type="button" class="btn btn-outline-secondary w-100"
+                                                    id="shippingResetFilter">
                                                     <i class="fas fa-redo me-2"></i> ڕیسێت
                                                 </button>
                                             </div>
@@ -345,7 +419,8 @@ function numberFormat($number) {
                         <div class="row">
                             <div class="col-12">
                                 <div class="card shadow-sm">
-                                    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                                    <div
+                                        class="card-header bg-transparent d-flex justify-content-between align-items-center">
                                         <h5 class="card-title mb-0">ئەو پسووڵانە کە تۆ کڕیوتن</h5>
                                         <div>
                                             <button class="btn btn-sm btn-outline-primary refresh-btn me-2">
@@ -362,7 +437,8 @@ function numberFormat($number) {
                                                         <div class="records-per-page">
                                                             <label class="me-2">نیشاندان:</label>
                                                             <div class="custom-select-wrapper">
-                                                                <select id="shippingRecordsPerPage" class="form-select form-select-sm rounded-pill">
+                                                                <select id="shippingRecordsPerPage"
+                                                                    class="form-select form-select-sm rounded-pill">
                                                                     <option value="5">5</option>
                                                                     <option value="10" selected>10</option>
                                                                     <option value="25">25</option>
@@ -374,8 +450,11 @@ function numberFormat($number) {
                                                     <div class="col-md-8 col-sm-6">
                                                         <div class="search-container">
                                                             <div class="input-group">
-                                                                <input type="text" id="shippingTableSearch" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
-                                                                <span class="input-group-text rounded-pill-end bg-light">
+                                                                <input type="text" id="shippingTableSearch"
+                                                                    class="form-control rounded-pill-start table-search-input"
+                                                                    placeholder="گەڕان لە تەیبڵدا...">
+                                                                <span
+                                                                    class="input-group-text rounded-pill-end bg-light">
                                                                     <i class="fas fa-search"></i>
                                                                 </span>
                                                             </div>
@@ -386,7 +465,8 @@ function numberFormat($number) {
                                             
                                             <!-- Table Content -->
                                             <div class="table-responsive">
-                                                <table id="shippingHistoryTable" class="table table-bordered custom-table table-hover">
+                                                <table id="shippingHistoryTable"
+                                                    class="table table-bordered custom-table table-hover">
                                                     <thead class="table-light">
                                                         <tr>
                                                             <th>#</th>
@@ -410,20 +490,29 @@ function numberFormat($number) {
                                                         <?php foreach ($purchasesData as $index => $purchase): ?>
                                                         <tr data-id="<?php echo $purchase['id']; ?>">
                                                             <td><?php echo $index + 1; ?></td>
-                                                            <td><?php echo htmlspecialchars($purchase['invoice_number']); ?></td>
-                                                            <td><?php echo htmlspecialchars($purchase['supplier_name'] ?? 'N/A'); ?></td>
-                                                            <td><?php echo date('Y/m/d', strtotime($purchase['date'])); ?></td>
-                                                            <td class="products-list-cell" data-products="<?php echo htmlspecialchars($purchase['products_list'] ?? ''); ?>">
+                                                                <td><?php echo htmlspecialchars($purchase['invoice_number']); ?>
+                                                                </td>
+                                                                <td><?php echo htmlspecialchars($purchase['supplier_name'] ?? 'N/A'); ?>
+                                                                </td>
+                                                                <td><?php echo date('Y/m/d', strtotime($purchase['date'])); ?>
+                                                                </td>
+                                                                <td class="products-list-cell"
+                                                                    data-products="<?php echo htmlspecialchars($purchase['products_list'] ?? ''); ?>">
                                                                 <?php echo htmlspecialchars($purchase['products_list'] ?? ''); ?>
                                                                 <div class="products-popup"></div>
                                                             </td>
                                                             <td><?php echo numberFormat($purchase['subtotal']); ?></td>
-                                                            <td><?php echo numberFormat($purchase['shipping_cost']); ?></td>
-                                                            <td><?php echo numberFormat($purchase['other_cost']); ?></td>
+                                                                <td><?php echo numberFormat($purchase['shipping_cost']); ?>
+                                                                </td>
+                                                                <td><?php echo numberFormat($purchase['other_cost']); ?>
+                                                                </td>
                                                             <td><?php echo numberFormat($purchase['discount']); ?></td>
-                                                            <td><?php echo numberFormat($purchase['total_amount']); ?></td>
-                                                            <td><?php echo numberFormat($purchase['paid_amount']); ?></td>
-                                                            <td><?php echo numberFormat($purchase['remaining_amount']); ?></td>
+                                                                <td><?php echo numberFormat($purchase['total_amount']); ?>
+                                                                </td>
+                                                                <td><?php echo numberFormat($purchase['paid_amount']); ?>
+                                                                </td>
+                                                                <td><?php echo numberFormat($purchase['remaining_amount']); ?>
+                                                                </td>
                                                             <td>
                                                                 <span class="badge rounded-pill <?php 
                                                                     echo $purchase['payment_type'] == 'cash' ? 'bg-success' : 
@@ -435,22 +524,33 @@ function numberFormat($number) {
                                                                     ?>
                                                                 </span>
                                                             </td>
-                                                            <td><?php echo htmlspecialchars($purchase['notes'] ?? ''); ?></td>
+                                                                <td><?php echo htmlspecialchars($purchase['notes'] ?? ''); ?>
+                                                                </td>
                                                             <td>
                                                                 <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="<?php echo $purchase['id']; ?>">
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-primary rounded-circle edit-btn"
+                                                                            data-id="<?php echo $purchase['id']; ?>">
                                                                         <i class="fas fa-edit"></i>
                                                                     </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="<?php echo $purchase['id']; ?>">
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-info rounded-circle view-btn"
+                                                                            data-id="<?php echo $purchase['id']; ?>">
                                                                         <i class="fas fa-eye"></i>
                                                                     </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="<?php echo $purchase['id']; ?>">
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-secondary rounded-circle print-btn"
+                                                                            data-id="<?php echo $purchase['id']; ?>">
                                                                         <i class="fas fa-print"></i>
                                                                     </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-warning rounded-circle return-btn" data-id="<?php echo $purchase['id']; ?>">
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-warning rounded-circle return-btn"
+                                                                            data-id="<?php echo $purchase['id']; ?>">
                                                                         <i class="fas fa-undo"></i>
                                                                     </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="<?php echo $purchase['id']; ?>">
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-danger rounded-circle delete-btn"
+                                                                            data-id="<?php echo $purchase['id']; ?>">
                                                                         <i class="fas fa-trash"></i>
                                                                     </button>
                                                                 </div>
@@ -459,7 +559,8 @@ function numberFormat($number) {
                                                         <?php endforeach; ?>
                                                         <?php if (empty($purchasesData)): ?>
                                                         <tr>
-                                                            <td colspan="15" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td>
+                                                                <td colspan="15" class="text-center">هیچ پسووڵەیەک
+                                                                    نەدۆزرایەوە</td>
                                                         </tr>
                                                         <?php endif; ?>
                                                     </tbody>
@@ -471,19 +572,26 @@ function numberFormat($number) {
                                                 <div class="row align-items-center">
                                                     <div class="col-md-6 mb-2 mb-md-0">
                                                         <div class="pagination-info">
-                                                            نیشاندانی <span id="shippingStartRecord">1</span> تا <span id="shippingEndRecord">2</span> لە کۆی <span id="shippingTotalRecords">2</span> تۆمار
+                                                            نیشاندانی <span id="shippingStartRecord">1</span> تا <span
+                                                                id="shippingEndRecord">2</span> لە کۆی <span
+                                                                id="shippingTotalRecords">2</span> تۆمار
                                                         </div>
                                                     </div>
                                                     <div class="col-md-6">
                                                         <div class="pagination-controls d-flex justify-content-md-end">
-                                                            <button id="shippingPrevPageBtn" class="btn btn-sm btn-outline-primary rounded-circle me-2" disabled>
+                                                            <button id="shippingPrevPageBtn"
+                                                                class="btn btn-sm btn-outline-primary rounded-circle me-2"
+                                                                disabled>
                                                                 <i class="fas fa-chevron-right"></i>
                                                             </button>
-                                                            <div id="shippingPaginationNumbers" class="pagination-numbers d-flex">
+                                                            <div id="shippingPaginationNumbers"
+                                                                class="pagination-numbers d-flex">
                                                                 <!-- Pagination numbers will be generated by JavaScript -->
-                                                                <button class="btn btn-sm btn-primary rounded-circle me-2 active">1</button>
+                                                                <button
+                                                                    class="btn btn-sm btn-primary rounded-circle me-2 active">1</button>
                                                             </div>
-                                                            <button id="shippingNextPageBtn" class="btn btn-sm btn-outline-primary rounded-circle">
+                                                            <button id="shippingNextPageBtn"
+                                                                class="btn btn-sm btn-outline-primary rounded-circle">
                                                                 <i class="fas fa-chevron-left"></i>
                                                             </button>
                                                         </div>
@@ -504,28 +612,22 @@ function numberFormat($number) {
                             <div class="col-12">
                                 <div class="card shadow-sm">
                                     <div class="card-body">
-                                        <h5 class="card-title mb-4">فلتەر بەپێی بەروار و ناو</h5>
+                                        <h5 class="card-title mb-4">فلتەر بەپێی بەروار</h5>
                                         <form id="withdrawalFilterForm" class="row g-3">
-                                            <div class="col-md-3">
-                                                <label for="withdrawalStartDate" class="form-label">بەرواری دەستپێک</label>
-                                                <input type="date" class="form-control auto-filter" id="withdrawalStartDate">
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label for="withdrawalEndDate" class="form-label">بەرواری کۆتایی</label>
-                                                <input type="date" class="form-control auto-filter" id="withdrawalEndDate">
+                                            <div class="col-md-4">
+                                                <label for="withdrawalStartDate" class="form-label">بەرواری
+                                                    دەستپێک</label>
+                                                <input type="date" class="form-control auto-filter"
+                                                    id="withdrawalStartDate">
                                             </div>
                                             <div class="col-md-4">
-                                                <label for="withdrawalName" class="form-label">ناو</label>
-                                                <select class="form-select auto-filter" id="withdrawalName">
-                                                    <option value="">هەموو ناوەکان</option>
-                                                    <option value="کارزان عومەر">کارزان عومەر</option>
-                                                    <option value="ئاکۆ سەعید">ئاکۆ سەعید</option>
-                                                    <option value="هێڤیدار ئەحمەد">هێڤیدار ئەحمەد</option>
-                                                    <option value="ئارام مستەفا">ئارام مستەفا</option>
-                                                </select>
+                                                <label for="withdrawalEndDate" class="form-label">بەرواری کۆتایی</label>
+                                                <input type="date" class="form-control auto-filter"
+                                                    id="withdrawalEndDate">
                                             </div>
-                                            <div class="col-md-2 d-flex align-items-end">
-                                                <button type="button" class="btn btn-outline-secondary w-100" id="withdrawalResetFilter">
+                                            <div class="col-md-4 d-flex align-items-end">
+                                                <button type="button" class="btn btn-outline-secondary w-100"
+                                                    id="withdrawalResetFilter">
                                                     <i class="fas fa-redo me-2"></i> ڕیسێت
                                                 </button>
                                             </div>
@@ -539,8 +641,9 @@ function numberFormat($number) {
                         <div class="row">
                             <div class="col-12">
                                 <div class="card shadow-sm">
-                                    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                                        <h5 class="card-title mb-0">مێژووی دەرکردنی پارە</h5>
+                                    <div
+                                        class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                                        <h5 class="card-title mb-0">مێژووی بەفیڕۆچوو</h5>
                                         <div>
                                             <button class="btn btn-sm btn-outline-primary refresh-btn me-2">
                                                 <i class="fas fa-sync-alt"></i>
@@ -556,7 +659,8 @@ function numberFormat($number) {
                                                         <div class="records-per-page">
                                                             <label class="me-2">نیشاندان:</label>
                                                             <div class="custom-select-wrapper">
-                                                                <select id="withdrawalRecordsPerPage" class="form-select form-select-sm rounded-pill">
+                                                                <select id="withdrawalRecordsPerPage"
+                                                                    class="form-select form-select-sm rounded-pill">
                                                                     <option value="5">5</option>
                                                                     <option value="10" selected>10</option>
                                                                     <option value="25">25</option>
@@ -568,8 +672,11 @@ function numberFormat($number) {
                                                     <div class="col-md-8 col-sm-6">
                                                         <div class="search-container">
                                                             <div class="input-group">
-                                                                <input type="text" id="withdrawalTableSearch" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
-                                                                <span class="input-group-text rounded-pill-end bg-light">
+                                                                <input type="text" id="withdrawalTableSearch"
+                                                                    class="form-control rounded-pill-start table-search-input"
+                                                                    placeholder="گەڕان لە تەیبڵدا...">
+                                                                <span
+                                                                    class="input-group-text rounded-pill-end bg-light">
                                                                     <i class="fas fa-search"></i>
                                                                 </span>
                                                             </div>
@@ -580,92 +687,67 @@ function numberFormat($number) {
                                             
                                             <!-- Table Content -->
                                             <div class="table-responsive">
-                                                <table id="withdrawalHistoryTable" class="table table-bordered custom-table table-hover">
+                                                <table id="withdrawalHistoryTable"
+                                                    class="table table-bordered custom-table table-hover">
                                                     <thead class="table-light">
                                                         <tr>
                                                             <th>#</th>
-                                                            <th>ناو</th>
                                                             <th>بەروار</th>
-                                                            <th>بڕی پارە</th>
-                                                            <th>جۆری دەرکردن</th>
+                                                            <th>کاڵاکان</th>
+                                                            <th>کۆی گشتی</th>
                                                             <th>تێبینی</th>
                                                             <th>کردارەکان</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <!-- Sample data - will be replaced with real data from database -->
-                                                        <tr data-id="1">
-                                                            <td>1</td>
-                                                            <td>کارزان عومەر</td>
-                                                            <td>2023/04/05</td>
-                                                            <td>$150</td>
-                                                            <td><span class="badge rounded-pill bg-warning text-dark">خەرجی ڕۆژانە</span></td>
-                                                            <td>کڕینی پێداویستی بۆ ئۆفیس</td>
-                                                            <td>
+                                                        <?php
+                                                        // Get wasting data with related items
+                                                        $stmt = $conn->query("
+                                                            SELECT w.*, 
+                                                                   GROUP_CONCAT(
+                                                                       CONCAT(p.name, ' (', wi.quantity, ' ', 
+                                                                       CASE wi.unit_type 
+                                                                           WHEN 'piece' THEN 'دانە'
+                                                                           WHEN 'box' THEN 'کارتۆن'
+                                                                           WHEN 'set' THEN 'سێت'
+                                                                       END, ')')
+                                                                   SEPARATOR ', ') as products_list,
+                                                                   SUM(wi.total_price) as total_amount
+                                                            FROM wastings w
+                                                            LEFT JOIN wasting_items wi ON w.id = wi.wasting_id
+                                                            LEFT JOIN products p ON wi.product_id = p.id
+                                                            GROUP BY w.id
+                                                            ORDER BY w.date DESC
+                                                        ");
+                                                        $wastings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                                                        if (count($wastings) > 0) {
+                                                            foreach ($wastings as $index => $wasting) {
+                                                                echo '<tr data-id="' . $wasting['id'] . '">';
+                                                                echo '<td>' . ($index + 1) . '</td>';
+                                                                echo '<td>' . date('Y/m/d', strtotime($wasting['date'])) . '</td>';
+                                                                echo '<td class="products-list-cell" data-products="' . htmlspecialchars($wasting['products_list']) . '">';
+                                                                echo htmlspecialchars($wasting['products_list']);
+                                                                echo '<div class="products-popup"></div>';
+                                                                echo '</td>';
+                                                                echo '<td>' . number_format($wasting['total_amount']) . ' د.ع</td>';
+                                                                echo '<td>' . htmlspecialchars($wasting['notes'] ?? '') . '</td>';
+                                                                echo '<td>
                                                                 <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="1" data-bs-toggle="modal" data-bs-target="#editWithdrawalModal">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="1">
+                                                                        <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="' . $wasting['id'] . '">
                                                                         <i class="fas fa-eye"></i>
                                                                     </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="1">
-                                                                        <i class="fas fa-print"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="1">
+                                                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="' . $wasting['id'] . '">
                                                                         <i class="fas fa-trash"></i>
                                                                     </button>
                                                                 </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr data-id="2">
-                                                            <td>2</td>
-                                                            <td>ئاکۆ سەعید</td>
-                                                            <td>2023/04/10</td>
-                                                            <td>$500</td>
-                                                            <td><span class="badge rounded-pill bg-danger">کرێ</span></td>
-                                                            <td>کرێی مانگانەی ئۆفیس</td>
-                                                            <td>
-                                                                <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="2" data-bs-toggle="modal" data-bs-target="#editWithdrawalModal">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="2">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="2">
-                                                                        <i class="fas fa-print"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="2">
-                                                                        <i class="fas fa-trash"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        <tr data-id="3">
-                                                            <td>3</td>
-                                                            <td>هێڤیدار ئەحمەد</td>
-                                                            <td>2023/04/12</td>
-                                                            <td>$75</td>
-                                                            <td><span class="badge rounded-pill bg-info">خزمەتگوزاری</span></td>
-                                                            <td>پارەی کارەبا</td>
-                                                            <td>
-                                                                <div class="action-buttons">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="3" data-bs-toggle="modal" data-bs-target="#editWithdrawalModal">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="3">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="3">
-                                                                        <i class="fas fa-print"></i>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="3">
-                                                                        <i class="fas fa-trash"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
+                                                                </td>';
+                                                                echo '</tr>';
+                                                            }
+                                                        } else {
+                                                            echo '<tr><td colspan="6" class="text-center">هیچ بەفیڕۆچوویەک نەدۆزرایەوە</td></tr>';
+                                                        }
+                                                        ?>
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -675,19 +757,26 @@ function numberFormat($number) {
                                                 <div class="row align-items-center">
                                                     <div class="col-md-6 mb-2 mb-md-0">
                                                         <div class="pagination-info">
-                                                            نیشاندانی <span id="withdrawalStartRecord">1</span> تا <span id="withdrawalEndRecord">3</span> لە کۆی <span id="withdrawalTotalRecords">3</span> تۆمار
+                                                            نیشاندانی <span id="withdrawalStartRecord">1</span> تا <span
+                                                                id="withdrawalEndRecord">3</span> لە کۆی <span
+                                                                id="withdrawalTotalRecords">3</span> تۆمار
                                                         </div>
                                                     </div>
                                                     <div class="col-md-6">
                                                         <div class="pagination-controls d-flex justify-content-md-end">
-                                                            <button id="withdrawalPrevPageBtn" class="btn btn-sm btn-outline-primary rounded-circle me-2" disabled>
+                                                            <button id="withdrawalPrevPageBtn"
+                                                                class="btn btn-sm btn-outline-primary rounded-circle me-2"
+                                                                disabled>
                                                                 <i class="fas fa-chevron-right"></i>
                                                             </button>
-                                                            <div id="withdrawalPaginationNumbers" class="pagination-numbers d-flex">
+                                                            <div id="withdrawalPaginationNumbers"
+                                                                class="pagination-numbers d-flex">
                                                                 <!-- Pagination numbers will be generated by JavaScript -->
-                                                                <button class="btn btn-sm btn-primary rounded-circle me-2 active">1</button>
+                                                                <button
+                                                                    class="btn btn-sm btn-primary rounded-circle me-2 active">1</button>
                                                             </div>
-                                                            <button id="withdrawalNextPageBtn" class="btn btn-sm btn-outline-primary rounded-circle">
+                                                            <button id="withdrawalNextPageBtn"
+                                                                class="btn btn-sm btn-outline-primary rounded-circle">
                                                                 <i class="fas fa-chevron-left"></i>
                                                             </button>
                                                         </div>
@@ -732,7 +821,8 @@ function numberFormat($number) {
                                                 </select>
                                             </div>
                                             <div class="col-md-2 d-flex align-items-end">
-                                                <button type="button" class="btn btn-outline-secondary w-100" id="draftResetFilter">
+                                                <button type="button" class="btn btn-outline-secondary w-100"
+                                                    id="draftResetFilter">
                                                     <i class="fas fa-redo me-2"></i> ڕیسێت
                                                 </button>
                                             </div>
@@ -746,7 +836,8 @@ function numberFormat($number) {
                         <div class="row">
                             <div class="col-12">
                                 <div class="card shadow-sm">
-                                    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                                    <div
+                                        class="card-header bg-transparent d-flex justify-content-between align-items-center">
                                         <h5 class="card-title mb-0">ڕەشنووسی پسووڵەکان</h5>
                                         <div>
                                             <button class="btn btn-sm btn-outline-primary refresh-btn me-2">
@@ -763,7 +854,8 @@ function numberFormat($number) {
                                                         <div class="records-per-page">
                                                             <label class="me-2">نیشاندان:</label>
                                                             <div class="custom-select-wrapper">
-                                                                <select id="draftRecordsPerPage" class="form-select form-select-sm rounded-pill">
+                                                                <select id="draftRecordsPerPage"
+                                                                    class="form-select form-select-sm rounded-pill">
                                                                     <option value="5">5</option>
                                                                     <option value="10" selected>10</option>
                                                                     <option value="25">25</option>
@@ -775,8 +867,11 @@ function numberFormat($number) {
                                                     <div class="col-md-8 col-sm-6">
                                                         <div class="search-container">
                                                             <div class="input-group">
-                                                                <input type="text" id="draftTableSearch" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
-                                                                <span class="input-group-text rounded-pill-end bg-light">
+                                                                <input type="text" id="draftTableSearch"
+                                                                    class="form-control rounded-pill-start table-search-input"
+                                                                    placeholder="گەڕان لە تەیبڵدا...">
+                                                                <span
+                                                                    class="input-group-text rounded-pill-end bg-light">
                                                                     <i class="fas fa-search"></i>
                                                                 </span>
                                                             </div>
@@ -787,7 +882,8 @@ function numberFormat($number) {
                                             
                                             <!-- Table Content -->
                                             <div class="table-responsive">
-                                                <table id="draftHistoryTable" class="table table-bordered custom-table table-hover">
+                                                <table id="draftHistoryTable"
+                                                    class="table table-bordered custom-table table-hover">
                                                     <thead class="table-light">
                                                         <tr>
                                                             <th>#</th>
@@ -856,19 +952,26 @@ function numberFormat($number) {
                                                 <div class="row align-items-center">
                                                     <div class="col-md-6 mb-2 mb-md-0">
                                                         <div class="pagination-info">
-                                                            نیشاندانی <span id="draftStartRecord">1</span> تا <span id="draftEndRecord">3</span> لە کۆی <span id="draftTotalRecords">3</span> تۆمار
+                                                            نیشاندانی <span id="draftStartRecord">1</span> تا <span
+                                                                id="draftEndRecord">3</span> لە کۆی <span
+                                                                id="draftTotalRecords">3</span> تۆمار
                                                         </div>
                                                     </div>
                                                     <div class="col-md-6">
                                                         <div class="pagination-controls d-flex justify-content-md-end">
-                                                            <button id="draftPrevPageBtn" class="btn btn-sm btn-outline-primary rounded-circle me-2" disabled>
+                                                            <button id="draftPrevPageBtn"
+                                                                class="btn btn-sm btn-outline-primary rounded-circle me-2"
+                                                                disabled>
                                                                 <i class="fas fa-chevron-right"></i>
                                                             </button>
-                                                            <div id="draftPaginationNumbers" class="pagination-numbers d-flex">
+                                                            <div id="draftPaginationNumbers"
+                                                                class="pagination-numbers d-flex">
                                                                 <!-- Pagination numbers will be generated by JavaScript -->
-                                                                <button class="btn btn-sm btn-primary rounded-circle me-2 active">1</button>
+                                                                <button
+                                                                    class="btn btn-sm btn-primary rounded-circle me-2 active">1</button>
                                                             </div>
-                                                            <button id="draftNextPageBtn" class="btn btn-sm btn-outline-primary rounded-circle">
+                                                            <button id="draftNextPageBtn"
+                                                                class="btn btn-sm btn-outline-primary rounded-circle">
                                                                 <i class="fas fa-chevron-left"></i>
                                                             </button>
                                                         </div>
@@ -886,7 +989,8 @@ function numberFormat($number) {
         </div>
     </div>
 
-    <div class="modal fade" id="editEmployeePaymentModal" tabindex="-1" aria-labelledby="editEmployeePaymentModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editEmployeePaymentModal" tabindex="-1" aria-labelledby="editEmployeePaymentModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -941,7 +1045,8 @@ function numberFormat($number) {
     </div>
 
     <!-- Shipping Cost Edit Modal -->
-    <div class="modal fade" id="editShippingModal" tabindex="-1" aria-labelledby="editShippingModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editShippingModal" tabindex="-1" aria-labelledby="editShippingModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -991,7 +1096,8 @@ function numberFormat($number) {
     </div>
 
     <!-- Withdrawal Edit Modal -->
-    <div class="modal fade" id="editWithdrawalModal" tabindex="-1" aria-labelledby="editWithdrawalModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editWithdrawalModal" tabindex="-1" aria-labelledby="editWithdrawalModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -1109,7 +1215,8 @@ function numberFormat($number) {
     </div>
 
     <!-- Edit Purchase Modal -->
-    <div class="modal fade" id="editPurchaseModal" tabindex="-1" aria-labelledby="editPurchaseModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editPurchaseModal" tabindex="-1" aria-labelledby="editPurchaseModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
@@ -1211,7 +1318,7 @@ function numberFormat($number) {
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Update script references at the bottom of the file -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -1219,618 +1326,55 @@ function numberFormat($number) {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <!-- Custom JavaScript -->
     <script src="../../js/include-components.js"></script>
-    <script src="../../js/receiptList/receipt.js"></script>
+
+    <!-- New modular JavaScript files -->
+    <script src="../../js/receiptList/tabs/common-receipt-functions.js"></script>
+    <script src="../../js/receiptList/tabs/sale-receipts.js"></script>
+    <script src="../../js/receiptList/tabs/purchase-receipts.js"></script>
+    <script src="../../js/receiptList/tabs/wasting-receipts.js"></script>
+    <script src="../../js/receiptList/tabs/draft-receipts.js"></script>
     
+    <!-- You can continue to use your existing JavaScript for other tabs initially -->
     <script>
+        // This is just a bridge to migrate to the new structure
+        // Eventually, all old code should be removed and replaced with modular files
         $(document).ready(function() {
-            // Handle draft receipt actions
-            $('#draftHistoryTable').on('click', '.view-btn', function() {
-                const receiptId = $(this).data('id');
-                viewDraftReceipt(receiptId);
-            });
-
-            $('#draftHistoryTable').on('click', '.edit-btn', function() {
-                const receiptId = $(this).data('id');
-                window.location.href = `editReceipt.php?id=${receiptId}&type=selling&is_draft=1`;
-            });
-
-            $('#draftHistoryTable').on('click', '.finalize-btn', function() {
-                const receiptId = $(this).data('id');
-                finalizeDraftReceipt(receiptId, $(this).closest('tr'));
-            });
-
-            $('#draftHistoryTable').on('click', '.delete-btn', function() {
-                const receiptId = $(this).data('id');
-                deleteDraftReceipt(receiptId, $(this).closest('tr'));
-            });
-
-            // Function to view draft receipt details
-            function viewDraftReceipt(receiptId) {
-                Swal.fire({
-                    title: 'جاری وەرگرتنی زانیاری...',
-                    didOpen: () => {
-                        Swal.showLoading();
-                    },
-                    allowOutsideClick: false
-                });
-
-                $.ajax({
-                    url: '../../api/get_receipt_details.php',
-                    type: 'POST',
-                    data: {
-                        id: receiptId,
-                        type: 'selling',
-                        is_draft: 1
-                    },
-                    success: function(response) {
-                        Swal.close();
-                        if (response.success) {
-                            showReceiptDetails(response.data);
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'هەڵە!',
-                                text: response.message
-                            });
+            // Handle tab switching to load relevant data
+            $('#expensesTabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+                const target = $(e.target).attr("data-bs-target");
+                if (target === '#employee-payment-content') {
+                    // Load sales data if not already loaded
+                    if ($('#employeeHistoryTable tbody tr').length <= 1) {
+                        loadSalesData();
+                    }
+                } else if (target === '#shipping-content') {
+                    // Load purchases data if not already loaded
+                    if ($('#shippingHistoryTable tbody tr').length <= 1) {
+                        if (typeof loadPurchasesData === 'function') {
+                            loadPurchasesData();
                         }
-                    },
-                    error: function() {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'هەڵە!',
-                            text: 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیاری'
-                        });
                     }
-                });
-            }
-
-            // Function to show receipt details
-            function showReceiptDetails(data) {
-                let itemsHtml = '';
-                data.items.forEach((item, index) => {
-                    itemsHtml += `
-                        <tr>
-                            <td>${index + 1}</td>
-                            <td>${item.product_name}</td>
-                            <td>${item.unit_type === 'piece' ? 'دانە' : (item.unit_type === 'box' ? 'کارتۆن' : 'سێت')}</td>
-                            <td>${item.unit_price}</td>
-                            <td>${item.quantity}</td>
-                            <td>${item.total_price}</td>
-                        </tr>
-                    `;
-                });
-
-                Swal.fire({
-                    title: `پسووڵەی ژمارە: ${data.header.invoice_number}`,
-                    html: `
-                        <div class="receipt-details">
-                            <p><strong>کڕیار:</strong> ${data.header.customer_name}</p>
-                            <p><strong>بەروار:</strong> ${data.header.date}</p>
-                            <p><strong>جۆری پارەدان:</strong> ${data.header.payment_type === 'cash' ? 'نەقد' : 'قەرز'}</p>
-                            <div class="table-responsive">
-                                <table class="table table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>کاڵا</th>
-                                            <th>یەکە</th>
-                                            <th>نرخی یەکە</th>
-                                            <th>بڕ</th>
-                                            <th>کۆی گشتی</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${itemsHtml}
-                                    </tbody>
-                                    <tfoot>
-                                        <tr>
-                                            <th colspan="5">کۆی کاڵاکان:</th>
-                                            <td>${data.totals.subtotal}</td>
-                                        </tr>
-                                        <tr>
-                                            <th colspan="5">کرێی گواستنەوە:</th>
-                                            <td>${data.header.shipping_cost}</td>
-                                        </tr>
-                                        <tr>
-                                            <th colspan="5">خەرجی تر:</th>
-                                            <td>${data.header.other_costs}</td>
-                                        </tr>
-                                        <tr>
-                                            <th colspan="5">داشکاندن:</th>
-                                            <td>${data.header.discount}</td>
-                                        </tr>
-                                        <tr>
-                                            <th colspan="5">کۆی گشتی:</th>
-                                            <td>${data.totals.grand_total}</td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
-                        </div>
-                    `,
-                    width: '800px',
-                    showCloseButton: true,
-                    showConfirmButton: false
-                });
-            }
-
-            // Function to finalize draft receipt
-            function finalizeDraftReceipt(receiptId, row) {
-                Swal.fire({
-                    title: 'دڵنیای؟',
-                    text: 'ئەم ڕەشنووسە دەبێتە پسووڵەیەکی ڕاستەقینە و کاریگەری دەبێت لەسەر عەمباری کۆگاکە',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'بەڵێ، پەسەندی بکە',
-                    cancelButtonText: 'نەخێر'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: '../../api/finalize_draft.php',
-                            type: 'POST',
-                            data: {
-                                id: receiptId,
-                                type: 'selling'
-                            },
-                            success: function(response) {
-                                if (response.success) {
-                                    Swal.fire({
-                                        icon: 'success',
-                                        title: 'پەسەندکرا!',
-                                        text: 'ڕەشنووسەکە بە سەرکەوتوویی پەسەندکرا'
-                                    }).then(() => {
-                                        row.fadeOut(400, function() {
-                                            $(this).remove();
-                                            if ($('#draftHistoryTable tbody tr').length === 0) {
-                                                $('#draftHistoryTable tbody').html('<tr><td colspan="7" class="text-center">هیچ ڕەشنووسێک نەدۆزرایەوە</td></tr>');
-                                            }
-                                        });
-                                    });
-                                } else {
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'هەڵە!',
-                                        text: response.message
-                                    });
-                                }
-                            },
-                            error: function() {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'هەڵە!',
-                                    text: 'هەڵەیەک ڕوویدا لە پەسەندکردنی ڕەشنووس'
-                                });
-                            }
-                        });
-                    }
-                });
-            }
-
-            // Function to delete draft receipt
-            function deleteDraftReceipt(receiptId, row) {
-                Swal.fire({
-                    title: 'دڵنیای؟',
-                    text: 'ئەم ڕەشنووسە دەسڕێتەوە و ناتوانرێت بگەڕێنرێتەوە',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'بەڵێ، بیسڕەوە',
-                    cancelButtonText: 'نەخێر'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: '../../api/delete_draft.php',
-                            type: 'POST',
-                            data: {
-                                id: receiptId,
-                                type: 'selling'
-                            },
-                            success: function(response) {
-                                if (response.success) {
-                                    Swal.fire({
-                                        icon: 'success',
-                                        title: 'سڕایەوە!',
-                                        text: 'ڕەشنووسەکە بە سەرکەوتوویی سڕایەوە'
-                                    }).then(() => {
-                                        row.fadeOut(400, function() {
-                                            $(this).remove();
-                                            if ($('#draftHistoryTable tbody tr').length === 0) {
-                                                $('#draftHistoryTable tbody').html('<tr><td colspan="7" class="text-center">هیچ ڕەشنووسێک نەدۆزرایەوە</td></tr>');
-                                            }
-                                        });
-                                    });
-                                } else {
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'هەڵە!',
-                                        text: response.message
-                                    });
-                                }
-                            },
-                            error: function() {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'هەڵە!',
-                                    text: 'هەڵەیەک ڕوویدا لە سڕینەوەی ڕەشنووس'
-                                });
-                            }
-                        });
-                    }
-                });
-            }
-
-            // Handle filter form
-            $('#draftFilterForm').on('submit', function(e) {
-                e.preventDefault();
-                filterDrafts();
-            });
-
-            // Handle filter reset
-            $('#draftResetFilter').on('click', function() {
-                $('#draftFilterForm')[0].reset();
-                filterDrafts();
-            });
-
-            // Function to filter drafts
-            function filterDrafts() {
-                const startDate = $('#draftStartDate').val();
-                const endDate = $('#draftEndDate').val();
-                const customer = $('#draftCustomer').val();
-
-                $.ajax({
-                    url: '../../api/filter_drafts.php',
-                    type: 'POST',
-                    data: {
-                        start_date: startDate,
-                        end_date: endDate,
-                        customer: customer,
-                        type: 'selling'
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            updateDraftTable(response.data);
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'هەڵە!',
-                                text: response.message
-                            });
+                } else if (target === '#withdrawal-content') {
+                    // Load wasting data if not already loaded
+                    if ($('#withdrawalHistoryTable tbody tr').length <= 1) {
+                        if (typeof loadWastingData === 'function') {
+                            loadWastingData();
                         }
-                    },
-                    error: function() {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'هەڵە!',
-                            text: 'هەڵەیەک ڕوویدا لە فلتەرکردنی ڕەشنووسەکان'
-                        });
                     }
-                });
-            }
-
-            // Function to update draft table
-            function updateDraftTable(data) {
-                const tbody = $('#draftHistoryTable tbody');
-                tbody.empty();
-
-                if (data.length > 0) {
-                    data.forEach((receipt, index) => {
-                        tbody.append(`
-                            <tr>
-                                <td>${index + 1}</td>
-                                <td>${receipt.invoice_number} <span class="draft-badge">ڕەشنووس</span></td>
-                                <td>${receipt.customer_name}</td>
-                                <td>${receipt.date}</td>
-                                <td>${receipt.payment_type === 'cash' ? 'نەقد' : 'قەرز'}</td>
-                                <td>${receipt.total_amount} دینار</td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${receipt.id}">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${receipt.id}">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-success rounded-circle finalize-btn" data-id="${receipt.id}">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${receipt.id}">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        `);
-                    });
-                } else {
-                    tbody.html('<tr><td colspan="7" class="text-center">هیچ ڕەشنووسێک نەدۆزرایەوە</td></tr>');
+                } else if (target === '#draft-content') {
+                    // Load draft data if not already loaded
+                    if ($('#draftHistoryTable tbody tr').length <= 1) {
+                        if (typeof loadDraftReceipts === 'function') {
+                            loadDraftReceipts();
+                        }
+                    }
                 }
-            }
-
-            // Handle delete button click for sales
-            $('#employeeHistoryTable').on('click', '.delete-btn', function() {
-                const saleId = $(this).data('id');
-                const row = $(this).closest('tr');
-                
-                Swal.fire({
-                    title: 'دڵنیای؟',
-                    text: 'ئەم پسووڵەیە دەسڕێتەوە و ناتوانرێت بگەڕێنرێتەوە',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'بەڵێ، بیسڕەوە',
-                    cancelButtonText: 'نەخێر',
-                    customClass: {
-                        popup: 'swal-rtl'
-                    }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: '../../api/delete_receipt.php',
-                            type: 'POST',
-                            data: {
-                                id: saleId,
-                                type: 'sale'
-                            },
-                            success: function(response) {
-                                if (response.success) {
-                                    Swal.fire({
-                                        icon: 'success',
-                                        title: 'سڕایەوە!',
-                                        text: 'پسووڵەکە بە سەرکەوتوویی سڕایەوە',
-                                        customClass: {
-                                            popup: 'swal-rtl'
-                                        }
-                                    }).then(() => {
-                                        row.fadeOut(400, function() {
-                                            $(this).remove();
-                                        });
-                                    });
-                                } else {
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'هەڵە!',
-                                        text: response.message,
-                                        customClass: {
-                                            popup: 'swal-rtl'
-                                        }
-                                    });
-                                }
-                            },
-                            error: function() {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'هەڵە!',
-                                    text: 'هەڵەیەک ڕوویدا لە سڕینەوەی پسووڵە',
-                                    customClass: {
-                                        popup: 'swal-rtl'
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
             });
-
-            // Handle delete button click for purchases
-            $('#shippingHistoryTable').on('click', '.delete-btn', function() {
-                const purchaseId = $(this).data('id');
-                const row = $(this).closest('tr');
-                
-                Swal.fire({
-                    title: 'دڵنیای؟',
-                    text: 'ئەم پسووڵەیە دەسڕێتەوە و ناتوانرێت بگەڕێنرێتەوە',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'بەڵێ، بیسڕەوە',
-                    cancelButtonText: 'نەخێر',
-                    customClass: {
-                        popup: 'swal-rtl'
-                    }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: '../../api/delete_receipt.php',
-                            type: 'POST',
-                            data: {
-                                id: purchaseId,
-                                type: 'purchase'
-                            },
-                            success: function(response) {
-                                if (response.success) {
-                                    Swal.fire({
-                                        icon: 'success',
-                                        title: 'سڕایەوە!',
-                                        text: 'پسووڵەکە بە سەرکەوتوویی سڕایەوە',
-                                        customClass: {
-                                            popup: 'swal-rtl'
-                                        }
-                                    }).then(() => {
-                                        row.fadeOut(400, function() {
-                                            $(this).remove();
-                                        });
-                                    });
-                                } else {
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'هەڵە!',
-                                        text: response.message,
-                                        customClass: {
-                                            popup: 'swal-rtl'
-                                        }
-                                    });
-                                }
-                            },
-                            error: function() {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'هەڵە!',
-                                    text: 'هەڵەیەک ڕوویدا لە سڕینەوەی پسووڵە',
-                                    customClass: {
-                                        popup: 'swal-rtl'
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
-            });
-
-            // Handle return button click
-            $('.return-btn').on('click', function() {
-                const receiptId = $(this).data('id');
-                const receiptType = $(this).closest('table').attr('id') === 'employeeHistoryTable' ? 'sale' : 'purchase';
-                
-                // Get receipt items
-                $.ajax({
-                    url: '../../api/get_receipt_items.php',
-                    type: 'POST',
-                    data: {
-                        id: receiptId,
-                        type: receiptType
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            $('#returnReceiptId').val(receiptId);
-                            $('#returnReceiptType').val(receiptType);
-                            populateReturnItems(response.data);
-                            $('#returnModal').modal('show');
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'هەڵە!',
-                                text: response.message
-                            });
-                        }
-                    },
-                    error: function() {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'هەڵە!',
-                            text: 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیاری'
-                        });
-                    }
-                });
-            });
-
-            function populateReturnItems(items) {
-                const tbody = $('#returnItemsList');
-                tbody.empty();
-
-                items.forEach(item => {
-                    const row = `
-                        <tr data-product-id="${item.product_id}" data-unit-type="${item.unit_type}">
-                            <td>${item.product_name}</td>
-                            <td>${getUnitTypeText(item.unit_type)}</td>
-                            <td>${item.quantity}</td>
-                            <td>${item.returned_quantity || 0}</td>
-                            <td>
-                                <input type="number" class="form-control return-quantity" 
-                                       min="0" 
-                                       max="${item.quantity - (item.returned_quantity || 0)}"
-                                       value="0">
-                            </td>
-                        </tr>
-                    `;
-                    tbody.append(row);
-                });
-            }
-
-            function getUnitTypeText(unitType) {
-                switch(unitType) {
-                    case 'piece': return 'دانە';
-                    case 'box': return 'کارتۆن';
-                    case 'set': return 'سێت';
-                    default: return unitType;
-                }
-            }
-
-            // Handle save return
-            $('#saveReturn').on('click', function() {
-                const returnItems = [];
-                let hasReturns = false;
-
-                $('#returnItemsList tr').each(function() {
-                    const quantity = parseFloat($(this).find('.return-quantity').val());
-                    if (quantity > 0) {
-                        hasReturns = true;
-                        returnItems.push({
-                            product_id: $(this).data('product-id'),
-                            quantity: quantity,
-                            unit_type: $(this).data('unit-type')
-                        });
-                    }
-                });
-
-                if (!hasReturns) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'ئاگاداری',
-                        text: 'تکایە بڕی گەڕاندنەوە دیاری بکە'
-                    });
-                    return;
-                }
-
-                $.ajax({
-                    url: '../../api/return_items.php',
-                    type: 'POST',
-                    data: {
-                        receipt_id: $('#returnReceiptId').val(),
-                        receipt_type: $('#returnReceiptType').val(),
-                        items: JSON.stringify(returnItems),
-                        notes: $('#returnNotes').val()
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'سەرکەوتوو بوو!',
-                                text: response.message
-                            }).then(() => {
-                                $('#returnModal').modal('hide');
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'هەڵە!',
-                                text: response.message
-                            });
-                        }
-                    },
-                    error: function() {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'هەڵە!',
-                            text: 'هەڵەیەک ڕوویدا لە گەڕاندنەوەی کاڵاکان'
-                        });
-                    }
-                });
-            });
+            
+            // Initialize product hover functionality for all tables
+            initProductsListHover();
         });
     </script>
-
-    <style>
-        .swal-html-rtl {
-            direction: rtl !important;
-            text-align: right !important;
-        }
-        
-        /* Custom scrollbar for Webkit browsers */
-        .swal2-html-container::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        .swal2-html-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-        
-        .swal2-html-container::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-        }
-        
-        .swal2-html-container::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-    </style>
 </body>
+
 </html> 

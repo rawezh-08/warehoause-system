@@ -84,6 +84,22 @@ try {
         }
         $stmt->execute([$item['quantity'], $receipt_id, $item['product_id']]);
 
+        // Also update the total_price based on the new returned quantity
+        if ($receipt_type === 'sale') {
+            $stmt = $conn->prepare("
+                UPDATE sale_items 
+                SET total_price = (quantity - COALESCE(returned_quantity, 0)) * unit_price
+                WHERE sale_id = ? AND product_id = ?
+            ");
+        } else {
+            $stmt = $conn->prepare("
+                UPDATE purchase_items 
+                SET total_price = (quantity - COALESCE(returned_quantity, 0)) * unit_price
+                WHERE purchase_id = ? AND product_id = ?
+            ");
+        }
+        $stmt->execute([$receipt_id, $item['product_id']]);
+
         // Update product quantity
         if ($receipt_type === 'sale') {
             // For sales returns, subtract from inventory (items coming back)

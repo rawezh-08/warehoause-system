@@ -5,7 +5,6 @@ $(document).ready(function() {
         const startDate = $('#employeePaymentStartDate').val();
         const endDate = $('#employeePaymentEndDate').val();
         const customerName = $('#employeePaymentName').val();
-        const invoiceNumber = $('#invoiceNumber').val();
         
         filterSalesData();
     }
@@ -92,7 +91,11 @@ $(document).ready(function() {
         const startDate = $('#employeePaymentStartDate').val();
         const endDate = $('#employeePaymentEndDate').val();
         const customerName = $('#employeePaymentName').val();
-        const invoiceNumber = $('#invoiceNumber').val();
+        
+        console.log('Filtering sales data with:', { startDate, endDate, customerName });
+        
+        // Show loading indicator
+        $('.table-responsive').addClass('loading');
         
         $.ajax({
             url: '../../api/filter_receipts.php',
@@ -101,25 +104,50 @@ $(document).ready(function() {
                 start_date: startDate,
                 end_date: endDate,
                 customer_name: customerName,
-                invoice_number: invoiceNumber,
-                type: 'selling'
+                type: 'sale' // Use 'sale' instead of 'selling'
             },
             success: function(response) {
+                // Hide loading indicator
+                $('.table-responsive').removeClass('loading');
+                
+                console.log('Sales filter response:', response);
+                
                 if (response.success) {
                     updateSalesTable(response.data);
                 } else {
+                    console.error('Error filtering sales data:', response.message);
                     Swal.fire({
                         icon: 'error',
                         title: 'هەڵە!',
-                        text: response.message
+                        text: response.message || 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیاری'
                     });
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
+                // Hide loading indicator
+                $('.table-responsive').removeClass('loading');
+                
+                console.error('AJAX error when filtering sales data:', { xhr, status, error });
+                
+                // Construct detailed error message
+                let errorDetails = '';
+                if (xhr.responseText) {
+                    try {
+                        const errorResponse = JSON.parse(xhr.responseText);
+                        errorDetails = errorResponse.message || '';
+                        console.error('Server error response:', errorResponse);
+                    } catch (e) {
+                        errorDetails = xhr.responseText;
+                        console.error('Raw server error:', xhr.responseText);
+                    }
+                }
+                
+                // Show error message
                 Swal.fire({
                     icon: 'error',
                     title: 'هەڵە!',
-                    text: 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیاری'
+                    text: 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیاری: ' + (errorDetails || error || status),
+                    footer: '<strong>Status Code:</strong> ' + xhr.status
                 });
             }
         });
@@ -132,6 +160,11 @@ $(document).ready(function() {
         const supplierName = $('#shippingProvider').val();
         const invoiceNumber = $('#shippingInvoiceNumber').val();
         
+        console.log('Filtering purchases data with:', { startDate, endDate, supplierName, invoiceNumber });
+        
+        // Show loading indicator
+        $('#purchasesTableContainer').addClass('loading');
+        
         $.ajax({
             url: '../../api/filter_receipts.php',
             type: 'POST',
@@ -143,25 +176,36 @@ $(document).ready(function() {
                 type: 'buying'
             },
             success: function(response) {
+                // Hide loading indicator
+                $('#purchasesTableContainer').removeClass('loading');
+                
+                console.log('Purchases filter response:', response);
+                
                 if (response.success) {
                     updatePurchasesTable(response.data);
                 } else {
+                    console.error('Error filtering purchases data:', response.message);
                     Swal.fire({
                         icon: 'error',
+                        title: 'هەڵە!',
+                        text: response.message || 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیاری'
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                // Hide loading indicator
+                $('#purchasesTableContainer').removeClass('loading');
+                
+                console.error('AJAX error when filtering purchases data:', { xhr, status, error });
+                
+                Swal.fire({
+                    icon: 'error',
                     title: 'هەڵە!',
-                    text: response.message
+                    text: 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیاری: ' + (error || status)
                 });
             }
-        },
-            error: function() {
-            Swal.fire({
-                icon: 'error',
-                    title: 'هەڵە!',
-                    text: 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیاری'
-            });
-        }
-    });
-}
+        });
+    }
 
     // Function to filter waste data
     function filterWasteData() {
@@ -345,15 +389,63 @@ $(document).ready(function() {
     // Handle edit button clicks
     $(document).on('click', '.edit-btn', function() {
         const id = $(this).data('id');
-        const type = $(this).closest('.tab-pane').attr('id');
-        window.location.href = `editReceipt.php?id=${id}&type=${type}`;
+        const activeTab = $('.nav-tabs .active').attr('id');
+        let receiptType;
+        
+        switch(activeTab) {
+            case 'employee-payment-tab':
+                receiptType = 'selling';
+                break;
+            case 'shipping-tab':
+                receiptType = 'buying';
+                break;
+            case 'withdrawal-tab':
+                receiptType = 'wasting';
+                break;
+            default:
+                console.error('Unknown tab type:', activeTab);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە!',
+                    text: 'جۆری پسووڵەکە نەناسراوە'
+                });
+                return;
+        }
+        
+        // Load receipt data and show edit modal
+        loadReceiptForEditing(id, receiptType);
     });
 
     // Handle print button clicks
     $(document).on('click', '.print-btn', function() {
         const id = $(this).data('id');
-        const type = $(this).closest('.tab-pane').attr('id');
-        window.open(`print_receipt.php?id=${id}&type=${type}`, '_blank');
+        const activeTab = $('.nav-tabs .active').attr('id');
+        let type;
+        
+        // Determine the correct receipt type based on active tab
+        switch(activeTab) {
+            case 'employee-payment-tab':
+                type = 'sale';
+                break;
+            case 'shipping-tab':
+                type = 'purchase';
+                break;
+            case 'withdrawal-tab':
+                type = 'wasting';
+                break;
+            default:
+                console.error('Unknown tab type:', activeTab);
+                return;
+        }
+        
+        // Open print receipt page in new window with correct parameters
+        if (type === 'sale') {
+            window.open(`../../views/receipt/print_receipt.php?sale_id=${id}`, '_blank');
+        } else if (type === 'purchase') {
+            window.open(`../../views/receipt/print_receipt.php?purchase_id=${id}`, '_blank');
+        } else {
+            window.open(`../../views/receipt/print_receipt.php?waste_id=${id}`, '_blank');
+        }
     });
 
     // Add return functionality
@@ -384,7 +476,7 @@ $(document).ready(function() {
                             itemsHtml += `
                                 <tr>
                                     <td>${index + 1}</td>
-                                    <td style="min-width: 200px; word-break: break-word;">
+                                    <td style="min-width: 200px; word-break: break-word; overflow-wrap: break-word;">
                                         ${item.product_name}
                                     </td>
                                     <td>${item.unit_type === 'piece' ? 'دانە' : (item.unit_type === 'box' ? 'کارتۆن' : 'سێت')}</td>
@@ -396,8 +488,11 @@ $(document).ready(function() {
                                                min="0" max="${maxReturn}" value="0"
                                                data-product-id="${item.product_id}"
                                                data-unit-price="${item.unit_price}"
-                                               data-unit-type="${item.unit_type}">
+                                               data-unit-type="${item.unit_type}"
+                                               data-product-name="${item.product_name}"
+                                               onchange="calculateReturnTotals()">
                                     </td>
+                                    <td class="item-return-total text-end" style="min-width: 120px;">0 د.ع</td>
                                 </tr>
                             `;
                         }
@@ -416,7 +511,8 @@ $(document).ready(function() {
                         title: 'گەڕاندنەوەی کاڵا',
                         html: `
                             <form id="returnForm" class="mx-3">
-                                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <input type="hidden" id="paymentType" value="${data.header.payment_type || 'cash'}">
+                                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
                                     <table class="table table-bordered table-hover">
                                         <thead class="sticky-top bg-light">
                                             <tr>
@@ -427,6 +523,7 @@ $(document).ready(function() {
                                                 <th>بڕی کڕدراو</th>
                                                 <th>بڕی گەڕێندراوە</th>
                                                 <th>بڕی گەڕاندنەوە</th>
+                                                <th>کۆی گشتی</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -434,19 +531,61 @@ $(document).ready(function() {
                                         </tbody>
                                     </table>
                                 </div>
-                                <div class="form-group mt-4">
-                                    <label for="returnReason" class="form-label fw-bold">هۆکاری گەڕاندنەوە</label>
-                                    <select class="form-select" id="returnReason" required>
-                                        <option value="">هۆکار هەڵبژێرە</option>
-                                        <option value="damaged">کاڵای خراپ</option>
-                                        <option value="wrong_product">کاڵای هەڵە</option>
-                                        <option value="customer_request">داواکاری کڕیار</option>
-                                        <option value="other">هۆکاری تر</option>
-                                    </select>
-                                </div>
-                                <div class="form-group mt-3">
-                                    <label for="returnNotes" class="form-label fw-bold">تێبینی</label>
-                                    <textarea class="form-control" id="returnNotes" rows="3"></textarea>
+
+                                <div class="card mt-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">زانیاری گەڕاندنەوە</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="returnReason" class="form-label fw-bold">هۆکاری گەڕاندنەوە</label>
+                                                    <select class="form-select" id="returnReason" required>
+                                                        <option value="">هۆکار هەڵبژێرە</option>
+                                                        <option value="damaged">کاڵای خراپ</option>
+                                                        <option value="wrong_product">کاڵای هەڵە</option>
+                                                        <option value="customer_request">داواکاری کڕیار</option>
+                                                        <option value="other">هۆکاری تر</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="returnNotes" class="form-label fw-bold">تێبینی</label>
+                                                    <textarea class="form-control" id="returnNotes" rows="3"></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span class="fw-bold">کۆی بەهای گەڕاندنەوە:</span>
+                                                        <span id="totalReturnAmount" class="fw-bold fs-5">0 د.ع</span>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span class="fw-bold">جۆری پارەدان:</span>
+                                                        <span id="paymentTypeDisplay" class="fw-bold text-primary">${data.header.payment_type === 'credit' ? 'قەرز' : 'نەقد'}</span>
+                                                    </div>
+                                                </div>
+                                                ${data.header.payment_type === 'credit' ? `
+                                                <div class="mb-3">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span class="fw-bold">قەرزی پێشوو:</span>
+                                                        <span id="previousDebt" class="fw-bold text-danger">${data.header.remaining_amount || 0} د.ع</span>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span class="fw-bold">قەرزی نوێ (دوای گەڕاندنەوە):</span>
+                                                        <span id="newDebt" class="fw-bold text-danger">${data.header.remaining_amount || 0} د.ع</span>
+                                                    </div>
+                                                </div>` : ''}
+                                                <div class="alert alert-info mt-3" id="returnSummary">
+                                                    تکایە بڕی گەڕاندنەوە دیاری بکە
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </form>
                         `,
@@ -459,6 +598,60 @@ $(document).ready(function() {
                             container: 'swal-rtl',
                             popup: 'swal-wide',
                             content: 'swal-content-large'
+                        },
+                        didOpen: () => {
+                            // Define the calculation function in global scope
+                            window.calculateReturnTotals = function() {
+                                let totalReturn = 0;
+                                let returnedItems = 0;
+                                let itemsSummary = [];
+                                
+                                // Calculate each item's return amount
+                                $('.return-quantity').each(function() {
+                                    const quantity = parseFloat($(this).val()) || 0;
+                                    const unitPrice = parseFloat($(this).data('unit-price')) || 0;
+                                    const totalPrice = quantity * unitPrice;
+                                    
+                                    // Update item total in the table
+                                    $(this).closest('tr').find('.item-return-total').text(totalPrice.toFixed(0) + ' د.ع');
+                                    
+                                    // Add to total return amount
+                                    totalReturn += totalPrice;
+                                    
+                                    // Add to summary if returning this item
+                                    if (quantity > 0) {
+                                        returnedItems++;
+                                        itemsSummary.push({
+                                            name: $(this).data('product-name'),
+                                            quantity: quantity,
+                                            total: totalPrice
+                                        });
+                                    }
+                                });
+                                
+                                // Update UI
+                                $('#totalReturnAmount').text(totalReturn.toFixed(0) + ' د.ع');
+                                
+                                // Calculate new debt if credit payment
+                                if ($('#paymentType').val() === 'credit') {
+                                    const previousDebt = parseFloat($('#previousDebt').text().replace(' د.ع', '')) || 0;
+                                    const newDebt = Math.max(0, previousDebt - totalReturn);
+                                    $('#newDebt').text(newDebt.toFixed(0) + ' د.ع');
+                                }
+                                
+                                // Update summary
+                                if (returnedItems === 0) {
+                                    $('#returnSummary').html('تکایە بڕی گەڕاندنەوە دیاری بکە');
+                                } else {
+                                    let summaryHtml = `<p>گەڕاندنەوەی ${returnedItems} کاڵا بە بەهای ${totalReturn.toFixed(0)} د.ع</p>`;
+                                    
+                                    if ($('#paymentType').val() === 'credit') {
+                                        summaryHtml += `<p>قەرزی نوێ: ${$('#newDebt').text()}</p>`;
+                                    }
+                                    
+                                    $('#returnSummary').html(summaryHtml);
+                                }
+                            };
                         },
                         preConfirm: () => {
                             const returnItems = [];
@@ -510,7 +703,11 @@ $(document).ready(function() {
                                         Swal.fire({
                                             icon: 'success',
                                             title: 'سەرکەوتوو بوو!',
-                                            text: 'گەڕاندنەوەی کاڵاکان بە سەرکەوتوویی تۆمار کرا'
+                                            text: 'گەڕاندنەوەی کاڵاکان بە سەرکەوتوویی تۆمار کرا',
+                                            html: `
+                                                <p>گەڕاندنەوەی کاڵاکان بە سەرکەوتوویی تۆمار کرا</p>
+                                                <p>بڕی گەڕێندراوە: ${response.return_amount} د.ع</p>
+                                            `
                                         }).then(() => {
                                             // Refresh the table
                                             if (receiptType === 'selling') {
@@ -785,4 +982,652 @@ $(document).ready(function() {
             }
         });
     });
+
+    // Function to load receipt data for editing
+    function loadReceiptForEditing(id, receiptType) {
+        // Show loading modal
+        Swal.fire({
+            title: 'تکایە چاوەڕێ بکە',
+            text: 'بارکردنی زانیاریەکانی پسووڵە...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        // Fetch receipt details from server
+        $.ajax({
+            url: '../../api/get_receipt_details.php',
+            type: 'POST',
+            data: { 
+                id: id, 
+                type: receiptType 
+            },
+            success: function(response) {
+                Swal.close();
+                
+                if (response.success) {
+                    showEditReceiptModal(response.data, receiptType);
+                } else {
+                    console.error('API Error:', response);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە!',
+                        text: response.message || 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیاری پسووڵە'
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                Swal.close();
+                console.error('AJAX Error:', {xhr, status, error});
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە!',
+                    text: 'هەڵەیەک ڕوویدا لە پەیوەندی کردن بە سێرڤەر: ' + error
+                });
+            }
+        });
+    }
+    
+    // Function to show the receipt edit modal
+    function showEditReceiptModal(data, receiptType) {
+        // Create items HTML
+        let itemsHtml = '';
+        if (data.items && data.items.length > 0) {
+            data.items.forEach((item, index) => {
+                itemsHtml += `
+                    <tr class="item-row" data-product-id="${item.product_id}">
+                        <td>${index + 1}</td>
+                        <td>${item.product_name}</td>
+                        <td>
+                            <select class="form-select form-select-sm unit-type">
+                                <option value="piece" ${item.unit_type === 'piece' ? 'selected' : ''}>دانە</option>
+                                <option value="box" ${item.unit_type === 'box' ? 'selected' : ''}>کارتۆن</option>
+                                <option value="set" ${item.unit_type === 'set' ? 'selected' : ''}>سێت</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm unit-price" value="${item.unit_price}" min="0">
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm quantity" value="${item.quantity}" min="1">
+                        </td>
+                        <td class="item-total">${item.total_price} د.ع</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-item">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+        
+        // Customer/Supplier selection based on receipt type
+        let partnerSelectionHtml = '';
+        
+        if (receiptType === 'selling') {
+            partnerSelectionHtml = `
+                <div class="mb-3">
+                    <label for="customerSelect" class="form-label">کڕیار</label>
+                    <select class="form-select" id="customerSelect" required>
+                        <option value="">هەڵبژاردنی کڕیار</option>
+                        <!-- Customers will be loaded dynamically -->
+                    </select>
+                </div>
+            `;
+        } else if (receiptType === 'buying') {
+            partnerSelectionHtml = `
+                <div class="mb-3">
+                    <label for="supplierSelect" class="form-label">فرۆشیار</label>
+                    <select class="form-select" id="supplierSelect" required>
+                        <option value="">هەڵبژاردنی فرۆشیار</option>
+                        <!-- Suppliers will be loaded dynamically -->
+                    </select>
+                </div>
+            `;
+        }
+        
+        // Create and show the modal
+        Swal.fire({
+            title: 'دەستکاریکردنی پسووڵە',
+            html: `
+                <form id="editReceiptForm" class="text-start">
+                    <input type="hidden" id="receiptId" value="${data.header.id}">
+                    <input type="hidden" id="receiptType" value="${receiptType}">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="invoiceNumber" class="form-label">ژمارەی پسووڵە</label>
+                                <input type="text" class="form-control" id="invoiceNumber" value="${data.header.invoice_number}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="receiptDate" class="form-label">بەروار</label>
+                                <input type="date" class="form-control" id="receiptDate" value="${formatDateForInput(data.header.date)}" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${partnerSelectionHtml}
+                    
+                    <div class="mb-3">
+                        <h5>کاڵاکان</h5>
+                        <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>کاڵا</th>
+                                        <th>یەکە</th>
+                                        <th>نرخی یەکە</th>
+                                        <th>بڕ</th>
+                                        <th>کۆی گشتی</th>
+                                        <th>کردار</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsTableBody">
+                                    ${itemsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="addItemBtn">
+                            <i class="fas fa-plus"></i> زیادکردنی کاڵا
+                        </button>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="shippingCost" class="form-label">کرێی گواستنەوە</label>
+                                <input type="number" class="form-control" id="shippingCost" value="${data.header.shipping_cost || 0}" min="0">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="otherCosts" class="form-label">خەرجی تر</label>
+                                <input type="number" class="form-control" id="otherCosts" value="${data.header.other_costs || 0}" min="0">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="discount" class="form-label">داشکاندن</label>
+                                <input type="number" class="form-control" id="discount" value="${data.header.discount || 0}" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="paymentType" class="form-label">جۆری پارەدان</label>
+                        <select class="form-select" id="paymentType">
+                            <option value="cash" ${data.header.payment_type === 'cash' ? 'selected' : ''}>نەقد</option>
+                            <option value="credit" ${data.header.payment_type === 'credit' ? 'selected' : ''}>قەرز</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3 paid-amount-container" style="${data.header.payment_type === 'credit' ? '' : 'display: none;'}">
+                        <label for="paidAmount" class="form-label">بڕی پارەی دراو</label>
+                        <input type="number" class="form-control" id="paidAmount" value="${data.header.paid_amount || 0}" min="0">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">تێبینی</label>
+                        <textarea class="form-control" id="notes" rows="3">${data.header.notes || ''}</textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">کۆی کاڵاکان</label>
+                                <input type="text" class="form-control" id="subtotal" value="${data.totals.subtotal} د.ع" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">کۆی گشتی</label>
+                                <input type="text" class="form-control" id="grandTotal" value="${data.totals.grand_total} د.ع" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            `,
+            width: '900px',
+            showCancelButton: true,
+            confirmButtonText: 'پاشەکەوتکردن',
+            cancelButtonText: 'داخستن',
+            showLoaderOnConfirm: true,
+            customClass: {
+                container: 'swal-rtl',
+                popup: 'swal-wide'
+            },
+            didOpen: () => {
+                // Load customers/suppliers based on receipt type
+                if (receiptType === 'selling') {
+                    loadCustomers(data.header.customer_id);
+                } else if (receiptType === 'buying') {
+                    loadSuppliers(data.header.supplier_id);
+                }
+                
+                // Add event listener for payment type change
+                $('#paymentType').on('change', function() {
+                    if ($(this).val() === 'credit') {
+                        $('.paid-amount-container').show();
+                    } else {
+                        $('.paid-amount-container').hide();
+                    }
+                });
+                
+                // Add event listeners for quantity and price changes
+                $('#itemsTableBody').on('input', '.unit-price, .quantity', updateItemTotal);
+                
+                // Add event listener for remove item button
+                $('#itemsTableBody').on('click', '.remove-item', function() {
+                    $(this).closest('tr').remove();
+                    recalculateTotals();
+                });
+                
+                // Add event listener for add item button
+                $('#addItemBtn').on('click', function() {
+                    showAddProductModal(receiptType);
+                });
+                
+                // Add event listeners for cost changes
+                $('#shippingCost, #otherCosts, #discount').on('input', recalculateTotals);
+            },
+            preConfirm: () => {
+                return collectFormData();
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                updateReceipt(result.value);
+            }
+        });
+    }
+    
+    // Function to format date for input field
+    function formatDateForInput(dateString) {
+        const date = new Date(dateString);
+        return date.toISOString().split('T')[0];
+    }
+    
+    // Function to load customers
+    function loadCustomers(selectedCustomerId) {
+        $.ajax({
+            url: '../../api/get_customers.php',
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    const customerSelect = $('#customerSelect');
+                    customerSelect.find('option:not(:first)').remove();
+                    
+                    response.data.forEach(customer => {
+                        const option = $('<option>')
+                            .val(customer.id)
+                            .text(customer.name);
+                            
+                        if (customer.id == selectedCustomerId) {
+                            option.prop('selected', true);
+                        }
+                        
+                        customerSelect.append(option);
+                    });
+                }
+            }
+        });
+    }
+    
+    // Function to load suppliers
+    function loadSuppliers(selectedSupplierId) {
+        $.ajax({
+            url: '../../api/get_suppliers.php',
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    const supplierSelect = $('#supplierSelect');
+                    supplierSelect.find('option:not(:first)').remove();
+                    
+                    response.data.forEach(supplier => {
+                        const option = $('<option>')
+                            .val(supplier.id)
+                            .text(supplier.name);
+                            
+                        if (supplier.id == selectedSupplierId) {
+                            option.prop('selected', true);
+                        }
+                        
+                        supplierSelect.append(option);
+                    });
+                }
+            }
+        });
+    }
+    
+    // Function to show add product modal
+    function showAddProductModal(receiptType) {
+        Swal.fire({
+            title: 'زیادکردنی کاڵا',
+            html: `
+                <form id="addProductForm">
+                    <div class="mb-3">
+                        <label for="productSelect" class="form-label">کاڵا</label>
+                        <select class="form-select" id="productSelect" required>
+                            <option value="">هەڵبژاردنی کاڵا</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="productUnitType" class="form-label">یەکە</label>
+                                <select class="form-select" id="productUnitType">
+                                    <option value="piece">دانە</option>
+                                    <option value="box">کارتۆن</option>
+                                    <option value="set">سێت</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="productUnitPrice" class="form-label">نرخی یەکە</label>
+                                <input type="number" class="form-control" id="productUnitPrice" min="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="productQuantity" class="form-label">بڕ</label>
+                                <input type="number" class="form-control" id="productQuantity" min="1" value="1" required>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'زیادکردن',
+            cancelButtonText: 'داخستن',
+            customClass: {
+                container: 'swal-rtl'
+            },
+            didOpen: () => {
+                // Load products
+                loadProducts();
+                
+                // Calculate total when quantity or price changes
+                $('#productUnitPrice, #productQuantity').on('input', function() {
+                    calculateProductTotal();
+                });
+            },
+            preConfirm: () => {
+                const productId = $('#productSelect').val();
+                const productName = $('#productSelect option:selected').text();
+                const unitType = $('#productUnitType').val();
+                const unitPrice = parseFloat($('#productUnitPrice').val());
+                const quantity = parseInt($('#productQuantity').val());
+                
+                if (!productId) {
+                    Swal.showValidationMessage('تکایە کاڵا هەڵبژێرە');
+                    return false;
+                }
+                
+                if (isNaN(unitPrice) || unitPrice <= 0) {
+                    Swal.showValidationMessage('تکایە نرخی دروست داخل بکە');
+                    return false;
+                }
+                
+                if (isNaN(quantity) || quantity <= 0) {
+                    Swal.showValidationMessage('تکایە بڕی دروست داخل بکە');
+                    return false;
+                }
+                
+                return {
+                    id: productId,
+                    name: productName,
+                    unitType: unitType,
+                    unitPrice: unitPrice,
+                    quantity: quantity,
+                    total: unitPrice * quantity
+                };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                addProductToTable(result.value);
+            }
+        });
+    }
+    
+    // Function to load products
+    function loadProducts() {
+        $.ajax({
+            url: '../../api/get_products.php',
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    const productSelect = $('#productSelect');
+                    productSelect.find('option:not(:first)').remove();
+                    
+                    response.data.forEach(product => {
+                        productSelect.append(`<option value="${product.id}" data-price="${product.price}">${product.name}</option>`);
+                    });
+                    
+                    // Set default price when product is selected
+                    productSelect.on('change', function() {
+                        const selectedOption = $(this).find('option:selected');
+                        $('#productUnitPrice').val(selectedOption.data('price') || '');
+                        calculateProductTotal();
+                    });
+                }
+            }
+        });
+    }
+    
+    // Function to calculate product total
+    function calculateProductTotal() {
+        const unitPrice = parseFloat($('#productUnitPrice').val()) || 0;
+        const quantity = parseInt($('#productQuantity').val()) || 0;
+        const total = unitPrice * quantity;
+    }
+    
+    // Function to add product to table
+    function addProductToTable(product) {
+        const rowCount = $('#itemsTableBody tr').length;
+        const newRow = `
+            <tr class="item-row" data-product-id="${product.id}">
+                <td>${rowCount + 1}</td>
+                <td>${product.name}</td>
+                <td>
+                    <select class="form-select form-select-sm unit-type">
+                        <option value="piece" ${product.unitType === 'piece' ? 'selected' : ''}>دانە</option>
+                        <option value="box" ${product.unitType === 'box' ? 'selected' : ''}>کارتۆن</option>
+                        <option value="set" ${product.unitType === 'set' ? 'selected' : ''}>سێت</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm unit-price" value="${product.unitPrice}" min="0">
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm quantity" value="${product.quantity}" min="1">
+                </td>
+                <td class="item-total">${product.total} د.ع</td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-item">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+        
+        $('#itemsTableBody').append(newRow);
+        recalculateTotals();
+    }
+    
+    // Function to update item total
+    function updateItemTotal() {
+        const row = $(this).closest('tr');
+        const unitPrice = parseFloat(row.find('.unit-price').val()) || 0;
+        const quantity = parseInt(row.find('.quantity').val()) || 0;
+        const total = unitPrice * quantity;
+        
+        row.find('.item-total').text(total + ' د.ع');
+        recalculateTotals();
+    }
+    
+    // Function to recalculate totals
+    function recalculateTotals() {
+        let subtotal = 0;
+        
+        // Sum all item totals
+        $('.item-total').each(function() {
+            const totalText = $(this).text();
+            const total = parseFloat(totalText.replace(' د.ع', '')) || 0;
+            subtotal += total;
+        });
+        
+        // Get additional costs
+        const shippingCost = parseFloat($('#shippingCost').val()) || 0;
+        const otherCosts = parseFloat($('#otherCosts').val()) || 0;
+        const discount = parseFloat($('#discount').val()) || 0;
+        
+        // Calculate grand total
+        const grandTotal = subtotal + shippingCost + otherCosts - discount;
+        
+        // Update the display
+        $('#subtotal').val(subtotal + ' د.ع');
+        $('#grandTotal').val(grandTotal + ' د.ع');
+    }
+    
+    // Function to collect form data
+    function collectFormData() {
+        const receiptId = $('#receiptId').val();
+        const receiptType = $('#receiptType').val();
+        const invoiceNumber = $('#invoiceNumber').val();
+        const receiptDate = $('#receiptDate').val();
+        const paymentType = $('#paymentType').val();
+        const shippingCost = parseFloat($('#shippingCost').val()) || 0;
+        const otherCosts = parseFloat($('#otherCosts').val()) || 0;
+        const discount = parseFloat($('#discount').val()) || 0;
+        const notes = $('#notes').val();
+        const paidAmount = parseFloat($('#paidAmount').val()) || 0;
+        
+        // Get customer or supplier ID
+        let partnerId = null;
+        if (receiptType === 'selling') {
+            partnerId = $('#customerSelect').val();
+            if (!partnerId) {
+                Swal.showValidationMessage('تکایە کڕیار هەڵبژێرە');
+                return false;
+            }
+        } else if (receiptType === 'buying') {
+            partnerId = $('#supplierSelect').val();
+            if (!partnerId) {
+                Swal.showValidationMessage('تکایە فرۆشیار هەڵبژێرە');
+                return false;
+            }
+        }
+        
+        // Get items
+        const items = [];
+        $('.item-row').each(function() {
+            const row = $(this);
+            const productId = row.data('product-id');
+            const unitType = row.find('.unit-type').val();
+            const unitPrice = parseFloat(row.find('.unit-price').val()) || 0;
+            const quantity = parseInt(row.find('.quantity').val()) || 0;
+            
+            if (productId && unitPrice > 0 && quantity > 0) {
+                items.push({
+                    product_id: productId,
+                    unit_type: unitType,
+                    unit_price: unitPrice,
+                    quantity: quantity
+                });
+            }
+        });
+        
+        if (items.length === 0) {
+            Swal.showValidationMessage('تکایە لانی کەم یەک کاڵا زیاد بکە');
+            return false;
+        }
+        
+        // Build the form data
+        const formData = {
+            id: receiptId,
+            type: receiptType,
+            invoice_number: invoiceNumber,
+            date: receiptDate,
+            payment_type: paymentType,
+            shipping_cost: shippingCost,
+            other_costs: otherCosts,
+            discount: discount,
+            notes: notes,
+            items: items
+        };
+        
+        // Add partner ID based on receipt type
+        if (receiptType === 'selling') {
+            formData.customer_id = partnerId;
+            if (paymentType === 'credit') {
+                formData.paid_amount = paidAmount;
+            }
+        } else if (receiptType === 'buying') {
+            formData.supplier_id = partnerId;
+            if (paymentType === 'credit') {
+                formData.paid_amount = paidAmount;
+            }
+        }
+        
+        return formData;
+    }
+    
+    // Function to update receipt
+    function updateReceipt(formData) {
+        $.ajax({
+            url: '../../api/update_receipt.php',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'سەرکەوتوو بوو!',
+                        text: 'پسووڵەکە بە سەرکەوتوویی نوێ کرایەوە',
+                        customClass: {
+                            container: 'swal-rtl'
+                        }
+                    }).then(() => {
+                        // Refresh the data
+                        if (formData.type === 'selling') {
+                            filterSalesData();
+                        } else if (formData.type === 'buying') {
+                            filterPurchasesData();
+                        } else if (formData.type === 'wasting') {
+                            filterWasteData();
+                        }
+                    });
+                } else {
+                    console.error('Update Error:', response);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە!',
+                        text: response.message || 'هەڵەیەک ڕوویدا لە نوێکردنەوەی پسووڵە',
+                        customClass: {
+                            container: 'swal-rtl'
+                        }
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', {xhr, status, error});
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە!',
+                    text: 'هەڵەیەک ڕوویدا لە پەیوەندی کردن بە سێرڤەر: ' + error,
+                    customClass: {
+                        container: 'swal-rtl'
+                    }
+                });
+            }
+        });
+    }
 });

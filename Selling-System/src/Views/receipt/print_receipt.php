@@ -172,6 +172,9 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
             background: white;
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
             position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         
         /* Header design */
@@ -292,13 +295,24 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
         }
 
         .quantity-cell {
-            font-weight: bold;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .pieces-per-box-cell {
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .total-pieces-cell {
-            font-weight: bold;
-            color: var(--primary-color);
+            text-align: center;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* Summary section */
@@ -346,6 +360,7 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
             padding: 25px;
             background: var(--bg-light);
             border-top: 2px dashed var(--border-color);
+            margin-top: auto;
         }
 
         .signatures {
@@ -413,6 +428,7 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
                 box-shadow: none;
                 margin: 0;
                 max-width: none;
+                min-height: 100vh;
             }
             .print-button {
                 display: none;
@@ -422,7 +438,7 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
                 margin: 0;
             }
             
-            /* Force page break before summary section */
+            /* Force page break before summary section if needed */
             .page-break-summary {
                 page-break-before: always;
             }
@@ -440,6 +456,20 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
             /* Keep table rows together where possible */
             tr {
                 page-break-inside: avoid;
+            }
+
+            /* Ensure footer stays at bottom */
+            .receipt-footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                margin-top: auto;
+            }
+
+            /* Add margin to content to prevent overlap with footer */
+            .items-section, .summary-section {
+                margin-bottom: 150px; /* Adjust based on footer height */
             }
         }
     </style>
@@ -489,6 +519,7 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
                         <th>کۆد</th>
                         <th>ناوی کاڵا</th>
                         <th>بڕ</th>
+                        <th>دانە</th>
                         <th>کۆی دانەکان</th>
                         <th>نرخی یەکە</th>
                         <th>کۆی گشتی</th>
@@ -502,27 +533,17 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
                         $count++;
                         $total_items += $product['quantity'];
 
-                        // Determine the unit type based on the sale_items unit_type or units table
+                        // Determine the unit type based on the sale_items unit_type
                         $unit_type = isset($product['unit_type']) ? $product['unit_type'] : 'piece';
-                        
-                        // Use units table data if available
-                        if (isset($product['is_piece']) && isset($product['is_box']) && isset($product['is_set'])) {
-                            if ($product['is_set']) {
-                                $unit_type = 'set';
-                            } elseif ($product['is_box']) {
-                                $unit_type = 'box';
-                            } else {
-                                $unit_type = 'piece';
-                            }
-                        }
 
-                        // Calculate total pieces based on unit type
+                        // Calculate pieces per box and total pieces
+                        $pieces_per_box = isset($product['pieces_per_box']) ? $product['pieces_per_box'] : 1;
                         $total_pieces = $product['quantity']; // Default for single pieces
-                        if ($unit_type == 'box' && isset($product['pieces_per_box']) && $product['pieces_per_box'] > 0) {
-                            $total_pieces = $product['quantity'] * $product['pieces_per_box'];
-                        } elseif ($unit_type == 'set' && isset($product['pieces_per_box']) && isset($product['boxes_per_set']) && 
-                                 $product['pieces_per_box'] > 0 && $product['boxes_per_set'] > 0) {
-                            $total_pieces = $product['quantity'] * $product['boxes_per_set'] * $product['pieces_per_box'];
+                        
+                        if ($unit_type == 'box' && $pieces_per_box > 0) {
+                            $total_pieces = $product['quantity'] * $pieces_per_box;
+                        } elseif ($unit_type == 'set' && isset($product['boxes_per_set']) && $product['boxes_per_set'] > 0) {
+                            $total_pieces = $product['quantity'] * $product['boxes_per_set'] * $pieces_per_box;
                         }
                     ?>
                     <tr>
@@ -548,29 +569,36 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
                         </td>
                         <td class="quantity-cell">
                             <?php 
-                            echo $product['quantity'] . ' ';
-                            switch($unit_type) {
-                                case 'box':
-                                    echo '<span class="unit-type">کارتۆن</span>';
-                                    break;
-                                case 'set':
-                                    echo '<span class="unit-type">سێت</span>';
-                                    break;
-                                default:
-                                    echo '<span class="unit-type">دانە</span>';
+                            if ($unit_type == 'piece') {
+                                echo $product['quantity'] . ' دانە';
+                            } else {
+                                echo $product['quantity'] . ' ';
+                                switch($unit_type) {
+                                    case 'box':
+                                        echo '<span class="unit-type">کارتۆن</span>';
+                                        break;
+                                    case 'set':
+                                        echo '<span class="unit-type">سێت</span>';
+                                        break;
+                                }
+                            }
+                            ?>
+                        </td>
+                        <td class="pieces-per-box-cell">
+                            <?php 
+                            if ($unit_type == 'piece') {
+                                echo '-';
+                            } elseif ($unit_type == 'box') {
+                                echo $pieces_per_box . ' دانە';
+                            } else { // set
+                                echo $product['boxes_per_set'] . ' کارتۆن';
                             }
                             ?>
                         </td>
                         <td class="total-pieces-cell">
                             <?php 
                             if ($unit_type == 'piece') {
-                                echo $total_pieces . ' دانە';
-                            } else if ($unit_type == 'box' && isset($product['pieces_per_box']) && $product['pieces_per_box'] > 0) {
-                                echo $product['quantity'] . ' کارتۆن، ' . $total_pieces . ' دانە';
-                            } else if ($unit_type == 'set' && isset($product['pieces_per_box']) && isset($product['boxes_per_set']) && 
-                                    $product['pieces_per_box'] > 0 && $product['boxes_per_set'] > 0) {
-                                $total_boxes = $product['quantity'] * $product['boxes_per_set'];
-                                echo $product['quantity'] . ' سێت، ' . $total_boxes . ' کارتۆن، ' . $total_pieces . ' دانە';
+                                echo $product['quantity'] . ' دانە';
                             } else {
                                 echo $total_pieces . ' دانە';
                             }
