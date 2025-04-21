@@ -92,7 +92,7 @@ require_once '../../process/dashboard_logic.php';
 
         <!-- Main Content Area -->
         <div class="main-content">
-            <div class="dashboard-container" id="content" style="margin: 0; margin-top: 65px;">
+            <div class="dashboard-container" id="content" style="margin: 0; margin-top: 65px">
                 <div class="container-fluid p-0">
                     <!-- Quick Access Section -->
                     <div class="row g-3 mb-3">

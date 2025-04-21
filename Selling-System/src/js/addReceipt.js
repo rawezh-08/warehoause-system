@@ -458,7 +458,89 @@ $(document).ready(function() {
         
         // Product select change handler (for both selling and buying)
         $(`#${tabId}`).on('select2:select', '.product-select', function(e) {
-            // Existing product select handler code...
+            const data = e.params.data;
+            const row = $(this).closest('tr');
+            
+            // Set product image
+            if (data.image) {
+                row.find('.product-image-cell').html(`
+                    <div class="product-image-container">
+                        <img src="${data.image}" alt="${data.text}" class="product-table-image">
+                    </div>
+                `);
+            } else {
+                row.find('.product-image-cell').html(`
+                    <div class="product-image-container">
+                        <div class="no-image-placeholder">
+                            <i class="fas fa-box"></i>
+                        </div>
+                    </div>
+                `);
+            }
+            
+            // Update unit type dropdown based on product data
+            const unitTypeSelect = row.find('.unit-type');
+            unitTypeSelect.empty(); // Clear existing options
+            
+            // Always add piece/unit option
+            unitTypeSelect.append(`<option value="piece">دانە</option>`);
+            
+            // Add box option if pieces_per_box exists and greater than 0
+            if (data.pieces_per_box && parseInt(data.pieces_per_box) > 0) {
+                unitTypeSelect.append(`<option value="box">کارتۆن</option>`);
+                
+                // Add set option if boxes_per_set exists and greater than 0
+                if (data.boxes_per_set && parseInt(data.boxes_per_set) > 0) {
+                    unitTypeSelect.append(`<option value="set">سێت</option>`);
+                }
+            }
+            
+            // Set default unit type to piece
+            unitTypeSelect.val('piece');
+            
+            // Set product price based on price type and unit type
+            const tabPane = row.closest('.tab-pane');
+            const tabType = tabPane.attr('data-receipt-type');
+            const priceType = tabPane.find('.price-type').val();
+            
+            // Get base price based on price type (single unit price)
+            let basePrice;
+            if (tabType === RECEIPT_TYPES.SELLING) {
+                basePrice = priceType === PRICE_TYPES.WHOLESALE ? 
+                    parseFloat(data.wholesale_price || 0) : 
+                    parseFloat(data.retail_price || 0);
+            } else if (tabType === RECEIPT_TYPES.BUYING) {
+                basePrice = parseFloat(data.purchase_price || 0);
+            } else if (tabType === RECEIPT_TYPES.WASTING) {
+                basePrice = parseFloat(data.purchase_price || 0);
+            }
+            
+            // Adjust price based on unit type
+            const unitType = unitTypeSelect.val();
+            
+            console.log(`Product selected: ${data.text}`);
+            console.log(`Base price (${priceType}): ${basePrice}`);
+            console.log(`Pieces per box: ${data.pieces_per_box}`);
+            console.log(`Boxes per set: ${data.boxes_per_set}`);
+            console.log(`Current unit type: ${unitType}`);
+            
+            if (unitType === 'box' && data.pieces_per_box) {
+                basePrice = Math.round(basePrice * parseInt(data.pieces_per_box || 0));
+                console.log(`Box price calculated: ${basePrice}`);
+            } else if (unitType === 'set' && data.pieces_per_box && data.boxes_per_set) {
+                basePrice = Math.round(basePrice * parseInt(data.pieces_per_box || 0) * parseInt(data.boxes_per_set || 0));
+                console.log(`Set price calculated: ${basePrice}`);
+            }
+            
+            // Update the appropriate price field based on tab type
+            if (tabType === RECEIPT_TYPES.WASTING) {
+                row.find('.price').val(basePrice);
+            } else {
+                row.find('.unit-price').val(basePrice);
+            }
+            
+            // Update totals
+            calculateRowTotal(row);
         });
         
         // Unit type change handler (for both selling and buying)
@@ -687,9 +769,6 @@ $(document).ready(function() {
             // Set default unit type to piece
             unitTypeSelect.val('piece');
             
-            // Trigger change event to update the price based on the unit type
-            unitTypeSelect.trigger('change');
-            
             // Set product price based on price type and unit type
             const tabPane = row.closest('.tab-pane');
             const tabType = tabPane.attr('data-receipt-type');
@@ -708,7 +787,7 @@ $(document).ready(function() {
             }
             
             // Adjust price based on unit type
-            const unitType = row.find('.unit-type').val();
+            const unitType = unitTypeSelect.val();
             
             console.log(`Product selected: ${data.text}`);
             console.log(`Base price (${priceType}): ${basePrice}`);

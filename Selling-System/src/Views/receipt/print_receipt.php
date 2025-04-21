@@ -72,7 +72,8 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
                p.pieces_per_box,
                p.boxes_per_set,
                u.name as unit_name,
-               u.is_piece, u.is_box, u.is_set
+               u.is_piece, u.is_box, u.is_set,
+               COALESCE(si.returned_quantity, 0) as returned_quantity
         FROM sale_items si
         JOIN products p ON si.product_id = p.id
         LEFT JOIN units u ON p.unit_id = u.id
@@ -86,9 +87,10 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
     $customer_name = $sale['customer_name'];
     $subtotal = 0;
     
-    // Calculate subtotal from sale items
+    // Calculate subtotal from sale items (considering returns)
     foreach ($products as $product) {
-        $subtotal += floatval($product['total_price']);
+        $actual_quantity = $product['quantity'] - $product['returned_quantity'];
+        $subtotal += floatval($product['unit_price'] * $actual_quantity);
     }
     
     $discount = floatval($sale['discount']);
@@ -531,20 +533,28 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
                     $total_items = 0;
                     foreach ($products as $product): 
                         $count++;
-                        $total_items += $product['quantity'];
+                        // Calculate actual quantity after returns
+                        $actual_quantity = $product['quantity'] - $product['returned_quantity'];
+                        $total_items += $actual_quantity;
+
+                        // Skip if all items were returned
+                        if ($actual_quantity <= 0) continue;
 
                         // Determine the unit type based on the sale_items unit_type
                         $unit_type = isset($product['unit_type']) ? $product['unit_type'] : 'piece';
 
                         // Calculate pieces per box and total pieces
                         $pieces_per_box = isset($product['pieces_per_box']) ? $product['pieces_per_box'] : 1;
-                        $total_pieces = $product['quantity']; // Default for single pieces
+                        $total_pieces = $actual_quantity; // Default for single pieces
                         
                         if ($unit_type == 'box' && $pieces_per_box > 0) {
-                            $total_pieces = $product['quantity'] * $pieces_per_box;
+                            $total_pieces = $actual_quantity * $pieces_per_box;
                         } elseif ($unit_type == 'set' && isset($product['boxes_per_set']) && $product['boxes_per_set'] > 0) {
-                            $total_pieces = $product['quantity'] * $product['boxes_per_set'] * $pieces_per_box;
+                            $total_pieces = $actual_quantity * $product['boxes_per_set'] * $pieces_per_box;
                         }
+
+                        // Calculate total price after returns
+                        $total_price = $actual_quantity * $product['unit_price'];
                     ?>
                     <tr>
                         <td><?php echo $count; ?></td>
@@ -565,14 +575,20 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
                                 <span class="product-name">
                                     <?php echo isset($product['product_name']) ? $product['product_name'] : $product['name']; ?>
                                 </span>
+                                <?php if ($product['returned_quantity'] > 0): ?>
+                                <br>
+                                <span class="returned-info" style="color: red; font-size: 0.9em;">
+                                    (<?php echo $product['returned_quantity']; ?> گەڕێنراوەتەوە)
+                                </span>
+                                <?php endif; ?>
                             </div>
                         </td>
                         <td class="quantity-cell">
                             <?php 
                             if ($unit_type == 'piece') {
-                                echo $product['quantity'] . ' دانە';
+                                echo $actual_quantity . ' دانە';
                             } else {
-                                echo $product['quantity'] . ' ';
+                                echo $actual_quantity . ' ';
                                 switch($unit_type) {
                                     case 'box':
                                         echo '<span class="unit-type">کارتۆن</span>';
@@ -598,14 +614,14 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
                         <td class="total-pieces-cell">
                             <?php 
                             if ($unit_type == 'piece') {
-                                echo $product['quantity'] . ' دانە';
+                                echo $actual_quantity . ' دانە';
                             } else {
                                 echo $total_pieces . ' دانە';
                             }
                             ?>
                         </td>
                         <td><?php echo number_format(isset($product['unit_price']) ? $product['unit_price'] : $product['price'], 0) . ' د.ع'; ?></td>
-                        <td><?php echo number_format(isset($product['total_price']) ? $product['total_price'] : $product['total'], 0) . ' د.ع'; ?></td>
+                        <td><?php echo number_format($total_price, 0) . ' د.ع'; ?></td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>

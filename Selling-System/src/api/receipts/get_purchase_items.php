@@ -7,37 +7,51 @@ require_once '../../config/database.php';
 header('Content-Type: application/json');
 
 try {
-    if (!isset($_POST['sale_id'])) {
-        throw new Exception('Sale ID is required');
+    if (!isset($_POST['purchase_id'])) {
+        throw new Exception('Purchase ID is required');
     }
 
-    $sale_id = $_POST['sale_id'];
+    $purchase_id = $_POST['purchase_id'];
     
     // Log the request for debugging
-    error_log("get_sale_items.php called with sale_id: " . $sale_id);
+    error_log("get_purchase_items.php called with purchase_id: " . $purchase_id);
 
     // Check if database connection is valid
     if (!$conn) {
+        error_log("Database connection failed");
         throw new Exception('Database connection error');
     }
+    error_log("Database connection successful");
 
-    // Get sale items with product information
+    // Get purchase items with product information
     $stmt = $conn->prepare("
         SELECT 
-            si.*,
+            pi.*,
             p.name as product_name,
             p.current_quantity as available_quantity,
             p.code as product_code
-        FROM sale_items si
-        JOIN products p ON si.product_id = p.id
-        WHERE si.sale_id = :sale_id
+        FROM purchase_items pi
+        JOIN products p ON pi.product_id = p.id
+        WHERE pi.purchase_id = :purchase_id
     ");
 
-    $stmt->execute([':sale_id' => $sale_id]);
+    // Log the SQL query for debugging
+    error_log("Executing SQL query with purchase_id: " . $purchase_id);
+    
+    $stmt->execute([':purchase_id' => $purchase_id]);
     $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Log result
-    error_log("get_sale_items.php found " . count($items) . " items for sale_id: " . $sale_id);
+    error_log("get_purchase_items.php found " . count($items) . " items for purchase_id: " . $purchase_id);
+    if (empty($items)) {
+        error_log("No items found in purchase_items table for purchase_id: " . $purchase_id);
+        // Let's check if the purchase exists
+        $checkStmt = $conn->prepare("SELECT id FROM purchases WHERE id = :purchase_id");
+        $checkStmt->execute([':purchase_id' => $purchase_id]);
+        if (!$checkStmt->fetch()) {
+            error_log("Purchase with ID " . $purchase_id . " does not exist in purchases table");
+        }
+    }
 
     // Process items to ensure correct format for returned_quantity
     foreach ($items as &$item) {
@@ -71,7 +85,7 @@ try {
     ]);
 
 } catch (Exception $e) {
-    error_log("Error in get_sale_items.php: " . $e->getMessage());
+    error_log("Error in get_purchase_items.php: " . $e->getMessage());
     
     echo json_encode([
         'status' => 'error',

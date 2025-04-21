@@ -380,7 +380,7 @@ $(document).ready(function() {
     }
 
     // Handle view button clicks
-    $(document).on('click', '.view-btn', function() {
+    $(document).on('click', '#receiptList .view-btn', function() {
         const id = $(this).data('id');
         const type = $(this).closest('.tab-pane').attr('id');
         viewReceipt(id, type);
@@ -921,8 +921,7 @@ $(document).ready(function() {
     // Add delete functionality
     $(document).on('click', '.delete-btn', function() {
         const receiptId = $(this).data('id');
-        const receiptType = $(this).closest('.tab-pane').attr('id') === 'employee-payment-content' ? 'sale' : 'purchase';
-        const row = $(this).closest('tr');
+        const receiptType = $(this).closest('.tab-pane').attr('id') === 'purchase-receipts-content' ? 'purchase' : 'sale';
         
         Swal.fire({
             title: 'دڵنیای؟',
@@ -937,45 +936,33 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: '../../api/delete_receipt.php',
-                    type: 'POST',
-                    data: {
-                        id: receiptId,
-                        type: receiptType
-                    },
+                    url: `../../api/receipts/delete_${receiptType}.php`,
+                    method: 'POST',
+                    data: { receipt_id: receiptId },
                     success: function(response) {
                         if (response.success) {
                             Swal.fire({
-                                icon: 'success',
-                                title: 'سڕایەوە!',
-                                text: 'پسووڵەکە بە سەرکەوتوویی سڕایەوە',
-                                customClass: {
-                                    popup: 'swal-rtl'
-                                }
+                                title: 'سەرکەوتوو!',
+                                text: 'پسووڵە بە سەرکەوتوویی سڕایەوە',
+                                icon: 'success'
                             }).then(() => {
-                                row.fadeOut(400, function() {
-                                    $(this).remove();
-                                });
+                                location.reload();
                             });
                         } else {
                             Swal.fire({
-                                icon: 'error',
                                 title: 'هەڵە!',
-                                text: response.message,
-                                customClass: {
-                                    popup: 'swal-rtl'
-                                }
+                                text: response.message || 'هەڵەیەک ڕوویدا',
+                                icon: 'error'
                             });
                         }
                     },
-                    error: function() {
+                    error: function(xhr, status, error) {
+                        console.error('Error:', error);
+                        console.error('Response:', xhr.responseText);
                         Swal.fire({
-                            icon: 'error',
                             title: 'هەڵە!',
-                            text: 'هەڵەیەک ڕوویدا لە سڕینەوەی پسووڵە',
-                            customClass: {
-                                popup: 'swal-rtl'
-                            }
+                            text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی بە سێرڤەرەوە',
+                            icon: 'error'
                         });
                     }
                 });

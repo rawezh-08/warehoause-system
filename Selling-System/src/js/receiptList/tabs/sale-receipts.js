@@ -49,9 +49,80 @@ $(document).ready(function() {
     });
     
     // Handle View button click
-    $(document).on('click', '#employeeHistoryTable .view-btn', function() {
+    $(document).on('click', '.view-btn', function(e) {
+        e.preventDefault(); // Prevent default navigation
         const saleId = $(this).data('id');
-        viewSale(saleId);
+        
+        // Show loading
+        Swal.fire({
+            title: 'تکایە چاوەڕێ بکە...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Fetch sale items
+        $.ajax({
+            url: '../../controllers/receipts/get_sale_items.php',
+            type: 'POST',
+            data: { sale_id: saleId },
+            success: function(response) {
+                Swal.close();
+                
+                try {
+                    const data = JSON.parse(response);
+                    if (data.status === 'success') {
+                        // Clear previous items
+                        $('#saleItemsTableBody').empty();
+                        
+                        // Add items to table
+                        data.items.forEach((item, index) => {
+                            const unitType = {
+                                'piece': 'دانە',
+                                'box': 'کارتۆن',
+                                'set': 'سێت'
+                            }[item.unit_type] || item.unit_type;
+                            
+                            $('#saleItemsTableBody').append(`
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${item.product_name}</td>
+                                    <td>${unitType}</td>
+                                    <td>${item.quantity}</td>
+                                    <td>${Number(item.unit_price).toLocaleString()} د.ع</td>
+                                    <td>${Number(item.total_price).toLocaleString()} د.ع</td>
+                                </tr>
+                            `);
+                        });
+                        
+                        // Show modal
+                        $('#viewSaleItemsModal').modal('show');
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'هەڵە',
+                            text: data.message || 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان'
+                        });
+                    }
+                } catch (e) {
+                    console.error(e);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان'
+                    });
+                }
+            },
+            error: function() {
+                Swal.close();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی کردن بە سێرڤەرەوە'
+                });
+            }
+        });
     });
     
     // Handle Print button click
@@ -60,10 +131,95 @@ $(document).ready(function() {
         printSaleReceipt(saleId);
     });
     
-    // Handle Return button click
+    // Handle sale receipt return
     $(document).on('click', '#employeeHistoryTable .return-btn', function() {
         const saleId = $(this).data('id');
-        returnSaleItems(saleId);
+        
+        console.log("Return button clicked for sale ID:", saleId);
+        
+        if (!saleId) {
+            console.error("No sale ID found on return button");
+            Swal.fire({
+                icon: 'error',
+                title: 'هەڵە',
+                text: 'ناسنامەی فرۆشتن نادروستە'
+            });
+            return;
+        }
+        
+        // Show loading
+        Swal.fire({
+            title: 'تکایە چاوەڕێ بکە...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Fetch sale items
+        $.ajax({
+            url: '../../api/receipts/get_sale_items.php',
+            type: 'POST',
+            data: { sale_id: saleId },
+            dataType: 'json',
+            success: function(response) {
+                console.log("API Response:", response);
+                
+                Swal.close();
+                
+                if (response.status === 'success' && response.items) {
+                    console.log("Items found:", response.items);
+                    console.log("Items length:", response.items.length);
+                    
+                    // Show detailed info for each item
+                    if (response.items && response.items.length > 0) {
+                        response.items.forEach((item, index) => {
+                            console.log(`Item ${index + 1}:`, item);
+                            console.log(`  - product_id: ${item.product_id}`);
+                            console.log(`  - product_name: ${item.product_name}`);
+                            console.log(`  - quantity: ${item.quantity}`);
+                            console.log(`  - returned_quantity: ${item.returned_quantity}`);
+                            console.log(`  - remaining: ${item.quantity - (parseFloat(item.returned_quantity) || 0)}`);
+                        });
+                    }
+                    
+                    // Show return form
+                    showReturnForm(saleId, 'sale', response.items);
+                } else {
+                    console.error('API Response Error:', response);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        html: `<div dir="ltr" style="text-align: left;">
+                            <p>هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان:</p>
+                            <pre style="background: #f0f0f0; padding: 10px; max-height: 200px; overflow: auto;">${response.message || 'No error message'}</pre>
+                        </div>`
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX Error:", {xhr, status, error});
+                Swal.close();
+                
+                let errorMessage = 'Unknown error occurred';
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    errorMessage = response.message || error;
+                } catch (e) {
+                    errorMessage = error || 'Could not parse error response';
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    html: `<div dir="ltr" style="text-align: left;">
+                        <p>هەڵەیەک ڕوویدا لە کاتی پەیوەندی کردن بە سێرڤەر:</p>
+                        <p><strong>Status:</strong> ${status}</p>
+                        <p><strong>Error:</strong> ${errorMessage}</p>
+                    </div>`
+                });
+            }
+        });
     });
     
     // Handle Delete button click
@@ -80,86 +236,176 @@ $(document).ready(function() {
 
 /**
  * Load sales data and display in the table
- * @param {Object} filters Optional filters for sales data
+ * @param {Object} customFilters Optional custom filters for sales data
  */
-function loadSalesData(filters = {}) {
-    // Show loading
-    showLoading('Loading sales data...');
+function loadSalesData(customFilters = {}) {
+    // Show loading indicator
+    Swal.fire({
+        title: 'تکایە چاوەڕێ بکە...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
     
+    // Collect filter values from form fields
+    const startDate = $('#employeePaymentStartDate').val();
+    const endDate = $('#employeePaymentEndDate').val();
+    const customerName = $('#employeePaymentName').val();
+    const searchTerm = $('#employeeTableSearch').val();
+    
+    // Combine form filters with any custom filters
+    const filters = {
+        ...customFilters,
+        start_date: startDate,
+        end_date: endDate,
+        customer_name: customerName,
+        search: searchTerm
+    };
+    
+    // Remove empty filters
+    Object.keys(filters).forEach(key => {
+        if (!filters[key]) {
+            delete filters[key];
+        }
+    });
+    
+    // Make AJAX request
     $.ajax({
         url: '../../api/receipts/filter_sales.php',
         type: 'POST',
         data: filters,
         dataType: 'json',
         success: function(response) {
-            hideLoading();
+            Swal.close();
             
-            if (response.success) {
-                displaySalesData(response.data);
-                showNotification('success', 'Sales data loaded successfully');
+            if (response.success || response.status === 'success') {
+                // Get actual data array
+                const salesData = response.data || response.sales || [];
+                
+                // Update table with data
+                updateSalesTable(salesData);
             } else {
-                showNotification('error', response.message || 'Failed to load sales data');
-                // Clear table if there's an error
-                $('#sales-table tbody').html('<tr><td colspan="8" class="text-center">No data available</td></tr>');
+                console.error('API Error:', response);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: response.message || 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیاری'
+                });
             }
         },
         error: function(xhr, status, error) {
-            hideLoading();
-            showNotification('error', 'Network error occurred');
-            console.error('AJAX error:', error);
-            // Clear table if there's an error
-            $('#sales-table tbody').html('<tr><td colspan="8" class="text-center">No data available</td></tr>');
+            Swal.close();
+            console.error('AJAX Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'هەڵە',
+                text: 'هەڵەیەک ڕوویدا لە پەیوەندی کردن بە سێرڤەر'
+            });
         }
     });
 }
 
 /**
- * Display sales data in the table
- * @param {Array} sales Sales data to display
+ * Update the sales table with filtered data
+ * @param {Array} salesData - Array of sales data
  */
-function displaySalesData(sales) {
-    const tbody = $('#sales-table tbody');
+function updateSalesTable(salesData) {
+    const tbody = $('#employeeHistoryTable tbody');
     tbody.empty();
     
-    if (sales.length === 0) {
-        tbody.html('<tr><td colspan="8" class="text-center">No sales found</td></tr>');
+    if (salesData.length === 0) {
+        tbody.html('<tr class="no-records"><td colspan="13" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td></tr>');
         return;
     }
     
-    sales.forEach(function(sale) {
-        const row = $('<tr>');
-        
-        // Format date
-        const date = new Date(sale.sale_date);
-        const formattedDate = date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        // Build row content
-        row.append(`<td>${sale.invoice_number}</td>`);
-        row.append(`<td>${formattedDate}</td>`);
-        row.append(`<td>${sale.customer_name || 'Walk-in Customer'}</td>`);
-        row.append(`<td>${parseFloat(sale.total_amount).toFixed(2)}</td>`);
-        row.append(`<td>${parseFloat(sale.paid_amount).toFixed(2)}</td>`);
-        row.append(`<td>${parseFloat(sale.due_amount).toFixed(2)}</td>`);
-        row.append(`<td>${sale.payment_status}</td>`);
-        
-        // Action buttons
-        const actions = $('<td class="text-center">');
-        actions.append(`<button class="btn btn-sm btn-info me-1 btn-view-sale" data-id="${sale.id}" title="View"><i class="fas fa-eye"></i></button>`);
-        actions.append(`<button class="btn btn-sm btn-primary me-1 btn-edit-sale" data-id="${sale.id}" title="Edit"><i class="fas fa-edit"></i></button>`);
-        actions.append(`<button class="btn btn-sm btn-success me-1 btn-print-sale" data-id="${sale.id}" title="Print"><i class="fas fa-print"></i></button>`);
-        actions.append(`<button class="btn btn-sm btn-warning me-1 btn-return-sale" data-id="${sale.id}" title="Return"><i class="fas fa-undo"></i></button>`);
-        actions.append(`<button class="btn btn-sm btn-danger btn-delete-sale" data-id="${sale.id}" title="Delete"><i class="fas fa-trash"></i></button>`);
-        row.append(actions);
-        
+    salesData.forEach((sale, index) => {
+        const row = `
+            <tr data-id="${sale.id}">
+                <td>${index + 1}</td>
+                <td>${sale.invoice_number || 'N/A'}</td>
+                <td>${sale.customer_name || 'N/A'}</td>
+                <td>${formatDate(sale.date)}</td>
+                <td class="products-list-cell" data-products="${sale.products_list || ''}">
+                    ${sale.products_list || ''}
+                    <div class="products-popup"></div>
+                </td>
+                <td>${numberFormat(sale.subtotal)}</td>
+                <td>${numberFormat(sale.shipping_cost)}</td>
+                <td>${numberFormat(sale.other_costs)}</td>
+                <td>${numberFormat(sale.discount)}</td>
+                <td>${numberFormat(sale.total_amount)}</td>
+                <td>
+                    <span class="badge rounded-pill ${sale.payment_type === 'cash' ? 'bg-success' : (sale.payment_type === 'credit' ? 'bg-warning' : 'bg-info')}">
+                        ${sale.payment_type === 'cash' ? 'نەقد' : (sale.payment_type === 'credit' ? 'قەرز' : 'چەک')}
+                    </span>
+                </td>
+                <td>${sale.notes || ''}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${sale.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${sale.id}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${sale.id}">
+                            <i class="fas fa-print"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-warning rounded-circle return-btn" data-id="${sale.id}">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${sale.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
         tbody.append(row);
     });
+    
+    // Initialize pagination
+    initTablePagination(
+        'employeeHistoryTable',
+        'employeeRecordsPerPage',
+        'employeePrevPageBtn',
+        'employeeNextPageBtn',
+        'employeePaginationNumbers',
+        'employeeStartRecord',
+        'employeeEndRecord',
+        'employeeTotalRecords'
+    );
 }
+
+// Helper function to format date
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).replace(/(\d+)\/(\d+)\/(\d+)/, '$3/$1/$2'); // Convert MM/DD/YYYY to YYYY/MM/DD
+}
+
+// Helper function to format numbers
+function numberFormat(number) {
+    return Number(number).toLocaleString() + ' د.ع';
+}
+
+// Update pagination information
+function updatePaginationInfo(totalRecords) {
+    $('#employeeTotalRecords').text(totalRecords);
+    $('#employeeEndRecord').text(Math.min(totalRecords, 10));
+}
+
+// Add search functionality
+$(document).ready(function() {
+    // Table search functionality
+    $('#employeeTableSearch').on('keyup', function() {
+        loadSalesData();
+    });
+});
 
 /**
  * Edit a sale receipt
@@ -474,7 +720,7 @@ function deleteSale(saleId) {
             showLoading('جاری سڕینەوەی پسووڵە...');
             
             $.ajax({
-                url: '../../api/receipts/delete_sale.php',
+                url: '../../api/delete_sale.php',
                 type: 'POST',
                 data: { id: saleId },
                 success: function(response) {

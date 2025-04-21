@@ -222,4 +222,425 @@ function scrollToTop() {
         top: 0,
         behavior: 'smooth'
     });
+}
+
+/**
+ * Initialize pagination for a table
+ * @param {string} tableId - ID of the table
+ * @param {string} recordsPerPageId - ID of the records per page select
+ * @param {string} prevBtnId - ID of the previous page button
+ * @param {string} nextBtnId - ID of the next page button
+ * @param {string} paginationNumbersId - ID of the pagination numbers container
+ * @param {string} startRecordId - ID of the start record span
+ * @param {string} endRecordId - ID of the end record span
+ * @param {string} totalRecordsId - ID of the total records span
+ */
+function initTablePagination(tableId, recordsPerPageId, prevBtnId, nextBtnId, paginationNumbersId, startRecordId, endRecordId, totalRecordsId) {
+    let currentPage = 1;
+    let recordsPerPage = parseInt($(`#${recordsPerPageId}`).val()) || 10;
+    const table = $(`#${tableId}`);
+    const rows = table.find('tbody tr:not(.no-records)');
+    const totalRecords = rows.length;
+    
+    // Update records per page when select changes
+    $(`#${recordsPerPageId}`).on('change', function() {
+        recordsPerPage = parseInt($(this).val());
+        currentPage = 1;
+        updatePagination();
+    });
+    
+    // Previous page button click
+    $(`#${prevBtnId}`).on('click', function() {
+        if (currentPage > 1) {
+            currentPage--;
+            updatePagination();
+        }
+    });
+    
+    // Next page button click
+    $(`#${nextBtnId}`).on('click', function() {
+        const totalPages = Math.ceil(totalRecords / recordsPerPage);
+        if (currentPage < totalPages) {
+            currentPage++;
+            updatePagination();
+        }
+    });
+    
+    // Update pagination
+    function updatePagination() {
+        const startIndex = (currentPage - 1) * recordsPerPage;
+        const endIndex = startIndex + recordsPerPage;
+        const totalPages = Math.ceil(totalRecords / recordsPerPage);
+        
+        // Hide all rows
+        rows.hide();
+        
+        // Show rows for current page
+        rows.slice(startIndex, endIndex).show();
+        
+        // Update pagination info
+        $(`#${startRecordId}`).text(totalRecords > 0 ? startIndex + 1 : 0);
+        $(`#${endRecordId}`).text(Math.min(endIndex, totalRecords));
+        $(`#${totalRecordsId}`).text(totalRecords);
+        
+        // Update pagination buttons
+        $(`#${prevBtnId}`).prop('disabled', currentPage === 1);
+        $(`#${nextBtnId}`).prop('disabled', currentPage === totalPages || totalPages === 0);
+        
+        // Update pagination numbers
+        updatePaginationNumbers();
+    }
+    
+    // Update pagination numbers
+    function updatePaginationNumbers() {
+        const totalPages = Math.ceil(totalRecords / recordsPerPage);
+        let paginationHtml = '';
+        
+        // Always show first page
+        paginationHtml += `
+            <button class="btn btn-sm ${1 === currentPage ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2 ${1 === currentPage ? 'active' : ''}" 
+                data-page="1">
+                1
+            </button>
+        `;
+        
+        // Calculate range of pages to show
+        let startPage = Math.max(2, currentPage - 2);
+        let endPage = Math.min(totalPages - 1, currentPage + 2);
+        
+        // Add dots after first page if needed
+        if (startPage > 2) {
+            paginationHtml += '<span class="mx-2">...</span>';
+        }
+        
+        // Add pages in the middle
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHtml += `
+                <button class="btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2 ${i === currentPage ? 'active' : ''}" 
+                    data-page="${i}">
+                    ${i}
+                </button>
+            `;
+        }
+        
+        // Add dots before last page if needed
+        if (endPage < totalPages - 1) {
+            paginationHtml += '<span class="mx-2">...</span>';
+        }
+        
+        // Always show last page if there is more than one page
+        if (totalPages > 1) {
+            paginationHtml += `
+                <button class="btn btn-sm ${totalPages === currentPage ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2 ${totalPages === currentPage ? 'active' : ''}" 
+                    data-page="${totalPages}">
+                    ${totalPages}
+                </button>
+            `;
+        }
+        
+        $(`#${paginationNumbersId}`).html(paginationHtml);
+        
+        // Add click handlers for pagination numbers
+        $(`#${paginationNumbersId} button`).on('click', function() {
+            currentPage = parseInt($(this).data('page'));
+            updatePagination();
+        });
+    }
+    
+    // Initialize pagination
+    updatePagination();
+}
+
+/**
+ * Show return form for products
+ * @param {number} receiptId - ID of the receipt
+ * @param {string} receiptType - Type of receipt ('sale' or 'purchase')
+ * @param {Array} items - Array of items to potentially return
+ */
+function showReturnForm(receiptId, receiptType, items) {
+    console.log("showReturnForm called with:", {
+        receiptId: receiptId,
+        receiptType: receiptType,
+        items: items
+    });
+
+    // Validate receiptId
+    if (!receiptId) {
+        console.error("Invalid receipt ID:", receiptId);
+        Swal.fire({
+            icon: 'error',
+            title: 'هەڵە',
+            text: 'ناسنامەی پسووڵە نادروستە'
+        });
+        return;
+    }
+
+    // Validate receiptType
+    if (!receiptType || (receiptType !== 'sale' && receiptType !== 'purchase')) {
+        console.error("Invalid receipt type:", receiptType);
+        Swal.fire({
+            icon: 'error',
+            title: 'هەڵە',
+            text: 'جۆری پسووڵە نادروستە'
+        });
+        return;
+    }
+
+    // Check if items is valid array
+    if (!items || !Array.isArray(items)) {
+        console.error("Invalid items (not an array):", items);
+        Swal.fire({
+            icon: 'error',
+            title: 'هەڵە',
+            text: 'هیچ کاڵایەک نەدۆزرایەوە بۆ گەڕاندنەوە'
+        });
+        return;
+    }
+
+    // Check if array is empty
+    if (items.length === 0) {
+        console.error("No items found (empty array)");
+        Swal.fire({
+            icon: 'info',
+            title: 'ئاگاداری',
+            text: 'هیچ کاڵایەک نەدۆزرایەوە بۆ گەڕاندنەوە'
+        });
+        return;
+    }
+
+    console.log("Items for return form:", items);
+
+    // Create HTML for the return form
+    let formHtml = `
+        <form id="returnForm">
+            <input type="hidden" id="returnReceiptId" value="${receiptId}">
+            <input type="hidden" id="returnReceiptType" value="${receiptType}">
+            
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>ناوی کاڵا</th>
+                            <th>یەکە</th>
+                            <th>بڕی کڕدراو</th>
+                            <th>بڕی گەڕاوە</th>
+                            <th>بڕی گەڕاندنەوە</th>
+                            <th>هۆکار</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
+
+    let hasReturnableItems = false;
+    let itemsChecked = 0;
+    let itemsSkipped = 0;
+    let itemsIncluded = 0;
+
+    items.forEach(item => {
+        itemsChecked++;
+        
+        // Validate item data
+        if (!item || typeof item !== 'object') {
+            console.warn("Invalid item data (not an object):", item);
+            itemsSkipped++;
+            return;
+        }
+
+        // Check required properties
+        if (!item.product_name || !item.product_id) {
+            console.warn("Missing required item properties:", item);
+            itemsSkipped++;
+            return;
+        }
+
+        // For debugging
+        console.log(`Processing item: ${item.product_name} (ID: ${item.product_id})`);
+        console.log(`  - Original quantity: ${item.quantity}`);
+        console.log(`  - Returned quantity: ${item.returned_quantity || 0}`);
+        
+        // Ensure numeric values
+        const quantity = parseFloat(item.quantity) || 0;
+        const returnedQuantity = parseFloat(item.returned_quantity) || 0;
+        const remainingQty = Math.max(0, quantity - returnedQuantity);
+        
+        console.log(`  - Calculated remaining quantity: ${remainingQty}`);
+        
+        if (remainingQty > 0) {
+            hasReturnableItems = true;
+            itemsIncluded++;
+            
+            const unitTypeText = item.unit_type === 'piece' ? 'دانە' : 
+                               (item.unit_type === 'box' ? 'کارتۆن' : 'سێت');
+            
+            formHtml += `
+                <tr data-item-id="${item.id}" data-product-id="${item.product_id}">
+                    <td>${item.product_name}</td>
+                    <td>${unitTypeText}</td>
+                    <td>${quantity}</td>
+                    <td>${returnedQuantity}</td>
+                    <td>
+                        <input type="number" class="form-control return-qty" 
+                            min="0" max="${remainingQty}" value="0" step="1"
+                            data-unit-type="${item.unit_type || 'piece'}"
+                            data-unit-price="${item.unit_price || 0}">
+                    </td>
+                    <td>
+                        <select class="form-control return-reason">
+                            <option value="damaged">خراپ بوو</option>
+                            <option value="wrong_product">کاڵای هەڵە</option>
+                            <option value="customer_request">داواکاری کڕیار</option>
+                            <option value="other">هۆکاری تر</option>
+                        </select>
+                    </td>
+                </tr>
+            `;
+        } else {
+            console.log(`  - Item skipped: No remaining quantity to return`);
+            itemsSkipped++;
+        }
+    });
+
+    console.log(`Return form summary: ${itemsChecked} items checked, ${itemsIncluded} included, ${itemsSkipped} skipped`);
+
+    if (!hasReturnableItems) {
+        Swal.fire({
+            icon: 'info',
+            title: 'ئاگاداری',
+            text: 'هەموو کاڵاکان پێشتر گەڕێنراونەتەوە یان هیچ کاڵایەک بۆ گەڕاندنەوە نییە'
+        });
+        return;
+    }
+
+    formHtml += `
+                </tbody>
+            </table>
+        </div>
+        <div class="form-group mt-3">
+            <label for="returnNotes">تێبینی</label>
+            <textarea class="form-control" id="returnNotes" rows="3"></textarea>
+        </div>
+    </form>`;
+
+    // Show the form in a modal
+    Swal.fire({
+        title: receiptType === 'sale' ? 'گەڕاندنەوەی کاڵای فرۆشراو' : 'گەڕاندنەوەی کاڵای کڕدراو',
+        html: formHtml,
+        width: 800,
+        showCancelButton: true,
+        confirmButtonText: 'گەڕاندنەوە',
+        cancelButtonText: 'داخستن',
+        preConfirm: () => {
+            // Collect return data
+            const returnData = {
+                receipt_id: receiptId,
+                receipt_type: receiptType,
+                notes: $('#returnNotes').val(),
+                items: []
+            };
+
+            // Collect items to return
+            $('.return-qty').each(function() {
+                const qty = parseFloat($(this).val());
+                if (qty > 0) {
+                    const row = $(this).closest('tr');
+                    returnData.items.push({
+                        product_id: row.data('product-id'),
+                        quantity: qty,
+                        unit_type: $(this).data('unit-type'),
+                        unit_price: $(this).data('unit-price'),
+                        reason: row.find('.return-reason').val()
+                    });
+                }
+            });
+
+            if (returnData.items.length === 0) {
+                Swal.showValidationMessage('تکایە بڕی گەڕاندنەوە دیاری بکە');
+                return false;
+            }
+
+            console.log("Return data:", returnData);
+            return returnData;
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            processReturn(result.value);
+        }
+    });
+}
+
+/**
+ * Process the return of products
+ * @param {Object} returnData - Data about the return
+ */
+function processReturn(returnData) {
+    console.log("Processing return data:", returnData);
+    
+    // Show loading
+    Swal.fire({
+        title: 'تکایە چاوەڕێ بکە...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // Send return data to server
+    $.ajax({
+        url: '../../api/receipts/process_return.php',
+        type: 'POST',
+        data: returnData,
+        dataType: 'json',
+        success: function(response) {
+            Swal.close();
+            console.log("Return processing response:", response);
+            
+            if (response.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'سەرکەوتوو بوو!',
+                    text: 'گەڕاندنەوەی کاڵاکان بە سەرکەوتوویی ئەنجام درا',
+                    confirmButtonText: 'باشە'
+                }).then(() => {
+                    // Reload the page or update the table
+                    location.reload();
+                });
+            } else {
+                console.error("Return processing error:", response);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە!',
+                    html: `<div dir="ltr" style="text-align: left;">
+                        <p>هەڵەیەک ڕوویدا لە گەڕاندنەوەی کاڵاکان:</p>
+                        <pre style="background: #f0f0f0; padding: 10px; max-height: 200px; overflow: auto;">${response.message || 'Unknown error'}</pre>
+                    </div>`,
+                    confirmButtonText: 'باشە'
+                });
+            }
+        },
+        error: function(xhr, status, error) {
+            Swal.close();
+            console.error("AJAX error in processReturn:", {xhr, status, error});
+            
+            let errorDetails = '';
+            try {
+                if (xhr.responseText) {
+                    errorDetails = xhr.responseText;
+                }
+            } catch (e) {
+                errorDetails = error || 'Unknown error';
+            }
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'هەڵە لە پەیوەندی کردن',
+                html: `<div dir="ltr" style="text-align: left;">
+                    <p>هەڵەیەک ڕوویدا لە کاتی پەیوەندی کردن بە سێرڤەر:</p>
+                    <p><strong>Status:</strong> ${status}</p>
+                    <p><strong>Error:</strong> ${error}</p>
+                    <pre style="background: #f0f0f0; padding: 10px; max-height: 200px; overflow: auto;">${errorDetails}</pre>
+                </div>`,
+                confirmButtonText: 'باشە'
+            });
+        }
+    });
 } 

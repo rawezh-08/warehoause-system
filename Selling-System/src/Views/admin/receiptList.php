@@ -1318,13 +1318,46 @@ $purchasesData = $purchaseReceiptsController->getPurchasesData(0, 0, $defaultFil
         </div>
     </div>
 
-    <!-- Update script references at the bottom of the file -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
+    <!-- View Sale Items Modal -->
+    <div class="modal fade" id="viewSaleItemsModal" tabindex="-1" aria-labelledby="viewSaleItemsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewSaleItemsModalLabel">کاڵا فرۆشراوەکان</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>ناوی کاڵا</th>
+                                    <th>یەکە</th>
+                                    <th>بڕ</th>
+                                    <th>نرخی تاک</th>
+                                    <th>کۆی گشتی</th>
+                                </tr>
+                            </thead>
+                            <tbody id="saleItemsTableBody">
+                                <!-- Items will be loaded here dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load dependencies first -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
-    <!-- Custom JavaScript -->
+
+    <!-- Then load your custom JavaScript -->
     <script src="../../js/include-components.js"></script>
 
     <!-- New modular JavaScript files -->
@@ -1333,47 +1366,49 @@ $purchasesData = $purchaseReceiptsController->getPurchasesData(0, 0, $defaultFil
     <script src="../../js/receiptList/tabs/purchase-receipts.js"></script>
     <script src="../../js/receiptList/tabs/wasting-receipts.js"></script>
     <script src="../../js/receiptList/tabs/draft-receipts.js"></script>
-    
-    <!-- You can continue to use your existing JavaScript for other tabs initially -->
+    <script src="../../js/receiptList/tabs/edit-sale-receipt.js"></script>
+    <script src="../../js/receiptList/tabs/edit-purchase-receipt.js"></script>
+
+    <!-- Initialize everything after all scripts are loaded -->
     <script>
-        // This is just a bridge to migrate to the new structure
-        // Eventually, all old code should be removed and replaced with modular files
-        $(document).ready(function() {
-            // Handle tab switching to load relevant data
-            $('#expensesTabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
-                const target = $(e.target).attr("data-bs-target");
-                if (target === '#employee-payment-content') {
-                    // Load sales data if not already loaded
-                    if ($('#employeeHistoryTable tbody tr').length <= 1) {
-                        loadSalesData();
-                    }
-                } else if (target === '#shipping-content') {
-                    // Load purchases data if not already loaded
-                    if ($('#shippingHistoryTable tbody tr').length <= 1) {
-                        if (typeof loadPurchasesData === 'function') {
-                            loadPurchasesData();
-                        }
-                    }
-                } else if (target === '#withdrawal-content') {
-                    // Load wasting data if not already loaded
-                    if ($('#withdrawalHistoryTable tbody tr').length <= 1) {
-                        if (typeof loadWastingData === 'function') {
-                            loadWastingData();
-                        }
-                    }
-                } else if (target === '#draft-content') {
-                    // Load draft data if not already loaded
-                    if ($('#draftHistoryTable tbody tr').length <= 1) {
-                        if (typeof loadDraftReceipts === 'function') {
-                            loadDraftReceipts();
-                        }
+    $(document).ready(function() {
+        // Handle tab switching to load relevant data
+        $('#expensesTabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+            const target = $(e.target).attr("data-bs-target");
+            if (target === '#employee-payment-content') {
+                // Load sales data if not already loaded
+                if ($('#employeeHistoryTable tbody tr').length <= 1) {
+                    loadSalesData();
+                }
+            } else if (target === '#shipping-content') {
+                // Load purchases data if not already loaded
+                if ($('#shippingHistoryTable tbody tr').length <= 1) {
+                    if (typeof loadPurchasesData === 'function') {
+                        loadPurchasesData();
                     }
                 }
-            });
-            
-            // Initialize product hover functionality for all tables
-            initProductsListHover();
+            } else if (target === '#withdrawal-content') {
+                // Load wasting data if not already loaded
+                if ($('#withdrawalHistoryTable tbody tr').length <= 1) {
+                    if (typeof loadWastingData === 'function') {
+                        loadWastingData();
+                    }
+                }
+            } else if (target === '#draft-content') {
+                // Load draft data if not already loaded
+                if ($('#draftHistoryTable tbody tr').length <= 1) {
+                    if (typeof loadDraftReceipts === 'function') {
+                        loadDraftReceipts();
+                    }
+                }
+            }
         });
+        
+        // Initialize product hover functionality for all tables
+        if (typeof initProductsListHover === 'function') {
+            initProductsListHover();
+        }
+    });
     </script>
 </body>
 

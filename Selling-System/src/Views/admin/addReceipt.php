@@ -15,6 +15,8 @@ require_once '../../config/database.php';
     <!-- Select2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
    <!-- Global CSS -->
    <link rel="stylesheet" href="../../assets/css/custom.css">
     <!-- Page CSS -->
@@ -22,7 +24,6 @@ require_once '../../config/database.php';
     <link rel="stylesheet" href="../../css/global.css">
     <link rel="stylesheet" href="../../css/addReceipt.css">
     <link rel="stylesheet" href="../../css/input.css">
-     
 </head>
 <body>
     <!-- Top Navigation -->
@@ -103,7 +104,14 @@ require_once '../../config/database.php';
                             <tbody class="items-list">
                                 <tr>
                                     <td>1</td>
-                                    <td><select class="form-control product-select" style="width: 100%"></select></td>
+                                    <td>
+                                        <div class="d-flex">
+                                            <select class="form-control product-select" style="width: 100%"></select>
+                                            <button type="button" class="btn btn-sm btn-primary ms-2 quick-add-product" title="زیادکردنی کاڵای نوێ">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </td>
                                     <td class="product-image-cell"></td>
                                     <td>
                                         <select class="form-control unit-type">
@@ -577,258 +585,190 @@ require_once '../../config/database.php';
         </div>
     </div>
 
+    <!-- Add this modal after the main content div -->
+    <div class="modal fade" id="quickAddProductModal" tabindex="-1" role="dialog" aria-labelledby="quickAddProductModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="quickAddProductModalLabel">زیادکردنی کاڵای نوێ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="quickAddProductForm">
+                        <div class="mb-3">
+                            <label for="productName" class="form-label">ناوی کاڵا</label>
+                            <input type="text" class="form-control" id="productName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productCategory" class="form-label">جۆری کاڵا</label>
+                            <select class="form-select" id="productCategory" required>
+                                <?php
+                                $stmt = $conn->query("SELECT id, name FROM categories");
+                                while ($category = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                                    echo "<option value='" . $category['id'] . "'>" . $category['name'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productUnit" class="form-label">یەکەی کاڵا</label>
+                            <select class="form-select" id="productUnit" required>
+                                <?php
+                                $stmt = $conn->query("SELECT id, name FROM units");
+                                while ($unit = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                                    echo "<option value='" . $unit['id'] . "'>" . $unit['name'] . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productQuantity" class="form-label">بڕی بەردەست</label>
+                            <input type="number" class="form-control" id="productQuantity" min="1" value="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productPurchasePrice" class="form-label">نرخی کڕین</label>
+                            <input type="number" class="form-control" id="productPurchasePrice" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productSellingPrice" class="form-label">نرخی فرۆشتن</label>
+                            <input type="number" class="form-control" id="productSellingPrice" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productWholesalePrice" class="form-label">نرخی کۆ</label>
+                            <input type="number" class="form-control" id="productWholesalePrice">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" id="saveQuickProduct">پاشەکەوتکردن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <!-- Test Script -->
+    <script>
+        $(document).ready(function() {
+            // Handle quick add product button click
+            $('.quick-add-product').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $('#quickAddProductModal').modal('show');
+            });
+
+            // Handle save product button click
+            $('#saveQuickProduct').on('click', function(e) {
+                e.preventDefault();
+                console.log('Save button clicked');
+
+                // Get form data
+                const productData = {
+                    name: $('#productName').val(),
+                    category_id: $('#productCategory').val(),
+                    unit_id: $('#productUnit').val(),
+                    quantity: $('#productQuantity').val(),
+                    purchase_price: $('#productPurchasePrice').val(),
+                    selling_price_single: $('#productSellingPrice').val(),
+                    selling_price_wholesale: $('#productWholesalePrice').val() || $('#productSellingPrice').val(),
+                    code: 'Q' + Math.floor(Math.random() * 1000000),
+                    barcode: Date.now().toString()
+                };
+
+                console.log('Product data:', productData);
+
+                // Validate form
+                if (!$('#quickAddProductForm')[0].checkValidity()) {
+                    console.log('Form validation failed');
+                    $('#quickAddProductForm')[0].reportValidity();
+                    return;
+                }
+
+                // Show loading state
+                const saveButton = $(this);
+                saveButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> چاوەڕێ بکە...');
+
+                // Save product via AJAX
+            $.ajax({
+                    url: '../../api/quick_add_product.php',
+                    type: 'POST',
+                    data: productData,
+                success: function(response) {
+                        console.log('API Response:', response);
+                        
+                    if (response.success) {
+                            // Add the new product to the select2 dropdown
+                            const newOption = new Option(productData.name, response.product_id, true, true);
+                            const $currentSelect = $('.product-select').last();
+                            
+                            $currentSelect.append(newOption).trigger('change');
+
+                            // Set the unit price based on price type
+                            const priceType = $('.price-type').val();
+                            const unitPriceInput = $currentSelect.closest('tr').find('.unit-price');
+                            
+                            if (priceType === 'wholesale') {
+                                unitPriceInput.val(productData.selling_price_wholesale);
+                            } else {
+                                unitPriceInput.val(productData.selling_price_single);
+                            }
+
+                            // Close modal and reset form
+                            $('#quickAddProductModal').modal('hide');
+                            $('#quickAddProductForm')[0].reset();
+
+                            // Show success message
+                            Swal.fire({
+                                title: 'سەرکەوتوو بوو',
+                                text: 'کاڵاکە بە سەرکەوتوویی زیادکرا',
+                                icon: 'success',
+                                confirmButtonText: 'باشە'
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: response.message || 'هەڵەیەک ڕوویدا',
+                                icon: 'error',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', error);
+                        console.error('Status:', status);
+                        console.error('Response:', xhr.responseText);
+                        
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە سێرڤەرەوە',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    },
+                    complete: function() {
+                        // Reset button state
+                        saveButton.prop('disabled', false).html('پاشەکەوتکردن');
+                    }
+                });
+            });
+
+            // Reset form when modal is closed
+            $('#quickAddProductModal').on('hidden.bs.modal', function() {
+                $('#quickAddProductForm')[0].reset();
+            });
+        });
+    </script>
+
+    <!-- Your other scripts -->
     <script src="../../js/debug_selects.js"></script>
     <script src="../../js/addReceipt.js"></script>
     <script src="../../js/advance-payment.js"></script>
     <script src="../../js/include-components.js"></script>
-    
-    <script>
-        // Get the last receipt number
-        <?php
-        // Get the last receipt number from the database
-        $stmt = $conn->query("SELECT MAX(CAST(SUBSTRING(receipt_number, 3) AS UNSIGNED)) as max_number FROM sales");
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        $nextNumber = ($result['max_number'] ?? 0) + 1;
-        $receiptNumber = 'A-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
-        ?>
-        
-        // Initialize the page
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set the receipt number
-            const receiptFields = document.querySelectorAll('.receipt-number');
-            receiptFields.forEach(field => {
-                field.value = '<?php echo $receiptNumber; ?>';
-            });
-
-            // Initialize Select2 for all select elements
-            $('.customer-select, .supplier-select, .product-select').select2({
-                theme: 'bootstrap-5',
-                width: '100%'
-            });
-
-            // Set today's date as default
-            const today = new Date().toISOString().split('T')[0];
-            $('.sale-date, .purchase-date, .adjustment-date').val(today);
-
-            // Initialize receipt type buttons
-            const buttons = document.querySelectorAll('.receipt-type-btn');
-            
-            buttons.forEach(button => {
-                button.addEventListener('click', function() {
-                    // Remove active class from all buttons
-                    buttons.forEach(btn => btn.classList.remove('active'));
-                    // Add active class to clicked button
-                    this.classList.add('active');
-                });
-            });
-
-            // Initialize the first tab
-            updateReceiptType('selling');
-
-            // Initialize Select2 for customer select with advance payment info
-            $('.customer-select').select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                ajax: {
-                    url: '../../api/customers.php',
-                    dataType: 'json',
-                    delay: 250,
-                    data: function(params) {
-                        return {
-                            search: params.term,
-                            page: params.page || 1
-                        };
-                    },
-                    processResults: function(data, params) {
-                        params.page = params.page || 1;
-                        return {
-                            results: data.customers,
-                            pagination: {
-                                more: (params.page * 10) < data.total_count
-                            }
-                        };
-                    },
-                    cache: true
-                },
-                templateResult: formatCustomer,
-                templateSelection: formatCustomerSelection
-            });
-        });
-
-        // Function to update receipt type
-        function updateReceiptType(type) {
-            // Hide all tab panes
-            $('.tab-pane').removeClass('show active');
-            
-            // Show the active tab pane
-            $(`#${type}-1`).addClass('show active');
-            
-            // Update the tab button
-            $(`.receipt-tab[data-bs-target="#${type}-1"]`).addClass('active');
-            
-            // Update the receipt number based on type
-            $.ajax({
-                url: '../../api/get_next_invoice.php',
-                type: 'GET',
-                data: { type: type },
-                success: function(response) {
-                    if (response.success) {
-                        $(`#${type}-1 .receipt-number`).val(response.invoice_number);
-                    }
-                }
-            });
-        }
-
-        // Function to check product stock
-        function checkProductStock(quantityInput) {
-            const row = quantityInput.closest('tr');
-            const productSelect = row.querySelector('.product-select');
-            const unitTypeSelect = row.querySelector('.unit-type');
-            
-            if (!productSelect || !productSelect.value || !quantityInput.value) {
-                return;
-            }
-            
-            const productId = productSelect.value;
-            const quantity = parseInt(quantityInput.value);
-            const unitType = unitTypeSelect ? unitTypeSelect.value : 'piece';
-            
-            // AJAX call to check stock
-            $.ajax({
-                url: '../../api/check_product_stock.php',
-                type: 'POST',
-                data: {
-                    product_id: productId,
-                    quantity: quantity,
-                    unit_type: unitType
-                },
-                success: function(response) {
-                    if (!response.success) {
-                        // Show warning if insufficient stock
-                        Swal.fire({
-                            title: 'ئاگاداری!',
-                            text: `بڕی پێویست لە کۆگادا بەردەست نیە! بڕی بەردەست: ${response.available_quantity} ${getUnitName(unitType)}`,
-                            icon: 'warning',
-                            confirmButtonText: 'باشە'
-                        });
-                        // Reset quantity to 1 or the maximum available
-                        quantityInput.value = Math.min(1, response.available_quantity);
-                        // Recalculate total
-                        calculateRowTotal(row);
-                    }
-                },
-                error: function() {
-                    console.error('Error checking product stock');
-                }
-            });
-        }
-
-        // Helper function to get unit name in Kurdish
-        function getUnitName(unitType) {
-            switch(unitType) {
-                case 'box': return 'کارتۆن';
-                case 'set': return 'سێت';
-                default: return 'دانە';
-            }
-        }
-
-        // Format customer display in dropdown
-        function formatCustomer(customer) {
-            if (!customer.id) return customer.text;
-            
-            let advanceInfo = '';
-            if (customer.debt_on_customer > 0) {
-                advanceInfo = `<div class="text-success" style="font-size: 0.9em;">
-                    <i class="fas fa-money-bill-wave"></i> پارەی پێشەکی: ${customer.debt_on_customer.toLocaleString()} دینار
-                </div>`;
-            }
-            
-            let debtInfo = '';
-            if (customer.debit_on_business > 0) {
-                debtInfo = `<div class="text-danger" style="font-size: 0.9em;">
-                    <i class="fas fa-file-invoice-dollar"></i> قەرز: ${customer.debit_on_business.toLocaleString()} دینار
-                </div>`;
-            }
-            
-            return $(`
-                <div class="customer-option">
-                    <div class="customer-name" style="font-weight: bold;">${customer.text}</div>
-                    <div class="customer-phone text-muted" style="font-size: 0.9em;">
-                        <i class="fas fa-phone"></i> ${customer.phone1}
-                    </div>
-                    ${advanceInfo}
-                    ${debtInfo}
-                </div>
-            `);
-        }
-
-        // Format selected customer
-        function formatCustomerSelection(customer) {
-            if (!customer.id) return customer.text;
-            
-            // Show/hide advance payment info
-            const advanceInfoDiv = $('.customer-advance-info');
-            const advanceAmountSpan = $('.advance-amount');
-            
-            if (customer.debt_on_customer > 0) {
-                advanceInfoDiv.show();
-                advanceAmountSpan.text(customer.debt_on_customer.toLocaleString());
-            } else {
-                advanceInfoDiv.hide();
-            }
-            
-            return customer.text;
-        }
-
-        // Add CSS styles for the dropdown
-        const style = `
-        <style>
-            .customer-option {
-                padding: 8px;
-                border-bottom: 1px solid #eee;
-            }
-            .customer-option:last-child {
-                border-bottom: none;
-            }
-            .customer-name {
-                margin-bottom: 2px;
-            }
-            .select2-results__option {
-                padding: 0 !important;
-            }
-            .select2-results__option--highlighted .customer-option {
-                background-color: #f0f0f0;
-            }
-            .customer-advance-info {
-                margin-top: 5px;
-                padding: 5px;
-                background-color: #f8f9fa;
-                border-radius: 4px;
-                font-size: 0.9em;
-            }
-        </style>
-        `;
-        $('head').append(style);
-
-        // Handle customer selection change
-        $('.customer-select').on('change', function() {
-            const selectedCustomer = $(this).select2('data')[0];
-            if (selectedCustomer && selectedCustomer.debt_on_customer > 0) {
-                // Show warning if customer has advance payment
-                Swal.fire({
-                    title: 'ئاگاداری',
-                    text: `ئەم کڕیارە ${selectedCustomer.debt_on_customer.toLocaleString()} دینار پارەی پێشەکی هەیە. ئەگەر کاڵا بە قەرز بکڕێت، لەم پارە پێشەکییە دەبڕدرێتەوە.`,
-                    icon: 'info',
-                    confirmButtonText: 'باشە'
-                });
-            }
-        });
-    </script>
 </body>
 </html> 

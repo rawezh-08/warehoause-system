@@ -35,8 +35,7 @@ class PurchaseReceiptsController {
                 FROM purchases p 
                 LEFT JOIN suppliers s ON p.supplier_id = s.id 
                 LEFT JOIN purchase_items pi ON p.id = pi.purchase_id
-                LEFT JOIN products pr ON pi.product_id = pr.id
-                WHERE p.is_draft = 0";
+                LEFT JOIN products pr ON pi.product_id = pr.id";
         
         $params = [];
         

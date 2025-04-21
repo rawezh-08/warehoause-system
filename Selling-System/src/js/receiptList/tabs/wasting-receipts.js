@@ -13,7 +13,7 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: '../../src/api/receipts/delete_wasting.php',
+                    url: '../../api/receipts/delete_wasting.php',
                     method: 'POST',
                     data: { receipt_id: receiptId },
                     success: function(response) {
@@ -46,9 +46,9 @@ $(document).ready(function() {
     });
 
     // Handle wasting receipt view
-    $(document).on('click', '.view-btn', function() {
-        const receiptId = $(this).data('id');
-        window.location.href = `../../src/views/admin/view_wasting.php?id=${receiptId}`;
+    $(document).on('click', '#withdrawalHistoryTable .view-btn', function() {
+        const wastingId = $(this).data('id');
+        viewWastingDetails(wastingId);
     });
 
     // Handle date filter changes
@@ -58,7 +58,7 @@ $(document).ready(function() {
         
         if (startDate && endDate) {
             $.ajax({
-                url: '../../src/api/receipts/filter_wastings.php',
+                url: '../../api/receipts/filter_wastings.php',
                 method: 'POST',
                 data: {
                     start_date: startDate,
@@ -93,41 +93,55 @@ $(document).ready(function() {
         location.reload();
     });
 
-    // Function to update wasting table with new data
-    function updateWastingTable(data) {
+    /**
+     * Update the wasting table with filtered data
+     * @param {Array} wastingData - Array of wasting data
+     */
+    function updateWastingTable(wastingData) {
         const tbody = $('#withdrawalHistoryTable tbody');
         tbody.empty();
-
-        if (data.length === 0) {
-            tbody.append(`<tr><td colspan="6" class="text-center">هیچ داتایەک نەدۆزرایەوە</td></tr>`);
+        
+        if (wastingData.length === 0) {
+            tbody.html('<tr class="no-records"><td colspan="6" class="text-center">هیچ بەفیڕۆچوویەک نەدۆزرایەوە</td></tr>');
             return;
         }
-
-        data.forEach((wasting, index) => {
-            const row = `<tr>
-                <td>${index + 1}</td>
-                <td>${wasting.date}</td>
-                <td class="products-list-cell" data-products="${wasting.products_list}">
-                    ${wasting.products_list}
-                    <div class="products-popup"></div>
-                </td>
-                <td>${formatCurrency(wasting.total_amount)}</td>
-                <td>${wasting.notes || ''}</td>
-                <td>
-                    <div class="action-buttons">
-                        <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${wasting.id}">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${wasting.id}">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>`;
+        
+        wastingData.forEach((wasting, index) => {
+            const row = `
+                <tr data-id="${wasting.id}">
+                    <td>${index + 1}</td>
+                    <td>${formatDate(wasting.date)}</td>
+                    <td class="products-list-cell" data-products="${wasting.products_list || ''}">
+                        ${wasting.products_list || ''}
+                        <div class="products-popup"></div>
+                    </td>
+                    <td>${numberFormat(wasting.total_amount)}</td>
+                    <td>${wasting.notes || ''}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${wasting.id}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${wasting.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
             tbody.append(row);
         });
-
-        // Reinitialize product hover functionality
-        initProductsListHover();
+        
+        // Initialize pagination
+        initTablePagination(
+            'withdrawalHistoryTable',
+            'withdrawalRecordsPerPage',
+            'withdrawalPrevPageBtn',
+            'withdrawalNextPageBtn',
+            'withdrawalPaginationNumbers',
+            'withdrawalStartRecord',
+            'withdrawalEndRecord',
+            'withdrawalTotalRecords'
+        );
     }
 }); 

@@ -5,18 +5,24 @@ $(document).ready(function() {
         return number.toLocaleString('en-US') + ' د.ع';
     }
 
-    // Handle purchase receipt deletion
+    // Handle purchase receipt view
+    $(document).on('click', '#shippingHistoryTable .view-btn', function() {
+        const purchaseId = $(this).data('id');
+        viewPurchaseDetails(purchaseId);
+    });
+
+    // Handle delete button
     $(document).on('click', '.delete-btn', function() {
         const receiptId = $(this).data('id');
-        if (!receiptId) return; // Skip if no ID (empty row)
         
         Swal.fire({
-            title: 'دڵنیای لە سڕینەوەی پسووڵە؟',
-            text: 'پاش سڕینەوە ناتوانیت گەڕایەوە',
+            title: 'دڵنیای؟',
+            text: 'ئەم پسووڵەیە بە تەواوی دەسڕدرێتەوە',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'بەڵێ، بسڕەوە',
-            cancelButtonText: 'نەخێر، هەڵوەشانەوە'
+            confirmButtonText: 'بەڵێ، بیسڕەوە',
+            cancelButtonText: 'نەخێر، پەشیمان بوومەوە',
+            reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
@@ -52,25 +58,95 @@ $(document).ready(function() {
         });
     });
 
-    // Handle purchase receipt view
-    $(document).on('click', '.view-btn', function() {
-        const receiptId = $(this).data('id');
-        if (!receiptId) return; // Skip if no ID (empty row)
-        window.location.href = `../../views/admin/view_purchase.php?id=${receiptId}`;
-    });
-
-    // Handle purchase receipt edit
-    $(document).on('click', '.edit-btn', function() {
-        const receiptId = $(this).data('id');
-        if (!receiptId) return; // Skip if no ID (empty row)
-        window.location.href = `../../views/admin/edit_purchase.php?id=${receiptId}`;
-    });
-
     // Handle purchase receipt return
-    $(document).on('click', '.return-btn', function() {
-        const receiptId = $(this).data('id');
-        if (!receiptId) return; // Skip if no ID (empty row)
-        window.location.href = `../../views/admin/return_purchase.php?id=${receiptId}`;
+    $(document).on('click', '#shippingHistoryTable .return-btn', function() {
+        const purchaseId = $(this).data('id');
+        
+        console.log("Return button clicked for purchase ID:", purchaseId);
+        
+        if (!purchaseId) {
+            console.error("No purchase ID found on return button");
+            Swal.fire({
+                icon: 'error',
+                title: 'هەڵە',
+                text: 'ناسنامەی کڕین نادروستە'
+            });
+            return;
+        }
+        
+        // Show loading
+        Swal.fire({
+            title: 'تکایە چاوەڕێ بکە...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Fetch purchase items
+        $.ajax({
+            url: '../../api/receipts/get_purchase_items.php',
+            type: 'POST',
+            data: { purchase_id: purchaseId },
+            dataType: 'json',
+            success: function(response) {
+                console.log("API Response:", response);
+                
+                Swal.close();
+                
+                if (response.status === 'success' && response.items) {
+                    console.log("Items found:", response.items);
+                    console.log("Items length:", response.items.length);
+                    
+                    // Show detailed info for each item
+                    if (response.items && response.items.length > 0) {
+                        response.items.forEach((item, index) => {
+                            console.log(`Item ${index + 1}:`, item);
+                            console.log(`  - product_id: ${item.product_id}`);
+                            console.log(`  - product_name: ${item.product_name}`);
+                            console.log(`  - quantity: ${item.quantity}`);
+                            console.log(`  - returned_quantity: ${item.returned_quantity}`);
+                            console.log(`  - remaining: ${item.quantity - (parseFloat(item.returned_quantity) || 0)}`);
+                        });
+                    }
+                    
+                    // Show return form
+                    showReturnForm(purchaseId, 'purchase', response.items);
+                } else {
+                    console.error('API Response Error:', response);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        html: `<div dir="ltr" style="text-align: left;">
+                            <p>هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان:</p>
+                            <pre style="background: #f0f0f0; padding: 10px; max-height: 200px; overflow: auto;">${response.message || 'No error message'}</pre>
+                        </div>`
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX Error:", {xhr, status, error});
+                Swal.close();
+                
+                let errorMessage = 'Unknown error occurred';
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    errorMessage = response.message || error;
+                } catch (e) {
+                    errorMessage = error || 'Could not parse error response';
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    html: `<div dir="ltr" style="text-align: left;">
+                        <p>هەڵەیەک ڕوویدا لە کاتی پەیوەندی کردن بە سێرڤەر:</p>
+                        <p><strong>Status:</strong> ${status}</p>
+                        <p><strong>Error:</strong> ${errorMessage}</p>
+                    </div>`
+                });
+            }
+        });
     });
 
     // Handle date filter changes
@@ -93,7 +169,7 @@ $(document).ready(function() {
                 success: function(response) {
                     if (response.success) {
                         // Update table with new data
-                        updatePurchaseTable(response.data);
+                        updatePurchasesTable(response.data);
                     } else {
                         Swal.fire({
                             title: 'هەڵە!',
@@ -122,63 +198,85 @@ $(document).ready(function() {
         location.reload();
     });
 
-    // Function to update purchase table with new data
-    function updatePurchaseTable(data) {
+    /**
+     * Update the purchases table with filtered data
+     * @param {Array} purchasesData - Array of purchases data
+     */
+    function updatePurchasesTable(purchasesData) {
         const tbody = $('#shippingHistoryTable tbody');
         tbody.empty();
-
-        if (data.length === 0) {
-            tbody.append(`<tr><td colspan="15" class="text-center">هیچ داتایەک نەدۆزرایەوە</td></tr>`);
+        
+        if (purchasesData.length === 0) {
+            tbody.html('<tr class="no-records"><td colspan="15" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td></tr>');
             return;
         }
-
-        data.forEach((purchase, index) => {
-            const row = `<tr>
-                <td>${index + 1}</td>
-                <td>${purchase.invoice_number}</td>
-                <td>${purchase.supplier_name || 'N/A'}</td>
-                <td>${purchase.date}</td>
-                <td class="products-list-cell" data-products="${purchase.products_list}">
-                    ${purchase.products_list}
-                    <div class="products-popup"></div>
-                </td>
-                <td>${numberFormat(purchase.subtotal)}</td>
-                <td>${numberFormat(purchase.shipping_cost)}</td>
-                <td>${numberFormat(purchase.other_cost)}</td>
-                <td>${numberFormat(purchase.discount)}</td>
-                <td>${numberFormat(purchase.total_amount)}</td>
-                <td>${numberFormat(purchase.paid_amount)}</td>
-                <td>${numberFormat(purchase.remaining_amount)}</td>
-                <td>
-                    <span class="badge rounded-pill ${purchase.payment_type == 'cash' ? 'bg-success' : (purchase.payment_type == 'credit' ? 'bg-warning' : 'bg-info')}">
-                        ${purchase.payment_type == 'cash' ? 'نەقد' : (purchase.payment_type == 'credit' ? 'قەرز' : 'چەک')}
-                    </span>
-                </td>
-                <td>${purchase.notes || ''}</td>
-                <td>
-                    <div class="action-buttons">
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${purchase.id}">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${purchase.id}">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${purchase.id}">
-                            <i class="fas fa-print"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-warning rounded-circle return-btn" data-id="${purchase.id}">
-                            <i class="fas fa-undo"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${purchase.id}">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>`;
+        
+        purchasesData.forEach((purchase, index) => {
+            const row = `
+                <tr data-id="${purchase.id}">
+                    <td>${index + 1}</td>
+                    <td>${purchase.invoice_number || 'N/A'}</td>
+                    <td>${purchase.supplier_name || 'N/A'}</td>
+                    <td>${formatDate(purchase.date)}</td>
+                    <td class="products-list-cell" data-products="${purchase.products_list || ''}">
+                        ${purchase.products_list || ''}
+                        <div class="products-popup"></div>
+                    </td>
+                    <td>${numberFormat(purchase.subtotal)}</td>
+                    <td>${numberFormat(purchase.shipping_cost)}</td>
+                    <td>${numberFormat(purchase.other_cost)}</td>
+                    <td>${numberFormat(purchase.discount)}</td>
+                    <td>${numberFormat(purchase.total_amount)}</td>
+                    <td>${numberFormat(purchase.paid_amount)}</td>
+                    <td>${numberFormat(purchase.remaining_amount)}</td>
+                    <td>
+                        <span class="badge rounded-pill ${purchase.payment_type === 'cash' ? 'bg-success' : (purchase.payment_type === 'credit' ? 'bg-warning' : 'bg-info')}">
+                            ${purchase.payment_type === 'cash' ? 'نەقد' : (purchase.payment_type === 'credit' ? 'قەرز' : 'چەک')}
+                        </span>
+                    </td>
+                    <td>${purchase.notes || ''}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${purchase.id}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${purchase.id}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${purchase.id}">
+                                <i class="fas fa-print"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-warning rounded-circle return-btn" data-id="${purchase.id}">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${purchase.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
             tbody.append(row);
         });
-
-        // Reinitialize product hover functionality
-        initProductsListHover();
+        
+        // Initialize pagination
+        initTablePagination(
+            'shippingHistoryTable',
+            'shippingRecordsPerPage',
+            'shippingPrevPageBtn',
+            'shippingNextPageBtn',
+            'shippingPaginationNumbers',
+            'shippingStartRecord',
+            'shippingEndRecord',
+            'shippingTotalRecords'
+        );
     }
+
+    // Initialize DataTable
+    const purchaseTable = $('#shippingHistoryTable').DataTable({
+        // ... your existing DataTable configuration
+    });
+
+    // Load initial data
+    loadPurchasesData();
 }); 
