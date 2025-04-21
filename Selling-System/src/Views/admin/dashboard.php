@@ -18,13 +18,15 @@ require_once '../../process/dashboard_logic.php';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="../../assets/css/custom.css">
-    <!-- Page CSS -->
-    <link rel="stylesheet" href="../../css/dashboard.css">
-    <link rel="stylesheet" href="../../css/global.css">
-    <!-- Dashboard Specific Styles -->
-    <link rel="stylesheet" href="../../css/dashboard_styles.css">
+
+
+    
+    <!-- <link rel="stylesheet" href="../../assets/css/custom.css"> -->
+    <!-- <link rel="stylesheet" href="../../css/dashboard.css"> -->
+    <!-- <link rel="stylesheet" href="../../css/global.css"> -->
+    <!-- <link rel="stylesheet" href="../../css/dashboard_styles.css"> -->
+    
+    <link rel="stylesheet" href="../../test/main.css">
     <style>
         .filter-buttons {
             margin-bottom: 20px;
@@ -83,6 +85,7 @@ require_once '../../process/dashboard_logic.php';
     <div id="content">
         <!-- Navbar container - will be populated by JavaScript -->
         <div id="navbar-container"></div>
+        <div class="blure-shape"></div>
 
         <!-- Sidebar container - will be populated by JavaScript -->
         <div id="sidebar-container"></div>
@@ -464,49 +467,7 @@ require_once '../../process/dashboard_logic.php';
         </div>
     </div>
 
-    <!-- Notification Panel (Hidden by default) -->
-    <div class="notification-panel">
-        <div class="panel-header">
-            <h3 class="panel-title">ئاگادارکردنەوەکان</h3>
-            <button class="btn-close-panel">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="panel-content">
-            <div class="notification-list">
-                <div class="notification-item unread">
-                    <div class="notification-icon warning">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <div class="notification-content">
-                        <h4>کەمبوونەوەی کۆگا</h4>
-                        <p>کاناپێی ڕەش تەنها ١ دانە ماوە</p>
-                        <span class="notification-time">٣ کاتژمێر لەمەوبەر</span>
-                    </div>
-                </div>
-                <div class="notification-item">
-                    <div class="notification-icon success">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="notification-content">
-                        <h4>فرۆشتنێکی نوێ</h4>
-                        <p>کاناپێی زێڕ بە بڕی ٣ دانە فرۆشرا</p>
-                        <span class="notification-time">٥ کاتژمێر لەمەوبەر</span>
-                    </div>
-                </div>
-                <div class="notification-item">
-                    <div class="notification-icon info">
-                        <i class="fas fa-info-circle"></i>
-                    </div>
-                    <div class="notification-content">
-                        <h4>زیادکردنی بەرهەم</h4>
-                        <p>٥ دانە کاناپێی قاوەیی زیادکرا</p>
-                        <span class="notification-time">١ ڕۆژ لەمەوبەر</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

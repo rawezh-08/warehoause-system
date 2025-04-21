@@ -454,7 +454,7 @@ canvas {
   font-weight: 700;
   color: #0047D0;
   line-height: 1.2;
-  user-select: none;
+  /* user-select: none; */
 }
 
 .progress-legend {

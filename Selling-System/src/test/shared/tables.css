@@ -1,0 +1,105 @@
+
+/* Product Section */
+.product-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 25px;
+}
+
+.product-card {
+  background-color: var(--card-bg);
+  border-radius: var(--card-radius);
+  padding: 20px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s, box-shadow 0.3s;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.product-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.product-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.product-table-container {
+  flex: 1;
+  overflow-x: auto;
+}
+
+.product-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.product-table thead th {
+  padding: 12px 15px;
+  background-color: rgba(0, 0, 0, 0.02);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+  text-align: right;
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.product-table tbody td {
+  padding: 15px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.product-table tbody tr {
+  transition: background-color 0.3s;
+}
+
+.product-table tbody tr:hover {
+  background-color: rgba(67, 97, 238, 0.05);
+}
+
+.product-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.product-table .product-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.product-table .product-count {
+  font-weight: var(--font-weight-bold);
+  color: var(--primary-color);
+  text-align: center;
+  padding: 4px 8px;
+  background-color: rgba(67, 97, 238, 0.1);
+  border-radius: 20px;
+  min-width: 30px;
+  display: inline-block;
+}
+
+.product-card.low-stock .product-title {
+  color: var(--warning-color);
+}
+
+.product-card.top-selling .product-title {
+  color: var(--success-color);
+}

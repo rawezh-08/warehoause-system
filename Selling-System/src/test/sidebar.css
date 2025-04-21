@@ -1,0 +1,326 @@
+.sidebar {
+  margin-top: 100px;
+  background-color: #ffffff;
+  width: 280px;
+  height: 100vh;
+  border-top-left-radius: 20px;
+  border-bottom-left-radius: 20px;
+  /* box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1); */
+  /* padding: 20px; */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+/* Sidebar */
+.sidebar {
+  background-color: white;
+  width: 260px;
+  height: 100vh; /* Changed from 100% to 100vh for consistent viewport height */
+  position: fixed;
+  top: 0;
+  right: -260px; /* Start with sidebar hidden */
+  z-index: 1030; /* Above navbar */
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+  transition: right 0.3s ease;
+  border-left: 1px solid var(--gray-200);
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+}
+
+
+body.sidebar-active .sidebar {
+  right: 0;
+}
+
+/* Fixing scrolling issues */
+body.sidebar-active {
+  overflow-x: hidden; /* Prevent horizontal scrolling of the body when sidebar is open */
+}
+
+.sidebar-wrapper {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  padding: 0;
+  margin-top: 0; /* Remove top margin since we don't need space for navbar */
+  padding-bottom: 100px; /* Add bottom padding to ensure all menu items are accessible */
+}
+
+/* Sidebar Header */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 1rem;
+  background-color: var(--light-gray);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  transition: all 0.3s ease;
+}
+
+.sidebar-logo:hover {
+  transform: scale(1.05);
+}
+
+/* Sidebar toggle button */
+.sidebar-toggle {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  display: flex;
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  z-index: 1040;
+  transition: right 0.3s ease, transform 0.3s ease;
+}
+
+.sidebar-toggle img {
+  transition: transform 0.3s ease;
+}
+
+body.sidebar-active .sidebar-toggle img {
+  transform: rotate(180deg);
+}
+
+body.sidebar-active .sidebar-toggle {
+  right: 210px; /* Position toggle button relative to sidebar width */
+}
+
+.sidebar-toggle:hover {
+  color: var(--primary-hover);
+}
+
+.sidebar-header{
+background-color: var(--primary-color);
+height: 60px;
+border-radius: 60px;
+margin: 10px;
+display: flex;
+align-items: center;
+justify-content: start;
+
+}
+
+
+
+.sidebar-header a{
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+ 
+
+
+
+
+.dash-cont {
+  width: 40px;
+  height: 40px;
+  background-color: #F0F0F0;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dash-icont img {
+  width: 2px;
+  height: 2px;
+  filter: brightness(0);
+}
+
+.item-link {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-self: unset;
+  background-color: #ffffff;
+  transition: background-color 0.2s ease;
+}
+
+
+
+.icon-cont {
+  width: 40px;
+  height: 40px;
+  background-color: #F0F0F0;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.icon-cont img {
+  width: 20px;
+  height: 20px;
+  filter: brightness(0);
+}
+
+
+.item-link:hover .icon-cont {
+
+  background-color: var(--primary-color);
+  transition: background-color 0.2s ease;
+
+}
+
+.item-link:hover .icon-cont img {
+
+  filter: invert(1) sepia(1) hue-rotate(180deg);
+}
+
+
+.submenu {
+  margin: 8px;
+  margin-right: 30px;
+  background-color: #EFF3FF;
+  border-radius: 10px;
+}
+.submenu li{
+  color: #383838;
+  padding: 6px;
+
+}
+
+
+
+@media (max-width: 400px) {
+  .sidebar {
+    margin: 0px;
+    position: fixed;
+    display: block;
+    top: 0;
+    left: 0;
+    right: -100%; /* Hide off-screen by default */
+    width: 80%; /* Take only 80% of screen width */
+    height: 100vh;
+    z-index: 1030;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    transition: right 0.3s ease;
+  }
+  
+  body.sidebar-active .sidebar {
+    right: 0; /* Slide in from right */
+  }
+  
+  /* Create an overlay effect when sidebar is open */
+  body.sidebar-active::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1020;
+  }
+  
+  /* Make sure content doesn't shift when sidebar opens */
+  body.sidebar-active .main-content {
+    margin-right: 0 !important;
+    transform: none !important;
+  }
+  
+  #wrapper, #wrapper:not(.sidebar-collapsed) {
+    padding-right: 0 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  
+  /* Fix toggle button on small screens */
+  body.sidebar-active .sidebar-toggle {
+    right: 85%; /* Positions the toggle button at the edge of the sidebar */
+    background-color: white;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    padding: 8px;
+    transform: translateX(50%);
+  }
+  
+  /* Improve toggle button appearance */
+  .sidebar-toggle {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .sidebar-toggle img {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* iPad specific styles (similar to mobile but with some differences) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .sidebar {
+    margin: 0px;
+    position: fixed;
+    display: block;
+    top: 0;
+    right: -320px; /* Hide off-screen by default, wider for iPad */
+    width: 320px; /* Take reasonable width for iPad */
+    height: 100vh;
+    z-index: 1030;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    transition: right 0.3s ease;
+  }
+  
+  body.sidebar-active .sidebar {
+    right: 0; /* Slide in from right */
+  }
+  
+  /* Create an overlay effect when sidebar is open */
+  body.sidebar-active::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1020;
+  }
+  
+  /* Make sure content doesn't shift when sidebar opens */
+  body.sidebar-active .main-content {
+    margin-right: 0 !important;
+    transform: none !important;
+  }
+  
+  #wrapper, #wrapper:not(.sidebar-collapsed) {
+    padding-right: 0 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  
+  /* Fix toggle button on iPad */
+  body.sidebar-active .sidebar-toggle {
+    right: 325px; /* Positions the toggle button at the edge of the sidebar */
+    background-color: white;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    padding: 8px;
+    transform: translateX(50%);
+  }
+}

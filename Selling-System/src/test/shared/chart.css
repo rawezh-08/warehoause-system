@@ -1,0 +1,242 @@
+
+/* Chart Sections */
+.charts-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    margin-bottom: 25px;
+  }
+  
+  .chart-section {
+    grid-column: span 8;
+    background-color: var(--card-bg);
+    border-radius: var(--card-radius);
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+  }
+  
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .chart-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    margin: 0;
+  }
+  
+  .chart-actions {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+  }
+  
+  .chart-content {
+    position: relative;
+    min-height: 300px;
+    width: 100%;
+    transition: all 0.3s ease;
+  }
+  
+  .chart-center-text {
+    pointer-events: none;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .total-transactions {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+  }
+  
+  .transactions-label {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  
+  .sales-chart {
+    background-color: var(--card-bg);
+    border-radius: var(--card-radius);
+    padding: 20px;
+  }
+  
+  /* Chart card */
+  .chart-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .chart-card .chart-content {
+    flex: 1;
+  }
+  
+  /* Chart Wrapper */
+  .chart-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 200px;
+    max-height: 400px;
+    aspect-ratio: 16/9;
+  }
+  
+  /* Chart transitions */
+  .chart-content,
+  .chart-container,
+  canvas {
+    transition: all 0.3s ease;
+  }
+  
+  /* Chart overflow fix */
+  .chart-container {
+    overflow: hidden;
+    border-radius: var(--card-radius);
+  }
+  
+  /* Chart tooltips */
+  .chartjs-tooltip {
+    z-index: 1000;
+    pointer-events: none;
+  }
+  
+  /* Circular Progress Section */
+  .progress-section {
+    grid-column: span 4;
+    background-color: var(--card-bg);
+    border-radius: var(--card-radius);
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .progress-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  .progress-chart {
+    position: relative;
+    background-color: var(--card-bg);
+    border-radius: var(--card-radius);
+    padding: 20px;
+  }
+  
+  .progress-circle-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 240px;
+    margin: 0 auto;
+    max-width: 240px;
+    animation: growChart 0.7s ease-out forwards;
+  }
+  
+  .progress-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 2;
+  }
+  
+  .progress-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #0047D0;
+    line-height: 1.2;
+  }
+  
+  .progress-legend {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    margin-top: 20px;
+  }
+  
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+  }
+  
+  .legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    display: inline-block;
+  }
+  
+  .legend-color.blue {
+    background-color: #0047D0;
+  }
+  
+  .legend-color.light-blue {
+    background-color: #85C1FF;
+  }
+  
+  .progress-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    margin-top: 5px;
+  }
+  
+  .progress-details {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+  }
+  
+  .progress-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .progress-item-value {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+  }
+  
+  .progress-item-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+  }
+  
+  @keyframes growChart {
+    0% {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+  
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  

@@ -1,0 +1,65 @@
+/* Table styles */
+.table {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.table thead th {
+    background-color: #f9fafb;
+    color: #374151;
+    font-weight: 600;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1rem 0.75rem;
+}
+
+.table tbody td {
+    padding: 0.75rem;
+    vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+/* Badge styles */
+.badge {
+    padding: 0.25em 0.6em;
+    font-weight: 500;
+}
+
+.badge-paid {
+    background-color: #28a745;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.badge-partial {
+    background-color: #ffc107;
+    color: #212529;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.badge-unpaid {
+    background-color: #dc3545;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+/* List group */
+.list-group-item {
+    transition: all 0.3s ease;
+    padding: 1rem;
+    border-left: none;
+    border-right: none;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}

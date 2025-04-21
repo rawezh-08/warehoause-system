@@ -1,0 +1,158 @@
+:root {
+  /* Color Variables */
+  --primary-color: #7380ec;
+  --primary-light: #4895ef;
+  --primary-dark: #3f37c9;
+  --secondary-color: #6C7293;
+  --accent-color: #f72585;
+  --success-color: #198754;
+  --warning-color: #cc8800;
+  --danger-color: #dc3545;
+  --info-color: #0d6efd;
+
+  /* Neutral Colors */
+  --bg-color: #F8F9FE;
+  --card-bg: #FFFFFF;
+  --text-primary: #212529;
+  --text-secondary: #495057;
+  --text-muted: #6c757d;
+  --border-color: #dee2e6;
+  --icon-bg: #E8F5FE;
+
+  /* Sizing & Spacing */
+  --card-radius: 20px;
+  --btn-radius: 12px;
+  --input-radius: 8px;
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 80px;
+  --header-height: 70px;
+  --transition-speed: 0.3s;
+
+  /* Typography */
+  --font-body: 'Rabar', sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Z-index layers */
+  --z-sidebar: 1000;
+  --z-header: 990;
+  --z-overlay: 989;
+  --z-dropdown: 1010;
+  --z-modal: 1050;
+  --z-tooltip: 1070;
+
+  /* Base Typography Variables */
+  --font-size-base: 16px;
+  --scale-ratio: 1.2;
+
+  /* Text Colors */
+  --text-tertiary: #6b6b6b;
+
+  /* Grays */
+  --light-gray: #f6f6f9;
+  --gray-100: #eef0f6;
+  --gray-200: #dce1eb;
+  --gray-300: #c2c9d6;
+  --gray-400: #97a0af;
+  --gray-500: #707a8a;
+  --gray-600: #4c5564;
+  
+  /* UI elements */
+  --blue-border-color: #b3cdff;
+  --border-radius: 10px;
+  --border-radius-sm: 6px;
+  --border-radius-lg: 15px;
+  --border-radius-pill: 50px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.1);
+  --shadow-hover: 0 5px 15px rgba(115, 128, 236, 0.2);
+  
+  /* Spacing */
+  --spacing-xs: 5px;
+  --spacing-sm: 10px;
+  --spacing-md: 15px;
+  --spacing-base: 20px;
+  --spacing-lg: 30px;
+  --spacing-xl: 40px;
+  
+  /* Layout */
+     --sidebar-width: 250px;
+     --header-height: 60px;
+  --content-max-width: 1200px;
+  
+  /* Animation */
+  --transition-fast: 0.2s;
+  --transition-base: 0.3s;
+  --transition-slow: 0.5s;
+
+  /* Neutral Colors */
+  --white: #ffffff;
+  --gray-50: #f8fafc;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+  --black: #000000;
+
+  /* Typography */
+  --font-family: 'Rabar';
+  --font-size-base: 1rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  
+  /* Spacing */
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-10: 2.5rem;
+  --spacing-12: 3rem;
+  
+  /* Border Radius */
+  --radius-sm: 0.125rem;
+  --radius-base: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-full: 9999px;
+  
+  /* Shadows */
+  --shadow-base: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  
+  /* Transitions */
+  --transition-base: all 0.2s ease-in-out;
+}
+
+/* Dark Mode Variables */
+[data-theme="dark"] {
+  --primary-color: #4361ee;
+  --primary-light: #5470ef;
+  --primary-dark: #3f37c9;
+  --bg-color: #1a202c;
+  --card-bg: #2d3748;
+  --text-primary: #f7fafc;
+  --text-secondary: #e2e8f0;
+  --text-muted: #a0aec0;
+  --border-color: #4a5568;
+}
+
+@font-face {
+  font-family: 'Rabar';
+  src: url('../assets/fonts/Roboto-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+} 

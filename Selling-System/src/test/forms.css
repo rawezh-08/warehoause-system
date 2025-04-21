@@ -1,0 +1,76 @@
+/* Form controls */
+.form-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.form-control, .form-select {
+    border: 1px solid var(--border-color);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: 24px;
+    transition: all var(--transition-fast);
+    direction: rtl;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.input-group-text {
+    background-color: var(--light-gray);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* Form validation */
+.is-invalid {
+    border-color: var(--danger-color) !important;
+}
+
+.invalid-feedback {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: var(--danger-color);
+}
+
+/* Input group styles */
+.input-group .form-control,
+.input-group .form-select {
+    border-radius: 0 var(--border-radius) var(--border-radius) 0;
+}
+
+/* Search inputs */
+.search-input {
+    height: 42px;
+    border-left: none;
+    padding-right: 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    box-shadow: none;
+    border-color: #86b7fe;
+}
+
+.search-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+/* Filter section */
+.filter-section {
+    background-color: #f8f9ff;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}

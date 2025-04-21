@@ -1,0 +1,47 @@
+.blure-shape {
+
+    position: static;
+    margin-right: 200px;
+    margin-top: 3px;
+    width: 400px;
+    height: 60px;
+    background-color: var(--primary-color);
+    filter: blur(60px);
+    z-index: -1;
+}
+
+/* Main content */
+.main-content {
+    margin-right: 0; /* Start with no margin */
+    padding-top: 70px; /* Space for fixed navbar */
+    transition: margin-right 0.3s ease;
+}
+
+body.sidebar-active .main-content {
+    margin-right: 260px;
+}
+/* Dashboard Container */
+.dashboard-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 25px;
+    padding: 25px;
+    margin-right: 250px;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+
+/* Dashboard Container Sidebar Interaction */
+.dashboard-container.with-sidebar {
+    margin-right: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+}
+
+/* Content wrapper adjustments */
+#content {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    transition: all 0.3s ease;
+}

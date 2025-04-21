@@ -1,0 +1,36 @@
+/* Main CSS file that imports all shared components */
+/* @import 'cards.css';
+@import 'dropdowns.css';
+@import 'forms.css';
+@import 'lists.css';
+@import 'layout.css';
+@import 'uploads.css';
+@import 'animations.css';
+@import 'utilities.css';
+@import 'responsive.css'; */
+@import 'shared/variables.css';
+@import 'shared/cards.css'; 
+@import 'shared/buttons.css';
+@import 'shared/chart.css';
+@import 'shared/layout.css';
+@import 'shared/tables.css';
+@import 'shared/components/sidebar.css';
+
+
+@font-face {
+    font-family: 'Rabar';
+    src: url('../assets/fonts/Rabar_021.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  
+  /* Base Styles */
+  body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    transition: background-color var(--transition-speed), color var(--transition-speed);
+    min-height: 100vh;
+    font-family: 'Rabar', sans-serif;
+    direction: rtl;
+    overflow-x: hidden;
+  }

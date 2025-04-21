@@ -1,0 +1,145 @@
+/* Button styles */
+.btn {
+  transition: all var(--transition-fast);
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  border-radius: var(--border-radius-pill);
+  padding: 8px var(--spacing-base);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+  transform: translateX(+2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.btn-outline-primary {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  border-radius: var(--border-radius-pill);
+  padding: 8px var(--spacing-base);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--primary-color);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.btn-action {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  margin-right: 5px;
+}
+
+.btn-group .btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 2px;
+  border-radius: 50% !important;
+}
+
+.btn-group .btn:hover {
+  transform: translateY(-2px);
+  transition: all 0.2s;
+}
+
+.save-btn {
+  padding: 0.75rem 2rem;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.save-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+
+/* Quick Access Icons Section */
+.quick-access-section {
+  margin-top: 30px;
+  display: flex;
+  justify-content: right;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.quick-access-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  text-decoration: none;
+  transition: transform 0.3s ease;
+  width: 100px;
+}
+
+.quick-access-item:hover {
+  transform: translateY(-5px);
+}
+
+.quick-access-icon {
+  background-color: var(--bg-color);
+
+  width: 100px;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  border-radius: 16px;
+  background-color: var(--card-bg);
+  transition: all 0.3s ease;
+  color: var(--primary-color);
+  font-size: 24px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(12, 133, 255, 0.223);
+
+}
+
+
+.quick-access-icon.active {
+  background-color: var(--primary-color);
+  color: #fff;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.quick-access-icon.bordered {
+  background-color: transparent;
+  border: 2px dashed var(--primary-color);
+  color: var(--primary-color);
+}
+
+.quick-access-icon.bordered:hover {
+  background-color: rgba(67, 97, 238, 0.1);
+  transform: scale(1.05);
+}
+
+.quick-access-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.quick-access-item:hover .quick-access-icon {
+  box-shadow: 0 8px 15px rgba(67, 97, 238, 0.2);
+  border-color: var(--primary-color);
+}
+
+
+a{
+  text-decoration: none;
+}
