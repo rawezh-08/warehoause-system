@@ -12,6 +12,7 @@
 
 .image-upload:hover {
     border-color: var(--primary-color);
+    background-color: var(--primary-light);
 }
 
 .image-upload input {

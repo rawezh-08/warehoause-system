@@ -15,10 +15,11 @@ require_once '../../process/addProduct_logic.php';
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <!-- Global CSS -->
-    <link rel="stylesheet" href="../../assets/css/custom.css">
+    <!-- <link rel="stylesheet" href="../../assets/css/custom.css"> -->
     <!-- Page CSS -->
-    <link rel="stylesheet" href="../../css/global.css">
-    <link rel="stylesheet" href="../../css/addProduct.css">
+    <!-- <link rel="stylesheet" href="../../css/global.css"> -->
+    <!-- <link rel="stylesheet" href="../../css/addProduct.css"> -->
+    <link rel="stylesheet" href="../../test/main.css">
 </head>
 <body>
 <div>
@@ -121,7 +122,7 @@ require_once '../../process/addProduct_logic.php';
                                                 <div class="col-md-12 mb-3">
                                                     <label class="form-label">وێنەی کاڵا</label>
                                                     <div class="product-image-upload">
-                                                    <button type="button" id="uploadBtn" class="btn btn-light upload-btn mt-2 w-100">
+                                                    <button type="button" id="uploadBtn" class="image-upload mt-2 w-100">
                                                         <div class="image-preview">
                                                             <i class="fas fa-cloud-upload-alt"></i>
                                                             <p>وێنە هەڵبژێرە</p>

@@ -6,14 +6,14 @@
 .btn-primary {
   background-color: var(--primary-color);
   border-color: var(--primary-color);
-  border-radius: var(--border-radius-pill);
+  border-radius: var(--radius-xl);
   padding: 8px var(--spacing-base);
 }
 
 .btn-primary:hover {
-  background-color: var(--primary-hover);
-  border-color: var(--primary-hover);
-  transform: translateX(+2px);
+  background-color: var(--primary-dark);
+  border-color: var(--primary-dark);
+  /* transform: translateX(+2px); */
   box-shadow: var(--shadow-hover);
 }
 
@@ -67,7 +67,7 @@
 
 /* Quick Access Icons Section */
 .quick-access-section {
-  margin-top: 30px;
+  margin-top: 0px;
   display: flex;
   justify-content: right;
   gap: 20px;
@@ -142,4 +142,36 @@
 
 a{
   text-decoration: none;
+}
+
+
+/* tabs */
+
+.tab-header {
+  display: flex;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 20px;
+}
+
+.tab-item {
+  color: var( --gray-500);;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 500;
+  /* color: var(--primary-color); */
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  border-radius: var(--radius-full);
+  border: 1px solid var( --gray-300);
+}
+
+.tab-item.active {
+  color: var(--white);
+  border-bottom-color: var(--primary-color);
+  background-color: var(--primary-color);
+}
+
+.tab-item.not-active {
+  color: red;
+  border-bottom-color: var(--primary-color);
 }
