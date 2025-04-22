@@ -22,6 +22,7 @@ require_once 'Selling-System/src/process/login_handler.php';
             --accent-color: #ff4081;
             --text-color: #333;
             --light-bg: #f5f5f5;
+            --danger-color: #dc3545;
         }
 
         * {
@@ -167,6 +168,12 @@ require_once 'Selling-System/src/process/login_handler.php';
             padding: 15px;
             margin-bottom: 25px;
             border: none;
+        }
+
+        .alert-danger {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger-color);
+            border-left: 4px solid var(--danger-color);
         }
 
         @media (max-width: 992px) {

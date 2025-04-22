@@ -1,0 +1,28 @@
+# Prevent directory listing
+Options -Indexes
+
+# Set default character set
+AddDefaultCharset UTF-8
+
+# Enable rewriting
+RewriteEngine On
+RewriteBase /warehouse-system/Selling-System/src/views/admin/
+
+# Protect against malicious file uploads
+<FilesMatch "(?i)\.(php|phtml|php3|php4|php5|php7|phps)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# But allow legitimate PHP view files
+<FilesMatch "(?i)\.(php)$">
+    Order Deny,Allow
+    Allow from all
+</FilesMatch>
+
+# Add security headers
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set X-Content-Type-Options "nosniff"
+</IfModule> 

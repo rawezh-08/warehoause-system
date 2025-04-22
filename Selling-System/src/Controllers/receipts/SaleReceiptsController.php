@@ -10,8 +10,12 @@ class SaleReceiptsController {
     
     /**
      * Get sales data with filtering options
+     * @param int $limit The maximum number of records to return (0 for no limit)
+     * @param int $offset The number of records to skip
+     * @param array $filters Associative array of filter conditions
+     * @return array Array of sales data
      */
-    public function getSalesData($limit = 0, $offset = 0, $filters = []) {
+    public function getSalesData(int $limit = 0, int $offset = 0, array $filters = []): array {
         // Base query to get sales with joined customer info and calculated total amount
         $sql = "SELECT 
                     s.*, 

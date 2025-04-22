@@ -3,7 +3,8 @@ session_start();
 
 // Check if user is already logged in
 if (isset($_SESSION['admin_id'])) {
-    header("Location: ../Selling-System/src/views/admin/dashboard.php");
+    // Correctly redirect to dashboard using relative path
+    header("Location: Selling-System/src/views/admin/dashboard.php");
     exit();
 }
 
@@ -15,6 +16,12 @@ if ($db->connect_error) {
 }
 
 $error = '';
+
+// Check if an auth error message is set
+if (isset($_SESSION['auth_error'])) {
+    $error = $_SESSION['auth_error'];
+    unset($_SESSION['auth_error']); // Clear the error message
+}
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = trim($_POST['username']);
@@ -36,7 +43,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if (password_verify($password, $user['password_hash'])) {
                 $_SESSION['admin_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
-                header("Location: /warehouse-system/Selling-System/src/views/admin/dashboard.php");
+                $_SESSION['last_activity'] = time(); // Set initial activity time
+                
+                // Set a session cookie that expires when browser closes
+                setcookie('admin_id', session_id(), 0, '/', '', false, true);
+                
+                // Determine correct path based on script location
+                $currentPath = $_SERVER['SCRIPT_NAME'];
+                
+                // Determine if we're in the main directory or a subdirectory
+                if (basename(dirname($currentPath)) === 'process' && basename(dirname(dirname($currentPath))) === 'src') {
+                    // If we're in src/process/, use relative path
+                    header("Location: ../views/admin/dashboard.php");
+                } else {
+                    // Otherwise use the standard path from project root
+                    header("Location: Selling-System/src/views/admin/dashboard.php");
+                }
                 exit();
             } else {
                 $error = "ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە";

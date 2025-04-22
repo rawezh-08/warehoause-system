@@ -46,6 +46,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $currentDebt = $customerData['debit_on_business'];
         
+        // Additional validation: Check if customer has debt when trying to make advance payment
+        if ($transactionType === 'advance_payment' && $currentDebt > 0) {
+            throw new PDOException('ناتوانیت پارەی پێشەکی زیاد بکەیت، چونکە ئەم کڕیارە قەرزی لەسەرە. تکایە سەرەتا قەرزەکەی وەربگرەوە.');
+        }
+        
         // Insert debt transaction
         $sql = "INSERT INTO debt_transactions (customer_id, amount, transaction_type, reference_id, notes, created_by) 
                 VALUES (:customer_id, :amount, :transaction_type, :reference_id, :notes, :created_by)";

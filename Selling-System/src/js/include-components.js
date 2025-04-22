@@ -27,13 +27,13 @@ function fixComponentPaths() {
     // Fix sidebar CSS
     const sidebarCSS = document.querySelector('link[href*="sidebar.css"]');
     if (sidebarCSS) {
-        sidebarCSS.href = window.location.origin + '/warehouse-system/Selling-System/src/css/shared/sidebar.css';
+        sidebarCSS.href = '../../css/shared/sidebar.css';
     }
     
     // Fix navbar CSS
     const navbarCSS = document.querySelector('link[href*="navbar.css"]');
     if (navbarCSS) {
-        navbarCSS.href = window.location.origin + '/warehouse-system/Selling-System/src/css/shared/navbar.css';
+        navbarCSS.href = '../../css/shared/navbar.css';
     }
     
     // Fix image paths in navbar
@@ -42,11 +42,11 @@ function fixComponentPaths() {
         const src = img.getAttribute('src');
         if (src && src.includes('assets')) {
             if (src.includes('../assets')) {
-                img.src = window.location.origin + '/warehouse-system/Selling-System/src/assets' + src.split('assets')[1];
+                img.src = '../../assets' + src.split('assets')[1];
             } else if (src.includes('../../assets')) {
-                img.src = window.location.origin + '/warehouse-system/Selling-System/src/assets' + src.split('assets')[1];
+                img.src = '../../assets' + src.split('assets')[1];
             } else if (!src.includes('http')) {
-                img.src = window.location.origin + '/warehouse-system/Selling-System/src/' + src;
+                img.src = '../../' + src;
             }
         }
     });
@@ -57,11 +57,11 @@ function fixComponentPaths() {
         const src = img.getAttribute('src');
         if (src && src.includes('assets')) {
             if (src.includes('../assets')) {
-                img.src = window.location.origin + '/warehouse-system/Selling-System/src/assets' + src.split('assets')[1];
+                img.src = '../../assets' + src.split('assets')[1];
             } else if (src.includes('../../assets')) {
-                img.src = window.location.origin + '/warehouse-system/Selling-System/src/assets' + src.split('assets')[1];
+                img.src = '../../assets' + src.split('assets')[1];
             } else if (!src.includes('http')) {
-                img.src = window.location.origin + '/warehouse-system/Selling-System/src/' + src;
+                img.src = '../../' + src;
             }
         }
     });
@@ -78,11 +78,11 @@ function fixComponentPaths() {
         if (src && (src.includes('.jpg') || src.includes('.png') || src.includes('.jpeg') || src.includes('.gif'))) {
             // If it's just a filename without a path
             if (!src.includes('/') && !src.includes('http')) {
-                img.src = window.location.origin + '/warehouse-system/Selling-System/src/uploads/products/' + src;
+                img.src = '../../uploads/products/' + src;
             }
             // If it's a numeric filename like 67f2ab56e219b_1743956822.jpg without proper path
             else if (src.match(/[0-9a-f]+_\d+\.(jpg|png|jpeg|gif)$/i) && !src.includes('/uploads/')) {
-                img.src = window.location.origin + '/warehouse-system/Selling-System/src/uploads/products/' + src.split('/').pop();
+                img.src = '../../uploads/products/' + src.split('/').pop();
             }
         }
     });
@@ -93,7 +93,7 @@ function fixComponentPaths() {
  */
 function loadNavbarAndSidebar() {
     // Determine base path for components
-    const basePath = window.location.origin + '/warehouse-system/Selling-System/src/';
+    const basePath = '../../';
     
     // Load navbar
     if (document.getElementById('navbar-container')) {
@@ -395,7 +395,7 @@ function initSidebar() {
 function initSidebarToggle() {
     const sidebarToggle = document.createElement('button');
     sidebarToggle.className = 'sidebar-toggle';
-    sidebarToggle.innerHTML = '<img src="' + window.location.origin + '/warehouse-system/Selling-System/src/assets/icons/menu.svg" alt="Menu" class="menu-icon toggle-open">';
+    sidebarToggle.innerHTML = '<img src="../../assets/icons/menu.svg" alt="Menu" class="menu-icon toggle-open">';
     document.body.appendChild(sidebarToggle);
 
     sidebarToggle.addEventListener('click', function(e) {

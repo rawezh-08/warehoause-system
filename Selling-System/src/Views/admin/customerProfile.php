@@ -85,7 +85,7 @@ foreach ($debtTransactions as $debtTransaction) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پڕۆفایلی کڕیار - سیستەمی بەڕێوەبردنی کۆگا</title>
+    <title>پڕۆفایلی کڕیار/<?php echo htmlspecialchars($customer['name']); ?> - سیستەمی بەڕێوەبردنی کۆگا</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -338,7 +338,7 @@ foreach ($debtTransactions as $debtTransaction) {
             <div class="container-fluid">
                 <div class="row mb-4">
                     <div class="col-12 d-flex justify-content-between align-items-center">
-                        <h3 class="page-title">پڕۆفایلی کڕیار</h3>
+                        <h3 class="page-title">پڕۆفایلی کڕیار/<?php echo htmlspecialchars($customer['name']); ?></h3>
                         <div>
                             <a href="addStaff.php?tab=customer" class="btn btn-primary me-2">
                                 <i class="fas fa-plus me-2"></i> زیادکردنی کڕیاری نوێ
@@ -625,7 +625,7 @@ foreach ($debtTransactions as $debtTransaction) {
                                                                     title="بینین">
                                                                     <i class="fas fa-eye"></i>
                                                                 </a>
-                                                                <a href="printInvoice.php?id=<?php echo $sale['id']; ?>"
+                                                                <a href="../../views/receipt/print_receipt.php?sale_id=<?php echo $sale['id']; ?>"
                                                                     class="btn btn-sm btn-outline-success rounded-circle"
                                                                     title="چاپکردن">
                                                                     <i class="fas fa-print"></i>
@@ -1133,6 +1133,15 @@ foreach ($debtTransactions as $debtTransaction) {
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <h5 class="card-title mb-0">وەرگرتنی پارەی پێشەکی</h5>
                                     </div>
+                                    
+                                    <?php if ($customer['debit_on_business'] > 0): ?>
+                                    <!-- Warning message for customers with debt -->
+                                    <div class="alert alert-warning mb-4">
+                                        <h5><i class="fas fa-exclamation-triangle me-2"></i> ئاگاداری</h5>
+                                        <p class="mb-0">ئەم کڕیارە <?php echo number_format($customer['debit_on_business']); ?> دینار قەرزی هەیە لەسەر. پێویستە سەرەتا قەرزەکەی بدات پێش ئەوەی پارەی پێشەکی وەربگیرێت.</p>
+                                    </div>
+                                    <?php endif; ?>
+                                    
                                     <form id="advancePaymentForm">
                                         <input type="hidden" name="customer_id" value="<?php echo $customer['id']; ?>">
                                         <input type="hidden" name="transaction_type" value="advance_payment">
@@ -1141,7 +1150,7 @@ foreach ($debtTransactions as $debtTransaction) {
                                             <label for="advanceAmount" class="form-label">بڕی پارەی پێشەکی</label>
                                             <div class="input-group">
                                                 <input type="number" class="form-control" id="advanceAmount"
-                                                    name="amount" min="1" required>
+                                                    name="amount" min="1" required <?php echo $customer['debit_on_business'] > 0 ? 'disabled' : ''; ?>>
                                                 <span class="input-group-text">دینار</span>
                                             </div>
                                         </div>
@@ -1149,28 +1158,28 @@ foreach ($debtTransactions as $debtTransaction) {
                                         <div class="mb-3">
                                             <label for="advanceDate" class="form-label">بەرواری وەرگرتن</label>
                                             <input type="date" class="form-control" id="advanceDate" name="advance_date"
-                                                value="<?php echo date('Y-m-d'); ?>" required>
+                                                value="<?php echo date('Y-m-d'); ?>" required <?php echo $customer['debit_on_business'] > 0 ? 'disabled' : ''; ?>>
                                         </div>
 
                                         <div class="mb-3">
                                             <label for="advanceNotes" class="form-label">تێبینی</label>
                                             <textarea class="form-control" id="advanceNotes" name="notes"
-                                                rows="3"></textarea>
+                                                rows="3" <?php echo $customer['debit_on_business'] > 0 ? 'disabled' : ''; ?>></textarea>
                                         </div>
 
                                         <div class="mb-3">
                                             <label for="advancePaymentMethod" class="form-label">شێوازی پارەدان</label>
-                                            <select class="form-select" id="advancePaymentMethod" name="payment_method">
+                                            <select class="form-select" id="advancePaymentMethod" name="payment_method" <?php echo $customer['debit_on_business'] > 0 ? 'disabled' : ''; ?>>
                                                 <option value="cash">نەقد</option>
                                                 <option value="transfer">FIB یان FastPay</option>
                                             </select>
                                         </div>
 
                                         <div class="text-end">
-                                            <button type="reset" class="btn btn-outline-secondary me-2">
+                                            <button type="reset" class="btn btn-outline-secondary me-2" <?php echo $customer['debit_on_business'] > 0 ? 'disabled' : ''; ?>>
                                                 <i class="fas fa-undo me-2"></i> ڕیسێت
                                             </button>
-                                            <button type="button" id="saveAdvancePaymentBtn" class="btn btn-primary">
+                                            <button type="button" id="saveAdvancePaymentBtn" class="btn btn-primary" <?php echo $customer['debit_on_business'] > 0 ? 'disabled' : ''; ?>>
                                                 <i class="fas fa-save me-2"></i> تۆمارکردن
                                             </button>
                                         </div>
@@ -1857,6 +1866,18 @@ foreach ($debtTransactions as $debtTransaction) {
             // Save advance payment button handler
             $('#saveAdvancePaymentBtn').on('click', function () {
                 const advanceAmount = parseInt($('#advanceAmount').val());
+                const customerDebt = <?php echo $customer['debit_on_business']; ?>;
+
+                // Check if customer has debt
+                if (customerDebt > 0) {
+                    Swal.fire({
+                        title: 'ناتوانیت پارەی پێشەکی زیاد بکەیت!',
+                        text: 'ئەم کڕیارە قەرزی هەیە لەسەر. پێویستە سەرەتا قەرزەکەی بدات پێش ئەوەی پارەی پێشەکی وەربگیرێت.',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                    return;
+                }
 
                 // Validate form
                 if (!advanceAmount || advanceAmount <= 0) {

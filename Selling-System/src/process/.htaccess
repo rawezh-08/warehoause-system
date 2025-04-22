@@ -1,0 +1,8 @@
+# Deny all direct access to files in this directory
+Order Deny,Allow
+Deny from all
+
+# Whitelist specific files that may need direct access
+<FilesMatch "^(process_ajax_requests\.php)$">
+    Allow from all
+</FilesMatch> 

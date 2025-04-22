@@ -1,4 +1,7 @@
 <?php
+// Include authentication check
+require_once '../../includes/auth.php';
+
 // Include the dashboard logic file
 require_once '../../process/dashboard_logic.php';
 ?>
@@ -424,7 +427,7 @@ require_once '../../process/dashboard_logic.php';
                                                                     // Extract just the filename from the image path
                                                                     $filename = basename($product['image']);
                                                                     // Use our new API endpoint with absolute path
-                                                                    $imagePath = "/warehouse-system/Selling-System/src/api/product_image.php?filename=" . urlencode($filename);
+                                                                    $imagePath = "../../api/product_image.php?filename=" . urlencode($filename);
                                                                 } else {
                                                                     $imagePath = "../../assets/img/pro-1.png";
                                                                 }

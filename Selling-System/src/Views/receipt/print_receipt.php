@@ -32,6 +32,29 @@ function get_correct_image_path($image_name) {
     return '../../uploads/products/' . $image_name;
 }
 
+// Initialize variables with default values to prevent undefined variable errors
+$products = [];
+$invoice_number = '';
+$customer_name = '';
+$subtotal = 0;
+$discount = 0;
+$shipping_cost = 0;
+$other_costs = 0;
+$total_amount = 0;
+$after_discount = 0;
+$paid_amount = 0;
+$remaining_balance = 0;
+$previous_balance = 0;
+$remaining_amount = 0;
+$grand_total = 0;
+$sale = [
+    'date' => date('Y-m-d'),
+    'time' => date('H:i'),
+    'payment_type' => '',
+    'customer_name' => '',
+    'customer_phone' => ''
+];
+
 // Check if sale_id is provided
 if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
     $sale_id = $_GET['sale_id']; // Don't convert to int to preserve string format
@@ -60,68 +83,69 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
     }
     
     if (!$sale) {
-        die("پسوڵەی داواکراو نەدۆزرایەوە (پسووڵەی ژمارە: " . htmlspecialchars($sale_id) . ")");
+        echo "<div style='text-align:center; padding:20px; color:red;'>پسوڵەی داواکراو نەدۆزرایەوە (پسووڵەی ژمارە: " . htmlspecialchars($sale_id) . ")</div>";
+    } else {
+        // Fetch sale items with correct column names
+        $stmt = $conn->prepare("
+            SELECT si.*, 
+                p.name as product_name, 
+                p.code as product_code, 
+                p.image as product_image,
+                p.pieces_per_box,
+                p.boxes_per_set,
+                u.name as unit_name,
+                u.is_piece, u.is_box, u.is_set,
+                COALESCE(si.returned_quantity, 0) as returned_quantity
+            FROM sale_items si
+            JOIN products p ON si.product_id = p.id
+            LEFT JOIN units u ON p.unit_id = u.id
+            WHERE si.sale_id = ?
+        ");
+        $stmt->execute([$sale['id']]);
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Set receipt data
+        $invoice_number = $sale['invoice_number'];
+        $customer_name = $sale['customer_name'];
+        $subtotal = 0;
+        
+        // Calculate subtotal from sale items (considering returns)
+        foreach ($products as $product) {
+            $actual_quantity = $product['quantity'] - $product['returned_quantity'];
+            $subtotal += floatval($product['unit_price'] * $actual_quantity);
+        }
+        
+        $discount = floatval($sale['discount']);
+        $shipping_cost = floatval($sale['shipping_cost']);
+        $other_costs = floatval($sale['other_costs']);
+        
+        // Calculate total before discount
+        $total_amount = $subtotal + $shipping_cost + $other_costs;
+        
+        // Calculate amount after discount
+        $after_discount = $total_amount - $discount;
+        
+        // Get paid and remaining amounts directly from the database
+        $paid_amount = floatval($sale['paid_amount']);
+        $remaining_balance = floatval($sale['remaining_amount']);
+        
+        // Get previous balance (all previous debt except this sale)
+        $stmt = $conn->prepare("
+            SELECT debit_on_business 
+            FROM customers 
+            WHERE id = ?
+        ");
+        $stmt->execute([$sale['customer_id']]);
+        $customer = $stmt->fetch(PDO::FETCH_ASSOC);
+        $previous_balance = isset($customer['debit_on_business']) ? 
+            (floatval($customer['debit_on_business']) - $remaining_balance) : 0;
+        $previous_balance = $previous_balance < 0 ? 0 : $previous_balance;
+        
+        $remaining_amount = $remaining_balance;
+        $grand_total = $previous_balance + $remaining_balance;
     }
-    
-    // Fetch sale items with correct column names
-    $stmt = $conn->prepare("
-        SELECT si.*, 
-               p.name as product_name, 
-               p.code as product_code, 
-               p.image as product_image,
-               p.pieces_per_box,
-               p.boxes_per_set,
-               u.name as unit_name,
-               u.is_piece, u.is_box, u.is_set,
-               COALESCE(si.returned_quantity, 0) as returned_quantity
-        FROM sale_items si
-        JOIN products p ON si.product_id = p.id
-        LEFT JOIN units u ON p.unit_id = u.id
-        WHERE si.sale_id = ?
-    ");
-    $stmt->execute([$sale['id']]);
-    $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Set receipt data
-    $invoice_number = $sale['invoice_number'];
-    $customer_name = $sale['customer_name'];
-    $subtotal = 0;
-    
-    // Calculate subtotal from sale items (considering returns)
-    foreach ($products as $product) {
-        $actual_quantity = $product['quantity'] - $product['returned_quantity'];
-        $subtotal += floatval($product['unit_price'] * $actual_quantity);
-    }
-    
-    $discount = floatval($sale['discount']);
-    $shipping_cost = floatval($sale['shipping_cost']);
-    $other_costs = floatval($sale['other_costs']);
-    
-    // Calculate total before discount
-    $total_amount = $subtotal + $shipping_cost + $other_costs;
-    
-    // Calculate amount after discount
-    $after_discount = $total_amount - $discount;
-    
-    // Get paid and remaining amounts directly from the database
-    $paid_amount = floatval($sale['paid_amount']);
-    $remaining_balance = floatval($sale['remaining_amount']);
-    
-    // Get previous balance (all previous debt except this sale)
-    $stmt = $conn->prepare("
-        SELECT debit_on_business 
-        FROM customers 
-        WHERE id = ?
-    ");
-    $stmt->execute([$sale['customer_id']]);
-    $customer = $stmt->fetch(PDO::FETCH_ASSOC);
-    $previous_balance = floatval($customer['debit_on_business']) - $remaining_balance;
-    $previous_balance = $previous_balance < 0 ? 0 : $previous_balance;
-    
-    $remaining_amount = $remaining_balance;
-    $grand_total = $previous_balance + $remaining_balance;
 } else {
-  
+    echo "<div style='text-align:center; padding:20px; color:red;'>هیچ پسووڵەیەک دیاری نەکراوە</div>";
 }
 ?>
 <!DOCTYPE html>

@@ -1,0 +1,42 @@
+# Prevent directory listing
+Options -Indexes
+
+# Set default character set
+AddDefaultCharset UTF-8
+
+# Enable rewriting
+RewriteEngine On
+RewriteBase /warehouse-system/Selling-System/src/views/
+
+# Check if user is authenticated with a valid session
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteCond %{REQUEST_URI} \.php$
+# Instead of trying to prepend auth.php, we'll let PHP handle it
+
+# Each PHP file in views should manually include the auth check
+# The following commented code is no longer used but kept for reference
+# <IfModule mod_php.c>
+#     php_value auto_prepend_file "C:/xampp/htdocs/warehouse-system/Selling-System/src/includes/auth.php"
+# </IfModule>
+
+# Deny direct access to PHP files if not authenticated
+# This part is now handled by each PHP file including auth.php manually
+
+# Protect against malicious file uploads
+<FilesMatch "(?i)\.(php|phtml|php3|php4|php5|php7|phps)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# But allow legitimate PHP view files
+<FilesMatch "(?i)\.(php)$">
+    Order Deny,Allow
+    Allow from all
+</FilesMatch>
+
+# Add security headers
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set X-Content-Type-Options "nosniff"
+</IfModule> 
