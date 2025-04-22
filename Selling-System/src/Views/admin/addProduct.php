@@ -1,5 +1,6 @@
 <?php
-// Include the addProduct logic file
+// Include authentication check
+require_once '../../includes/auth.php';
 require_once '../../process/addProduct_logic.php';
 ?>
 <!DOCTYPE html>
@@ -278,6 +279,8 @@ require_once '../../process/addProduct_logic.php';
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
+    <!-- Global AJAX Configuration -->
+    <script src="../../js/ajax-config.js"></script>
     <!-- Component loading script -->
     <script src="../../js/include-components.js"></script>
     <!-- Add Product Script -->

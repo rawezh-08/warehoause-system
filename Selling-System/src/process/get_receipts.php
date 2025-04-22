@@ -1,4 +1,6 @@
 <?php
+
+
 // Include database connection
 require_once '../config/db_connection.php';
 

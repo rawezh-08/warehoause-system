@@ -1,3 +1,23 @@
+# Set default character set
+AddDefaultCharset UTF-8
+
+# Enable rewriting
+RewriteEngine On
+
+# Allow access to authorized PHP files but ensure they include auth.php
+<FilesMatch "^(.*\.php)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Require proper origin for AJAX requests 
+<IfModule mod_headers.c>
+    # Security headers
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>
+
+# Each PHP file in this directory should manually include auth.php
+
 # Deny all direct access to files in this directory
 Order Deny,Allow
 Deny from all

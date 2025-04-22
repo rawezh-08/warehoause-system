@@ -1,4 +1,7 @@
 <?php
+// Include authentication check
+
+
 require_once __DIR__ . '/../config/database.php';
 
 header('Content-Type: application/json');

@@ -1,6 +1,5 @@
 <?php
-// Notification Logic for ASHKAN system
-require_once '../../includes/auth.php';
+
 require_once '../../config/database.php';
 
 // Connect to database

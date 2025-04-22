@@ -1,5 +1,6 @@
 <?php
-// Include the logic file
+// Include authentication check
+require_once '../../includes/auth.php';
 require_once '../../process/expensesHistory_logic.php';
 ?>
 <!DOCTYPE html>
@@ -440,6 +441,8 @@ require_once '../../process/expensesHistory_logic.php';
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
+    <!-- Global AJAX Configuration -->
+    <script src="../../js/ajax-config.js"></script>
     <!-- Custom JavaScript -->
     <script src="../../js/include-components.js"></script>
     <script src="../../js/expenses-history.js"></script>

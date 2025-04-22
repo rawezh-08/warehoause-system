@@ -1,4 +1,6 @@
 <?php
+
+
 require_once '../config/database.php';
 
 // Get employee ID from request

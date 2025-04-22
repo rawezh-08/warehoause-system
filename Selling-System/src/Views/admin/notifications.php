@@ -1,5 +1,6 @@
 <?php
-// Include the notification logic
+// Include authentication check
+require_once '../../includes/auth.php';
 require_once '../../process/notification_logic.php';
 ?>
 <!DOCTYPE html>

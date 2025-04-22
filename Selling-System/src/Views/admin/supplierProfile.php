@@ -1,5 +1,6 @@
 <?php
-// Include database connection
+// Include authentication check
+require_once '../../includes/auth.php';
 require_once '../../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
@@ -1117,6 +1118,8 @@ foreach ($purchases as $purchase) {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
+    <!-- Global AJAX Configuration -->
+    <script src="../../js/ajax-config.js"></script>
     <!-- Initialize common elements -->
     <script src="../../js/include-components.js"></script>
     <!-- Scripts -->

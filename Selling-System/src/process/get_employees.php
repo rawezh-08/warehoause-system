@@ -1,4 +1,6 @@
 <?php
+
+
 require_once '../config/database.php';
 
 try {
@@ -6,6 +8,10 @@ try {
     $name = $_GET['name'] ?? '';
     $position = $_GET['position'] ?? '';
     $phone = $_GET['phone'] ?? '';
+    
+    // Create a Database instance and get connection
+    $db = new Database();
+    $conn = $db->getConnection();
     
     // Build query
     $query = "SELECT * FROM employees WHERE 1=1";

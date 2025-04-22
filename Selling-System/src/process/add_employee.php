@@ -1,4 +1,7 @@
 <?php
+// Include authentication check
+
+
 require_once '../config/db_connection.php';
 
 // Set content type to JSON

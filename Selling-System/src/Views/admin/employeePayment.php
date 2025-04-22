@@ -1,4 +1,6 @@
 <?php
+// Include authentication check
+require_once '../../includes/auth.php';
 require_once '../../config/database.php';
 
 // Create a database connection

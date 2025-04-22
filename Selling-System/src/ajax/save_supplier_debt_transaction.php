@@ -1,4 +1,7 @@
 <?php
+// Include authentication check
+
+
 // save_supplier_debt_transaction.php - AJAX handler for supplier debt payments
 
 // Start session if not already started

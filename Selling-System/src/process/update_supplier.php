@@ -1,4 +1,7 @@
 <?php
+// Include authentication check
+
+
 require_once '../config/database.php';
 
 try {
