@@ -1,6 +1,14 @@
 # Secure directory structure
 Options -Indexes
 
+# Font MIME types configuration
+AddType application/vnd.ms-fontobject .eot
+AddType font/ttf .ttf
+AddType font/otf .otf
+AddType font/woff .woff
+AddType font/woff2 .woff2
+AddType image/svg+xml .svg
+
 # Deny access to sensitive files
 <FilesMatch "^(\.htaccess|\.htpasswd|config\.php|database\.php)$">
     Order Deny,Allow
