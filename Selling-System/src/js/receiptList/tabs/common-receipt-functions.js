@@ -408,14 +408,8 @@ function showReturnForm(receiptId, receiptType, items) {
         return;
     }
 
-    console.log("Items for return form:", items);
-
-    // Create HTML for the return form
     let formHtml = `
         <form id="returnForm">
-            <input type="hidden" id="returnReceiptId" value="${receiptId}">
-            <input type="hidden" id="returnReceiptType" value="${receiptType}">
-            
             <div class="table-responsive">
                 <table class="table table-bordered">
                     <thead>
@@ -431,10 +425,10 @@ function showReturnForm(receiptId, receiptType, items) {
                     <tbody>
     `;
 
-    let hasReturnableItems = false;
     let itemsChecked = 0;
-    let itemsSkipped = 0;
     let itemsIncluded = 0;
+    let itemsSkipped = 0;
+    let hasReturnableItems = false;
 
     items.forEach(item => {
         itemsChecked++;
@@ -482,7 +476,9 @@ function showReturnForm(receiptId, receiptType, items) {
                         <input type="number" class="form-control return-qty" 
                             min="0" max="${remainingQty}" value="0" step="1"
                             data-unit-type="${item.unit_type || 'piece'}"
-                            data-unit-price="${item.unit_price || 0}">
+                            data-unit-price="${item.unit_price || 0}"
+                            data-max-return="${remainingQty}"
+                            onchange="validateReturnQuantity(this)">
                     </td>
                     <td>
                         <select class="form-control return-reason">
@@ -500,35 +496,56 @@ function showReturnForm(receiptId, receiptType, items) {
         }
     });
 
+    formHtml += `
+                    </tbody>
+                </table>
+            </div>
+            <div class="mb-3">
+                <label for="returnNotes" class="form-label">تێبینی</label>
+                <textarea id="returnNotes" class="form-control" rows="3"></textarea>
+            </div>
+        </form>
+    `;
+
     console.log(`Return form summary: ${itemsChecked} items checked, ${itemsIncluded} included, ${itemsSkipped} skipped`);
 
     if (!hasReturnableItems) {
         Swal.fire({
             icon: 'info',
             title: 'ئاگاداری',
-            text: 'هەموو کاڵاکان پێشتر گەڕێنراونەتەوە یان هیچ کاڵایەک بۆ گەڕاندنەوە نییە'
+            text: 'هەموو کاڵاکان گەڕێنراونەتەوە'
         });
         return;
     }
 
-    formHtml += `
-                </tbody>
-            </table>
-        </div>
-        <div class="form-group mt-3">
-            <label for="returnNotes">تێبینی</label>
-            <textarea class="form-control" id="returnNotes" rows="3"></textarea>
-        </div>
-    </form>`;
+    // Add validation function to window scope
+    window.validateReturnQuantity = function(input) {
+        const value = parseFloat(input.value) || 0;
+        const maxReturn = parseFloat(input.dataset.maxReturn) || 0;
+        
+        if (value > maxReturn) {
+            Swal.fire({
+                icon: 'error',
+                title: 'هەڵە',
+                text: `بڕی گەڕاندنەوە نابێت لە ${maxReturn} زیاتر بێت`
+            });
+            input.value = maxReturn;
+        }
+    };
 
-    // Show the form in a modal
     Swal.fire({
-        title: receiptType === 'sale' ? 'گەڕاندنەوەی کاڵای فرۆشراو' : 'گەڕاندنەوەی کاڵای کڕدراو',
+        title: 'گەڕاندنەوەی کاڵا',
         html: formHtml,
-        width: 800,
         showCancelButton: true,
-        confirmButtonText: 'گەڕاندنەوە',
+        confirmButtonText: 'پاشەکەوتکردن',
         cancelButtonText: 'داخستن',
+        showLoaderOnConfirm: true,
+        width: '900px',
+        customClass: {
+            container: 'return-form-dialog',
+            popup: 'return-form-popup',
+            content: 'return-form-content'
+        },
         preConfirm: () => {
             // Collect return data
             const returnData = {
@@ -543,6 +560,13 @@ function showReturnForm(receiptId, receiptType, items) {
                 const qty = parseFloat($(this).val());
                 if (qty > 0) {
                     const row = $(this).closest('tr');
+                    const maxReturn = parseFloat($(this).data('max-return'));
+                    
+                    if (qty > maxReturn) {
+                        Swal.showValidationMessage(`بڕی گەڕاندنەوە نابێت لە ${maxReturn} زیاتر بێت`);
+                        return false;
+                    }
+                    
                     returnData.items.push({
                         product_id: row.data('product-id'),
                         quantity: qty,

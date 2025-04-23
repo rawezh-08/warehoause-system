@@ -86,6 +86,15 @@ require_once '../../config/database.php';
                             </select>
                         </div>
                     </div>
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="draft-indicator" style="display: none;">
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-file-alt"></i> ئەم پسوڵە تەنیا بۆ نیشاندان و عەرز کردنە
+                                </span>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Items Table - Moved to top -->
                     <div class="table-responsive mb-4">

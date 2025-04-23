@@ -1,73 +1,104 @@
 <?php
+// Enable error reporting
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Set up error logging
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/finalize_draft_errors.log');
+
+// Log the start of the script
+error_log("Starting finalize_draft.php script");
+
+require_once '../../config/database.php';
+
+// Set headers for JSON response
 header('Content-Type: application/json');
-require_once '../../../config/database.php';
 
-// Check if the request method is POST
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['success' => false, 'message' => 'Invalid request method']);
-    exit;
-}
-
-// Get the receipt ID from the POST data
-$receipt_id = isset($_POST['receipt_id']) ? intval($_POST['receipt_id']) : 0;
-
-if ($receipt_id <= 0) {
-    echo json_encode(['success' => false, 'message' => 'Invalid receipt ID']);
-    exit;
-}
+// Log POST data
+error_log("POST data received: " . print_r($_POST, true));
 
 try {
-    // Start transaction
-    $conn->beginTransaction();
-
-    // First, verify the receipt exists and is a draft
-    $stmt = $conn->prepare("SELECT id, type FROM receipts WHERE id = ? AND status = 'draft'");
-    $stmt->execute([$receipt_id]);
-    $receipt = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if (!$receipt) {
-        $conn->rollBack();
-        echo json_encode(['success' => false, 'message' => 'Draft receipt not found']);
-        exit;
+    // Validate input
+    if (!isset($_POST['receipt_id']) || empty($_POST['receipt_id'])) {
+        error_log("Receipt ID is missing from POST data");
+        throw new Exception('پێناسەی پسووڵە پێویستە');
     }
-
-    // Get receipt items to update product quantities
-    $stmt = $conn->prepare("SELECT product_id, quantity FROM receipt_items WHERE receipt_id = ?");
-    $stmt->execute([$receipt_id]);
-    $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Update product quantities based on receipt type
-    foreach ($items as $item) {
-        if ($receipt['type'] === 'sale') {
-            // For sales, reduce product quantity
-            $update_stmt = $conn->prepare("UPDATE products SET quantity = quantity - ? WHERE id = ? AND quantity >= ?");
-            $update_stmt->execute([$item['quantity'], $item['product_id'], $item['quantity']]);
-        } else {
-            // For purchases, increase product quantity
-            $update_stmt = $conn->prepare("UPDATE products SET quantity = quantity + ? WHERE id = ?");
-            $update_stmt->execute([$item['quantity'], $item['product_id']]);
+    
+    $receipt_id = intval($_POST['receipt_id']);
+    
+    error_log("Processing draft receipt_id: " . $receipt_id);
+    
+    // Initialize database connection
+    $database = new Database();
+    $conn = $database->getConnection();
+    
+    if (!$conn) {
+        error_log("Failed to establish database connection");
+        throw new Exception('کێشە هەیە لە پەیوەندی بە داتابەیسەوە');
+    }
+    
+    error_log("Database connection established successfully");
+    
+    // Begin transaction
+    $conn->beginTransaction();
+    
+    try {
+        // Check if draft exists
+        $stmt = $conn->prepare("SELECT * FROM sales WHERE id = ? AND is_draft = 1");
+        $stmt->execute([$receipt_id]);
+        $receipt = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$receipt) {
+            throw new Exception('ڕەشنووسی پسووڵە نەدۆزرایەوە - ID: ' . $receipt_id);
         }
         
-        if ($update_stmt->rowCount() === 0) {
-            throw new Exception("Insufficient quantity for product ID: " . $item['product_id']);
+        // Get sale items
+        $stmt = $conn->prepare("SELECT * FROM sale_items WHERE sale_id = ?");
+        $stmt->execute([$receipt_id]);
+        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Update product quantities
+        foreach ($items as $item) {
+            $stmt = $conn->prepare("UPDATE products SET current_quantity = current_quantity - ? WHERE id = ?");
+            $stmt->execute([$item['pieces_count'], $item['product_id']]);
         }
-    }
-
-    // Update receipt status to finalized
-    $stmt = $conn->prepare("UPDATE receipts SET status = 'finalized', finalized_at = NOW() WHERE id = ?");
-    $stmt->execute([$receipt_id]);
-    $affected_rows = $stmt->rowCount();
-
-    if ($affected_rows > 0) {
+        
+        // Update sale record to finalize it
+        $stmt = $conn->prepare("UPDATE sales SET is_draft = 0 WHERE id = ?");
+        $stmt->execute([$receipt_id]);
+        
+        // Commit transaction
         $conn->commit();
-        echo json_encode(['success' => true, 'message' => 'Draft receipt finalized successfully']);
-    } else {
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'ڕەشنووسی پسووڵە بە سەرکەوتوویی تەواوکرا'
+        ]);
+        
+    } catch (Exception $e) {
+        // Rollback transaction on error
         $conn->rollBack();
-        echo json_encode(['success' => false, 'message' => 'Failed to finalize draft receipt']);
+        throw $e;
     }
-
+    
 } catch (Exception $e) {
-    $conn->rollBack();
-    echo json_encode(['success' => false, 'message' => 'Error finalizing draft receipt: ' . $e->getMessage()]);
+    // Log the error
+    error_log("Error in finalize_draft.php: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
+    
+    // Return error response
+    echo json_encode([
+        'success' => false,
+        'message' => $e->getMessage(),
+        'debug_info' => [
+            'error_message' => $e->getMessage(),
+            'error_code' => $e->getCode(),
+            'error_file' => $e->getFile(),
+            'error_line' => $e->getLine(),
+            'stack_trace' => $e->getTraceAsString()
+        ]
+    ]);
 }
 ?> 

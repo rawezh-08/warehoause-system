@@ -15,7 +15,9 @@ $(document).ready(function() {
                 $.ajax({
                     url: '../../api/receipts/delete_wasting.php',
                     method: 'POST',
-                    data: { receipt_id: receiptId },
+                    data: { 
+                        receipt_id: receiptId
+                    },
                     success: function(response) {
                         if (response.success) {
                             Swal.fire({
@@ -33,10 +35,20 @@ $(document).ready(function() {
                             });
                         }
                     },
-                    error: function() {
+                    error: function(xhr, status, error) {
+                        console.error('Error:', xhr, status, error);
+                        let errorMessage = 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی بە سێرڤەرەوە';
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.message) {
+                                errorMessage = response.message;
+                            }
+                        } catch (e) {
+                            console.error('Error parsing server response:', e);
+                        }
                         Swal.fire({
                             title: 'هەڵە!',
-                            text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی بە سێرڤەرەوە',
+                            text: errorMessage,
                             icon: 'error'
                         });
                     }
@@ -50,6 +62,135 @@ $(document).ready(function() {
         const wastingId = $(this).data('id');
         viewWastingDetails(wastingId);
     });
+
+    // Function to view wasting details
+    function viewWastingDetails(wastingId) {
+        // Show loading
+        Swal.fire({
+            title: 'تکایە چاوەڕێ بکە...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Fetch wasting details
+        $.ajax({
+            url: '../../api/receipts/get_wasting_details.php',
+            type: 'POST',
+            data: { wasting_id: wastingId },
+            success: function(response) {
+                Swal.close();
+                
+                try {
+                    const data = typeof response === 'string' ? JSON.parse(response) : response;
+                    if (data.status === 'success') {
+                        // Display wasting details
+                        showWastingDetailsModal(data.wasting);
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'هەڵە',
+                            text: data.message || 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان'
+                        });
+                    }
+                } catch (e) {
+                    console.error('JSON parsing error:', e);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان'
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX error:', xhr, status, error);
+                Swal.close();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی کردن بە سێرڤەرەوە'
+                });
+            }
+        });
+    }
+
+    // Function to show wasting details modal
+    function showWastingDetailsModal(wasting) {
+        let itemsHtml = '';
+        
+        if (wasting.items && wasting.items.length > 0) {
+            wasting.items.forEach((item, index) => {
+                const unitTypeText = item.unit_type === 'piece' ? 'دانە' : 
+                                    (item.unit_type === 'box' ? 'کارتۆن' : 'سێت');
+                
+                itemsHtml += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${item.product_name}</td>
+                        <td>${unitTypeText}</td>
+                        <td>${item.quantity}</td>
+                        <td>${Number(item.unit_price).toLocaleString()} د.ع</td>
+                        <td>${Number(item.total_price).toLocaleString()} د.ع</td>
+                    </tr>
+                `;
+            });
+        } else {
+            itemsHtml = '<tr><td colspan="6" class="text-center">هیچ کاڵایەک نەدۆزرایەوە</td></tr>';
+        }
+        
+        const modalHtml = `
+            <div class="container-fluid">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>بەروار:</strong> ${formatDate(wasting.date)}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>تێبینی:</strong> ${wasting.notes || 'هیچ تێبینییەک نیە'}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <h5>کاڵاکان</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>ناوی کاڵا</th>
+                                        <th>یەکە</th>
+                                        <th>بڕ</th>
+                                        <th>نرخی یەکە</th>
+                                        <th>کۆی گشتی</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${itemsHtml}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="5" class="text-left">کۆی گشتی:</th>
+                                        <th>${Number(wasting.total_amount).toLocaleString()} د.ع</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        Swal.fire({
+            title: 'وردەکاری بەفیڕۆچوو',
+            html: modalHtml,
+            width: 800,
+            confirmButtonText: 'داخستن',
+            customClass: {
+                popup: 'swal-rtl',
+                confirmButton: 'btn btn-primary'
+            }
+        });
+    }
 
     // Handle date filter changes
     $('#withdrawalStartDate, #withdrawalEndDate').on('change', function() {
@@ -144,4 +285,169 @@ $(document).ready(function() {
             'withdrawalTotalRecords'
         );
     }
+
+    // Function to load wasting data
+    function loadWastingData() {
+        const startDate = $('#withdrawalStartDate').val();
+        const endDate = $('#withdrawalEndDate').val();
+        const searchTerm = $('#withdrawalTableSearch').val();
+        const recordsPerPage = $('#withdrawalRecordsPerPage').val();
+
+        $.ajax({
+            url: '../../api/receipts/get_wasting_data.php',
+            method: 'POST',
+            data: {
+                start_date: startDate,
+                end_date: endDate,
+                search: searchTerm,
+                records_per_page: recordsPerPage
+            },
+            success: function(response) {
+                if (response.success) {
+                    updateWastingTable(response.data);
+                    updateWastingPagination(response.pagination);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: response.message
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: 'کێشەیەک هەیە لە پەیوەندی بە سێرڤەرەوە'
+                });
+            }
+        });
+    }
+
+    // Function to update wasting pagination
+    function updateWastingPagination(pagination) {
+        const { current_page, total_pages, total_records, start_record, end_record } = pagination;
+        
+        $('#withdrawalStartRecord').text(start_record);
+        $('#withdrawalEndRecord').text(end_record);
+        $('#withdrawalTotalRecords').text(total_records);
+        
+        const paginationNumbers = $('#withdrawalPaginationNumbers');
+        paginationNumbers.empty();
+        
+        // Previous button
+        $('#withdrawalPrevPageBtn').prop('disabled', current_page === 1);
+        
+        // Page numbers
+        for (let i = 1; i <= total_pages; i++) {
+            const button = $(`
+                <button class="btn btn-sm ${i === current_page ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2">
+                    ${i}
+                </button>
+            `);
+            
+            button.on('click', function() {
+                loadWastingData(i);
+            });
+            
+            paginationNumbers.append(button);
+        }
+        
+        // Next button
+        $('#withdrawalNextPageBtn').prop('disabled', current_page === total_pages);
+    }
+
+    // Function to delete a wasting receipt
+    function deleteWastingReceipt(receiptId) {
+        Swal.fire({
+            title: 'دڵنیای',
+            text: 'دڵنیای لە سڕینەوەی ئەم بەفیڕۆچووە؟',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'بەڵێ',
+            cancelButtonText: 'نەخێر'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '../../api/receipts/delete_wasting.php',
+                    method: 'POST',
+                    data: { receipt_id: receiptId },
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'سەرکەوتوو',
+                                text: 'بەفیڕۆچووەکە بە سەرکەوتوویی سڕایەوە'
+                            }).then(() => {
+                                loadWastingData();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'هەڵە',
+                                text: response.message
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'هەڵە',
+                            text: 'کێشەیەک هەیە لە پەیوەندی بە سێرڤەرەوە'
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    // Initialize wasting receipts functionality
+    $(document).ready(function() {
+        // Load initial data
+        loadWastingData();
+        
+        // Handle filter changes
+        $('.auto-filter').on('change', function() {
+            loadWastingData();
+        });
+        
+        // Handle search input
+        let searchTimeout;
+        $('#withdrawalTableSearch').on('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                loadWastingData();
+            }, 500);
+        });
+        
+        // Handle records per page change
+        $('#withdrawalRecordsPerPage').on('change', function() {
+            loadWastingData();
+        });
+        
+        // Handle reset filter
+        $('#withdrawalResetFilter').on('click', function() {
+            $('#withdrawalStartDate').val('');
+            $('#withdrawalEndDate').val('');
+            $('#withdrawalTableSearch').val('');
+            loadWastingData();
+        });
+        
+        // Handle refresh button
+        $('.refresh-btn').on('click', function() {
+            loadWastingData();
+        });
+        
+        // Handle delete button
+        $(document).on('click', '.delete-btn', function() {
+            const receiptId = $(this).data('id');
+            deleteWastingReceipt(receiptId);
+        });
+        
+        // Handle view button
+        $(document).on('click', '.view-btn', function() {
+            const receiptId = $(this).data('id');
+            viewReceipt(receiptId, 'wasting');
+        });
+    });
 }); 

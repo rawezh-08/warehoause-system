@@ -2,60 +2,42 @@
 $(document).ready(function() {
     // Helper function for number formatting
     function numberFormat(number) {
+        if (number === null || number === undefined) {
+            return '0 د.ع';
+        }
         return number.toLocaleString('en-US') + ' د.ع';
+    }
+
+    // Function to load purchases data
+    function loadPurchasesData() {
+        $.ajax({
+            url: '../../api/receipts/get_purchases.php',
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    updatePurchasesTable(response.data);
+                } else {
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: response.message || 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان',
+                        icon: 'error'
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                Swal.fire({
+                    title: 'هەڵە!',
+                    text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی بە سێرڤەرەوە',
+                    icon: 'error'
+                });
+            }
+        });
     }
 
     // Handle purchase receipt view
     $(document).on('click', '#shippingHistoryTable .view-btn', function() {
         const purchaseId = $(this).data('id');
         viewPurchaseDetails(purchaseId);
-    });
-
-    // Handle delete button
-    $(document).on('click', '.delete-btn', function() {
-        const receiptId = $(this).data('id');
-        
-        Swal.fire({
-            title: 'دڵنیای؟',
-            text: 'ئەم پسووڵەیە بە تەواوی دەسڕدرێتەوە',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'بەڵێ، بیسڕەوە',
-            cancelButtonText: 'نەخێر، پەشیمان بوومەوە',
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: '../../api/receipts/delete_purchase.php',
-                    method: 'POST',
-                    data: { receipt_id: receiptId },
-                    success: function(response) {
-                        if (response.success) {
-                            Swal.fire({
-                                title: 'سەرکەوتوو!',
-                                text: 'پسووڵە بە سەرکەوتوویی سڕایەوە',
-                                icon: 'success'
-                            }).then(() => {
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire({
-                                title: 'هەڵە!',
-                                text: response.message || 'هەڵەیەک ڕوویدا',
-                                icon: 'error'
-                            });
-                        }
-                    },
-                    error: function() {
-                        Swal.fire({
-                            title: 'هەڵە!',
-                            text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی بە سێرڤەرەوە',
-                            icon: 'error'
-                        });
-                    }
-                });
-            }
-        });
     });
 
     // Handle purchase receipt return
@@ -137,13 +119,12 @@ $(document).ready(function() {
                 }
                 
                 Swal.fire({
+                    title: 'هەڵە!',
+                    text: errorMessage,
                     icon: 'error',
-                    title: 'هەڵە',
-                    html: `<div dir="ltr" style="text-align: left;">
-                        <p>هەڵەیەک ڕوویدا لە کاتی پەیوەندی کردن بە سێرڤەر:</p>
-                        <p><strong>Status:</strong> ${status}</p>
-                        <p><strong>Error:</strong> ${errorMessage}</p>
-                    </div>`
+                    customClass: {
+                        popup: 'swal-rtl'
+                    }
                 });
             }
         });
@@ -237,20 +218,17 @@ $(document).ready(function() {
                     <td>${purchase.notes || ''}</td>
                     <td>
                         <div class="action-buttons">
-                            <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${purchase.id}">
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" title="دەستکاری" data-id="${purchase.id}">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${purchase.id}">
+                            <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" title="بینین" data-id="${purchase.id}">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${purchase.id}">
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" title="پرینت" data-id="${purchase.id}">
                                 <i class="fas fa-print"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-warning rounded-circle return-btn" data-id="${purchase.id}">
+                            <button type="button" class="btn btn-sm btn-outline-warning rounded-circle return-btn" title="گەڕاندنەوە" data-id="${purchase.id}">
                                 <i class="fas fa-undo"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${purchase.id}">
-                                <i class="fas fa-trash"></i>
                             </button>
                         </div>
                     </td>
@@ -271,11 +249,6 @@ $(document).ready(function() {
             'shippingTotalRecords'
         );
     }
-
-    // Initialize DataTable
-    const purchaseTable = $('#shippingHistoryTable').DataTable({
-        // ... your existing DataTable configuration
-    });
 
     // Load initial data
     loadPurchasesData();

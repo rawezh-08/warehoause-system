@@ -428,13 +428,23 @@ th {
 /* Action buttons */
 .action-buttons {
     display: flex;
-    gap: 0.5rem;
-    justify-content: center;
+    flex-direction: row;
+    gap: 5px;
+    justify-content: flex-start;
+    align-items: center;
+    flex-wrap: nowrap;
+    min-width: 200px; /* Ensure minimum width for buttons */
 }
 
 .action-buttons .btn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
+    padding: 0.25rem;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    flex-shrink: 0; /* Prevent buttons from shrinking */
 }
 
 /* Modal styles */
@@ -474,6 +484,54 @@ th {
     }
     
     .action-buttons {
-        flex-wrap: wrap;
+        min-width: 180px; /* Slightly smaller on mobile */
+        padding: 5px 0;
     }
+
+    .action-buttons .btn {
+        width: 28px; /* Slightly smaller buttons on mobile */
+        height: 28px;
+    }
+
+    /* Hide less important columns on mobile */
+    .table td:nth-child(5),
+    .table td:nth-child(6),
+    .table td:nth-child(7),
+    .table td:nth-child(8),
+    .table th:nth-child(5),
+    .table th:nth-child(6),
+    .table th:nth-child(7),
+    .table th:nth-child(8) {
+        display: none;
+    }
+}
+
+/* Custom scrollbar for better UX */
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Ensure table cells don't wrap unnecessarily */
+.table td {
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+/* Style for the action column specifically */
+.table td:last-child {
+    padding: 0.5rem;
+    min-width: 200px;
 } 

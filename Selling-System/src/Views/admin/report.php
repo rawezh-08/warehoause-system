@@ -3,6 +3,9 @@
 require_once '../../includes/auth.php';
 require_once '../../config/database.php';
 
+// Temporarily disable ONLY_FULL_GROUP_BY to fix SQL errors
+$conn->query("SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
+
 // Function to get total count from a table
 function getCount($table) {
     global $conn;
@@ -611,6 +614,33 @@ foreach ($cashFlowData as $data) {
         "net" => $data['net_cash']
     ];
 }
+
+// 9. Top debtors
+$stmt = $conn->prepare("
+    SELECT 
+        c.id,
+        c.name,
+        c.phone1,
+        c.debit_on_business as debt_amount,
+        DATEDIFF(NOW(), MAX(s.date)) as days_since_last_purchase,
+        COUNT(DISTINCT s.id) as purchase_count,
+        SUM(si.total_price) as total_purchases
+    FROM 
+        customers c
+    LEFT JOIN 
+        sales s ON c.id = s.customer_id
+    LEFT JOIN 
+        sale_items si ON s.id = si.sale_id
+    WHERE 
+        c.debit_on_business > 0
+    GROUP BY 
+        c.id, c.name, c.phone1, c.debit_on_business
+    ORDER BY 
+        c.debit_on_business DESC
+    LIMIT 10
+");
+$stmt->execute();
+$topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">

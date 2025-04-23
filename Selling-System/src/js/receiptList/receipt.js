@@ -920,12 +920,57 @@ $(document).ready(function() {
 
     // Add delete functionality
     $(document).on('click', '.delete-btn', function() {
-        const receiptId = $(this).data('id');
-        const receiptType = $(this).closest('.tab-pane').attr('id') === 'purchase-receipts-content' ? 'purchase' : 'sale';
+        const deleteBtn = $(this);
+        const receiptRow = deleteBtn.closest('tr');
+        const receiptId = deleteBtn.data('id');
+        const activeTabId = $('.tab-pane.active').attr('id');
         
+        // Get receipt information for logging
+        const receiptInfo = {
+            id: receiptId,
+            invoiceNumber: receiptRow.find('td:eq(1)').text().trim(),
+            customerName: receiptRow.find('td:eq(2)').text().trim(),
+            date: receiptRow.find('td:eq(3)').text().trim(),
+            tabId: activeTabId
+        };
+        
+        console.log('Delete button clicked - Receipt Info:', receiptInfo);
+        
+        // Determine receipt type and URL based on active tab
+        let receiptType;
+        let deleteUrl;
+        
+        switch(activeTabId) {
+            case 'employee-payment-content':
+                receiptType = 'sale';
+                deleteUrl = '../../api/receipts/delete_sale.php';
+                break;
+            case 'shipping-content':
+                receiptType = 'purchase';
+                deleteUrl = '../../api/receipts/delete_purchase.php';
+                break;
+            case 'withdrawal-content':
+                receiptType = 'waste';
+                deleteUrl = '../../api/receipts/delete_wasting.php';
+                break;
+            case 'draft-content':
+                receiptType = 'draft';
+                deleteUrl = '../../api/receipts/delete_draft.php';
+                break;
+            default:
+                console.error('Unknown tab type:', activeTabId);
+                Swal.fire({
+                    title: 'هەڵە!',
+                    text: 'جۆری پسووڵەکە نەناسراوە',
+                    icon: 'error'
+                });
+                return;
+        }
+        
+        // Show confirmation dialog
         Swal.fire({
-            title: 'دڵنیای؟',
-            text: 'ئەم پسووڵەیە دەسڕێتەوە و ناتوانرێت بگەڕێنرێتەوە',
+            title: 'دڵنیایت؟',
+            text: 'ئایا دڵنیایت کە دەتەوێت ئەم پسووڵەیە بسڕیتەوە؟ ئەم کردارە ناتوانرێت پاشگەز بکرێتەوە.',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'بەڵێ، بیسڕەوە',
@@ -935,34 +980,109 @@ $(document).ready(function() {
             }
         }).then((result) => {
             if (result.isConfirmed) {
+                // Show loading state
+                Swal.fire({
+                    title: 'جاری سڕینەوەی پسووڵە...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Prepare the data to send
+                const data = {
+                    receipt_id: receiptId
+                };
+                
+                console.log('Sending delete request:', {
+                    url: deleteUrl,
+                    data: data
+                });
+                
+                // Send delete request
                 $.ajax({
-                    url: `../../api/receipts/delete_${receiptType}.php`,
+                    url: deleteUrl,
                     method: 'POST',
-                    data: { receipt_id: receiptId },
+                    data: data,
                     success: function(response) {
+                        console.log('Delete response:', response);
+                        
+                        // Close loading dialog
+                        Swal.close();
+                        
                         if (response.success) {
+                            // Show success message
                             Swal.fire({
                                 title: 'سەرکەوتوو!',
                                 text: 'پسووڵە بە سەرکەوتوویی سڕایەوە',
                                 icon: 'success'
                             }).then(() => {
+                                // Remove the row from the table
+                                receiptRow.remove();
+                                // Reload the page to refresh all data
                                 location.reload();
                             });
                         } else {
+                            // Show error message with debug info
+                            let errorMessage = response.message || 'هەڵەیەک ڕوویدا لە سڕینەوەی پسووڵە';
+                            
+                            if (response.debug_info) {
+                                console.log('Debug Info:', response.debug_info);
+                                errorMessage += '\n\nزانیاری زیاتر:';
+                                if (response.debug_info.error_file) {
+                                    errorMessage += `\nفایل: ${response.debug_info.error_file}`;
+                                }
+                                if (response.debug_info.error_line) {
+                                    errorMessage += `\nهێڵ: ${response.debug_info.error_line}`;
+                                }
+                            }
+                            
                             Swal.fire({
                                 title: 'هەڵە!',
-                                text: response.message || 'هەڵەیەک ڕوویدا',
-                                icon: 'error'
+                                text: errorMessage,
+                                icon: 'error',
+                                customClass: {
+                                    popup: 'swal-rtl'
+                                }
                             });
                         }
                     },
                     error: function(xhr, status, error) {
-                        console.error('Error:', error);
-                        console.error('Response:', xhr.responseText);
+                        console.error('Delete request failed:', error);
+                        let errorMessage = '';
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.message) {
+                                errorMessage = response.message;
+                            } else if (response.debug_info && response.debug_info.error_message) {
+                                errorMessage = response.debug_info.error_message;
+                            } else {
+                                errorMessage = error || 'هەڵەیەکی نەناسراو ڕوویدا';
+                            }
+                            
+                            // Add debug info if available
+                            if (response.debug_info) {
+                                console.log('Debug Info:', response.debug_info);
+                                errorMessage += '\n\nزانیاری زیاتر:';
+                                if (response.debug_info.error_file) {
+                                    errorMessage += `\nفایل: ${response.debug_info.error_file}`;
+                                }
+                                if (response.debug_info.error_line) {
+                                    errorMessage += `\nهێڵ: ${response.debug_info.error_line}`;
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Error parsing server response:', e);
+                            errorMessage = xhr.responseText || error || 'هەڵەیەکی نەناسراو ڕوویدا';
+                        }
+                        
                         Swal.fire({
                             title: 'هەڵە!',
-                            text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی بە سێرڤەرەوە',
-                            icon: 'error'
+                            text: errorMessage,
+                            icon: 'error',
+                            customClass: {
+                                popup: 'swal-rtl'
+                            }
                         });
                     }
                 });

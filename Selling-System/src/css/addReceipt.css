@@ -1064,3 +1064,114 @@ input[type="text"].form-control {
         width: calc(100% + 10px);
     }
 }
+
+.select2-container--bootstrap-5 .select2-dropdown {
+    min-width: 400px !important;
+    max-height: 500px !important;
+    overflow-y: auto !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 8px !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__options {
+    max-height: 500px !important;
+    overflow-y: auto !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option {
+    padding: 12px 15px !important;
+    font-size: 15px !important;
+    line-height: 1.5 !important;
+    border-bottom: 1px solid #eee !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option:last-child {
+    border-bottom: none !important;
+}
+
+.select2-container--bootstrap-5 {
+    width: 100% !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection {
+    height: auto !important;
+    min-height: 42px !important;
+    padding: 8px 12px !important;
+}
+
+/* Make dropdown wider on mobile */
+@media (max-width: 767px) {
+    .select2-container--bootstrap-5 .select2-dropdown {
+        min-width: 300px !important;
+        max-width: 95vw !important;
+        margin: 0 auto !important;
+    }
+}
+
+/* Ensure dropdown is above other elements */
+.select2-container--bootstrap-5.select2-container--open .select2-dropdown {
+    z-index: 9999 !important;
+}
+
+/* Style the search box */
+.select2-search--dropdown .select2-search__field {
+    padding: 10px 12px !important;
+    font-size: 15px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 6px !important;
+    margin: 8px !important;
+    width: calc(100% - 16px) !important;
+}
+
+/* Highlight selected option */
+.select2-container--bootstrap-5 .select2-results__option--selected {
+    background-color: #e9ecef !important;
+    color: #212529 !important;
+    font-weight: 600 !important;
+}
+
+/* Hover effect */
+.select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: #f8f9fa !important;
+    color: #0d6efd !important;
+}
+
+/* Product option container */
+.product-option-container {
+    padding: 12px 15px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+    transition: all 0.2s ease !important;
+}
+
+.product-option-container:hover {
+    background-color: #f8f9fa !important;
+}
+
+/* Product details */
+.product-option-details {
+    flex: 1 !important;
+}
+
+.product-name {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    margin-bottom: 5px !important;
+    color: #2c3e50 !important;
+}
+
+.product-meta {
+    font-size: 13px !important;
+    color: #6c757d !important;
+}
+
+/* Product image */
+.product-option-image {
+    width: 50px !important;
+    height: 50px !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    border: 1px solid #dee2e6 !important;
+}

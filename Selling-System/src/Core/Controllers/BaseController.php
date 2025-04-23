@@ -16,7 +16,16 @@ class BaseController {
     protected function initializeDatabase() {
         // Initialize database connection
         require_once __DIR__ . '/../Database/Connection.php';
-        $this->db = new \Core\Database\Connection();
+        
+        // Database configuration
+        $config = [
+            'host' => 'localhost',
+            'database' => 'warehouse_db',
+            'username' => 'root',
+            'password' => ''
+        ];
+        
+        $this->db = new \App\Core\Database\Connection($config);
     }
 
     protected function initializeRequest() {

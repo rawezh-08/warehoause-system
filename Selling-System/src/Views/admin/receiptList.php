@@ -1,4 +1,8 @@
 <?php
+// Enable error reporting
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // Include authentication check
 require_once '../../includes/auth.php';
 require_once '../../controllers/receipts/SaleReceiptsController.php';
@@ -13,23 +17,28 @@ function numberFormat($number)
 }
 
 // Initialize controllers
-$saleReceiptsController = new SaleReceiptsController($conn);
-$purchaseReceiptsController = new PurchaseReceiptsController($conn);
-$wastingReceiptsController = new WastingReceiptsController($conn);
-$draftReceiptsController = new DraftReceiptsController($conn);
+try {
+    $saleReceiptsController = new SaleReceiptsController($conn);
+    $purchaseReceiptsController = new PurchaseReceiptsController($conn);
+    $wastingReceiptsController = new WastingReceiptsController($conn);
+    $draftReceiptsController = new DraftReceiptsController($conn);
 
-// Get initial data for page load
-$today = date('Y-m-d');
-$startOfMonth = date('Y-m-01');
+    // Get initial data for page load
+    $today = date('Y-m-d');
+    $startOfMonth = date('Y-m-01');
 
-$defaultFilters = [
-    'start_date' => $startOfMonth,
-    'end_date' => $today
-];
+    $defaultFilters = [
+        'start_date' => $startOfMonth,
+        'end_date' => $today
+    ];
 
-// Get data using controllers
-$salesData = $saleReceiptsController->getSalesData(0, 0, $defaultFilters);
-$purchasesData = $purchaseReceiptsController->getPurchasesData(0, 0, $defaultFilters);
+    // Get data using controllers
+    $salesData = $saleReceiptsController->getSalesData(0, 0, $defaultFilters);
+    $purchasesData = $purchaseReceiptsController->getPurchasesData(0, 0, $defaultFilters);
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage();
+    die();
+}
 ?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
@@ -52,10 +61,7 @@ $purchasesData = $purchaseReceiptsController->getPurchasesData(0, 0, $defaultFil
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     
-    <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+    
 
     <style>
         .draft-badge {
@@ -77,6 +83,47 @@ $purchasesData = $purchaseReceiptsController->getPurchasesData(0, 0, $defaultFil
 
         .table td {
             vertical-align: middle;
+        }
+
+        /* Return Form Dialog Styles */
+        .return-form-dialog {
+            z-index: 1060;
+        }
+
+        .return-form-popup {
+            max-width: 900px;
+            width: 90%;
+        }
+
+        .return-form-content {
+            padding: 20px;
+        }
+
+        .return-form-content .table {
+            margin-bottom: 1rem;
+        }
+
+        .return-form-content .table th,
+        .return-form-content .table td {
+            padding: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .return-form-content .form-control {
+            font-size: 0.9rem;
+        }
+
+        .return-form-content .table-responsive {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* Make sure the table header stays visible while scrolling */
+        .return-form-content .table thead th {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1;
         }
     </style>
 </head>
@@ -115,20 +162,6 @@ $purchasesData = $purchaseReceiptsController->getPurchasesData(0, 0, $defaultFil
                                     data-bs-target="#shipping-content" type="button" role="tab"
                                     aria-controls="shipping-content" aria-selected="false">
                                     <i class="fas fa-truck me-2"></i> پسووڵەکانی کڕین
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="withdrawal-tab" data-bs-toggle="tab"
-                                    data-bs-target="#withdrawal-content" type="button" role="tab"
-                                    aria-controls="withdrawal-content" aria-selected="false">
-                                    <i class="fas fa-money-bill-wave me-2"></i> بەفیڕۆچوو
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="draft-tab" data-bs-toggle="tab"
-                                    data-bs-target="#draft-content" type="button" role="tab"
-                                    aria-controls="draft-content" aria-selected="false">
-                                    <i class="fas fa-file-alt me-2"></i> ڕەشنووسەکان
                                 </button>
                             </li>
                         </ul>
@@ -307,11 +340,6 @@ $purchasesData = $purchaseReceiptsController->getPurchasesData(0, 0, $defaultFil
                                                                             class="btn btn-sm btn-outline-warning rounded-circle return-btn"
                                                                             data-id="<?php echo $sale['id']; ?>">
                                                                         <i class="fas fa-undo"></i>
-                                                                    </button>
-                                                                        <button type="button"
-                                                                            class="btn btn-sm btn-outline-danger rounded-circle delete-btn"
-                                                                            data-id="<?php echo $sale['id']; ?>">
-                                                                        <i class="fas fa-trash"></i>
                                                                     </button>
                                                                 </div>
                                                             </td>
@@ -549,11 +577,6 @@ $purchasesData = $purchaseReceiptsController->getPurchasesData(0, 0, $defaultFil
                                                                             data-id="<?php echo $purchase['id']; ?>">
                                                                         <i class="fas fa-undo"></i>
                                                                     </button>
-                                                                        <button type="button"
-                                                                            class="btn btn-sm btn-outline-danger rounded-circle delete-btn"
-                                                                            data-id="<?php echo $purchase['id']; ?>">
-                                                                        <i class="fas fa-trash"></i>
-                                                                    </button>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -592,386 +615,6 @@ $purchasesData = $purchaseReceiptsController->getPurchasesData(0, 0, $defaultFil
                                                                     class="btn btn-sm btn-primary rounded-circle me-2 active">1</button>
                                                             </div>
                                                             <button id="shippingNextPageBtn"
-                                                                class="btn btn-sm btn-outline-primary rounded-circle">
-                                                                <i class="fas fa-chevron-left"></i>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Money Withdrawal Tab -->
-                    <div class="tab-pane fade" id="withdrawal-content" role="tabpanel" aria-labelledby="withdrawal-tab">
-                        <!-- Date Filter for Withdrawals -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <div class="card shadow-sm">
-                                    <div class="card-body">
-                                        <h5 class="card-title mb-4">فلتەر بەپێی بەروار</h5>
-                                        <form id="withdrawalFilterForm" class="row g-3">
-                                            <div class="col-md-4">
-                                                <label for="withdrawalStartDate" class="form-label">بەرواری
-                                                    دەستپێک</label>
-                                                <input type="date" class="form-control auto-filter"
-                                                    id="withdrawalStartDate">
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label for="withdrawalEndDate" class="form-label">بەرواری کۆتایی</label>
-                                                <input type="date" class="form-control auto-filter"
-                                                    id="withdrawalEndDate">
-                                            </div>
-                                            <div class="col-md-4 d-flex align-items-end">
-                                                <button type="button" class="btn btn-outline-secondary w-100"
-                                                    id="withdrawalResetFilter">
-                                                    <i class="fas fa-redo me-2"></i> ڕیسێت
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Withdrawal History Table -->
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="card shadow-sm">
-                                    <div
-                                        class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                                        <h5 class="card-title mb-0">مێژووی بەفیڕۆچوو</h5>
-                                        <div>
-                                            <button class="btn btn-sm btn-outline-primary refresh-btn me-2">
-                                                <i class="fas fa-sync-alt"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="table-container">
-                                            <!-- Table Controls -->
-                                            <div class="table-controls mb-3">
-                                                <div class="row align-items-center">
-                                                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
-                                                        <div class="records-per-page">
-                                                            <label class="me-2">نیشاندان:</label>
-                                                            <div class="custom-select-wrapper">
-                                                                <select id="withdrawalRecordsPerPage"
-                                                                    class="form-select form-select-sm rounded-pill">
-                                                                    <option value="5">5</option>
-                                                                    <option value="10" selected>10</option>
-                                                                    <option value="25">25</option>
-                                                                    <option value="50">50</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-8 col-sm-6">
-                                                        <div class="search-container">
-                                                            <div class="input-group">
-                                                                <input type="text" id="withdrawalTableSearch"
-                                                                    class="form-control rounded-pill-start table-search-input"
-                                                                    placeholder="گەڕان لە تەیبڵدا...">
-                                                                <span
-                                                                    class="input-group-text rounded-pill-end bg-light">
-                                                                    <i class="fas fa-search"></i>
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Table Content -->
-                                            <div class="table-responsive">
-                                                <table id="withdrawalHistoryTable"
-                                                    class="table table-bordered custom-table table-hover">
-                                                    <thead class="table-light">
-                                                        <tr>
-                                                            <th>#</th>
-                                                            <th>بەروار</th>
-                                                            <th>کاڵاکان</th>
-                                                            <th>کۆی گشتی</th>
-                                                            <th>تێبینی</th>
-                                                            <th>کردارەکان</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <?php
-                                                        // Get wasting data with related items
-                                                        $stmt = $conn->query("
-                                                            SELECT w.*, 
-                                                                   GROUP_CONCAT(
-                                                                       CONCAT(p.name, ' (', wi.quantity, ' ', 
-                                                                       CASE wi.unit_type 
-                                                                           WHEN 'piece' THEN 'دانە'
-                                                                           WHEN 'box' THEN 'کارتۆن'
-                                                                           WHEN 'set' THEN 'سێت'
-                                                                       END, ')')
-                                                                   SEPARATOR ', ') as products_list,
-                                                                   SUM(wi.total_price) as total_amount
-                                                            FROM wastings w
-                                                            LEFT JOIN wasting_items wi ON w.id = wi.wasting_id
-                                                            LEFT JOIN products p ON wi.product_id = p.id
-                                                            GROUP BY w.id
-                                                            ORDER BY w.date DESC
-                                                        ");
-                                                        $wastings = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-                                                        if (count($wastings) > 0) {
-                                                            foreach ($wastings as $index => $wasting) {
-                                                                echo '<tr data-id="' . $wasting['id'] . '">';
-                                                                echo '<td>' . ($index + 1) . '</td>';
-                                                                echo '<td>' . date('Y/m/d', strtotime($wasting['date'])) . '</td>';
-                                                                echo '<td class="products-list-cell" data-products="' . htmlspecialchars($wasting['products_list']) . '">';
-                                                                echo htmlspecialchars($wasting['products_list']);
-                                                                echo '<div class="products-popup"></div>';
-                                                                echo '</td>';
-                                                                echo '<td>' . number_format($wasting['total_amount']) . ' د.ع</td>';
-                                                                echo '<td>' . htmlspecialchars($wasting['notes'] ?? '') . '</td>';
-                                                                echo '<td>
-                                                                <div class="action-buttons">
-                                                                        <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="' . $wasting['id'] . '">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </button>
-                                                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="' . $wasting['id'] . '">
-                                                                        <i class="fas fa-trash"></i>
-                                                                    </button>
-                                                                </div>
-                                                                </td>';
-                                                                echo '</tr>';
-                                                            }
-                                                        } else {
-                                                            echo '<tr><td colspan="6" class="text-center">هیچ بەفیڕۆچوویەک نەدۆزرایەوە</td></tr>';
-                                                        }
-                                                        ?>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            
-                                            <!-- Table Pagination -->
-                                            <div class="table-pagination mt-3">
-                                                <div class="row align-items-center">
-                                                    <div class="col-md-6 mb-2 mb-md-0">
-                                                        <div class="pagination-info">
-                                                            نیشاندانی <span id="withdrawalStartRecord">1</span> تا <span
-                                                                id="withdrawalEndRecord">3</span> لە کۆی <span
-                                                                id="withdrawalTotalRecords">3</span> تۆمار
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="pagination-controls d-flex justify-content-md-end">
-                                                            <button id="withdrawalPrevPageBtn"
-                                                                class="btn btn-sm btn-outline-primary rounded-circle me-2"
-                                                                disabled>
-                                                                <i class="fas fa-chevron-right"></i>
-                                                            </button>
-                                                            <div id="withdrawalPaginationNumbers"
-                                                                class="pagination-numbers d-flex">
-                                                                <!-- Pagination numbers will be generated by JavaScript -->
-                                                                <button
-                                                                    class="btn btn-sm btn-primary rounded-circle me-2 active">1</button>
-                                                            </div>
-                                                            <button id="withdrawalNextPageBtn"
-                                                                class="btn btn-sm btn-outline-primary rounded-circle">
-                                                                <i class="fas fa-chevron-left"></i>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Draft Receipts Tab -->
-                    <div class="tab-pane fade" id="draft-content" role="tabpanel" aria-labelledby="draft-tab">
-                        <!-- Date Filter for Drafts -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <div class="card shadow-sm">
-                                    <div class="card-body">
-                                        <h5 class="card-title mb-4">فلتەر بەپێی بەروار و ناو</h5>
-                                        <form id="draftFilterForm" class="row g-3">
-                                            <div class="col-md-3">
-                                                <label for="draftStartDate" class="form-label">بەرواری دەستپێک</label>
-                                                <input type="date" class="form-control auto-filter" id="draftStartDate">
-                </div>
-                                            <div class="col-md-3">
-                                                <label for="draftEndDate" class="form-label">بەرواری کۆتایی</label>
-                                                <input type="date" class="form-control auto-filter" id="draftEndDate">
-            </div>
-                                            <div class="col-md-4">
-                                                <label for="draftCustomer" class="form-label">کڕیار</label>
-                                                <select class="form-select auto-filter" id="draftCustomer">
-                                                    <option value="">هەموو کڕیارەکان</option>
-                                                    <?php
-                                                    // Get all customers from database
-                                                    $stmt = $conn->query("SELECT DISTINCT name FROM customers ORDER BY name");
-                                                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                                                        echo '<option value="' . htmlspecialchars($row['name']) . '">' . htmlspecialchars($row['name']) . '</option>';
-                                                    }
-                                                    ?>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-2 d-flex align-items-end">
-                                                <button type="button" class="btn btn-outline-secondary w-100"
-                                                    id="draftResetFilter">
-                                                    <i class="fas fa-redo me-2"></i> ڕیسێت
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Draft History Table -->
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="card shadow-sm">
-                                    <div
-                                        class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                                        <h5 class="card-title mb-0">ڕەشنووسی پسووڵەکان</h5>
-                                        <div>
-                                            <button class="btn btn-sm btn-outline-primary refresh-btn me-2">
-                                                <i class="fas fa-sync-alt"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="table-container">
-                                            <!-- Table Controls -->
-                                            <div class="table-controls mb-3">
-                                                <div class="row align-items-center">
-                                                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
-                                                        <div class="records-per-page">
-                                                            <label class="me-2">نیشاندان:</label>
-                                                            <div class="custom-select-wrapper">
-                                                                <select id="draftRecordsPerPage"
-                                                                    class="form-select form-select-sm rounded-pill">
-                                                                    <option value="5">5</option>
-                                                                    <option value="10" selected>10</option>
-                                                                    <option value="25">25</option>
-                                                                    <option value="50">50</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-8 col-sm-6">
-                                                        <div class="search-container">
-                                                            <div class="input-group">
-                                                                <input type="text" id="draftTableSearch"
-                                                                    class="form-control rounded-pill-start table-search-input"
-                                                                    placeholder="گەڕان لە تەیبڵدا...">
-                                                                <span
-                                                                    class="input-group-text rounded-pill-end bg-light">
-                                                                    <i class="fas fa-search"></i>
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Table Content -->
-                                            <div class="table-responsive">
-                                                <table id="draftHistoryTable"
-                                                    class="table table-bordered custom-table table-hover">
-                                                    <thead class="table-light">
-                                                        <tr>
-                                                            <th>#</th>
-                                                            <th>ژمارەی پسووڵە</th>
-                                                            <th>کڕیار</th>
-                                                            <th>بەروار</th>
-                                                            <th>جۆری پارەدان</th>
-                                                            <th>کۆی گشتی</th>
-                                                            <th>کردارەکان</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <?php
-                                                        // Get draft receipts
-                                                        $stmt = $conn->prepare("
-                                                            SELECT s.*, c.name as customer_name,
-                                                            COALESCE(SUM(si.total_price), 0) as subtotal,
-                                                            (COALESCE(SUM(si.total_price), 0) + s.shipping_cost + s.other_costs - s.discount) as total_amount
-                                                            FROM sales s
-                                                            LEFT JOIN customers c ON s.customer_id = c.id
-                                                            LEFT JOIN sale_items si ON s.id = si.sale_id
-                                                            WHERE s.is_draft = 1
-                                                            GROUP BY s.id
-                                                            ORDER BY s.created_at DESC
-                                                        ");
-                                                        $stmt->execute();
-                                                        $draft_receipts = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                                                        
-                                                        if (count($draft_receipts) > 0) {
-                                                            foreach ($draft_receipts as $index => $receipt) {
-                                                                echo '<tr>';
-                                                                echo '<td>' . ($index + 1) . '</td>';
-                                                                echo '<td>' . htmlspecialchars($receipt['invoice_number']) . ' <span class="draft-badge">ڕەشنووس</span></td>';
-                                                                echo '<td>' . htmlspecialchars($receipt['customer_name']) . '</td>';
-                                                                echo '<td>' . date('Y-m-d', strtotime($receipt['date'])) . '</td>';
-                                                                echo '<td>' . ($receipt['payment_type'] == 'cash' ? 'نەقد' : 'قەرز') . '</td>';
-                                                                echo '<td>' . number_format($receipt['total_amount']) . ' دینار</td>';
-                                                                echo '<td>
-                                                                    <div class="action-buttons">
-                                                                        <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="' . $receipt['id'] . '">
-                                                                            <i class="fas fa-eye"></i>
-                                                                        </button>
-                                                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="' . $receipt['id'] . '">
-                                                                            <i class="fas fa-edit"></i>
-                                                                        </button>
-                                                                        <button type="button" class="btn btn-sm btn-outline-success rounded-circle finalize-btn" data-id="' . $receipt['id'] . '">
-                                                                            <i class="fas fa-check"></i>
-                                                                        </button>
-                                                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="' . $receipt['id'] . '">
-                                                                            <i class="fas fa-trash"></i>
-                                                                        </button>
-                                                                    </div>
-                                                                </td>';
-                                                                echo '</tr>';
-                                                            }
-                                                        } else {
-                                                            echo '<tr><td colspan="7" class="text-center">هیچ ڕەشنووسێک نەدۆزرایەوە</td></tr>';
-                                                        }
-                                                        ?>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            
-                                            <!-- Table Pagination -->
-                                            <div class="table-pagination mt-3">
-                                                <div class="row align-items-center">
-                                                    <div class="col-md-6 mb-2 mb-md-0">
-                                                        <div class="pagination-info">
-                                                            نیشاندانی <span id="draftStartRecord">1</span> تا <span
-                                                                id="draftEndRecord">3</span> لە کۆی <span
-                                                                id="draftTotalRecords">3</span> تۆمار
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="pagination-controls d-flex justify-content-md-end">
-                                                            <button id="draftPrevPageBtn"
-                                                                class="btn btn-sm btn-outline-primary rounded-circle me-2"
-                                                                disabled>
-                                                                <i class="fas fa-chevron-right"></i>
-                                                            </button>
-                                                            <div id="draftPaginationNumbers"
-                                                                class="pagination-numbers d-flex">
-                                                                <!-- Pagination numbers will be generated by JavaScript -->
-                                                                <button
-                                                                    class="btn btn-sm btn-primary rounded-circle me-2 active">1</button>
-                                                            </div>
-                                                            <button id="draftNextPageBtn"
                                                                 class="btn btn-sm btn-outline-primary rounded-circle">
                                                                 <i class="fas fa-chevron-left"></i>
                                                             </button>
@@ -1091,58 +734,6 @@ $purchasesData = $purchaseReceiptsController->getPurchasesData(0, 0, $defaultFil
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
                     <button type="button" class="btn btn-primary" id="saveShippingEdit">پاشەکەوتکردن</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Withdrawal Edit Modal -->
-    <div class="modal fade" id="editWithdrawalModal" tabindex="-1" aria-labelledby="editWithdrawalModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editWithdrawalModalLabel">دەستکاری دەرکردنی پارە</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editWithdrawalForm">
-                        <input type="hidden" id="editWithdrawalId">
-                        <div class="mb-3">
-                            <label for="editWithdrawalName" class="form-label">ناو</label>
-                            <input type="text" id="editWithdrawalName" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editWithdrawalDate" class="form-label">بەروار</label>
-                            <input type="date" id="editWithdrawalDate" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editWithdrawalAmount" class="form-label">بڕی پارە</label>
-                            <div class="input-group">
-                                <input type="number" id="editWithdrawalAmount" class="form-control" required>
-                                <span class="input-group-text">$</span>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editWithdrawalCategory" class="form-label">جۆری دەرکردن</label>
-                            <select id="editWithdrawalCategory" class="form-select" required>
-                                <option value="" selected disabled>جۆر هەڵبژێرە</option>
-                                <option value="expense">خەرجی ڕۆژانە</option>
-                                <option value="supplies">پێداویستی</option>
-                                <option value="rent">کرێ</option>
-                                <option value="utility">خزمەتگوزاری</option>
-                                <option value="other">جۆری تر</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editWithdrawalNotes" class="form-label">تێبینی</label>
-                            <textarea id="editWithdrawalNotes" class="form-control" rows="3"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
-                    <button type="button" class="btn btn-primary" id="saveWithdrawalEdit">پاشەکەوتکردن</button>
                 </div>
             </div>
         </div>
@@ -1320,7 +911,7 @@ $purchasesData = $purchaseReceiptsController->getPurchasesData(0, 0, $defaultFil
     </div>
 
     <!-- View Sale Items Modal -->
-    <div class="modal fade" id="viewSaleItemsModal" tabindex="-1" aria-labelledby="viewSaleItemsModalLabel" aria-hidden="true">
+    <div class="modal fade" id="viewSaleItemsModal" tabindex="-1" aria-labelledby="viewSaleItemsModalLabel">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
@@ -1358,7 +949,6 @@ $purchasesData = $purchaseReceiptsController->getPurchasesData(0, 0, $defaultFil
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <!-- Global AJAX Configuration -->
-    <script src="../../js/ajax-config.js"></script>
 
     <!-- Then load your custom JavaScript -->
     <script src="../../js/include-components.js"></script>
@@ -1371,7 +961,7 @@ $purchasesData = $purchaseReceiptsController->getPurchasesData(0, 0, $defaultFil
     <script src="../../js/receiptList/tabs/draft-receipts.js"></script>
     <script src="../../js/receiptList/tabs/edit-sale-receipt.js"></script>
     <script src="../../js/receiptList/tabs/edit-purchase-receipt.js"></script>
-
+    
     <!-- Initialize everything after all scripts are loaded -->
     <script>
     $(document).ready(function() {

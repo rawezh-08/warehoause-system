@@ -201,31 +201,43 @@ $(document).ready(function() {
                 console.error("AJAX Error:", {xhr, status, error});
                 Swal.close();
                 
-                let errorMessage = 'Unknown error occurred';
+                let errorMessage = '';
                 try {
                     const response = JSON.parse(xhr.responseText);
-                    errorMessage = response.message || error;
+                    if (response.message) {
+                        errorMessage = response.message;
+                    } else if (response.debug_info && response.debug_info.error_message) {
+                        errorMessage = response.debug_info.error_message;
+                    } else {
+                        errorMessage = error || 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی بە سێرڤەرەوە';
+                    }
+                    
+                    // Add debug info if available
+                    if (response.debug_info) {
+                        console.log('Debug Info:', response.debug_info);
+                        errorMessage += '\n\nزانیاری زیاتر:';
+                        if (response.debug_info.error_file) {
+                            errorMessage += `\nفایل: ${response.debug_info.error_file}`;
+                        }
+                        if (response.debug_info.error_line) {
+                            errorMessage += `\nهێڵ: ${response.debug_info.error_line}`;
+                        }
+                    }
                 } catch (e) {
-                    errorMessage = error || 'Could not parse error response';
+                    console.error('Error parsing server response:', e);
+                    errorMessage = xhr.responseText || error || 'هەڵەیەکی نەناسراو ڕوویدا';
                 }
                 
                 Swal.fire({
+                    title: 'هەڵە!',
+                    text: errorMessage,
                     icon: 'error',
-                    title: 'هەڵە',
-                    html: `<div dir="ltr" style="text-align: left;">
-                        <p>هەڵەیەک ڕوویدا لە کاتی پەیوەندی کردن بە سێرڤەر:</p>
-                        <p><strong>Status:</strong> ${status}</p>
-                        <p><strong>Error:</strong> ${errorMessage}</p>
-                    </div>`
+                    customClass: {
+                        popup: 'swal-rtl'
+                    }
                 });
             }
         });
-    });
-    
-    // Handle Delete button click
-    $(document).on('click', '#employeeHistoryTable .delete-btn', function() {
-        const saleId = $(this).data('id');
-        deleteSale(saleId);
     });
     
     // Handle save sale edit
@@ -343,20 +355,17 @@ function updateSalesTable(salesData) {
                 <td>${sale.notes || ''}</td>
                 <td>
                     <div class="action-buttons">
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${sale.id}">
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" title="دەستکاری" data-id="${sale.id}">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${sale.id}">
+                        <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" title="بینین" data-id="${sale.id}">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${sale.id}">
+                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" title="پرینت" data-id="${sale.id}">
                             <i class="fas fa-print"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-warning rounded-circle return-btn" data-id="${sale.id}">
+                        <button type="button" class="btn btn-sm btn-outline-warning rounded-circle return-btn" title="گەڕاندنەوە" data-id="${sale.id}">
                             <i class="fas fa-undo"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="${sale.id}">
-                            <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </td>
@@ -707,39 +716,46 @@ function showReturnItemsModal(saleId, items) {
 }
 
 /**
- * Delete a sale receipt
- * @param {number} saleId - ID of the sale to delete
+ * Show loading message
+ * @param {string} message Loading message to display
  */
-function deleteSale(saleId) {
-    confirmAction(
-        'دڵنیایت؟',
-        'ئایا دڵنیایت کە دەتەوێت ئەم پسووڵەیە بسڕیتەوە؟ ئەم کردارە ناتوانرێت پاشگەز بکرێتەوە.',
-        'بەڵێ، بیسڕەوە',
-        'نەخێر، پاشگەز بوومەوە',
-        function() {
-            showLoading('جاری سڕینەوەی پسووڵە...');
-            
-            $.ajax({
-                url: '../../api/delete_sale.php',
-                type: 'POST',
-                data: { id: saleId },
-                success: function(response) {
-                    hideLoading();
-                    
-                    if (response.success) {
-                        showSuccess('پسووڵەکە بە سەرکەوتوویی سڕایەوە');
-                        loadSalesData();
-                    } else {
-                        showError(response.message || 'هەڵەیەک ڕوویدا لە سڕینەوەی پسووڵە');
-                    }
-                },
-                error: function() {
-                    hideLoading();
-                    showError('هەڵەیەک ڕوویدا لە پەیوەندی کردن بە سێرڤەر');
-                }
-            });
-        }
-    );
+function showLoading(message = 'Loading...') {
+    $('#loading-overlay').removeClass('d-none');
+    $('#loading-message').text(message);
+}
+
+/**
+ * Hide loading message
+ */
+function hideLoading() {
+    $('#loading-overlay').addClass('d-none');
+}
+
+/**
+ * Show notification
+ * @param {string} type Notification type (success, error, warning, info)
+ * @param {string} message Message to display
+ */
+function showNotification(type, message) {
+    const toast = $(`
+        <div class="toast align-items-center text-white bg-${type === 'error' ? 'danger' : type}" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `);
+    
+    $('.toast-container').append(toast);
+    const bsToast = new bootstrap.Toast(toast, { autohide: true, delay: 3000 });
+    bsToast.show();
+    
+    // Remove toast from DOM after it's hidden
+    toast.on('hidden.bs.toast', function() {
+        $(this).remove();
+    });
 }
 
 /**
@@ -765,11 +781,6 @@ function initializeEventHandlers() {
     $(document).on('click', '.btn-return-sale', function() {
         const saleId = $(this).data('id');
         returnSaleItems(saleId);
-    });
-    
-    $(document).on('click', '.btn-delete-sale', function() {
-        const saleId = $(this).data('id');
-        deleteSale(saleId);
     });
     
     // Save edited sale
@@ -823,48 +834,5 @@ function initializeFilterHandlers() {
         if (e.key === 'Enter') {
             $('#filter-sales-btn').click();
         }
-    });
-}
-
-/**
- * Show loading message
- * @param {string} message Loading message to display
- */
-function showLoading(message = 'Loading...') {
-    $('#loading-overlay').removeClass('d-none');
-    $('#loading-message').text(message);
-}
-
-/**
- * Hide loading message
- */
-function hideLoading() {
-    $('#loading-overlay').addClass('d-none');
-}
-
-/**
- * Show notification
- * @param {string} type Notification type (success, error, warning, info)
- * @param {string} message Message to display
- */
-function showNotification(type, message) {
-    const toast = $(`
-        <div class="toast align-items-center text-white bg-${type === 'error' ? 'danger' : type}" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="d-flex">
-                <div class="toast-body">
-                    ${message}
-                </div>
-                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-        </div>
-    `);
-    
-    $('.toast-container').append(toast);
-    const bsToast = new bootstrap.Toast(toast, { autohide: true, delay: 3000 });
-    bsToast.show();
-    
-    // Remove toast from DOM after it's hidden
-    toast.on('hidden.bs.toast', function() {
-        $(this).remove();
     });
 } 

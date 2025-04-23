@@ -62,6 +62,7 @@
                     <li><a href="addReceipt.php" > زیادکردنی پسوڵە</a></li>
         
                     <li><a href="receiptList.php">لیستی پسوڵەکان</a></li>
+                    <li><a href="draftAndWithdrawal.php">ڕەشنووسەکان و بەفیڕۆچوو</a></li>
                 </ul>
             </li>
             

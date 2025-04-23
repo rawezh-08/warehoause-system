@@ -1,3 +1,22 @@
-# Deny all direct access to files in this directory
-Order Deny,Allow
-Deny from all 
+# Set default character set
+AddDefaultCharset UTF-8
+
+# Enable rewriting
+RewriteEngine On
+
+# Require proper origin for AJAX requests 
+<IfModule mod_headers.c>
+    # Only allow requests from same origin
+    Header set Access-Control-Allow-Origin "same-origin"
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>
+
+# Each AJAX file should manually include the auth check at the beginning
+# The following code is no longer used but kept for reference
+# <IfModule mod_php.c>
+#     php_value auto_prepend_file "C:/xampp/htdocs/warehouse-system/Selling-System/src/includes/auth.php"
+# </IfModule>
+
+# Prevent direct access to files unless they have a valid token or session
+RewriteCond %{HTTP:X-Requested-With} !^XMLHttpRequest$
+RewriteRule .* - [F,L] 

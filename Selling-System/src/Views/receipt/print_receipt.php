@@ -498,6 +498,21 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
                 margin-bottom: 150px; /* Adjust based on footer height */
             }
         }
+
+        .draft-indicator {
+            background: #ffc107;
+            color: #000;
+            padding: 5px 15px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .draft-indicator i {
+            margin-left: 5px;
+        }
     </style>
 
 </head>
@@ -517,7 +532,12 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
                 <div class="invoice-date">بەروار: <?php echo isset($sale['date']) ? date('Y-m-d', strtotime($sale['date'])) : date('Y-m-d'); ?></div>
             </div>
         </header>
-<center>
+        <?php if (isset($sale['is_draft']) && $sale['is_draft']): ?>
+        <div class="draft-indicator">
+            <i class="fas fa-file-alt"></i> ئەم پسوڵە تەنیا بۆ نیشاندان و عەرز کردنە
+        </div>
+        <?php endif; ?>
+        <center>
         <section class="customer-info">
             <div class="info-group">
                 <div class="info-label">کڕیار</div>
