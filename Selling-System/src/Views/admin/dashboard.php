@@ -41,45 +41,6 @@ require_once '../../process/dashboard_logic.php';
             margin: 0 5px;
             border-radius: 20px;
         }
-        .kpi-value {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 5px;
-            direction: ltr;
-        }
-        .kpi-value .currency {
-            order: -1;
-        }
-        /* New styles for better spacing */
-        .quick-access-item {
-            margin: 0.5rem !important;
-        }
-        .kpi-card {
-            padding: 1rem;
-            margin-bottom: 0.5rem;
-        }
-        .chart-card, .product-card {
-            margin-bottom: 0.5rem;
-        }
-        .product-table-container {
-            margin: 0;
-            padding: 0.5rem;
-        }
-        .main-content {
-            padding: 1rem;
-        }
-        .dashboard-container {
-            padding: 0.5rem;
-        }
-        @media (max-width: 768px) {
-            .main-content {
-                padding: 0.5rem;
-            }
-            .dashboard-container {
-                padding: 0.25rem;
-            }
-        }
     </style>
 </head>
 
@@ -144,22 +105,7 @@ require_once '../../process/dashboard_logic.php';
                     <!-- KPI Cards Section -->
                     <div class="row g-3 mb-3">
                         <!-- KPI Card 1 -->
-                        <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
-                            <div class="kpi-card h-100">
-                                <div class="kpi-icon-wrapper">
-                                    <h3 class="kpi-title">کۆی فرۆشتن بە نەقد</h3>
-                                    <div class="kpi-icon blue">
-                                    <img src="../../assets/icons/sell-cash.svg" alt="">   
-                                    </div>
-                                </div>
-                                <div class="kpi-content">
-                                    <div class="kpi-value"><?php echo number_format($cashSales, 0, '.', ','); ?> <span class="currency">د.ع</span></div>
-                                    <div class="kpi-comparison <?php echo $cashSalesPercentage >= 0 ? 'positive' : 'negative'; ?>">
-                                        <i class="fas fa-arrow-<?php echo $cashSalesPercentage >= 0 ? 'up' : 'down'; ?>"></i> <?php echo abs($cashSalesPercentage); ?>%
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+ 
 
                         <!-- KPI Card 2 -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">

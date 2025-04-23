@@ -67,7 +67,6 @@
 
 /* Quick Access Icons Section */
 .quick-access-section {
-  margin-top: 0px;
   display: flex;
   justify-content: right;
   gap: 20px;

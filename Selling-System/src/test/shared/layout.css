@@ -12,8 +12,7 @@
 
 /* Main content */
 .main-content {
-    margin-right: 0; /* Start with no margin */
-    padding-top: 70px; /* Space for fixed navbar */
+  
     transition: margin-right 0.3s ease;
 }
 
