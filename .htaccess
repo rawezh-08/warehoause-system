@@ -1,6 +1,14 @@
 # Secure directory structure
 Options -Indexes
 
+# Font MIME types configuration
+AddType application/vnd.ms-fontobject .eot
+AddType font/ttf .ttf
+AddType font/otf .otf
+AddType font/woff .woff
+AddType font/woff2 .woff2
+AddType image/svg+xml .svg
+
 # Deny access to sensitive files
 <FilesMatch "^(\.htaccess|\.htpasswd|config\.php|database\.php)$">
     Order Deny,Allow
@@ -12,7 +20,7 @@ AddDefaultCharset UTF-8
 
 # Enable rewriting
 RewriteEngine On
-RewriteBase /warehouse-system/
+RewriteBase /
 
 # Ensure PHP files are processed as PHP
 <FilesMatch "\.php$">
@@ -21,19 +29,19 @@ RewriteBase /warehouse-system/
 
 # Redirect direct access attempts of PHP files in protected directories
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s([^.]+)\.php [NC]
-RewriteCond %{REQUEST_URI} ^/warehouse-system/Selling-System/src/(config|process|models|controllers|Core)/ [NC]
+RewriteCond %{REQUEST_URI} ^/Selling-System/src/(config|process|models|controllers|Core)/ [NC]
 RewriteRule ^ index.php [L,R=301]
 
 # Allow access to assets and necessary public files
-RewriteCond %{REQUEST_URI} !^/warehouse-system/(index\.php|logout\.php)
-RewriteCond %{REQUEST_URI} !^/warehouse-system/Selling-System/src/(assets|css|js|uploads)/
+RewriteCond %{REQUEST_URI} !^/(index\.php|logout\.php)
+RewriteCond %{REQUEST_URI} !^/Selling-System/src/(assets|css|js|uploads)/
 
 # Special rule for views - must have a valid session
-RewriteCond %{REQUEST_URI} ^/warehouse-system/Selling-System/src/views/
+RewriteCond %{REQUEST_URI} ^/Selling-System/src/views/
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteCond %{REQUEST_URI} \.php$
 RewriteRule ^ - [L]
 
 # PHP settings for security
 php_flag session.cookie_httponly on
-php_flag session.use_only_cookies on 
+php_flag session.use_only_cookies on
