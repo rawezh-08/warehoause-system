@@ -81,12 +81,11 @@ try {
     $countQuery = str_replace("w.*, GROUP_CONCAT(CONCAT(p.name, ' (', wi.quantity, ' ', CASE wi.unit_type WHEN 'piece' THEN 'دانە' WHEN 'box' THEN 'کارتۆن' WHEN 'set' THEN 'سێت' END, ')') SEPARATOR ', ') as products_list, SUM(wi.total_price) as total_amount", "COUNT(DISTINCT w.id) as total", $query);
     $stmt = $conn->prepare($countQuery);
     $stmt->execute($params);
-    $totalRecords = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    $totalRecords = $result ? $result['total'] : 0;
     
     // Add pagination
-    $query .= " ORDER BY w.date DESC LIMIT :limit OFFSET :offset";
-    $params[':limit'] = $recordsPerPage;
-    $params[':offset'] = $offset;
+    $query .= " ORDER BY w.date DESC LIMIT " . intval($recordsPerPage) . " OFFSET " . intval($offset);
     
     // Execute the main query
     $stmt = $conn->prepare($query);
@@ -95,8 +94,8 @@ try {
     
     // Calculate pagination info
     $totalPages = ceil($totalRecords / $recordsPerPage);
-    $startRecord = $offset + 1;
-    $endRecord = min($offset + $recordsPerPage, $totalRecords);
+    $startRecord = $totalRecords > 0 ? $offset + 1 : 0;
+    $endRecord = $totalRecords > 0 ? min($offset + $recordsPerPage, $totalRecords) : 0;
     
     // Return the response
     echo json_encode([
