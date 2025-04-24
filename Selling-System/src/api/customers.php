@@ -63,6 +63,7 @@ try {
                 guarantor_phone, 
                 address,
                 debit_on_business,
+                debt_on_customer,
                 notes", "SELECT COUNT(*) as total", $sql);
     
     $countStmt = $conn->prepare($countSql);
@@ -107,4 +108,4 @@ try {
 
 // Return JSON response
 echo json_encode($response, JSON_UNESCAPED_UNICODE);
-?> 
+?>

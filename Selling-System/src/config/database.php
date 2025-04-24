@@ -41,7 +41,7 @@ try {
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $conn->exec("SET NAMES utf8");
 } catch(PDOException $e) {
-    echo "Connection failed: " . $e->getMessage();
-    die();
+    // Instead of outputting directly, we'll throw an exception
+    throw new Exception("Database connection failed: " . $e->getMessage());
 }
 

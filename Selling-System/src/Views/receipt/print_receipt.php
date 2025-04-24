@@ -100,9 +100,51 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
             JOIN products p ON si.product_id = p.id
             LEFT JOIN units u ON p.unit_id = u.id
             WHERE si.sale_id = ?
+            ORDER BY p.id, si.unit_type
         ");
         $stmt->execute([$sale['id']]);
-        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $sale_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Group sale items by product_id to combine different unit types
+        $grouped_products = [];
+        foreach ($sale_items as $item) {
+            $product_id = $item['product_id'];
+            
+            if (!isset($grouped_products[$product_id])) {
+                // Initialize the product with base data
+                $grouped_products[$product_id] = [
+                    'product_id' => $product_id,
+                    'product_name' => $item['product_name'],
+                    'product_code' => $item['product_code'],
+                    'product_image' => $item['product_image'],
+                    'pieces_per_box' => $item['pieces_per_box'],
+                    'boxes_per_set' => $item['boxes_per_set'],
+                    'unit_name' => $item['unit_name'],
+                    'units' => [],
+                    'total_price' => 0,
+                    'returned_quantity' => 0
+                ];
+            }
+            
+            // Add this unit type to the product's units array
+            $actual_quantity = $item['quantity'] - $item['returned_quantity'];
+            if ($actual_quantity > 0) {
+                $grouped_products[$product_id]['units'][] = [
+                    'unit_type' => $item['unit_type'],
+                    'quantity' => $actual_quantity,
+                    'unit_price' => $item['unit_price']
+                ];
+                
+                // Add to total price
+                $grouped_products[$product_id]['total_price'] += $actual_quantity * $item['unit_price'];
+            }
+            
+            // Track returned items
+            $grouped_products[$product_id]['returned_quantity'] += $item['returned_quantity'];
+        }
+        
+        // Convert grouped products to array for easier iteration
+        $products = array_values($grouped_products);
         
         // Set receipt data
         $invoice_number = $sale['invoice_number'];
@@ -110,7 +152,7 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
         $subtotal = 0;
         
         // Calculate subtotal from sale items (considering returns)
-        foreach ($products as $product) {
+        foreach ($sale_items as $product) {
             $actual_quantity = $product['quantity'] - $product['returned_quantity'];
             $subtotal += floatval($product['unit_price'] * $actual_quantity);
         }
@@ -147,13 +189,94 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
 } else {
     echo "<div style='text-align:center; padding:20px; color:red;'>هیچ پسووڵەیەک دیاری نەکراوە</div>";
 }
+
+// Add language translations
+$translations = [
+    'ku' => [
+        'receipt_title' => 'پسووڵەی فرۆشتن',
+        'company_name' => 'کۆگای احمد و ئەشکان',
+        'address' => 'ناونیشان: سلێمانی - کۆگاکانی غرفة تجارة - کۆگای 288',
+        'phone' => 'ژمارە تەلەفۆن: 5678 123 0770',
+        'receipt_number' => 'ژمارەی پسووڵە',
+        'date' => 'بەروار',
+        'customer' => 'کڕیار',
+        'mobile' => 'ژمارەی مۆبایل',
+        'time' => 'کات',
+        'image' => 'وێنە',
+        'code' => 'کۆد',
+        'product_name' => 'ناوی کاڵا',
+        'quantity' => 'بڕ',
+        'pieces' => 'دانە',
+        'total_pieces' => 'کۆی دانەکان',
+        'unit_price' => 'نرخی یەکە',
+        'total' => 'کۆی گشتی',
+        'total_amount' => 'کۆی پارەی کاڵاکان',
+        'discount' => 'داشکاندن',
+        'after_discount' => 'دوای داشکاندن',
+        'paid_amount' => 'پارەی دراو',
+        'remaining' => 'پارەی ماوە',
+        'previous_balance' => 'قەرزی پێشوو',
+        'grand_total' => 'کۆی گشتی',
+        'customer_signature' => 'واژۆی کڕیار',
+        'seller_signature' => 'واژۆی فرۆشیار',
+        'thank_you' => 'سوپاس بۆ کڕینتان',
+        'print' => 'چاپکردن',
+        'box' => 'کارتۆن',
+        'set' => 'سێت',
+        'returned' => 'گەڕێنراوەتەوە',
+        'draft_notice' => 'ئەم پسوڵە تەنیا بۆ نیشاندان و عەرز کردنە',
+        'and' => 'و'
+    ],
+    'ar' => [
+        'receipt_title' => 'فاتورة المبيعات',
+        'company_name' => 'مخزن أحمد و أشكان',
+        'address' => 'العنوان: السليمانية - مخازن الغرفة التجارية - مخزن 288',
+        'phone' => 'رقم الهاتف: 5678 123 0770',
+        'receipt_number' => 'رقم الفاتورة',
+        'date' => 'التاريخ',
+        'customer' => 'الزبون',
+        'mobile' => 'رقم الموبايل',
+        'time' => 'الوقت',
+        'image' => 'الصورة',
+        'code' => 'الرمز',
+        'product_name' => 'اسم المنتج',
+        'quantity' => 'الكمية',
+        'pieces' => 'قطعة',
+        'total_pieces' => 'مجموع القطع',
+        'unit_price' => 'سعر الوحدة',
+        'total' => 'المجموع',
+        'total_amount' => 'المبلغ الإجمالي',
+        'discount' => 'الخصم',
+        'after_discount' => 'بعد الخصم',
+        'paid_amount' => 'المبلغ المدفوع',
+        'remaining' => 'المبلغ المتبقي',
+        'previous_balance' => 'الرصيد السابق',
+        'grand_total' => 'المجموع الكلي',
+        'customer_signature' => 'توقيع الزبون',
+        'seller_signature' => 'توقيع البائع',
+        'thank_you' => 'شكراً لتسوقكم',
+        'print' => 'طباعة',
+        'box' => 'كارتون',
+        'set' => 'طقم',
+        'returned' => 'مرتجع',
+        'draft_notice' => 'هذه الفاتورة للعرض فقط',
+        'and' => 'و'
+    ]
+];
+
+// Get current language (default to Kurdish)
+$lang = isset($_GET['lang']) ? $_GET['lang'] : 'ku';
+$t = $translations[$lang];
+
+// Update HTML direction based on language
+$dir = $lang === 'ar' ? 'rtl' : 'rtl';
 ?>
 <!DOCTYPE html>
-<html lang="ku" dir="rtl">
+<html lang="<?php echo $lang; ?>" dir="<?php echo $dir; ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پسووڵەی فرۆشتن - <?php echo $invoice_number; ?></title>
+    <title><?php echo $t['receipt_title']; ?> - <?php echo $invoice_number; ?></title>
     <style>
         @font-face {
             font-family: 'Rabar';
@@ -513,6 +636,32 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
         .draft-indicator i {
             margin-left: 5px;
         }
+
+        .language-button {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            font-family: 'Rabar', sans-serif;
+        }
+
+        .language-button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        @media print {
+            .language-button {
+                display: none;
+            }
+        }
     </style>
 
 </head>
@@ -520,37 +669,37 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
     <div class="receipt-container">
         <header class="receipt-header">
             <div class="logo-section">
-                <img src="../../assets/images/company-logo.svg" alt="کۆگای ئەشکان" class="company-logo">
+          
                 <div class="company-info">
-                    <h1>کۆگای احمد و ئەشکان</h1>
-                    <p>ناونیشان: سلێمانی - کۆگاکانی غرفة تجارة - کۆگای 288</p>
-                    <p>ژمارە تەلەفۆن: 5678 123 0770</p>
+                    <h1><?php echo $t['company_name']; ?></h1>
+                    <p><?php echo $t['address']; ?></p>
+                    <p><?php echo $t['phone']; ?></p>
                 </div>
             </div>
             <div class="invoice-details">
-                <div class="invoice-number">ژمارەی پسووڵە: <?php echo $invoice_number; ?></div>
-                <div class="invoice-date">بەروار: <?php echo isset($sale['date']) ? date('Y-m-d', strtotime($sale['date'])) : date('Y-m-d'); ?></div>
+                <div class="invoice-number"><?php echo $t['receipt_number']; ?>: <?php echo $invoice_number; ?></div>
+                <div class="invoice-date"><?php echo $t['date']; ?>: <?php echo isset($sale['date']) ? date('Y-m-d', strtotime($sale['date'])) : date('Y-m-d'); ?></div>
             </div>
         </header>
         <?php if (isset($sale['is_draft']) && $sale['is_draft']): ?>
         <div class="draft-indicator">
-            <i class="fas fa-file-alt"></i> ئەم پسوڵە تەنیا بۆ نیشاندان و عەرز کردنە
+            <i class="fas fa-file-alt"></i> <?php echo $t['draft_notice']; ?>
         </div>
         <?php endif; ?>
         <center>
         <section class="customer-info">
             <div class="info-group">
-                <div class="info-label">کڕیار</div>
+                <div class="info-label"><?php echo $t['customer']; ?></div>
                 <div class="info-value"><?php echo isset($customer_name) ? $customer_name : 'هیچ'; ?></div>
             </div>
             <?php if (isset($sale['customer_phone']) && !empty($sale['customer_phone'])): ?>
             <div class="info-group">
-                <div class="info-label">ژمارەی مۆبایل</div>
+                <div class="info-label"><?php echo $t['mobile']; ?></div>
                 <div class="info-value"><?php echo $sale['customer_phone']; ?></div>
             </div>
             <?php endif; ?>
             <div class="info-group">
-                <div class="info-label">کات</div>
+                <div class="info-label"><?php echo $t['time']; ?></div>
                 <div class="info-value"><?php echo date('H:i', strtotime($sale['date'] ?? 'now')); ?></div>
             </div>
         </section>
@@ -561,14 +710,13 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>وێنە</th>
-                        <th>کۆد</th>
-                        <th>ناوی کاڵا</th>
-                        <th>بڕ</th>
-                        <th>دانە</th>
-                        <th>کۆی دانەکان</th>
-                        <th>نرخی یەکە</th>
-                        <th>کۆی گشتی</th>
+                        <th><?php echo $t['image']; ?></th>
+                        <th><?php echo $t['code']; ?></th>
+                        <th><?php echo $t['product_name']; ?></th>
+                        <th><?php echo $t['quantity']; ?></th>
+                        <th><?php echo $t['total_pieces']; ?></th>
+                        <th><?php echo $t['unit_price']; ?></th>
+                        <th><?php echo $t['total']; ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -576,96 +724,94 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
                     $count = 0;
                     $total_items = 0;
                     foreach ($products as $product): 
-                        $count++;
-                        // Calculate actual quantity after returns
-                        $actual_quantity = $product['quantity'] - $product['returned_quantity'];
-                        $total_items += $actual_quantity;
-
-                        // Skip if all items were returned
-                        if ($actual_quantity <= 0) continue;
-
-                        // Determine the unit type based on the sale_items unit_type
-                        $unit_type = isset($product['unit_type']) ? $product['unit_type'] : 'piece';
-
-                        // Calculate pieces per box and total pieces
-                        $pieces_per_box = isset($product['pieces_per_box']) ? $product['pieces_per_box'] : 1;
-                        $total_pieces = $actual_quantity; // Default for single pieces
+                        // Skip products with no valid units
+                        if (empty($product['units'])) continue;
                         
-                        if ($unit_type == 'box' && $pieces_per_box > 0) {
-                            $total_pieces = $actual_quantity * $pieces_per_box;
-                        } elseif ($unit_type == 'set' && isset($product['boxes_per_set']) && $product['boxes_per_set'] > 0) {
-                            $total_pieces = $actual_quantity * $product['boxes_per_set'] * $pieces_per_box;
+                        $count++;
+                        
+                        // Calculate total pieces and prepare display text
+                        $total_pieces = 0;
+                        $quantity_text = '';
+                        $unit_counts = [
+                            'set' => 0,
+                            'box' => 0,
+                            'piece' => 0
+                        ];
+                        
+                        // Count quantities by unit type
+                        foreach ($product['units'] as $unit) {
+                            $unit_counts[$unit['unit_type']] += $unit['quantity'];
                         }
-
-                        // Calculate total price after returns
-                        $total_price = $actual_quantity * $product['unit_price'];
+                        
+                        // Build quantity text with all unit types
+                        $parts = [];
+                        if ($unit_counts['set'] > 0) {
+                            $parts[] = $unit_counts['set'] . ' ' . $t['set'];
+                            $total_pieces += $unit_counts['set'] * $product['boxes_per_set'] * $product['pieces_per_box'];
+                        }
+                        if ($unit_counts['box'] > 0) {
+                            $parts[] = $unit_counts['box'] . ' ' . $t['box'];
+                            $total_pieces += $unit_counts['box'] * $product['pieces_per_box'];
+                        }
+                        if ($unit_counts['piece'] > 0) {
+                            $parts[] = $unit_counts['piece'] . ' ' . $t['pieces'];
+                            $total_pieces += $unit_counts['piece'];
+                        }
+                        
+                        // Join parts with "and"
+                        if (count($parts) > 1) {
+                            $last_part = array_pop($parts);
+                            $quantity_text = implode('، ', $parts) . ' ' . $t['and'] . ' ' . $last_part;
+                        } else {
+                            $quantity_text = $parts[0];
+                        }
+                        
+                        $image_name = !empty($product['product_image']) ? $product['product_image'] : 'pro-1.png';
+                        $image_url = get_correct_image_path($image_name);
                     ?>
                     <tr>
                         <td><?php echo $count; ?></td>
                         <td class="product-image">
-                            <?php 
-                            $image_name = !empty($product['product_image']) ? $product['product_image'] : 'pro-1.png';
-                            $image_url = get_correct_image_path($image_name);
-                            $product_name = isset($product['product_name']) ? $product['product_name'] : 'Product';
-                            ?>
                             <img src="<?php echo htmlspecialchars($image_url); ?>" 
-                                 alt="<?php echo htmlspecialchars($product_name); ?>" 
+                                 alt="<?php echo htmlspecialchars($product['product_name']); ?>" 
                                  class="product-thumb"
                                  onerror="this.onerror=null; this.src='<?php echo htmlspecialchars(get_correct_image_path('pro-1.png')); ?>';">
                         </td>
-                        <td><?php echo isset($product['product_code']) ? $product['product_code'] : $product['code']; ?></td>
+                        <td><?php echo $product['product_code']; ?></td>
                         <td class="product-name-cell">
                             <div class="product-details">
                                 <span class="product-name">
-                                    <?php echo isset($product['product_name']) ? $product['product_name'] : $product['name']; ?>
+                                    <?php echo $product['product_name']; ?>
                                 </span>
                                 <?php if ($product['returned_quantity'] > 0): ?>
                                 <br>
                                 <span class="returned-info" style="color: red; font-size: 0.9em;">
-                                    (<?php echo $product['returned_quantity']; ?> گەڕێنراوەتەوە)
+                                    (<?php echo $product['returned_quantity']; ?> <?php echo $t['returned']; ?>)
                                 </span>
                                 <?php endif; ?>
                             </div>
                         </td>
                         <td class="quantity-cell">
-                            <?php 
-                            if ($unit_type == 'piece') {
-                                echo $actual_quantity . ' دانە';
-                            } else {
-                                echo $actual_quantity . ' ';
-                                switch($unit_type) {
-                                    case 'box':
-                                        echo '<span class="unit-type">کارتۆن</span>';
-                                        break;
-                                    case 'set':
-                                        echo '<span class="unit-type">سێت</span>';
-                                        break;
-                                }
-                            }
-                            ?>
-                        </td>
-                        <td class="pieces-per-box-cell">
-                            <?php 
-                            if ($unit_type == 'piece') {
-                                echo '-';
-                            } elseif ($unit_type == 'box') {
-                                echo $pieces_per_box . ' دانە';
-                            } else { // set
-                                echo $product['boxes_per_set'] . ' کارتۆن';
-                            }
-                            ?>
+                            <?php echo $quantity_text; ?>
                         </td>
                         <td class="total-pieces-cell">
+                            <?php echo $total_pieces . ' ' . $t['pieces']; ?>
+                        </td>
+                        <td>
                             <?php 
-                            if ($unit_type == 'piece') {
-                                echo $actual_quantity . ' دانە';
+                            // Show unit prices if multiple units with different prices
+                            if (count($product['units']) > 1) {
+                                $price_texts = [];
+                                foreach ($product['units'] as $unit) {
+                                    $price_texts[] = number_format($unit['unit_price'], 0) . ' د.ع';
+                                }
+                                echo implode(' / ', $price_texts);
                             } else {
-                                echo $total_pieces . ' دانە';
+                                echo number_format($product['units'][0]['unit_price'], 0) . ' د.ع';
                             }
                             ?>
                         </td>
-                        <td><?php echo number_format(isset($product['unit_price']) ? $product['unit_price'] : $product['price'], 0) . ' د.ع'; ?></td>
-                        <td><?php echo number_format($total_price, 0) . ' د.ع'; ?></td>
+                        <td><?php echo number_format($product['total_price'], 0) . ' د.ع'; ?></td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -675,37 +821,37 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
         <section id="summary-section" class="summary-section">
             <table class="summary-table">
                 <tr>
-                    <td class="summary-label">کۆی پارەی کاڵاکان:</td>
+                    <td class="summary-label"><?php echo $t['total_amount']; ?>:</td>
                     <td class="summary-value"><?php echo number_format($total_amount, 0) . ' د.ع'; ?></td>
                 </tr>
                 <?php if ($discount > 0): ?>
                 <tr>
-                    <td class="summary-label">داشکاندن:</td>
+                    <td class="summary-label"><?php echo $t['discount']; ?>:</td>
                     <td class="summary-value"><?php echo number_format($discount , 0)  ?> د.ع</td>
                 </tr>
                 <tr>
-                    <td class="summary-label">دوای داشکاندن:</td>
+                    <td class="summary-label"><?php echo $t['after_discount']; ?>:</td>
                     <td class="summary-value"><?php echo number_format($after_discount, 0) . ' د.ع'; ?></td>
                 </tr>
                 <?php endif; ?>
                 <tr>
-                    <td class="summary-label">پارەی دراو:</td>
+                    <td class="summary-label"><?php echo $t['paid_amount']; ?>:</td>
                     <td class="summary-value"><?php echo number_format($paid_amount, 0) . ' د.ع'; ?></td>
                 </tr>
                 <?php if ($remaining_balance > 0): ?>
                 <tr>
-                    <td class="summary-label">پارەی ماوە:</td>
+                    <td class="summary-label"><?php echo $t['remaining']; ?>:</td>
                     <td class="summary-value"><?php echo number_format($remaining_balance, 0) . ' د.ع'; ?></td>
                 </tr>
                 <?php endif; ?>
                 <?php if ($previous_balance > 0): ?>
                 <tr>
-                    <td class="summary-label">قەرزی پێشوو:</td>
+                    <td class="summary-label"><?php echo $t['previous_balance']; ?>:</td>
                     <td class="summary-value"><?php echo number_format($previous_balance, 0) . ' د.ع'; ?></td>
                 </tr>
                 <?php endif; ?>
                 <tr>
-                    <td class="summary-label">کۆی گشتی:</td>
+                    <td class="summary-label"><?php echo $t['grand_total']; ?>:</td>
                     <td class="summary-value"><?php echo number_format($grand_total, 0) . ' د.ع'; ?></td>
                 </tr>
             </table>
@@ -715,54 +861,64 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
             <div class="signatures">
                 <div class="signature-box">
                     <div class="signature-line"></div>
-                    <div class="signature-label">واژۆی کڕیار</div>
+                    <div class="signature-label"><?php echo $t['customer_signature']; ?></div>
                 </div>
                 <div class="signature-box">
                     <div class="signature-line"></div>
-                    <div class="signature-label">واژۆی فرۆشیار</div>
+                    <div class="signature-label"><?php echo $t['seller_signature']; ?></div>
                 </div>
             </div>
             
             <div class="thank-you">
-                سوپاس بۆ کڕینتان
+                <?php echo $t['thank_you']; ?>
             </div>
             
          
         </footer>
     </div>
 
-    <button class="print-button" onclick="window.print()">چاپکردن</button>
-        <script>
-        // Auto open print dialog when page loads
-        window.onload = function() {
-            setTimeout(function() {
-                window.print();
-                checkSummaryPosition();
-                // Recalculate on window resize
-                window.addEventListener('resize', checkSummaryPosition);
-            }, 1000); // Short delay to ensure everything is loaded
-        };
+    <button class="print-button" onclick="window.print()"><?php echo $t['print']; ?></button>
+    <button class="language-button" onclick="toggleLanguage()"><?php echo $lang === 'ku' ? 'العربية' : 'کوردی'; ?></button>
+
+    <script>
+    function toggleLanguage() {
+        const currentLang = '<?php echo $lang; ?>';
+        const newLang = currentLang === 'ku' ? 'ar' : 'ku';
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('lang', newLang);
+        window.location.href = currentUrl.toString();
+    }
+
+    // Auto open print dialog when page loads
+    window.onload = function() {
+        setTimeout(function() {
+            window.print();
+            checkSummaryPosition();
+            // Recalculate on window resize
+            window.addEventListener('resize', checkSummaryPosition);
+        }, 1000); // Short delay to ensure everything is loaded
+    };
+    
+    function checkSummaryPosition() {
+        const summarySection = document.getElementById('summary-section');
+        const itemsSection = document.querySelector('.items-section');
         
-        function checkSummaryPosition() {
-            const summarySection = document.getElementById('summary-section');
-            const itemsSection = document.querySelector('.items-section');
-            
-            if (!summarySection || !itemsSection) return;
-            
-            // Get elements positions
-            const itemsRect = itemsSection.getBoundingClientRect();
-            const summaryRect = summarySection.getBoundingClientRect();
-            
-            // If items table takes up most of the page, force summary to next page
-            const pageHeight = window.innerHeight;
-            const itemsHeight = itemsRect.height;
-            
-            if (itemsHeight > pageHeight * 0.7) { // If items take more than 70% of the page
-                summarySection.classList.add('page-break-summary');
-            } else {
-                summarySection.classList.remove('page-break-summary');
-            }
+        if (!summarySection || !itemsSection) return;
+        
+        // Get elements positions
+        const itemsRect = itemsSection.getBoundingClientRect();
+        const summaryRect = summarySection.getBoundingClientRect();
+        
+        // If items table takes up most of the page, force summary to next page
+        const pageHeight = window.innerHeight;
+        const itemsHeight = itemsRect.height;
+        
+        if (itemsHeight > pageHeight * 0.7) { // If items take more than 70% of the page
+            summarySection.classList.add('page-break-summary');
+        } else {
+            summarySection.classList.remove('page-break-summary');
         }
+    }
     </script>
 </body>
 </html> 

@@ -42,7 +42,7 @@ require_once '../../config/database.php';
             </div>
   
 
-    <div class="container-fluid px-0">
+    <div class="container-fluid px-2">
         <!-- Tabs Navigation -->
         <ul class="nav nav-tabs" id="receiptTabs" role="tablist">
             <li class="nav-item" role="presentation">
@@ -131,7 +131,7 @@ require_once '../../config/database.php';
                                         </select>
                                     </td>
                                     <td><input type="number" class="form-control unit-price" step="1"></td>
-                                    <td><input type="number" class="form-control quantity" min="1" step="1" onchange="checkProductStock(this)"></td>
+                                    <td><input type="number" class="form-control quantity" min="1" step="1" data-check-stock="true"></td>
                                     <td><input type="number" class="form-control total" step="1" readonly></td>
                                     <td>
                                         <button type="button" class="btn btn-danger btn-sm remove-row">
@@ -510,7 +510,7 @@ require_once '../../config/database.php';
                                 </select>
                             </td>
                             <td><input type="number" class="form-control unit-price" step="1"></td>
-                            <td><input type="number" class="form-control quantity" min="1" step="1" onchange="checkProductStock(this)"></td>
+                            <td><input type="number" class="form-control quantity" min="1" step="1" data-check-stock="true"></td>
                             <td><input type="number" class="form-control total" step="1" readonly></td>
                             <td>
                                 <button type="button" class="btn btn-danger btn-sm remove-row">

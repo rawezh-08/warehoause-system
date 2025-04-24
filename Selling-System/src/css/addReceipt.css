@@ -1066,38 +1066,25 @@ input[type="text"].form-control {
 }
 
 .select2-container--bootstrap-5 .select2-dropdown {
-    min-width: 400px !important;
+    min-width: 300px !important;
     max-height: 500px !important;
     overflow-y: auto !important;
     box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
     border: 1px solid #ced4da !important;
     border-radius: 8px !important;
-}
-
-.select2-container--bootstrap-5 .select2-results__options {
-    max-height: 500px !important;
-    overflow-y: auto !important;
-}
-
-.select2-container--bootstrap-5 .select2-results__option {
-    padding: 12px 15px !important;
-    font-size: 15px !important;
-    line-height: 1.5 !important;
-    border-bottom: 1px solid #eee !important;
-}
-
-.select2-container--bootstrap-5 .select2-results__option:last-child {
-    border-bottom: none !important;
+    margin-top: 4px !important;
 }
 
 .select2-container--bootstrap-5 {
-    width: 100% !important;
+    min-width: 300px !important;
+    width: auto !important;
 }
 
 .select2-container--bootstrap-5 .select2-selection {
     height: auto !important;
     min-height: 42px !important;
     padding: 8px 12px !important;
+    width: 100% !important;
 }
 
 /* Make dropdown wider on mobile */
@@ -1107,12 +1094,13 @@ input[type="text"].form-control {
         max-width: 95vw !important;
         margin: 0 auto !important;
     }
+    
+    .select2-container--bootstrap-5 {
+        min-width: 300px !important;
+    }
 }
 
-/* Ensure dropdown is above other elements */
-.select2-container--bootstrap-5.select2-container--open .select2-dropdown {
-    z-index: 9999 !important;
-}
+
 
 /* Style the search box */
 .select2-search--dropdown .select2-search__field {

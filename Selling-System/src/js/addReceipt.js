@@ -2270,4 +2270,37 @@ $(document).ready(function() {
             relatedTarget: $('.receipt-tab.active').not(this)[0]
         });
     });
+
+    // Function to check product stock
+    function checkProductStock(input) {
+        const row = $(input).closest('tr');
+        const productSelect = row.find('.product-select');
+        const quantity = parseInt($(input).val()) || 0;
+        const productId = productSelect.val();
+        const unitType = row.find('.unit-type').val();
+
+        if (!productId) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'ئاگادارکردنەوە',
+                text: 'تکایە سەرەتا کاڵا هەڵبژێرە'
+            });
+            $(input).val('');
+            return;
+        }
+
+        // Get the selected product's data
+        const selectedProduct = productSelect.select2('data')[0];
+        const availableQuantity = parseInt(selectedProduct.available_quantity) || 0;
+
+        if (quantity > availableQuantity) {
+            Swal.fire({
+                icon: 'error',
+                title: 'هەڵە',
+                text: `بڕی بەردەست ${availableQuantity} ${unitType === 'piece' ? 'دانە' : (unitType === 'box' ? 'کارتۆن' : 'سێت')} یە`
+            });
+            $(input).val(availableQuantity);
+            calculateRowTotal(row);
+        }
+    }
 });

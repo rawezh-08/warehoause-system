@@ -82,7 +82,7 @@ try {
     $stmt = $conn->prepare($countQuery);
     $stmt->execute($params);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    $totalRecords = $result ? $result['total'] : 0;
+    $totalRecords = isset($result['total']) ? intval($result['total']) : 0;
     
     // Add pagination
     $query .= " ORDER BY w.date DESC LIMIT " . intval($recordsPerPage) . " OFFSET " . intval($offset);
@@ -93,7 +93,7 @@ try {
     $wastings = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Calculate pagination info
-    $totalPages = ceil($totalRecords / $recordsPerPage);
+    $totalPages = $totalRecords > 0 ? ceil($totalRecords / $recordsPerPage) : 0;
     $startRecord = $totalRecords > 0 ? $offset + 1 : 0;
     $endRecord = $totalRecords > 0 ? min($offset + $recordsPerPage, $totalRecords) : 0;
     
