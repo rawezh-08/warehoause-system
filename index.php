@@ -1,6 +1,30 @@
 <?php
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Log index.php execution
+$log_file = __DIR__ . '/index_debug.log';
+file_put_contents($log_file, "Index.php accessed at: " . date('Y-m-d H:i:s') . "\n", FILE_APPEND);
+file_put_contents($log_file, "Server: " . $_SERVER['SERVER_NAME'] . "\n", FILE_APPEND);
+file_put_contents($log_file, "Script: " . $_SERVER['SCRIPT_NAME'] . "\n", FILE_APPEND);
+
 // Include the login handler
-require_once 'Selling-System/src/process/login_handler.php';
+try {
+    $login_handler_path = __DIR__ . '/Selling-System/src/process/login_handler.php';
+    file_put_contents($log_file, "Attempting to include: " . $login_handler_path . "\n", FILE_APPEND);
+    
+    if (file_exists($login_handler_path)) {
+        require_once $login_handler_path;
+        file_put_contents($log_file, "Login handler included successfully\n", FILE_APPEND);
+    } else {
+        file_put_contents($log_file, "Login handler file not found\n", FILE_APPEND);
+        echo "Error: Login handler file not found. Please contact the administrator.";
+    }
+} catch (Exception $e) {
+    file_put_contents($log_file, "Error including login handler: " . $e->getMessage() . "\n", FILE_APPEND);
+    echo "Error: " . $e->getMessage();
+}
 ?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
@@ -238,5 +262,41 @@ require_once 'Selling-System/src/process/login_handler.php';
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // Add client-side validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        let hasError = false;
+        
+        if (username === '') {
+            document.getElementById('username').style.borderColor = 'var(--danger-color)';
+            hasError = true;
+        } else {
+            document.getElementById('username').style.borderColor = '';
+        }
+        
+        if (password === '') {
+            document.getElementById('password').style.borderColor = 'var(--danger-color)';
+            hasError = true;
+        } else {
+            document.getElementById('password').style.borderColor = '';
+        }
+        
+        if (hasError) {
+            e.preventDefault();
+            
+            // Create alert if it doesn't exist
+            if (!document.querySelector('.alert-danger')) {
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-danger';
+                alert.textContent = 'تکایە هەموو خانەکان پڕ بکەرەوە';
+                
+                const loginHeader = document.querySelector('.login-header');
+                loginHeader.insertAdjacentElement('afterend', alert);
+            }
+        }
+    });
+    </script>
 </body>
 </html> 
