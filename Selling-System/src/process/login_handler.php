@@ -8,7 +8,7 @@ session_start();
 // Check if user is already logged in
 if (isset($_SESSION['admin_id'])) {
     // Correctly redirect to dashboard using relative path
-    header("Location: Selling-System/src/views/admin/dashboard.php");
+    header("Location: /Selling-System/src/views/admin/dashboard.php");
     exit();
 }
 
@@ -16,6 +16,7 @@ if (isset($_SESSION['admin_id'])) {
 $log_file = dirname(__FILE__) . '/login_debug.log';
 file_put_contents($log_file, "Login attempt: " . date('Y-m-d H:i:s') . "\n", FILE_APPEND);
 file_put_contents($log_file, "Script path: " . $_SERVER['SCRIPT_NAME'] . "\n", FILE_APPEND);
+file_put_contents($log_file, "Document root: " . $_SERVER['DOCUMENT_ROOT'] . "\n", FILE_APPEND);
 
 // Database connection - with try/catch for better error handling
 try {
@@ -84,9 +85,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     // Log successful login
                     file_put_contents($log_file, "Login successful for user: $username\n", FILE_APPEND);
                     
+                    // Check if dashboard file exists
+                    $dashboard_path = $_SERVER['DOCUMENT_ROOT'] . '/Selling-System/src/views/admin/dashboard.php';
+                    if (file_exists($dashboard_path)) {
+                        file_put_contents($log_file, "Dashboard file exists at: $dashboard_path\n", FILE_APPEND);
+                    } else {
+                        file_put_contents($log_file, "Dashboard file NOT found at: $dashboard_path\n", FILE_APPEND);
+                        // Try alternative path
+                        $alt_dashboard_path = dirname(dirname(dirname(__FILE__))) . '/views/admin/dashboard.php';
+                        if (file_exists($alt_dashboard_path)) {
+                            file_put_contents($log_file, "Dashboard file found at alternative path: $alt_dashboard_path\n", FILE_APPEND);
+                            header("Location: /Selling-System/src/views/admin/dashboard.php");
+                        } else {
+                            file_put_contents($log_file, "Dashboard file NOT found at alternative path either: $alt_dashboard_path\n", FILE_APPEND);
+                            throw new Exception("Dashboard file not found. Please check file paths.");
+                        }
+                    }
+                    
                     // Adjust redirects for Hostinger
-                    $baseUrl = '/'; // Base URL for the application
-                    header("Location: {$baseUrl}Selling-System/src/views/admin/dashboard.php");
+                    header("Location: /Selling-System/src/views/admin/dashboard.php");
                     exit();
                 } else {
                     $error = "ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە";
