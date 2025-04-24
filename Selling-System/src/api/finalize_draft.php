@@ -27,84 +27,92 @@ if ($receipt_type !== 'selling') {
 }
 
 try {
-    // Start a transaction
+    // Create database connection
+    $database = new Database();
+    $conn = $database->getConnection();
+    
+    // Begin transaction
     $conn->beginTransaction();
     
-    // Check if the receipt exists and is a draft
-    $check_stmt = $conn->prepare("SELECT * FROM sales WHERE id = ? AND is_draft = 1");
+    // First check if the draft exists
+    $check_stmt = $conn->prepare("SELECT EXISTS(SELECT 1 FROM sales WHERE id = ? AND is_draft = 1) as draft_exists");
     $check_stmt->execute([$receipt_id]);
-    $draft_receipt = $check_stmt->fetch(PDO::FETCH_ASSOC);
+    $draft_exists = $check_stmt->fetchColumn();
     
-    if (!$draft_receipt) {
+    if (!$draft_exists) {
         echo json_encode([
             'success' => false,
             'message' => 'ڕەشنووسی پسوڵە نەدۆزرایەوە یان پێشتر پەسەند کراوە'
         ]);
-        $conn->rollBack();
         exit;
     }
     
-    // Get sale items
-    $items_stmt = $conn->prepare("SELECT * FROM sale_items WHERE sale_id = ?");
-    $items_stmt->execute([$receipt_id]);
-    $items = $items_stmt->fetchAll(PDO::FETCH_ASSOC);
+    // Get receipt information
+    $created_by = isset($_POST['created_by']) ? intval($_POST['created_by']) : 1;
     
-    if (empty($items)) {
+    $info_stmt = $conn->prepare("
+        SELECT s.customer_id, s.payment_type, 
+            (COALESCE(SUM(si.total_price), 0) + s.shipping_cost + s.other_costs - s.discount) as total_amount
+        FROM sales s
+        LEFT JOIN sale_items si ON s.id = si.sale_id
+        WHERE s.id = ?
+        GROUP BY s.id
+    ");
+    $info_stmt->execute([$receipt_id]);
+    $receipt_info = $info_stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$receipt_info) {
         echo json_encode([
             'success' => false,
-            'message' => 'هیچ کاڵایەک لەناو ڕەشنووسەکە نییە'
+            'message' => 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکانی پسوڵە'
         ]);
         $conn->rollBack();
         exit;
     }
     
-    // Check inventory for each item
-    foreach ($items as $item) {
-        // Get product stock
-        $stock_stmt = $conn->prepare("SELECT current_quantity FROM products WHERE id = ?");
-        $stock_stmt->execute([$item['product_id']]);
-        $product = $stock_stmt->fetch(PDO::FETCH_ASSOC);
+    // Update the draft to finalize it
+    $update_stmt = $conn->prepare("
+        UPDATE sales 
+        SET is_draft = 0, 
+            created_by = ?, 
+            updated_at = NOW()
+        WHERE id = ?
+    ");
+    $update_stmt->execute([$created_by, $receipt_id]);
+    
+    // If payment type is credit, update customer debt
+    if ($receipt_info['payment_type'] === 'credit') {
+        // Insert debt transaction record
+        $debt_stmt = $conn->prepare("
+            INSERT INTO debt_transactions (
+                customer_id, 
+                amount, 
+                transaction_type, 
+                reference_id, 
+                created_by, 
+                created_at
+            ) VALUES (?, ?, 'sale', ?, ?, NOW())
+        ");
+        $debt_stmt->execute([
+            $receipt_info['customer_id'],
+            $receipt_info['total_amount'],
+            $receipt_id,
+            $created_by
+        ]);
         
-        // Check if we have enough stock
-        if ($product['current_quantity'] < $item['pieces_count']) {
-            echo json_encode([
-                'success' => false,
-                'message' => "بڕی پێویست لە کۆگا بەردەست نییە بۆ کاڵای بە ناسنامەی " . $item['product_id']
-            ]);
-            $conn->rollBack();
-            exit;
-        }
-        
-        // Update product stock
-        $update_stock_stmt = $conn->prepare("UPDATE products SET current_quantity = current_quantity - ? WHERE id = ?");
-        $update_stock_stmt->execute([$item['pieces_count'], $item['product_id']]);
-        
-        // Record in inventory table
-        $inventory_stmt = $conn->prepare("INSERT INTO inventory (product_id, quantity, reference_type, reference_id) VALUES (?, ?, 'sale', ?)");
-        $inventory_stmt->execute([$item['product_id'], -$item['pieces_count'], $item['id']]);
+        // Update customer debit_on_business (not debt_on_business)
+        $customer_stmt = $conn->prepare("
+            UPDATE customers 
+            SET debit_on_business = debit_on_business + ?
+            WHERE id = ?
+        ");
+        $customer_stmt->execute([
+            $receipt_info['total_amount'],
+            $receipt_info['customer_id']
+        ]);
     }
     
-    // Mark the receipt as no longer a draft
-    $update_stmt = $conn->prepare("UPDATE sales SET is_draft = 0 WHERE id = ?");
-    $update_stmt->execute([$receipt_id]);
-    
-    // If payment type is credit and there's a remaining amount, create debt transaction
-    if ($draft_receipt['payment_type'] === 'credit' && $draft_receipt['remaining_amount'] > 0) {
-        // Create debt transaction using stored procedure
-        $debt_stmt = $conn->prepare("CALL add_debt_transaction(?, ?, 'sale', ?, ?, ?)");
-        $debt_stmt->bindParam(1, $draft_receipt['customer_id'], PDO::PARAM_INT);
-        $debt_stmt->bindParam(2, $draft_receipt['remaining_amount'], PDO::PARAM_STR);
-        $debt_stmt->bindParam(3, $receipt_id, PDO::PARAM_INT);
-        $debt_stmt->bindParam(4, $draft_receipt['notes'], PDO::PARAM_STR);
-        $created_by = $draft_receipt['created_by'] ?? 1;
-        $debt_stmt->bindParam(5, $created_by, PDO::PARAM_INT);
-        $debt_stmt->execute();
-        
-        // Close the cursor
-        $debt_stmt->closeCursor();
-    }
-    
-    // Commit the transaction
+    // Commit transaction
     $conn->commit();
     
     echo json_encode([
@@ -114,7 +122,7 @@ try {
     
 } catch (PDOException $e) {
     // Rollback transaction on error
-    if ($conn->inTransaction()) {
+    if (isset($conn) && $conn->inTransaction()) {
         $conn->rollBack();
     }
     
@@ -122,7 +130,7 @@ try {
     
     echo json_encode([
         'success' => false,
-        'message' => 'هەڵەیەک ڕوویدا لە کاتی پەسەندکردنی ڕەشنووس',
+        'message' => 'هەڵەیەک ڕوویدا لە کاتی پەسەندکردنی ڕەشنووس: ' . $e->getMessage(),
         'debug' => [
             'error_code' => $e->getCode(),
             'error_message' => $e->getMessage()

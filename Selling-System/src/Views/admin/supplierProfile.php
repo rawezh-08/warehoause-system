@@ -597,6 +597,45 @@ foreach ($purchases as $purchase) {
                                                                 <a href="viewPurchase.php?id=<?php echo $purchase['id']; ?>" class="btn btn-sm btn-outline-primary rounded-circle" title="بینین">
                                                                     <i class="fas fa-eye"></i>
                                                                 </a>
+                                                                <?php
+                                                                // Check if purchase can be deleted (no returns or payments)
+                                                                $canDelete = true;
+                                                                
+                                                                // Check for debt transactions (payments)
+                                                                $paymentQuery = "SELECT COUNT(*) as count FROM supplier_debt_transactions 
+                                                                                WHERE reference_id = :purchase_id 
+                                                                                AND transaction_type = 'payment'";
+                                                                $paymentStmt = $conn->prepare($paymentQuery);
+                                                                $paymentStmt->bindParam(':purchase_id', $purchase['id']);
+                                                                $paymentStmt->execute();
+                                                                $paymentCount = $paymentStmt->fetch(PDO::FETCH_ASSOC)['count'];
+                                                                
+                                                                if ($paymentCount > 0) {
+                                                                    $canDelete = false;
+                                                                }
+                                                                
+                                                                // Check for product returns
+                                                                $returnQuery = "SELECT COUNT(*) as count FROM product_returns 
+                                                                               WHERE receipt_id = :purchase_id AND receipt_type = 'buying'";
+                                                                $returnStmt = $conn->prepare($returnQuery);
+                                                                $returnStmt->bindParam(':purchase_id', $purchase['id']);
+                                                                $returnStmt->execute();
+                                                                $returnCount = $returnStmt->fetch(PDO::FETCH_ASSOC)['count'];
+                                                                
+                                                                if ($returnCount > 0) {
+                                                                    $canDelete = false;
+                                                                }
+                                                                
+                                                                if ($canDelete):
+                                                                ?>
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-danger rounded-circle delete-purchase"
+                                                                    data-id="<?php echo $purchase['id']; ?>"
+                                                                    data-invoice="<?php echo $purchase['invoice_number']; ?>"
+                                                                    title="سڕینەوە">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                                <?php endif; ?>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -1138,6 +1177,60 @@ foreach ($purchases as $purchase) {
             let purchasesRecordsPerPage = parseInt(purchasesRecordsPerPageSelect.val());
             const purchasesTableRows = $('#purchasesTable tbody tr');
             const purchasesTotalRecords = purchasesTableRows.length;
+            
+            // Delete purchase button handler
+            $(document).on('click', '.delete-purchase', function() {
+                const purchaseId = $(this).data('id');
+                const invoiceNumber = $(this).data('invoice');
+                
+                Swal.fire({
+                    title: 'دڵنیای لە سڕینەوە؟',
+                    text: `ئایا دڵنیای لە سڕینەوەی پسووڵە ${invoiceNumber}؟`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'بەڵێ، بسڕەوە',
+                    cancelButtonText: 'نەخێر',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '../../ajax/delete_purchase.php',
+                            type: 'POST',
+                            data: {
+                                purchase_id: purchaseId
+                            },
+                            success: function(response) {
+                                const data = JSON.parse(response);
+                                if (data.success) {
+                                    Swal.fire({
+                                        title: 'سەرکەوتوو بوو!',
+                                        text: data.message,
+                                        icon: 'success',
+                                        confirmButtonText: 'باشە'
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        title: 'هەڵە!',
+                                        text: data.message,
+                                        icon: 'error',
+                                        confirmButtonText: 'باشە'
+                                    });
+                                }
+                            },
+                            error: function() {
+                                Swal.fire({
+                                    title: 'هەڵە!',
+                                    text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
+                                    icon: 'error',
+                                    confirmButtonText: 'باشە'
+                                });
+                            }
+                        });
+                    }
+                });
+            });
             
             // Update records per page when select changes
             purchasesRecordsPerPageSelect.on('change', function() {

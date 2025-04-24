@@ -506,19 +506,178 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
-    <!-- Global AJAX Configuration -->
 
     <!-- Then load your custom JavaScript -->
     <script src="../../js/include-components.js"></script>
 
-    <!-- New modular JavaScript files -->
-    <script src="../../js/receiptList/tabs/common-receipt-functions.js"></script>
-    <script src="../../js/receiptList/tabs/draft-receipts.js"></script>
-    <script src="../../js/receiptList/tabs/wasting-receipts.js"></script>
-
     <!-- Initialize everything after all scripts are loaded -->
     <script>
     $(document).ready(function() {
+        // Function to update debug info (visible only in development)
+        function logDebug(message) {
+            console.log(message);
+        }
+
+        // Function to delete a draft receipt
+        function handleDeleteDraft(receiptId) {
+            Swal.fire({
+                title: 'دڵنیای',
+                text: 'دڵنیای لە سڕینەوەی ئەم ڕەشنووسە؟',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'بەڵێ',
+                cancelButtonText: 'نەخێر'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    logDebug('هەوڵی سڕینەوەی ڕەشنووس: ID=' + receiptId);
+                    
+                    // First, verify the draft exists
+                    $.ajax({
+                        url: '../../api/receipts/verify_draft.php',
+                        method: 'POST',
+                        data: { receipt_id: receiptId },
+                        success: function(response) {
+                            logDebug('پشکنینی ڕەشنووس: ' + JSON.stringify(response));
+                            
+                            if (response.exists) {
+                                // If draft exists, proceed with deletion
+                                $.ajax({
+                                    url: '../../api/receipts/delete_draft.php',
+                                    method: 'POST',
+                                    data: { receipt_id: receiptId },
+                                    success: function(response) {
+                                        logDebug('ئەنجامی سڕینەوە: ' + JSON.stringify(response));
+                                        
+                                        if (response.success) {
+                                            Swal.fire({
+                                                icon: 'success',
+                                                title: 'سەرکەوتوو',
+                                                text: 'ڕەشنووسەکە بە سەرکەوتوویی سڕایەوە'
+                                            }).then(() => {
+                                                if (typeof loadDraftReceipts === 'function') {
+                                                    loadDraftReceipts();
+                                                } else {
+                                                    location.reload();
+                                                }
+                                            });
+                                        } else {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'هەڵە',
+                                                text: response.message || 'هەڵەیەک ڕوویدا لە سڕینەوەی ڕەشنووس'
+                                            });
+                                        }
+                                    },
+                                    error: function(xhr, status, error) {
+                                        logDebug('هەڵەی AJAX: ' + xhr.responseText);
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'هەڵە',
+                                            text: 'هەڵەیەک ڕوویدا لە پەیوەندی بە سێرڤەرەوە'
+                                        });
+                                    }
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'هەڵە',
+                                    text: 'ڕەشنووسەکە نەدۆزرایەوە'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            logDebug('هەڵەی پشکنین: ' + xhr.responseText);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'هەڵە',
+                                text: 'هەڵەیەک ڕوویدا لە پشکنینی ڕەشنووس'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+        
+        // Function to delete a wasting record
+        function handleDeleteWasting(wastingId) {
+            Swal.fire({
+                title: 'دڵنیای',
+                text: 'دڵنیای لە سڕینەوەی ئەم بەفیڕۆچووە؟',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'بەڵێ',
+                cancelButtonText: 'نەخێر'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    logDebug('هەوڵی سڕینەوەی بەفیڕۆچوو: ID=' + wastingId);
+                    
+                    // First, verify the wasting record exists
+                    $.ajax({
+                        url: '../../api/receipts/verify_wasting.php',
+                        method: 'POST',
+                        data: { wasting_id: wastingId },
+                        success: function(response) {
+                            logDebug('پشکنینی بەفیڕۆچوو: ' + JSON.stringify(response));
+                            
+                            if (response.exists) {
+                                // If wasting record exists, proceed with deletion
+                                $.ajax({
+                                    url: '../../api/receipts/delete_wasting.php',
+                                    method: 'POST',
+                                    data: { wasting_id: wastingId },
+                                    success: function(response) {
+                                        logDebug('ئەنجامی سڕینەوە: ' + JSON.stringify(response));
+                                        
+                                        if (response.success) {
+                                            Swal.fire({
+                                                icon: 'success',
+                                                title: 'سەرکەوتوو',
+                                                text: 'بەفیڕۆچووەکە بە سەرکەوتوویی سڕایەوە'
+                                            }).then(() => {
+                                                if (typeof loadWastingData === 'function') {
+                                                    loadWastingData();
+                                                } else {
+                                                    location.reload();
+                                                }
+                                            });
+                                        } else {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'هەڵە',
+                                                text: response.message || 'هەڵەیەک ڕوویدا لە سڕینەوەی بەفیڕۆچوو'
+                                            });
+                                        }
+                                    },
+                                    error: function(xhr, status, error) {
+                                        logDebug('هەڵەی AJAX: ' + xhr.responseText);
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'هەڵە',
+                                            text: 'هەڵەیەک ڕوویدا لە پەیوەندی بە سێرڤەرەوە'
+                                        });
+                                    }
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'هەڵە',
+                                    text: 'بەفیڕۆچووەکە نەدۆزرایەوە'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            logDebug('هەڵەی پشکنین: ' + xhr.responseText);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'هەڵە',
+                                text: 'هەڵەیەک ڕوویدا لە پشکنینی بەفیڕۆچوو'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
         // Handle tab switching to load relevant data
         $('#expensesTabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
             const target = $(e.target).attr("data-bs-target");
@@ -543,8 +702,32 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
         if (typeof initProductsListHover === 'function') {
             initProductsListHover();
         }
+
+        // Remove any existing event handlers first
+        $(document).off('click', '#draft-content .delete-btn');
+        $(document).off('click', '#withdrawal-content .delete-btn');
+
+        // Assign specific click handlers for delete buttons in different tabs
+        $(document).on('click', '#draft-content .delete-btn', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const receiptId = $(this).data('id');
+            handleDeleteDraft(receiptId);
+        });
+
+        $(document).on('click', '#withdrawal-content .delete-btn', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const wastingId = $(this).data('id');
+            handleDeleteWasting(wastingId);
+        });
     });
     </script>
+
+    <!-- Load optional module scripts after the main initialization -->
+    <script src="../../js/receiptList/tabs/common-receipt-functions.js"></script>
+    <script src="../../js/receiptList/tabs/draft-receipts.js"></script>
+    <script src="../../js/receiptList/tabs/wasting-receipts.js"></script>
 </body>
 
 </html> 

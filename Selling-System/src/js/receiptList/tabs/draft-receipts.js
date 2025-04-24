@@ -3,13 +3,63 @@ $(document).ready(function() {
     // Handle draft receipt finalization
     $(document).on('click', '.finalize-btn', function() {
         const receiptId = $(this).data('id');
-        finalizeDraftReceipt(receiptId);
-    });
-
-    // Handle draft receipt deletion
-    $(document).on('click', '.delete-btn', function() {
-        const receiptId = $(this).data('id');
-        deleteDraftReceipt(receiptId);
+        
+        Swal.fire({
+            title: 'دڵنیای لە تەواوکردنی پسوڵەکە؟',
+            text: 'ئەم کردارە ناگەڕێتەوە',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'بەڵێ، تەواو بکە',
+            cancelButtonText: 'نەخێر، هەڵوەشاندنەوە',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'تکایە چاوەڕێ بکە...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Send request to finalize receipt
+                $.ajax({
+                    url: '../../api/finalize_draft.php',
+                    method: 'POST',
+                    data: {
+                        id: receiptId,
+                        type: 'selling'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                title: 'سەرکەوتوو',
+                                text: response.message,
+                                icon: 'success'
+                            }).then(() => {
+                                // Reload the table
+                                loadDraftReceipts();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە',
+                                text: response.message,
+                                icon: 'error'
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(xhr.responseText);
+                        Swal.fire({
+                            title: 'هەڵە',
+                            text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی بە سێرڤەرەوە',
+                            icon: 'error'
+                        });
+                    }
+                });
+            }
+        });
     });
 
     // Handle draft receipt view
@@ -450,48 +500,9 @@ function updateDraftPagination(pagination) {
     $('#draftNextPageBtn').prop('disabled', current_page === total_pages);
 }
 
-// Function to finalize a draft receipt
-function finalizeDraftReceipt(receiptId) {
-    Swal.fire({
-        title: 'دڵنیای',
-        text: 'دڵنیای لە تەواوکردنی ئەم ڕەشنووسە؟',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'بەڵێ',
-        cancelButtonText: 'نەخێر'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            $.ajax({
-                url: '../../api/receipts/finalize_draft.php',
-                method: 'POST',
-                data: { receipt_id: receiptId },
-                success: function(response) {
-                    if (response.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'سەرکەوتوو',
-                            text: 'ڕەشنووسەکە بە سەرکەوتوویی تەواوکرا'
-                        }).then(() => {
-                            loadDraftReceipts();
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'هەڵە',
-                            text: response.message
-                        });
-                    }
-                },
-                error: function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'هەڵە',
-                        text: 'کێشەیەک هەیە لە پەیوەندی بە سێرڤەرەوە'
-                    });
-                }
-            });
-        }
-    });
+// Initialize product hover functionality
+function initProductsListHover() {
+    // Implementation of initProductsListHover function
 }
 
 // Function to delete a draft receipt
@@ -505,40 +516,61 @@ function deleteDraftReceipt(receiptId) {
         cancelButtonText: 'نەخێر'
     }).then((result) => {
         if (result.isConfirmed) {
+            // Show loading
+            Swal.fire({
+                title: 'چاوەڕێ بکە...',
+                text: 'سڕینەوەی ڕەشنووس',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
             $.ajax({
                 url: '../../api/receipts/delete_draft.php',
                 method: 'POST',
                 data: { receipt_id: receiptId },
+                dataType: 'json',
                 success: function(response) {
+                    Swal.close();
                     if (response.success) {
                         Swal.fire({
                             icon: 'success',
                             title: 'سەرکەوتوو',
-                            text: 'ڕەشنووسەکە بە سەرکەوتوویی سڕایەوە'
+                            text: response.message || 'ڕەشنووسەکە بە سەرکەوتوویی سڕایەوە'
                         }).then(() => {
                             loadDraftReceipts();
                         });
                     } else {
+                        console.error('Delete error:', response);
                         Swal.fire({
                             icon: 'error',
                             title: 'هەڵە',
-                            text: response.message
+                            text: response.message || 'هەڵەیەک ڕوویدا لە سڕینەوەی ڕەشنووس'
                         });
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    Swal.close();
+                    console.error('AJAX error:', xhr.responseText);
+                    
+                    let errorMessage = 'کێشەیەک هەیە لە پەیوەندی بە سێرڤەرەوە';
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.message) {
+                            errorMessage = response.message;
+                        }
+                    } catch(e) {
+                        console.error('Error parsing response:', e);
+                    }
+                    
                     Swal.fire({
                         icon: 'error',
                         title: 'هەڵە',
-                        text: 'کێشەیەک هەیە لە پەیوەندی بە سێرڤەرەوە'
+                        text: errorMessage
                     });
                 }
             });
         }
     });
-}
-
-// Initialize product hover functionality
-function initProductsListHover() {
-    // Implementation of initProductsListHover function
 } 

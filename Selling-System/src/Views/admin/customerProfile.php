@@ -637,6 +637,41 @@ foreach ($debtTransactions as $debtTransaction) {
                                                                     title="بینینی هەموو کاڵاکان">
                                                                     <i class="fas fa-list"></i>
                                                                 </button>
+                                                                <?php
+                                                                // Check if sale can be deleted (no returns or payments)
+                                                                $canDelete = true;
+                                                                
+                                                                // Check for debt transactions
+                                                                foreach ($debtTransactions as $transaction) {
+                                                                    if ($transaction['reference_id'] == $sale['id'] && 
+                                                                        ($transaction['transaction_type'] == 'collection' || 
+                                                                         $transaction['transaction_type'] == 'payment')) {
+                                                                        $canDelete = false;
+                                                                        break;
+                                                                    }
+                                                                }
+                                                                
+                                                                // Check for product returns
+                                                                $returnQuery = "SELECT COUNT(*) as count FROM product_returns WHERE receipt_id = :sale_id AND receipt_type = 'selling'";
+                                                                $returnStmt = $conn->prepare($returnQuery);
+                                                                $returnStmt->bindParam(':sale_id', $sale['id']);
+                                                                $returnStmt->execute();
+                                                                $returnCount = $returnStmt->fetch(PDO::FETCH_ASSOC)['count'];
+                                                                
+                                                                if ($returnCount > 0) {
+                                                                    $canDelete = false;
+                                                                }
+                                                                
+                                                                if ($canDelete):
+                                                                ?>
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-danger rounded-circle delete-sale"
+                                                                    data-id="<?php echo $sale['id']; ?>"
+                                                                    data-invoice="<?php echo $sale['invoice_number']; ?>"
+                                                                    title="سڕینەوە">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                                <?php endif; ?>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -1964,6 +1999,60 @@ foreach ($debtTransactions as $debtTransaction) {
                         confirmButtonText: 'باشە'
                     });
                 }
+            });
+
+            // Delete sale button handler
+            $(document).on('click', '.delete-sale', function() {
+                const saleId = $(this).data('id');
+                const invoiceNumber = $(this).data('invoice');
+                
+                Swal.fire({
+                    title: 'دڵنیای لە سڕینەوە؟',
+                    text: `ئایا دڵنیای لە سڕینەوەی پسووڵە ${invoiceNumber}؟`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'بەڵێ، بسڕەوە',
+                    cancelButtonText: 'نەخێر',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '../../ajax/delete_sale.php',
+                            type: 'POST',
+                            data: {
+                                sale_id: saleId
+                            },
+                            success: function(response) {
+                                const data = JSON.parse(response);
+                                if (data.success) {
+                                    Swal.fire({
+                                        title: 'سەرکەوتوو بوو!',
+                                        text: data.message,
+                                        icon: 'success',
+                                        confirmButtonText: 'باشە'
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        title: 'هەڵە!',
+                                        text: data.message,
+                                        icon: 'error',
+                                        confirmButtonText: 'باشە'
+                                    });
+                                }
+                            },
+                            error: function() {
+                                Swal.fire({
+                                    title: 'هەڵە!',
+                                    text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
+                                    icon: 'error',
+                                    confirmButtonText: 'باشە'
+                                });
+                            }
+                        });
+                    }
+                });
             });
         });
     </script>

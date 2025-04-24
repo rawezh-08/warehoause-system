@@ -1,62 +1,33 @@
+// Custom number formatting function for Iraqi Dinar
+function numberFormat(number) {
+    return number_format(number, 0, '.', ',') + ' د.ع';
+}
+
+// Helper function for number formatting
+function number_format(number, decimals, dec_point, thousands_sep) {
+    number = (number + '').replace(/[^0-9+\-Ee.]/g, '');
+    var n = !isFinite(+number) ? 0 : +number,
+        prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
+        sep = (typeof thousands_sep === 'undefined') ? ',' : thousands_sep,
+        dec = (typeof dec_point === 'undefined') ? '.' : dec_point,
+        s = '',
+        toFixedFix = function (n, prec) {
+            var k = Math.pow(10, prec);
+            return '' + Math.round(n * k) / k;
+        };
+    s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
+    if (s[0].length > 3) {
+        s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep);
+    }
+    if ((s[1] || '').length < prec) {
+        s[1] = s[1] || '';
+        s[1] += new Array(prec - s[1].length + 1).join('0');
+    }
+    return s.join(dec);
+}
+
 // Wasting Receipts Management
 $(document).ready(function() {
-    // Handle wasting receipt deletion
-    $(document).on('click', '.delete-btn', function() {
-        const receiptId = $(this).data('id');
-        Swal.fire({
-            title: 'دڵنیای لە سڕینەوەی پسووڵە؟',
-            text: 'پاش سڕینەوە ناتوانیت گەڕایەوە',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'بەڵێ، بسڕەوە',
-            cancelButtonText: 'نەخێر، هەڵوەشانەوە'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: '../../api/receipts/delete_wasting.php',
-                    method: 'POST',
-                    data: { 
-                        receipt_id: receiptId
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            Swal.fire({
-                                title: 'سەرکەوتوو!',
-                                text: 'پسووڵە بە سەرکەوتوویی سڕایەوە',
-                                icon: 'success'
-                            }).then(() => {
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire({
-                                title: 'هەڵە!',
-                                text: response.message || 'هەڵەیەک ڕوویدا',
-                                icon: 'error'
-                            });
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error:', xhr, status, error);
-                        let errorMessage = 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی بە سێرڤەرەوە';
-                        try {
-                            const response = JSON.parse(xhr.responseText);
-                            if (response.message) {
-                                errorMessage = response.message;
-                            }
-                        } catch (e) {
-                            console.error('Error parsing server response:', e);
-                        }
-                        Swal.fire({
-                            title: 'هەڵە!',
-                            text: errorMessage,
-                            icon: 'error'
-                        });
-                    }
-                });
-            }
-        });
-    });
-
     // Handle wasting receipt view
     $(document).on('click', '#withdrawalHistoryTable .view-btn', function() {
         const wastingId = $(this).data('id');
@@ -357,8 +328,8 @@ $(document).ready(function() {
         $('#withdrawalNextPageBtn').prop('disabled', current_page === total_pages);
     }
 
-    // Function to delete a wasting receipt
-    function deleteWastingReceipt(receiptId) {
+    // Function to delete a wasting record
+    function deleteWastingRecord(wastingId) {
         Swal.fire({
             title: 'دڵنیای',
             text: 'دڵنیای لە سڕینەوەی ئەم بەفیڕۆچووە؟',
@@ -368,32 +339,58 @@ $(document).ready(function() {
             cancelButtonText: 'نەخێر'
         }).then((result) => {
             if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'چاوەڕێ بکە...',
+                    text: 'سڕینەوەی بەفیڕۆچوو',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
                 $.ajax({
                     url: '../../api/receipts/delete_wasting.php',
                     method: 'POST',
-                    data: { receipt_id: receiptId },
+                    data: { wasting_id: wastingId },
+                    dataType: 'json',
                     success: function(response) {
+                        Swal.close();
                         if (response.success) {
                             Swal.fire({
                                 icon: 'success',
                                 title: 'سەرکەوتوو',
-                                text: 'بەفیڕۆچووەکە بە سەرکەوتوویی سڕایەوە'
+                                text: response.message || 'بەفیڕۆچووەکە بە سەرکەوتوویی سڕایەوە'
                             }).then(() => {
                                 loadWastingData();
                             });
                         } else {
+                            console.error('Delete error:', response);
                             Swal.fire({
                                 icon: 'error',
                                 title: 'هەڵە',
-                                text: response.message
+                                text: response.message || 'هەڵەیەک ڕوویدا لە سڕینەوەی بەفیڕۆچوو'
                             });
                         }
                     },
-                    error: function() {
+                    error: function(xhr, status, error) {
+                        Swal.close();
+                        console.error('AJAX error:', xhr.responseText);
+                        
+                        let errorMessage = 'کێشەیەک هەیە لە پەیوەندی بە سێرڤەرەوە';
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.message) {
+                                errorMessage = response.message;
+                            }
+                        } catch(e) {
+                            console.error('Error parsing response:', e);
+                        }
+                        
                         Swal.fire({
                             icon: 'error',
                             title: 'هەڵە',
-                            text: 'کێشەیەک هەیە لە پەیوەندی بە سێرڤەرەوە'
+                            text: errorMessage
                         });
                     }
                 });
@@ -436,12 +433,6 @@ $(document).ready(function() {
         // Handle refresh button
         $('.refresh-btn').on('click', function() {
             loadWastingData();
-        });
-        
-        // Handle delete button
-        $(document).on('click', '.delete-btn', function() {
-            const receiptId = $(this).data('id');
-            deleteWastingReceipt(receiptId);
         });
         
         // Handle view button

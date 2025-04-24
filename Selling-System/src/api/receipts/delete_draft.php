@@ -41,37 +41,21 @@ try {
     
     error_log("Database connection established successfully");
     
-    // Begin transaction
-    $conn->beginTransaction();
-    
     try {
-        // Check if draft exists
-        $stmt = $conn->prepare("SELECT * FROM sales WHERE id = ? AND is_draft = 1");
+        // Call the stored procedure to delete the draft receipt
+        $stmt = $conn->prepare("CALL DeleteDraftReceipt(?)");
         $stmt->execute([$receipt_id]);
-        $receipt = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$receipt) {
-            throw new Exception('ڕەشنووسی پسووڵە نەدۆزرایەوە - ID: ' . $receipt_id);
-        }
-        
-        // Delete related records
-        $stmt = $conn->prepare("DELETE FROM sale_items WHERE sale_id = ?");
-        $stmt->execute([$receipt_id]);
-        
-        $stmt = $conn->prepare("DELETE FROM sales WHERE id = ? AND is_draft = 1");
-        $stmt->execute([$receipt_id]);
-        
-        // Commit transaction
-        $conn->commit();
         
         echo json_encode([
             'success' => true,
             'message' => 'ڕەشنووسی پسووڵە بە سەرکەوتوویی سڕایەوە'
         ]);
         
-    } catch (Exception $e) {
-        // Rollback transaction on error
-        $conn->rollBack();
+    } catch (PDOException $e) {
+        // Check if this is a custom error from the stored procedure
+        if ($e->getCode() == '45000') {
+            throw new Exception($e->getMessage());
+        }
         throw $e;
     }
     
