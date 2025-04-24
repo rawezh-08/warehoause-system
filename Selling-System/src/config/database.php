@@ -1,9 +1,10 @@
 <?php
 // Database configuration
 define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'warehouse_db');
+define('DB_USER', 'u924953439_Rawezh_Jaza08');
+define('DB_PASS', 'Rawezh.Jaza@0894');
+define('DB_NAME', 'u924953439_warehouse_db');
+
 
 class Database {
     private $host = DB_HOST;
