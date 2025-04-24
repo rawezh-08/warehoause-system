@@ -1001,6 +1001,64 @@ try {
         if (typeof initProductsListHover === 'function') {
             initProductsListHover();
         }
+
+        // Global AJAX error handling for better debugging
+        $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
+            console.error('AJAX Error:', thrownError);
+            console.log('Response:', jqXHR.responseText);
+            console.log('Status:', jqXHR.status);
+            console.log('URL:', ajaxSettings.url);
+            console.log('Type:', ajaxSettings.type);
+            console.log('Data:', ajaxSettings.data);
+            
+            let errorMessage = '';
+            try {
+                const response = JSON.parse(jqXHR.responseText);
+                errorMessage = response.message || thrownError || 'هەڵەیەکی نەناسراو ڕوویدا';
+                if (response.debug_info) {
+                    console.log('Debug Info:', response.debug_info);
+                    // Add debug info to console but not to user message
+                }
+            } catch (e) {
+                errorMessage = jqXHR.responseText || thrownError || 'هەڵەیەک ڕوویدا';
+            }
+            
+            // Only show an error message if not handled already by the specific AJAX call
+            if (!event.isDefaultPrevented()) {
+                Swal.fire({
+                    title: 'هەڵە!',
+                    text: errorMessage,
+                    icon: 'error',
+                    confirmButtonText: 'باشە'
+                });
+            }
+        });
+        
+        // Override the default jQuery AJAX setup to include error handling
+        $.ajaxSetup({
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', error);
+                console.log('Response:', xhr.responseText);
+                
+                // Prevent the global handler from showing duplicate messages
+                $(document).trigger('ajaxError').preventDefault();
+                
+                let errorMessage = '';
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    errorMessage = response.message || error || 'هەڵەیەک ڕوویدا';
+                } catch (e) {
+                    errorMessage = xhr.responseText || error || 'هەڵەیەک ڕوویدا';
+                }
+                
+                Swal.fire({
+                    title: 'هەڵە!',
+                    text: errorMessage,
+                    icon: 'error',
+                    confirmButtonText: 'باشە'
+                });
+            }
+        });
     });
     </script>
 </body>
