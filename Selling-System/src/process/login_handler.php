@@ -11,7 +11,7 @@ if (isset($_SESSION['admin_id'])) {
 }
 
 // Database connection
-$db = new mysqli('localhost', 'root', '', 'warehouse_db');
+$db = new mysqli('localhost', 'warehouse_user', 'Rawezh.Jaza@0894', 'warehouse_db');
 
 if ($db->connect_error) {
     die("Connection failed: " . $db->connect_error);

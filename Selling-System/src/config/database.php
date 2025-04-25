@@ -1,8 +1,8 @@
 <?php
 // Database configuration
 define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_USER', 'warehouse_user');
+define('DB_PASS', 'Rawezh.Jaza@0894');
 define('DB_NAME', 'warehouse_db');
 
 
