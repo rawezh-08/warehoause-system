@@ -660,535 +660,71 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
     
     <!-- Global CSS -->
-    <link rel="stylesheet" href="../../assets/css/custom.css">
-    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../components/assets/css/custom.css">
     <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/dashboard_styles.css">
+    <link rel="stylesheet" href="../../test/main.css">
     
     <style>
-        /* Report Page Specific Styles - Enhanced Design */
-        :root {
-            --chart-primary: #7380ec;
-            --chart-success: #41f1b6;
-            --chart-warning: #ffbb55;
-            --chart-danger: #ff7782;
-            --chart-info: #9a86f3;
-            --bg-gradient: linear-gradient(135deg, #f8f9fe 0%, #f1f4fd 100%);
+        /* Custom Scrollbar Styles */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
-        
-        body {
-            background: var(--bg-gradient);
-            font-family: 'rabar_021', sans-serif;
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
         }
-        
-        /* Font settings for charts */
-        .apexcharts-text tspan,
-        .apexcharts-legend-text,
-        .apexcharts-title-text,
-        .apexcharts-subtitle-text,
-        .apexcharts-tooltip-text,
-        .apexcharts-datalabel-label,
-        .apexcharts-datalabel-value,
-        .apexcharts-xaxis-label,
-        .apexcharts-yaxis-label {
-            font-family: 'rabar_021', sans-serif !important;
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
         }
-        
-        .report-card {
-            border-radius: 15px;
-            border: none;
-            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.04);
-            transition: all 0.3s ease;
-            overflow: hidden;
-            backdrop-filter: blur(5px);
-            background: rgba(255, 255, 255, 0.9);
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
         }
-        
+
+        /* Sidebar Active State */
+        body.sidebar-active .main-content {
+            margin-right: 260px;
+        }
+
+        /* Hover Effects */
         .report-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 30px rgba(115, 128, 236, 0.1);
         }
-        
-        .report-card .card-body {
-            padding: 1.2rem;
+
+        /* Active State for Sidebar */
+        #sidebar.active {
+            width: 260px;
         }
-        
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 0.8rem;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
+
+        #sidebar.active ~ .main-content {
+            margin-right: 260px;
         }
-        
-        .stat-icon::before {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            opacity: 0.2;
-            border-radius: inherit;
-            transform: scale(0.85);
-            transition: all 0.4s ease;
-        }
-        
-        .report-card:hover .stat-icon::before {
-            transform: scale(1);
-        }
-        
-        .stat-icon i {
-            font-size: 1.5rem;
-            color: white;
-            position: relative;
-            z-index: 1;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .stat-icon.bg-primary-light {
-            background-color: rgba(115, 128, 236, 0.15);
-        }
-        
-        .stat-icon.bg-primary-light i {
-            color: var(--chart-primary);
-        }
-        
-        .stat-icon.bg-primary-light::before {
-            background-color: var(--chart-primary);
-        }
-        
-        .stat-icon.bg-success-light {
-            background-color: rgba(65, 241, 182, 0.15);
-        }
-        
-        .stat-icon.bg-success-light i {
-            color: var(--chart-success);
-        }
-        
-        .stat-icon.bg-success-light::before {
-            background-color: var(--chart-success);
-        }
-        
-        .stat-icon.bg-warning-light {
-            background-color: rgba(255, 187, 85, 0.15);
-        }
-        
-        .stat-icon.bg-warning-light i {
-            color: var(--chart-warning);
-        }
-        
-        .stat-icon.bg-warning-light::before {
-            background-color: var(--chart-warning);
-        }
-        
-        .stat-icon.bg-danger-light {
-            background-color: rgba(255, 119, 130, 0.15);
-        }
-        
-        .stat-icon.bg-danger-light i {
-            color: var(--chart-danger);
-        }
-        
-        .stat-icon.bg-danger-light::before {
-            background-color: var(--chart-danger);
-        }
-        
-        .stat-title {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            margin-bottom: 0.3rem;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            font-weight: 500;
-        }
-        
-        .stat-value {
-            color: var(--text-primary);
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            line-height: 1.2;
-            background: linear-gradient(45deg, var(--text-primary), #4a4a4a);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .stat-change {
-            display: flex;
-            align-items: center;
-            font-size: 0.8rem;
-            padding: 3px 8px;
-            border-radius: 15px;
-            width: fit-content;
-        }
-        
-        .stat-change.positive {
-            color: var(--chart-success);
-            background-color: rgba(65, 241, 182, 0.1);
-        }
-        
-        .stat-change.negative {
-            color: var(--chart-danger);
-            background-color: rgba(255, 119, 130, 0.1);
-        }
-        
-        .stat-change i {
-            margin-right: 0.35rem;
-            font-size: 0.9rem;
-        }
-        
-        .chart-container {
-            height: 380px;
-            position: relative;
-        }
-        
-        .card-title {
-            font-weight: 600;
-            margin-bottom: 0;
-            font-size: 1.2rem;
-            color: #363949;
-            position: relative;
-        }
-        
-        .date-filter {
-            background-color: white;
-            border: 1px solid var(--border-color);
-            border-radius: 25px;
-            padding: 0.6rem 1.2rem;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-        
-        .date-filter:hover {
-            border-color: var(--chart-primary);
-            box-shadow: 0 3px 12px rgba(115, 128, 236, 0.15);
-        }
-        
-        .date-filter i {
-            margin-left: 0.8rem;
-            color: var(--chart-primary);
-            font-size: 1.1rem;
-        }
-        
-        .filter-dropdown {
-            position: relative;
-        }
-        
-        .filter-dropdown .dropdown-menu {
-            min-width: 12rem;
-            padding: 0.75rem 0;
-            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
-            border: none;
-            border-radius: 12px;
-            animation: dropdown-fade 0.2s ease-out;
-        }
-        
-        @keyframes dropdown-fade {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .filter-dropdown .dropdown-item {
-            padding: 0.7rem 1.2rem;
-            color: var(--text-primary);
-            transition: all 0.2s ease;
-            position: relative;
-        }
-        
-        .filter-dropdown .dropdown-item:hover {
-            background-color: rgba(115, 128, 236, 0.08);
-            color: var(--chart-primary);
-            transform: translateX(5px);
-        }
-        
-        .filter-dropdown .dropdown-item i {
-            margin-left: 0.5rem;
-            width: 18px;
-            color: var(--text-muted);
-            transition: all 0.2s ease;
-        }
-        
-        .filter-dropdown .dropdown-item:hover i {
-            color: var(--chart-primary);
-        }
-        
-        .report-table {
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-        
-        .report-table th {
-            font-weight: 600;
-            color: var(--text-primary);
-            background-color: rgba(246, 246, 249, 0.6);
-            padding: 1rem 1.2rem;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border: none;
-        }
-        
-        .report-table th:first-child {
-            border-top-right-radius: 10px;
-        }
-        
-        .report-table th:last-child {
-            border-top-left-radius: 10px;
-        }
-        
-        .report-table td {
-            vertical-align: middle;
-            padding: 1.2rem 1.2rem;
-            border-top: 1px solid rgba(220, 225, 235, 0.5);
-            transition: all 0.2s ease;
-        }
-        
-        .report-table tr {
-            transition: all 0.2s ease;
-        }
-        
-        .report-table tr:hover {
+
+        /* Table Hover Effects */
+        .report-table tbody tr:hover {
             background-color: rgba(115, 128, 236, 0.04);
         }
-        
-        .report-table tr:hover td {
+
+        .report-table tbody tr:hover td {
             transform: translateX(3px);
         }
-        
-        .table-status {
-            padding: 0.4rem 0.9rem;
-            border-radius: 50px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            white-space: nowrap;
-            display: inline-block;
-        }
-        
-        .stock-indicator {
-            width: 100%;
-            height: 10px;
-            background-color: rgba(220, 225, 235, 0.5);
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
-        
-        .stock-level {
-            height: 100%;
-            border-radius: 8px;
-            transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        
-        .stock-level.critical {
-            background: linear-gradient(90deg, #ff7782, #ff5a67);
-            box-shadow: 0 0 15px rgba(255, 119, 130, 0.5);
-        }
-        
-        .stock-level.warning {
-            background: linear-gradient(90deg, #ffbb55, #ffa922);
-            box-shadow: 0 0 15px rgba(255, 187, 85, 0.5);
-        }
-        
-        .stock-level.good {
-            background: linear-gradient(90deg, #41f1b6, #2bd89e);
-            box-shadow: 0 0 15px rgba(65, 241, 182, 0.5);
-        }
-        
-        .nav-tabs {
-            border-bottom: 2px solid rgba(220, 225, 235, 0.5);
-            margin-bottom: 1.5rem;
-        }
-        
-        .nav-tabs .nav-link {
-            border: none;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
-            color: var(--text-muted);
-            padding: 0.8rem 1.5rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        .nav-tabs .nav-link:hover {
-            color: var(--chart-primary);
-        }
-        
-        .nav-tabs .nav-link::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 50%;
-            width: 0;
-            height: 2px;
-            background-color: var(--chart-primary);
-            transition: all 0.3s ease;
-            transform: translateX(-50%);
-        }
-        
-        .nav-tabs .nav-link:hover::after {
-            width: 80%;
-        }
-        
-        .nav-tabs .nav-link.active {
-            color: var(--chart-primary);
-            border-bottom-color: var(--chart-primary);
-            background-color: transparent;
-        }
-        
-        .nav-tabs .nav-link.active::after {
-            width: 100%;
-        }
-        
-        .tab-content {
-            padding-top: 1.5rem;
-        }
-        
-        .tab-pane {
-            animation: fadeIn 0.4s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .btn {
-            border-radius: 12px;
-            padding: 0.6rem 1.2rem;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .btn::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 5px;
-            height: 5px;
-            background: rgba(255, 255, 255, 0.5);
-            opacity: 0;
-            border-radius: 100%;
-            transform: scale(1, 1) translate(-50%, -50%);
-            transform-origin: 50% 50%;
-        }
-        
-        .btn:focus:not(:active)::after {
-            animation: ripple 1s ease-out;
-        }
-        
-        @keyframes ripple {
-            0% {
-                transform: scale(0, 0);
-                opacity: 0.5;
-            }
-            100% {
-                transform: scale(20, 20);
-                opacity: 0;
-            }
-        }
-        
-        .btn-sm {
-            padding: 0.4rem 0.8rem;
-            border-radius: 8px;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(45deg, var(--chart-primary), #566bf7);
-            border: none;
-            box-shadow: 0 4px 15px rgba(115, 128, 236, 0.2);
-        }
-        
-        .btn-primary:hover {
-            background: linear-gradient(45deg, #5a68e4, #7380ec);
-            box-shadow: 0 6px 18px rgba(115, 128, 236, 0.3);
+
+        /* Button Hover Effects */
+        .btn:hover {
             transform: translateY(-2px);
         }
-        
-        .btn-light {
-            background-color: white;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-        
-        .btn-light:hover {
-            background-color: #f8f9fa;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
-        }
-        
-        .btn-outline-primary {
-            color: var(--chart-primary);
-            border-color: var(--chart-primary);
-            background-color: transparent;
-        }
-        
-        .btn-outline-primary:hover {
-            color: white;
-            background: linear-gradient(45deg, var(--chart-primary), #566bf7);
-            border-color: transparent;
-            box-shadow: 0 4px 15px rgba(115, 128, 236, 0.2);
-            transform: translateY(-2px);
-        }
-        
-        .card-title {
-            position: relative;
-            padding-bottom: 0.8rem;
-            margin-bottom: 1.2rem !important;
-        }
-        
-        .card-title::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            bottom: 0;
-            width: 40px;
-            height: 3px;
-            background: linear-gradient(45deg, var(--chart-primary), #566bf7);
-            border-radius: 3px;
-        }
-        
-        .page-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: linear-gradient(45deg, #363949, #566bf7);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .d-flex.justify-content-between.align-items-center.mt-3 {
-            margin-top: 0.5rem !important;
-        }
-        
-        .fw-bold {
-            font-size: 0.9rem;
-        }
-        
-        /* Print styles */
-        @media print {
-            .sidebar, .navbar, .no-print {
-                display: none !important;
-            }
-            
-            .content-wrapper {
-                margin-right: 0 !important;
-                padding: 0 !important;
-            }
-            
-            .report-card {
-                break-inside: avoid;
-                page-break-inside: avoid;
-                box-shadow: none !important;
-            }
+
+        /* Card Hover Effects */
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(115, 128, 236, 0.1);
         }
     </style>
 </head>
