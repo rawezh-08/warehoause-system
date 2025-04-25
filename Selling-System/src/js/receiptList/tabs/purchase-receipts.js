@@ -34,6 +34,77 @@ $(document).ready(function() {
         });
     }
 
+    /**
+     * View purchase details
+     * @param {number} purchaseId - ID of the purchase to view
+     */
+    function viewPurchaseDetails(purchaseId) {
+        // Show loading
+        Swal.fire({
+            title: 'تکایە چاوەڕێ بکە...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Fetch purchase items
+        $.ajax({
+            url: '../../api/receipts/get_purchase_items.php',
+            type: 'POST',
+            data: { purchase_id: purchaseId },
+            dataType: 'json',
+            success: function(response) {
+                Swal.close();
+                
+                if (response.status === 'success' && response.items) {
+                    // Populate the items table
+                    const tbody = $('#saleItemsTableBody');
+                    tbody.empty();
+                    
+                    let totalQuantity = 0;
+                    let totalAmount = 0;
+                    
+                    response.items.forEach((item, index) => {
+                        const itemTotal = item.quantity * item.unit_price;
+                        totalQuantity += parseInt(item.quantity);
+                        totalAmount += itemTotal;
+                        
+                        const row = `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${item.product_name}</td>
+                                <td>${item.unit_type === 'piece' ? 'دانە' : (item.unit_type === 'box' ? 'کارتۆن' : 'سێت')}</td>
+                                <td>${item.quantity}</td>
+                                <td>${numberFormat(item.unit_price)}</td>
+                                <td>${numberFormat(itemTotal)}</td>
+                            </tr>
+                        `;
+                        tbody.append(row);
+                    });
+                    
+                    // Show the modal
+                    $('#viewSaleItemsModal').modal('show');
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: response.message || 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیارییەکان'
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                Swal.close();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: 'هەڵەیەک ڕوویدا لە پەیوەندی کردن بە سێرڤەر'
+                });
+                console.error('AJAX Error:', error);
+            }
+        });
+    }
+
     // Handle purchase receipt view
     $(document).on('click', '#shippingHistoryTable .view-btn', function() {
         const purchaseId = $(this).data('id');

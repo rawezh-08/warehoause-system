@@ -23,6 +23,24 @@ try {
         throw new Exception('پسووڵەی داواکراو نەدۆزرایەوە');
     }
 
+    // Check if sale has any returns
+    $stmt = $conn->prepare("
+        SELECT COUNT(*) as return_count 
+        FROM product_returns 
+        WHERE receipt_id = ? AND receipt_type = 'selling'
+    ");
+    $stmt->execute([$id]);
+    $hasReturns = $stmt->fetch(PDO::FETCH_ASSOC)['return_count'] > 0;
+
+    // Check if sale has any payments (for credit sales)
+    $stmt = $conn->prepare("
+        SELECT COUNT(*) as payment_count 
+        FROM debt_transactions 
+        WHERE reference_id = ? AND transaction_type = 'payment'
+    ");
+    $stmt->execute([$id]);
+    $hasPayments = $stmt->fetch(PDO::FETCH_ASSOC)['payment_count'] > 0;
+
     // Get sale items
     $stmt = $conn->prepare("
         SELECT si.*, p.name as product_name
@@ -46,7 +64,9 @@ try {
             'other_costs' => $sale['other_costs'],
             'discount' => $sale['discount'],
             'notes' => $sale['notes'],
-            'items' => $items
+            'items' => $items,
+            'has_returns' => $hasReturns,
+            'has_payments' => $hasPayments
         ]
     ]);
 

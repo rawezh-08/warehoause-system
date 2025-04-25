@@ -568,11 +568,6 @@ try {
                                                                         <i class="fas fa-eye"></i>
                                                                     </button>
                                                                         <button type="button"
-                                                                            class="btn btn-sm btn-outline-secondary rounded-circle print-btn"
-                                                                            data-id="<?php echo $purchase['id']; ?>">
-                                                                        <i class="fas fa-print"></i>
-                                                                    </button>
-                                                                        <button type="button"
                                                                             class="btn btn-sm btn-outline-warning rounded-circle return-btn"
                                                                             data-id="<?php echo $purchase['id']; ?>">
                                                                         <i class="fas fa-undo"></i>
@@ -753,7 +748,7 @@ try {
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="editSaleInvoiceNumber" class="form-label">ژمارەی پسووڵە</label>
-                                <input type="text" class="form-control" id="editSaleInvoiceNumber" required>
+                                <input type="text" class="form-control" id="editSaleInvoiceNumber" required readonly>
                             </div>
                             <div class="col-md-6">
                                 <label for="editSaleCustomer" class="form-label">کڕیار</label>

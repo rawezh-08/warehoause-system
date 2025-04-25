@@ -81,31 +81,23 @@ $(document).ready(function() {
             url: '../../api/receipts/get_draft_details.php',
             type: 'POST',
             data: { draft_id: receiptId },
+            dataType: 'json',
             success: function(response) {
                 Swal.close();
                 
-                try {
-                    const data = JSON.parse(response);
-                    if (data.status === 'success') {
-                        // Display draft details in a modal
-                        showDraftDetails(data.draft);
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'هەڵە',
-                            text: data.message || 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان'
-                        });
-                    }
-                } catch (e) {
-                    console.error(e);
+                if (response.status === 'success') {
+                    // Display draft details in a modal
+                    showDraftDetails(response.draft);
+                } else {
                     Swal.fire({
                         icon: 'error',
                         title: 'هەڵە',
-                        text: 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان'
+                        text: response.message || 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان'
                     });
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
+                console.error('AJAX error:', xhr);
                 Swal.close();
                 Swal.fire({
                     icon: 'error',
@@ -135,31 +127,23 @@ $(document).ready(function() {
             url: '../../api/receipts/get_draft_details.php',
             type: 'POST',
             data: { draft_id: receiptId },
+            dataType: 'json',
             success: function(response) {
                 Swal.close();
                 
-                try {
-                    const data = JSON.parse(response);
-                    if (data.status === 'success') {
-                        // Show edit form
-                        showEditDraftForm(data.draft);
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'هەڵە',
-                            text: data.message || 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان'
-                        });
-                    }
-                } catch (e) {
-                    console.error(e);
+                if (response.status === 'success') {
+                    // Show edit form
+                    showEditDraftForm(response.draft);
+                } else {
                     Swal.fire({
                         icon: 'error',
                         title: 'هەڵە',
-                        text: 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان'
+                        text: response.message || 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان'
                     });
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
+                console.error('AJAX error:', xhr);
                 Swal.close();
                 Swal.fire({
                     icon: 'error',

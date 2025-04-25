@@ -34,6 +34,15 @@ $(document).ready(function() {
         viewWastingDetails(wastingId);
     });
 
+    /**
+     * View receipt details - a function to handle viewing of wasting/withdrawal receipts
+     * @param {number} id - ID of the receipt to view
+     */
+    function viewReceipt(id) {
+        // Simply call the appropriate function for wasting receipts
+        viewWastingDetails(id);
+    }
+
     // Function to view wasting details
     function viewWastingDetails(wastingId) {
         // Show loading

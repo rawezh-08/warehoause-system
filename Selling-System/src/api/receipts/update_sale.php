@@ -40,23 +40,28 @@ try {
     $stmt->execute([$id]);
     $hasReturns = $stmt->fetch(PDO::FETCH_ASSOC)['return_count'] > 0;
 
+    // Check if sale has any payments (for credit sales)
+    $stmt = $conn->prepare("
+        SELECT COUNT(*) as payment_count 
+        FROM debt_transactions 
+        WHERE reference_id = ? AND transaction_type = 'payment'
+    ");
+    $stmt->execute([$id]);
+    $hasPayments = $stmt->fetch(PDO::FETCH_ASSOC)['payment_count'] > 0;
+
+    // Prevent changing payment type if there are returns or payments
+    if (($hasReturns || $hasPayments) && $sale['payment_type'] !== $payment_type) {
+        throw new Exception('ناتوانرێت جۆری پارەدان بگۆڕدرێت چونکە پسووڵەکە گەڕاندنەوەی کاڵا یان پارەدانی لەسەر تۆمارکراوە');
+    }
+
+    // If there are returns, don't allow editing the receipt
     if ($hasReturns) {
         throw new Exception('ناتوانرێت ئەم پسووڵەیە دەستکاری بکرێت چونکە گەڕاندنەوەی کاڵای لەسەر تۆمارکراوە');
     }
 
-    // Check if sale has any payments (for credit sales)
-    if ($sale['payment_type'] === 'credit') {
-        $stmt = $conn->prepare("
-            SELECT COUNT(*) as payment_count 
-            FROM debt_transactions 
-            WHERE reference_id = ? AND transaction_type = 'payment'
-        ");
-        $stmt->execute([$id]);
-        $hasPayments = $stmt->fetch(PDO::FETCH_ASSOC)['payment_count'] > 0;
-
-        if ($hasPayments) {
-            throw new Exception('ناتوانرێت ئەم پسووڵەیە دەستکاری بکرێت چونکە پارەدانی لەسەر تۆمارکراوە');
-        }
+    // If there are payments, don't allow editing the receipt
+    if ($hasPayments) {
+        throw new Exception('ناتوانرێت ئەم پسووڵەیە دەستکاری بکرێت چونکە پارەدانی لەسەر تۆمارکراوە');
     }
 
     // Update sale
@@ -85,48 +90,102 @@ try {
         $id
     ]);
 
-    // If payment type changed from credit to cash, remove debt records
+    // Calculate total amount of the sale
+    $stmt = $conn->prepare("
+        SELECT SUM(total_price) as total 
+        FROM sale_items 
+        WHERE sale_id = ?
+    ");
+    $stmt->execute([$id]);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    $total = $result['total'] ?? 0;
+    $total_amount = $total + $shipping_cost + $other_costs - $discount;
+
+    // If payment type changed from credit to cash, remove debt records and update customer debt
     if ($sale['payment_type'] === 'credit' && $payment_type === 'cash') {
+        // Delete debt transaction
         $stmt = $conn->prepare("
             DELETE FROM debt_transactions 
             WHERE reference_id = ? AND transaction_type = 'sale'
         ");
         $stmt->execute([$id]);
+        
+        // Update customer's debt (decrease)
+        $stmt = $conn->prepare("
+            UPDATE customers 
+            SET debit_on_business = debit_on_business - ?
+            WHERE id = ?
+        ");
+        $stmt->execute([$total_amount, $sale['customer_id']]);
+        
+        // Update remaining_amount and paid_amount
+        $stmt = $conn->prepare("
+            UPDATE sales 
+            SET remaining_amount = 0, 
+                paid_amount = ?
+            WHERE id = ?
+        ");
+        $stmt->execute([$total_amount, $id]);
     }
 
-    // If payment type changed from cash to credit, add debt record
+    // If payment type changed from cash to credit, add debt record and update customer debt
     if ($sale['payment_type'] === 'cash' && $payment_type === 'credit') {
-        // Calculate total amount
-        $stmt = $conn->prepare("
-            SELECT SUM(total_price) as total 
-            FROM sale_items 
-            WHERE sale_id = ?
-        ");
-        $stmt->execute([$id]);
-        $total = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-        $total += $shipping_cost + $other_costs - $discount;
-
         // Add debt transaction
         $stmt = $conn->prepare("
             INSERT INTO debt_transactions (
-                customer_id, amount, transaction_type, reference_id, notes
-            ) VALUES (?, ?, 'sale', ?, ?)
+                customer_id, amount, transaction_type, reference_id, notes, created_at
+            ) VALUES (?, ?, 'sale', ?, ?, NOW())
         ");
         $stmt->execute([
             $customer_id,
-            $total,
+            $total_amount,
             $id,
             $notes
         ]);
 
-        // Update remaining amount in sales table
+        // Update customer's debt (increase)
+        $stmt = $conn->prepare("
+            UPDATE customers 
+            SET debit_on_business = debit_on_business + ?
+            WHERE id = ?
+        ");
+        $stmt->execute([$total_amount, $customer_id]);
+
+        // Update remaining amount and paid amount in sales table
         $stmt = $conn->prepare("
             UPDATE sales 
             SET remaining_amount = ?, 
                 paid_amount = 0
             WHERE id = ?
         ");
-        $stmt->execute([$total, $id]);
+        $stmt->execute([$total_amount, $id]);
+    }
+
+    // If only customer changed but payment type remains credit, update debt record ownership
+    if ($payment_type === 'credit' && $sale['payment_type'] === 'credit' && $customer_id != $sale['customer_id']) {
+        // First decrease debt for old customer
+        $stmt = $conn->prepare("
+            UPDATE customers 
+            SET debit_on_business = debit_on_business - ?
+            WHERE id = ?
+        ");
+        $stmt->execute([$total_amount, $sale['customer_id']]);
+        
+        // Then increase debt for new customer
+        $stmt = $conn->prepare("
+            UPDATE customers 
+            SET debit_on_business = debit_on_business + ?
+            WHERE id = ?
+        ");
+        $stmt->execute([$total_amount, $customer_id]);
+        
+        // Update debt transaction customer
+        $stmt = $conn->prepare("
+            UPDATE debt_transactions 
+            SET customer_id = ?
+            WHERE reference_id = ? AND transaction_type = 'sale'
+        ");
+        $stmt->execute([$customer_id, $id]);
     }
 
     // Commit transaction

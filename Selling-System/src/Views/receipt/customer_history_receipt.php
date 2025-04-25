@@ -7,6 +7,108 @@ $conn = $db->getConnection();
 // Check if we're in print mode (no filters shown)
 $printMode = isset($_GET['print']) && $_GET['print'] == 'true';
 
+// Get language preference (default to Kurdish)
+$lang = isset($_GET['lang']) ? $_GET['lang'] : 'ku';
+
+// Language translations
+$translations = [
+    'ku' => [
+        'title' => 'مێژووی کڕیار',
+        'company_name' => 'کۆگای احمد و ئەشکان',
+        'company_address' => 'ناونیشان: سلێمانی - کۆگاکانی غرفة تجارة - کۆگای 288',
+        'company_phone' => 'ژمارە تەلەفۆن: 5678 123 0770',
+        'customer_history' => 'مێژووی مامەڵەکانی کڕیار',
+        'date' => 'بەروار',
+        'customer_name' => 'ناوی کڕیار',
+        'phone' => 'ژمارەی مۆبایل',
+        'address' => 'ناونیشان',
+        'debt_status' => 'بارودۆخی قەرز',
+        'unknown' => 'نادیار',
+        'debt_amount' => 'دینار قەرزدار',
+        'advance_amount' => 'دینار پێشەکی',
+        'balanced' => 'هاوسەنگ',
+        'purchase_history' => 'مێژووی کڕینەکان',
+        'invoice_number' => 'ژمارەی پسووڵە',
+        'items_count' => 'هەژمار کاڵاکان',
+        'total_quantity' => 'کۆی بڕ',
+        'total_price' => 'کۆی نرخ',
+        'payment_type' => 'جۆری پارەدان',
+        'cash' => 'نەقد',
+        'credit' => 'قەرز',
+        'paid_amount' => 'پارەی دراو',
+        'remaining_amount' => 'پارەی ماوە',
+        'debt_return_history' => 'مێژووی گەڕاندنەوەی قەرز',
+        'returned_amount' => 'بڕی گەڕاوە',
+        'payment_method' => 'شێوازی پارەدان',
+        'notes' => 'تێبینی',
+        'total_purchases' => 'کۆی کڕینەکان',
+        'total_debt_returns' => 'کۆی گەڕاندنەوەی قەرز',
+        'debt_status_title' => 'دۆخی قەرز',
+        'debtor' => 'قەرزدار',
+        'advance' => 'پێشەکی',
+        'footer_note' => 'ئەم وەسڵە تەنها بۆ مەبەستی بەدواداچوونە و بە وەسڵی فەرمی دانانرێت',
+        'print' => 'چاپکردن',
+        'filter_title' => 'فلتەرکردنی مێژووی کڕیار بە پێی بەروار',
+        'from_date' => 'لە بەرواری',
+        'to_date' => 'هەتا بەرواری',
+        'reset' => 'ڕیسێت',
+        'credit_only' => 'تەنها پسووڵەکانی قەرز نیشان بدە',
+        'no_purchases' => 'هیچ کڕینێک نەدۆزرایەوە',
+        'no_debt_returns' => 'هیچ گەڕاندنەوەیەکی قەرز نەدۆزرایەوە',
+        'transfer' => 'FIB یان FastPay',
+        'other' => 'هی تر'
+    ],
+    'ar' => [
+        'title' => 'سجل العميل',
+        'company_name' => 'مخزن احمد و أشكان',
+        'company_address' => 'العنوان: السليمانية - مخازن الغرفة التجارية - مخزن 288',
+        'company_phone' => 'رقم الهاتف: 5678 123 0770',
+        'customer_history' => 'سجل معاملات العميل',
+        'date' => 'التاريخ',
+        'customer_name' => 'اسم العميل',
+        'phone' => 'رقم الهاتف',
+        'address' => 'العنوان',
+        'debt_status' => 'حالة الدين',
+        'unknown' => 'غير معروف',
+        'debt_amount' => 'دينار مدين',
+        'advance_amount' => 'دينار مقدم',
+        'balanced' => 'متوازن',
+        'purchase_history' => 'سجل المشتريات',
+        'invoice_number' => 'رقم الفاتورة',
+        'items_count' => 'عدد المواد',
+        'total_quantity' => 'الكمية الإجمالية',
+        'total_price' => 'السعر الإجمالي',
+        'payment_type' => 'نوع الدفع',
+        'cash' => 'نقداً',
+        'credit' => 'دين',
+        'paid_amount' => 'المبلغ المدفوع',
+        'remaining_amount' => 'المبلغ المتبقي',
+        'debt_return_history' => 'سجل تسديد الديون',
+        'returned_amount' => 'المبلغ المسدد',
+        'payment_method' => 'طريقة الدفع',
+        'notes' => 'ملاحظات',
+        'total_purchases' => 'إجمالي المشتريات',
+        'total_debt_returns' => 'إجمالي تسديد الديون',
+        'debt_status_title' => 'حالة الدين',
+        'debtor' => 'مدين',
+        'advance' => 'مقدم',
+        'footer_note' => 'هذا الإيصال للمتابعة فقط ولا يعتبر إيصالاً رسمياً',
+        'print' => 'طباعة',
+        'filter_title' => 'تصفية سجل العميل حسب التاريخ',
+        'from_date' => 'من تاريخ',
+        'to_date' => 'إلى تاريخ',
+        'reset' => 'إعادة تعيين',
+        'credit_only' => 'عرض الفواتير الآجلة فقط',
+        'no_purchases' => 'لم يتم العثور على مشتريات',
+        'no_debt_returns' => 'لم يتم العثور على تسديدات للديون',
+        'transfer' => 'FIB أو FastPay',
+        'other' => 'أخرى'
+    ]
+];
+
+// Get the translations for the current language
+$t = $translations[$lang];
+
 // Function to get correct image path without duplication
 function get_correct_image_path($image_name) {
     // Remove any existing paths to avoid duplication
@@ -83,6 +185,12 @@ if (!empty($endDate)) {
     $dateFilterParams[] = $endDate;
 }
 
+// Check if credit only filter is applied
+$creditOnly = isset($_GET['credit_only']) && $_GET['credit_only'] == '1';
+if ($creditOnly) {
+    $dateFilterCondition .= " AND s.payment_type = 'credit'";
+}
+
 // Get all sales for this customer
 $salesQuery = "SELECT s.*, 
                COUNT(si.id) as items_count,
@@ -136,11 +244,11 @@ foreach ($payments as $payment) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="ku" dir="rtl">
+<html lang="<?php echo $lang; ?>" dir="<?php echo $lang === 'ar' ? 'rtl' : 'rtl'; ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مێژووی کڕیار - <?php echo htmlspecialchars($customer['name']); ?></title>
+    <title><?php echo $t['title']; ?> - <?php echo htmlspecialchars($customer['name']); ?></title>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -493,13 +601,67 @@ foreach ($payments as $payment) {
         .btn-reset:hover {
             background-color: #e9ecef;
         }
+        
+        /* Custom checkbox style */
+        .form-check {
+            padding: 10px 30px 10px 0;
+            background-color: rgba(255, 187, 85, 0.1);
+            border-radius: 5px;
+            border: 1px solid var(--warning-color);
+            cursor: pointer;
+        }
+        
+        .form-check-input {
+            margin-left: 10px;
+        }
+        
+        .form-check-label {
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--warning-color);
+        }
+
+        /* Language selector styles */
+        .language-selector {
+            position: fixed;
+            top: 20px;
+            <?php echo $lang === 'ar' ? 'left' : 'right'; ?>: 80px;
+            z-index: 1000;
+        }
+        
+        .language-btn {
+            padding: 10px 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            margin-<?php echo $lang === 'ar' ? 'right' : 'left'; ?>: 10px;
+        }
+        
+        .language-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+        
+        .language-btn.active {
+            background: var(--success-color);
+        }
     </style>
 </head>
 <body>
     <?php if (!$printMode): ?>
+    <!-- Language Selector -->
+    <div class="language-selector">
+        <button onclick="changeLanguage('ku')" class="language-btn <?php echo $lang === 'ku' ? 'active' : ''; ?>">کوردی</button>
+        <button onclick="changeLanguage('ar')" class="language-btn <?php echo $lang === 'ar' ? 'active' : ''; ?>">عربي</button>
+    </div>
+    
     <!-- Date Filter Form -->
     <div class="filter-container">
-        <div class="filter-title">فلتەرکردنی مێژووی کڕیار بە پێی بەروار</div>
+        <div class="filter-title"><?php echo $t['filter_title']; ?></div>
         <form id="dateFilterForm" class="filter-form">
             <!-- Preserve customer_id or transaction_id -->
             <?php if ($customerId > 0): ?>
@@ -508,19 +670,30 @@ foreach ($payments as $payment) {
             <input type="hidden" name="transaction_id" value="<?php echo $transactionId; ?>">
             <?php endif; ?>
             
+            <!-- Preserve language selection -->
+            <input type="hidden" name="lang" value="<?php echo $lang; ?>">
+            
             <div class="form-group">
-                <label for="start_date" class="form-label">لە بەرواری</label>
+                <label for="start_date" class="form-label"><?php echo $t['from_date']; ?></label>
                 <input type="date" id="start_date" name="start_date" class="form-control date-filter" value="<?php echo $startDate; ?>">
             </div>
             
             <div class="form-group">
-                <label for="end_date" class="form-label">هەتا بەرواری</label>
+                <label for="end_date" class="form-label"><?php echo $t['to_date']; ?></label>
                 <input type="date" id="end_date" name="end_date" class="form-control date-filter" value="<?php echo $endDate; ?>">
             </div>
             
+            <div class="form-group">
+                <label for="credit_only" class="form-label d-block">&nbsp;</label>
+                <div class="form-check">
+                    <input type="checkbox" id="credit_only" name="credit_only" value="1" class="form-check-input credit-filter" <?php echo $creditOnly ? 'checked' : ''; ?>>
+                    <label class="form-check-label" for="credit_only"><?php echo $t['credit_only']; ?></label>
+                </div>
+            </div>
+            
             <div class="form-group" style="flex: 0 0 auto;">
-                <a href="?<?php echo $customerId > 0 ? 'customer_id=' . $customerId : 'transaction_id=' . $transactionId; ?>" class="btn-reset">
-                    <i class="fas fa-redo"></i> ڕیسێت
+                <a href="?<?php echo $customerId > 0 ? 'customer_id=' . $customerId : 'transaction_id=' . $transactionId; ?>&lang=<?php echo $lang; ?>" class="btn-reset">
+                    <i class="fas fa-redo"></i> <?php echo $t['reset']; ?>
                 </a>
             </div>
         </form>
@@ -530,61 +703,65 @@ foreach ($payments as $payment) {
     <div class="receipt-container">
         <header class="receipt-header">
             <div class="logo-section">
-                <img src="../../assets/images/company-logo.svg" alt="کۆگای ئەشکان" class="company-logo">
                 <div class="company-info">
-                    <h1>کۆگای ئەشکان</h1>
-                    <p>ناونیشان: سلێمانی - کۆگاکانی غرفة تجارة - کۆگای 288</p>
-                    <p>ژمارە تەلەفۆن: 5678 123 0770</p>
+                    <h1><?php echo $t['company_name']; ?></h1>
+                    <p><?php echo $t['company_address']; ?></p>
+                    <p><?php echo $t['company_phone']; ?></p>
                 </div>
             </div>
             <div class="invoice-details">
-                <div class="receipt-title">مێژووی مامەڵەکانی کڕیار</div>
-                <div class="receipt-date">بەروار: <?php echo date('Y-m-d'); ?></div>
+                <div class="receipt-title"><?php echo $t['customer_history']; ?></div>
+                <div class="receipt-date"><?php echo $t['date']; ?>: <?php echo date('Y-m-d'); ?></div>
             </div>
         </header>
 
         <section class="customer-info">
             <div class="info-group">
-                <div class="info-label">ناوی کڕیار</div>
+                <div class="info-label"><?php echo $t['customer_name']; ?></div>
                 <div class="info-value"><?php echo htmlspecialchars($customer['name']); ?></div>
             </div>
             <div class="info-group">
-                <div class="info-label">ژمارەی مۆبایل</div>
+                <div class="info-label"><?php echo $t['phone']; ?></div>
                 <div class="info-value"><?php echo htmlspecialchars($customer['phone1']); ?></div>
             </div>
             <div class="info-group">
-                <div class="info-label">ناونیشان</div>
-                <div class="info-value"><?php echo htmlspecialchars($customer['address'] ?: 'نادیار'); ?></div>
+                <div class="info-label"><?php echo $t['address']; ?></div>
+                <div class="info-value"><?php echo htmlspecialchars($customer['address'] ?: $t['unknown']); ?></div>
             </div>
             <div class="info-group">
-                <div class="info-label">بارودۆخی قەرز</div>
+                <div class="info-label"><?php echo $t['debt_status']; ?></div>
                 <div class="info-value">
                     <?php if ($customer['debit_on_business'] > 0): ?>
-                        <span style="color: var(--danger-color);"><?php echo number_format($customer['debit_on_business']); ?> دینار قەرزدار</span>
+                        <span style="color: var(--danger-color);"><?php echo number_format($customer['debit_on_business']); ?> <?php echo $t['debt_amount']; ?></span>
                     <?php elseif ($customer['debit_on_business'] < 0): ?>
-                        <span style="color: var(--success-color);"><?php echo number_format(abs($customer['debit_on_business'])); ?> دینار پێشەکی</span>
+                        <span style="color: var(--success-color);"><?php echo number_format(abs($customer['debit_on_business'])); ?> <?php echo $t['advance_amount']; ?></span>
                     <?php else: ?>
-                        <span style="color: var(--info-color);">هاوسەنگ</span>
+                        <span style="color: var(--info-color);"><?php echo $t['balanced']; ?></span>
                     <?php endif; ?>
                 </div>
             </div>
         </section>
 
         <section class="items-section">
-            <h2 class="section-title">مێژووی کڕینەکان</h2>
+            <h2 class="section-title">
+                <?php echo $t['purchase_history']; ?>
+                <?php if ($creditOnly): ?>
+                <span class="badge badge-warning" style="font-size: 14px; vertical-align: middle; margin-right: 10px;"><?php echo $t['credit_only']; ?></span>
+                <?php endif; ?>
+            </h2>
             <div class="table-responsive">
                 <table class="items-table">
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>ژمارەی پسووڵە</th>
-                            <th>بەروار</th>
-                            <th>هەژمار کاڵاکان</th>
-                            <th>کۆی بڕ</th>
-                            <th>کۆی نرخ</th>
-                            <th>جۆری پارەدان</th>
-                            <th>پارەی دراو</th>
-                            <th>پارەی ماوە</th>
+                            <th><?php echo $t['invoice_number']; ?></th>
+                            <th><?php echo $t['date']; ?></th>
+                            <th><?php echo $t['items_count']; ?></th>
+                            <th><?php echo $t['total_quantity']; ?></th>
+                            <th><?php echo $t['total_price']; ?></th>
+                            <th><?php echo $t['payment_type']; ?></th>
+                            <th><?php echo $t['paid_amount']; ?></th>
+                            <th><?php echo $t['remaining_amount']; ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -600,9 +777,9 @@ foreach ($payments as $payment) {
                                     <td><?php echo number_format($sale['invoice_total']); ?> د.ع</td>
                                     <td>
                                         <?php if ($sale['payment_type'] == 'cash'): ?>
-                                            <span class="badge badge-success">نەقد</span>
+                                            <span class="badge badge-success"><?php echo $t['cash']; ?></span>
                                         <?php else: ?>
-                                            <span class="badge badge-warning">قەرز</span>
+                                            <span class="badge badge-warning"><?php echo $t['credit']; ?></span>
                                         <?php endif; ?>
                                     </td>
                                     <td><?php echo number_format($sale['paid_amount']); ?> د.ع</td>
@@ -611,23 +788,23 @@ foreach ($payments as $payment) {
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="9" style="text-align: center;">هیچ کڕینێک نەدۆزرایەوە</td>
+                                <td colspan="9" style="text-align: center;"><?php echo $t['no_purchases']; ?></td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
             </div>
 
-            <h2 class="section-title">مێژووی گەڕاندنەوەی قەرز</h2>
+            <h2 class="section-title"><?php echo $t['debt_return_history']; ?></h2>
             <div class="table-responsive">
                 <table class="items-table">
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>بەروار</th>
-                            <th>بڕی گەڕاوە</th>
-                            <th>شێوازی پارەدان</th>
-                            <th>تێبینی</th>
+                            <th><?php echo $t['date']; ?></th>
+                            <th><?php echo $t['returned_amount']; ?></th>
+                            <th><?php echo $t['payment_method']; ?></th>
+                            <th><?php echo $t['notes']; ?></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -642,13 +819,13 @@ foreach ($payments as $payment) {
                                         <?php
                                         switch ($payment['payment_method']) {
                                             case 'cash':
-                                                echo '<span class="badge badge-success">نەقد</span>';
+                                                echo '<span class="badge badge-success">' . $t['cash'] . '</span>';
                                                 break;
                                             case 'transfer':
-                                                echo '<span class="badge badge-info">FIB یان FastPay</span>';
+                                                echo '<span class="badge badge-info">' . $t['transfer'] . '</span>';
                                                 break;
                                             default:
-                                                echo '<span class="badge badge-secondary">هی تر</span>';
+                                                echo '<span class="badge badge-secondary">' . $t['other'] . '</span>';
                                         }
                                         ?>
                                     </td>
@@ -657,7 +834,7 @@ foreach ($payments as $payment) {
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="5" style="text-align: center;">هیچ گەڕاندنەوەیەکی قەرز نەدۆزرایەوە</td>
+                                <td colspan="5" style="text-align: center;"><?php echo $t['no_debt_returns']; ?></td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -668,22 +845,22 @@ foreach ($payments as $payment) {
         <section class="summary-section">
             <table class="summary-table">
                 <tr>
-                    <td class="summary-label">کۆی کڕینەکان:</td>
+                    <td class="summary-label"><?php echo $t['total_purchases']; ?>:</td>
                     <td class="summary-value"><?php echo number_format($totalSales); ?> د.ع</td>
                 </tr>
                 <tr>
-                    <td class="summary-label">کۆی گەڕاندنەوەی قەرز:</td>
+                    <td class="summary-label"><?php echo $t['total_debt_returns']; ?>:</td>
                     <td class="summary-value"><?php echo number_format($totalPaid); ?> د.ع</td>
                 </tr>
                 <tr>
-                    <td class="summary-label">دۆخی قەرز:</td>
+                    <td class="summary-label"><?php echo $t['debt_status_title']; ?>:</td>
                     <td class="summary-value">
                         <?php if ($totalDebt > 0): ?>
-                            <span style="color: var(--danger-color);"><?php echo number_format($totalDebt); ?> د.ع قەرزدار</span>
+                            <span style="color: var(--danger-color);"><?php echo number_format($totalDebt); ?> د.ع <?php echo $t['debtor']; ?></span>
                         <?php elseif ($totalDebt < 0): ?>
-                            <span style="color: var(--success-color);"><?php echo number_format(abs($totalDebt)); ?> د.ع پێشەکی</span>
+                            <span style="color: var(--success-color);"><?php echo number_format(abs($totalDebt)); ?> د.ع <?php echo $t['advance']; ?></span>
                         <?php else: ?>
-                            <span style="color: var(--info-color);">هاوسەنگ</span>
+                            <span style="color: var(--info-color);"><?php echo $t['balanced']; ?></span>
                         <?php endif; ?>
                     </td>
                 </tr>
@@ -692,20 +869,35 @@ foreach ($payments as $payment) {
 
         <footer class="receipt-footer">
             <div class="footer-notes">
-                ئەم وەسڵە تەنها بۆ مەبەستی بەدواداچوونە و بە وەسڵی فەرمی دانانرێت
+                <?php echo $t['footer_note']; ?>
             </div>
             
-            <p class="mt-3">© کۆگای ئەشکان - <?php echo date('Y'); ?></p>
+            <p class="mt-3">© <?php echo $t['company_name']; ?> - <?php echo date('Y'); ?></p>
         </footer>
     </div>
 
     <?php if (!$printMode): ?>
-    <button class="print-button" onclick="printWithFilters()">چاپکردن</button>
+    <button class="print-button" onclick="printWithFilters()"><?php echo $t['print']; ?></button>
     
     <script>
+        function changeLanguage(newLang) {
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('lang', newLang);
+            window.location.href = currentUrl.toString();
+        }
+        
         function printWithFilters() {
             const currentUrl = new URL(window.location.href);
             currentUrl.searchParams.set('print', 'true');
+            
+            // Preserve credit_only filter if it's checked
+            const creditOnlyCheck = document.getElementById('credit_only');
+            if (creditOnlyCheck && creditOnlyCheck.checked) {
+                currentUrl.searchParams.set('credit_only', '1');
+            }
+            
+            // Preserve language selection
+            currentUrl.searchParams.set('lang', '<?php echo $lang; ?>');
             
             // Open in new tab and print
             const printWindow = window.open(currentUrl.toString(), '_blank');
@@ -716,14 +908,39 @@ foreach ($payments as $payment) {
             }
         }
         
-        // Auto open print dialog when page loads in print mode
-        <?php if ($printMode): ?>
-        window.onload = function() {
-            setTimeout(function() {
-                window.print();
-            }, 1000); // Short delay to ensure everything is loaded
-        };
-        <?php endif; ?>
+        // Auto filter when date changes
+        const dateInputs = document.querySelectorAll('.date-filter');
+        dateInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                submitFilterForm();
+            });
+        });
+        
+        // Auto filter when credit checkbox changes
+        const creditFilter = document.getElementById('credit_only');
+        if (creditFilter) {
+            creditFilter.addEventListener('change', function() {
+                submitFilterForm();
+            });
+        }
+        
+        // Function to submit the filter form
+        function submitFilterForm() {
+            const form = document.getElementById('dateFilterForm');
+            
+            // Create a FormData object from our form
+            const formData = new FormData(form);
+            
+            // Build the new URL with parameters
+            let url = '?';
+            for (let pair of formData.entries()) {
+                url += `${pair[0]}=${pair[1]}&`;
+            }
+            
+            // Remove trailing & and redirect
+            url = url.slice(0, -1);
+            window.location.href = url;
+        }
     </script>
     <?php endif; ?>
 
@@ -734,24 +951,35 @@ foreach ($payments as $payment) {
         const dateInputs = document.querySelectorAll('.date-filter');
         dateInputs.forEach(input => {
             input.addEventListener('change', function() {
-                // Get current URL parameters
-                const urlParams = new URLSearchParams(window.location.search);
-                const form = document.getElementById('dateFilterForm');
-                
-                // Create a FormData object from our form
-                const formData = new FormData(form);
-                
-                // Build the new URL with parameters
-                let url = '?';
-                for (let pair of formData.entries()) {
-                    url += `${pair[0]}=${pair[1]}&`;
-                }
-                
-                // Remove trailing & and redirect
-                url = url.slice(0, -1);
-                window.location.href = url;
+                submitFilterForm();
             });
         });
+        
+        // Auto filter when credit checkbox changes
+        const creditFilter = document.getElementById('credit_only');
+        if (creditFilter) {
+            creditFilter.addEventListener('change', function() {
+                submitFilterForm();
+            });
+        }
+        
+        // Function to submit the filter form
+        function submitFilterForm() {
+            const form = document.getElementById('dateFilterForm');
+            
+            // Create a FormData object from our form
+            const formData = new FormData(form);
+            
+            // Build the new URL with parameters
+            let url = '?';
+            for (let pair of formData.entries()) {
+                url += `${pair[0]}=${pair[1]}&`;
+            }
+            
+            // Remove trailing & and redirect
+            url = url.slice(0, -1);
+            window.location.href = url;
+        }
     });
     </script>
 </body>

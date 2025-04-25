@@ -59,6 +59,24 @@ function populateSaleEditForm(saleData) {
     $('#editSaleOtherCosts').val(saleData.other_costs || 0);
     $('#editSaleDiscount').val(saleData.discount || 0);
     $('#editSaleNotes').val(saleData.notes || '');
+    
+    // Disable payment type field if sale has returns or payments
+    if (saleData.has_returns || saleData.has_payments) {
+        $('#editSalePaymentType').prop('disabled', true);
+        
+        // Add a note about why the field is disabled
+        if (saleData.has_returns && saleData.has_payments) {
+            $('<small class="text-danger d-block mt-1">ناتوانرێت جۆری پارەدان بگۆڕدرێت چونکە پسووڵەکە گەڕاندنەوەی کاڵا و پارەدانی لەسەر تۆمارکراوە</small>').insertAfter('#editSalePaymentType');
+        } else if (saleData.has_returns) {
+            $('<small class="text-danger d-block mt-1">ناتوانرێت جۆری پارەدان بگۆڕدرێت چونکە پسووڵەکە گەڕاندنەوەی کاڵای لەسەر تۆمارکراوە</small>').insertAfter('#editSalePaymentType');
+        } else if (saleData.has_payments) {
+            $('<small class="text-danger d-block mt-1">ناتوانرێت جۆری پارەدان بگۆڕدرێت چونکە پسووڵەکە پارەدانی لەسەر تۆمارکراوە</small>').insertAfter('#editSalePaymentType');
+        }
+    } else {
+        $('#editSalePaymentType').prop('disabled', false);
+        // Remove any existing note
+        $('#editSalePaymentType').next('small.text-danger').remove();
+    }
 }
 
 // Save sale changes

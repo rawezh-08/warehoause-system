@@ -621,11 +621,6 @@ foreach ($debtTransactions as $debtTransaction) {
                                                         </td>
                                                         <td>
                                                             <div class="action-buttons">
-                                                                <a href="viewSale.php?id=<?php echo $sale['id']; ?>"
-                                                                    class="btn btn-sm btn-outline-primary rounded-circle"
-                                                                    title="بینین">
-                                                                    <i class="fas fa-eye"></i>
-                                                                </a>
                                                                 <a href="../../views/receipt/print_receipt.php?sale_id=<?php echo $sale['id']; ?>"
                                                                     class="btn btn-sm btn-outline-success rounded-circle"
                                                                     title="چاپکردن">
@@ -810,11 +805,6 @@ foreach ($debtTransactions as $debtTransaction) {
                                                         </td>
                                                         <td>
                                                             <div class="action-buttons">
-                                                                    <a href="viewSale.php?id=<?php echo $transaction['reference_id']; ?>"
-                                                                        class="btn btn-sm btn-outline-primary rounded-circle"
-                                                                        title="بینین">
-                                                                        <i class="fas fa-eye"></i>
-                                                                    </a>
                                                                 <button type="button" 
                                                                     class="btn btn-sm btn-outline-info rounded-circle show-invoice-items"
                                                                     data-invoice="<?php echo $transaction['invoice_number']; ?>"

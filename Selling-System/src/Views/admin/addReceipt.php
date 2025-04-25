@@ -221,7 +221,10 @@ require_once '../../config/database.php';
                         <button type="button" class="btn btn-outline-primary draft-btn ">
                             <i class="fas fa-file-alt"></i> ڕەشنووس
                         </button>
-                        <button type="button" class="btn btn-primary save-btn cta-btn ">
+                        <button type="button" class="btn btn-outline-success delivery-btn ms-2">
+                            <i class="fas fa-truck"></i> پسووڵەی گەیاندن
+                        </button>
+                        <button type="button" class="btn btn-primary save-btn cta-btn ms-2">
                             پاشەکەوتکردن <i class="fas fa-save"></i>
                         </button>
                     </div>
@@ -657,6 +660,30 @@ require_once '../../config/database.php';
         </div>
     </div>
 
+    <!-- Delivery Receipt Modal -->
+    <div class="modal fade" id="deliveryReceiptModal" tabindex="-1" role="dialog" aria-labelledby="deliveryReceiptModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deliveryReceiptModalLabel">پسووڵەی گەیاندن</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="deliveryReceiptForm">
+                        <div class="mb-3">
+                            <label for="deliveryAddress" class="form-label">ناونیشانی گەیاندن</label>
+                            <textarea class="form-control" id="deliveryAddress" rows="3" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-success" id="saveDeliveryReceipt">پاشەکەوتکردن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -666,6 +693,117 @@ require_once '../../config/database.php';
     <!-- Test Script -->
     <script>
         $(document).ready(function() {
+            // Handle draft button click
+            $('.draft-btn').on('click', function(e) {
+                e.preventDefault();
+                
+                // Prevent multiple submissions
+                const saveButton = $(this);
+                if (saveButton.prop('disabled')) {
+                    return;
+                }
+                
+                // Get current receipt data
+                const currentTab = $('.tab-pane.active');
+                const receiptData = {
+                    receipt_type: 'selling',
+                    is_draft: true, // Set is_draft to true for draft receipts
+                    invoice_number: currentTab.find('.receipt-number').val(),
+                    customer_id: currentTab.find('.customer-select').val(),
+                    date: currentTab.find('.sale-date').val(),
+                    payment_type: currentTab.find('.payment-type').val(),
+                    discount: currentTab.find('.discount').val() || 0,
+                    paid_amount: currentTab.find('.paid-amount').val() || 0,
+                    price_type: currentTab.find('.price-type').val(),
+                    shipping_cost: currentTab.find('.shipping-cost').val() || 0,
+                    other_cost: currentTab.find('.other-cost').val() || 0,
+                    notes: currentTab.find('.notes').val() || '',
+                    products: []
+                };
+
+                // Get products data
+                currentTab.find('.items-list tr').each(function() {
+                    const $row = $(this);
+                    const productId = $row.find('.product-select').val();
+                    if (productId) {
+                        receiptData.products.push({
+                            product_id: productId,
+                            quantity: $row.find('.quantity').val(),
+                            unit_type: $row.find('.unit-type').val(),
+                            unit_price: $row.find('.unit-price').val()
+                        });
+                    }
+                });
+
+                // Show loading state
+                saveButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> چاوەڕێ بکە...');
+
+                // Save draft receipt via AJAX
+                $.ajax({
+                    url: '../../api/save_receipt.php',
+                    type: 'POST',
+                    data: JSON.stringify(receiptData),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        console.log('Server response:', response);
+                        if (response.success) {
+                            // Show success message
+                            Swal.fire({
+                                title: 'سەرکەوتوو بوو',
+                                text: 'ڕەشنووسی پسووڵە بە سەرکەوتوویی پاشەکەوتکرا',
+                                icon: 'success',
+                                confirmButtonText: 'باشە'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    // Fix the URL path to point to the correct location
+                                    window.location.href = '../../views/admin/receiptList.php?tab=drafts';
+                                }
+                            });
+                        } else {
+                            // Handle specific error cases
+                            if (response.message === 'ئەم ڕەشنووسە پێشتر هەیە') {
+                                Swal.fire({
+                                    title: 'هەڵە!',
+                                    text: 'ئەم ڕەشنووسە پێشتر هەیە. دەتەوێت بیبینیت؟',
+                                    icon: 'warning',
+                                    showCancelButton: true,
+                                    confirmButtonText: 'بەڵێ',
+                                    cancelButtonText: 'نەخێر'
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        // Fix the URL path to point to the correct location
+                                        window.location.href = '../../views/admin/receiptList.php?tab=drafts';
+                                    }
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'هەڵە!',
+                                    text: response.message || 'هەڵەیەک ڕوویدا',
+                                    icon: 'error',
+                                    confirmButtonText: 'باشە'
+                                });
+                            }
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', error);
+                        console.error('Status:', status);
+                        console.error('Response:', xhr.responseText);
+                        
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە سێرڤەرەوە',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    },
+                    complete: function() {
+                        // Reset button state
+                        saveButton.prop('disabled', false).html('<i class="fas fa-file-alt"></i> ڕەشنووس');
+                    }
+                });
+            });
+
             // Handle quick add product button click
             $('.quick-add-product').on('click', function(e) {
                 e.preventDefault();
@@ -771,6 +909,127 @@ require_once '../../config/database.php';
             // Reset form when modal is closed
             $('#quickAddProductModal').on('hidden.bs.modal', function() {
                 $('#quickAddProductForm')[0].reset();
+            });
+
+            // Handle delivery receipt button click
+            $('.delivery-btn').on('click', function(e) {
+                e.preventDefault();
+                $('#deliveryReceiptModal').modal('show');
+            });
+
+            // Handle save delivery receipt button click
+            $('#saveDeliveryReceipt').on('click', function(e) {
+                e.preventDefault();
+                
+                // Get form data
+                const deliveryAddress = $('#deliveryAddress').val();
+                
+                if (!deliveryAddress) {
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'تکایە ناونیشانی گەیاندن بنووسە',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                    return;
+                }
+
+                // Get current receipt data
+                const currentTab = $('.tab-pane.active');
+                const receiptData = {
+                    receipt_type: 'selling',
+                    is_delivery: true,
+                    delivery_address: deliveryAddress,
+                    invoice_number: currentTab.find('.receipt-number').val(),
+                    customer_id: currentTab.find('.customer-select').val(),
+                    date: currentTab.find('.sale-date').val(),
+                    payment_type: currentTab.find('.payment-type').val(),
+                    discount: currentTab.find('.discount').val() || 0,
+                    paid_amount: currentTab.find('.paid-amount').val() || 0,
+                    price_type: currentTab.find('.price-type').val(),
+                    shipping_cost: currentTab.find('.shipping-cost').val() || 0,
+                    other_cost: currentTab.find('.other-cost').val() || 0,
+                    notes: currentTab.find('.notes').val() || '',
+                    products: []
+                };
+
+                // Get products data
+                currentTab.find('.items-list tr').each(function() {
+                    const $row = $(this);
+                    const productId = $row.find('.product-select').val();
+                    if (productId) {
+                        receiptData.products.push({
+                            product_id: productId,
+                            quantity: $row.find('.quantity').val(),
+                            unit_type: $row.find('.unit-type').val(),
+                            unit_price: $row.find('.unit-price').val()
+                        });
+                    }
+                });
+
+                // Debug: Log the data being sent
+                console.log('Sending receipt data:', receiptData);
+
+                // Show loading state
+                const saveButton = $(this);
+                saveButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> چاوەڕێ بکە...');
+
+                // Save receipt via AJAX
+                $.ajax({
+                    url: '../../api/save_receipt.php',
+                    type: 'POST',
+                    data: JSON.stringify(receiptData),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        console.log('Server response:', response);
+                        if (response.success) {
+                            // Close modal and reset form
+                            $('#deliveryReceiptModal').modal('hide');
+                            $('#deliveryReceiptForm')[0].reset();
+
+                            // Show success message
+                            Swal.fire({
+                                title: 'سەرکەوتوو بوو',
+                                text: 'پسووڵەی گەیاندن بە سەرکەوتوویی پاشەکەوتکرا',
+                                icon: 'success',
+                                confirmButtonText: 'باشە'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    // Redirect to delivery receipt view
+                                    window.location.href = `../receipt/delivery_receipt.php?id=${response.receipt_id}`;
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: response.message || 'هەڵەیەک ڕوویدا',
+                                icon: 'error',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', error);
+                        console.error('Status:', status);
+                        console.error('Response:', xhr.responseText);
+                        
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە سێرڤەرەوە',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    },
+                    complete: function() {
+                        // Reset button state
+                        saveButton.prop('disabled', false).html('پاشەکەوتکردن');
+                    }
+                });
+            });
+
+            // Reset form when modal is closed
+            $('#deliveryReceiptModal').on('hidden.bs.modal', function() {
+                $('#deliveryReceiptForm')[0].reset();
             });
         });
     </script>

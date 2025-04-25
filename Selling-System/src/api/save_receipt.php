@@ -36,6 +36,12 @@ if (!$data) {
 
 // Validate required fields
 $required_fields = ['receipt_type', 'invoice_number', 'date', 'payment_type'];
+if ($data['receipt_type'] === 'selling') {
+    $required_fields[] = 'customer_id';
+} elseif ($data['receipt_type'] === 'buying') {
+    $required_fields[] = 'supplier_id';
+}
+
 $missing_fields = [];
 foreach ($required_fields as $field) {
     if (!isset($data[$field]) || empty($data[$field])) {
@@ -57,7 +63,33 @@ if (!empty($missing_fields)) {
 }
 
 // Check if this is a draft receipt
-$is_draft = isset($data['is_draft']) ? $data['is_draft'] : false;
+$is_draft = isset($data['is_draft']) ? (bool)$data['is_draft'] : false;
+
+// If this is a draft receipt, check if it already exists
+if ($is_draft) {
+    $check_stmt = $conn->prepare("
+        SELECT id FROM sales 
+        WHERE invoice_number = ? 
+        AND customer_id = ? 
+        AND is_draft = 1
+    ");
+    $check_stmt->execute([
+        $data['invoice_number'],
+        $data['customer_id']
+    ]);
+    
+    if ($check_stmt->fetch()) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'ئەم ڕەشنووسە پێشتر هەیە',
+            'debug' => [
+                'invoice_number' => $data['invoice_number'],
+                'customer_id' => $data['customer_id']
+            ]
+        ]);
+        exit;
+    }
+}
 
 // Validate receipt type specific fields
 if ($data['receipt_type'] === 'selling') {
@@ -104,19 +136,6 @@ try {
     $receipt_id = null;
     
     if ($data['receipt_type'] === 'selling') {
-        // Validate selling data
-        if (empty($data['customer_id']) || empty($data['products'])) {
-            echo json_encode([
-                'success' => false, 
-                'message' => 'کڕیار و کاڵاکان پێویستن',
-                'debug' => [
-                    'customer_id' => $data['customer_id'] ?? 'missing',
-                    'products' => $data['products'] ?? 'missing'
-                ]
-            ]);
-            exit;
-        }
-        
         // Format products data for the stored procedure
         $products_json = [];
         foreach ($data['products'] as $item) {
@@ -130,109 +149,91 @@ try {
         
         $products_json_string = json_encode($products_json);
         
-        // If this is a draft receipt, handle it differently
+        // Debug: Log the prepared data
+        error_log("Prepared sale data: " . print_r([
+            'invoice_number' => $data['invoice_number'],
+            'customer_id' => $data['customer_id'],
+            'date' => $data['date'],
+            'payment_type' => $data['payment_type'],
+            'discount' => floatval($data['discount']),
+            'paid_amount' => floatval($data['paid_amount']),
+            'price_type' => $data['price_type'],
+            'shipping_cost' => floatval($data['shipping_cost']),
+            'other_cost' => floatval($data['other_cost']),
+            'notes' => $data['notes'],
+            'is_delivery' => isset($data['is_delivery']) ? 1 : 0,
+            'delivery_address' => $data['delivery_address'] ?? null,
+            'is_draft' => $is_draft ? 1 : 0,
+            'products' => $products_json
+        ], true));
+        
+        // For regular (non-draft) sales, call the stored procedure
         if ($is_draft) {
-            // For draft sales, directly insert into database without calling stored procedure
-            // This approach doesn't modify inventory counts
-            $stmt = $conn->prepare("INSERT INTO sales (
-                invoice_number, customer_id, date, payment_type, 
-                discount, paid_amount, price_type, shipping_cost, other_costs,
-                notes, created_by, is_draft
-            ) VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1
-            )");
+            // Insert draft sale directly
+            $stmt = $conn->prepare("
+                INSERT INTO sales (
+                    invoice_number, customer_id, date, payment_type, 
+                    discount, paid_amount, price_type, shipping_cost, other_costs,
+                    notes, created_by, is_delivery, delivery_address, is_draft
+                ) VALUES (
+                    ?, ?, ?, ?, 
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?
+                )
+            ");
             
-            $stmt->bindParam(1, $data['invoice_number'], PDO::PARAM_STR);
-            $stmt->bindParam(2, $data['customer_id'], PDO::PARAM_INT);
-            $stmt->bindParam(3, $data['date'], PDO::PARAM_STR);
-            $stmt->bindParam(4, $data['payment_type'], PDO::PARAM_STR);
-            $stmt->bindParam(5, $data['discount'], PDO::PARAM_STR);
-            $stmt->bindParam(6, $data['paid_amount'], PDO::PARAM_STR);
-            $stmt->bindParam(7, $data['price_type'], PDO::PARAM_STR);
-            $stmt->bindParam(8, $data['shipping_cost'], PDO::PARAM_STR);
-            $stmt->bindParam(9, $data['other_cost'], PDO::PARAM_STR);
-            $stmt->bindParam(10, $data['notes'], PDO::PARAM_STR);
-            $created_by = 1; // Replace with actual user ID when authentication is implemented
-            $stmt->bindParam(11, $created_by, PDO::PARAM_INT);
+            $stmt->execute([
+                $data['invoice_number'],
+                $data['customer_id'],
+                $data['date'],
+                $data['payment_type'],
+                floatval($data['discount']),
+                floatval($data['paid_amount']),
+                $data['price_type'],
+                floatval($data['shipping_cost']),
+                floatval($data['other_cost']),
+                $data['notes'],
+                1, // created_by
+                isset($data['is_delivery']) ? 1 : 0,
+                $data['delivery_address'] ?? null,
+                1 // is_draft
+            ]);
             
-            $stmt->execute();
             $receipt_id = $conn->lastInsertId();
             
-            // Add draft sale items without updating inventory
-            $subtotal = 0;
-            foreach ($data['products'] as $item) {
-                $unit_price = floatval($item['unit_price']);
-                $quantity = (int)$item['quantity'];
-                $total_price = $unit_price * $quantity;
-                $subtotal += $total_price;
-                
-                // Calculate pieces count based on unit type
-                $product_info = $conn->prepare("SELECT pieces_per_box, boxes_per_set FROM products WHERE id = ?");
-                $product_info->execute([(int)$item['product_id']]);
-                $product = $product_info->fetch(PDO::FETCH_ASSOC);
-                
-                $pieces_count = $quantity; // Default for 'piece'
-                if ($item['unit_type'] === 'box' && !empty($product['pieces_per_box'])) {
-                    $pieces_count = $quantity * $product['pieces_per_box'];
-                } elseif ($item['unit_type'] === 'set' && !empty($product['pieces_per_box']) && !empty($product['boxes_per_set'])) {
-                    $pieces_count = $quantity * $product['pieces_per_box'] * $product['boxes_per_set'];
-                }
-                
-                $stmt = $conn->prepare("INSERT INTO sale_items (
+            // Insert sale items
+            $stmt = $conn->prepare("
+                INSERT INTO sale_items (
                     sale_id, product_id, quantity, unit_type, pieces_count,
                     unit_price, total_price
                 ) VALUES (
-                    ?, ?, ?, ?, ?, ?, ?
-                )");
+                    ?, ?, ?, ?, ?,
+                    ?, ?
+                )
+            ");
+            
+            foreach ($products_json as $item) {
+                $total_price = $item['quantity'] * $item['unit_price'];
+                $pieces_count = $item['quantity']; // For draft, we don't need to calculate actual pieces
                 
                 $stmt->execute([
                     $receipt_id,
-                    (int)$item['product_id'],
-                    $quantity,
+                    $item['product_id'],
+                    $item['quantity'],
                     $item['unit_type'],
                     $pieces_count,
-                    $unit_price,
+                    $item['unit_price'],
                     $total_price
                 ]);
             }
-            
-            // Update total amounts
-            $total_amount = $subtotal + floatval($data['shipping_cost']) + floatval($data['other_cost']) - floatval($data['discount']);
-            $remaining_amount = $data['payment_type'] === 'credit' ? ($total_amount - floatval($data['paid_amount'])) : 0;
-            
-            $stmt = $conn->prepare("UPDATE sales SET 
-                remaining_amount = ?, 
-                paid_amount = ? 
-                WHERE id = ?");
-            
-            // For draft receipts, don't record any debt transactions
-            $stmt->execute([
-                $remaining_amount,
-                $data['payment_type'] === 'credit' ? floatval($data['paid_amount']) : $total_amount,
-                $receipt_id
-            ]);
         } else {
-            // Debug: Log the prepared data
-            error_log("Prepared sale data: " . print_r([
-                'invoice_number' => $data['invoice_number'],
-                'customer_id' => $data['customer_id'],
-                'date' => $data['date'],
-                'payment_type' => $data['payment_type'],
-                'discount' => floatval($data['discount']),
-                'paid_amount' => floatval($data['paid_amount']),
-                'price_type' => $data['price_type'],
-                'shipping_cost' => floatval($data['shipping_cost']),
-                'other_cost' => floatval($data['other_cost']),
-                'notes' => $data['notes'],
-                'products' => $products_json
-            ], true));
-            
-            // For regular (non-draft) sales, call the stored procedure
+            // For regular sales, use the stored procedure
             if ($data['payment_type'] === 'credit') {
-                $stmt = $conn->prepare("CALL add_sale_with_advance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt = $conn->prepare("CALL add_sale_with_advance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             } else {
-                $stmt = $conn->prepare("CALL add_sale(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt = $conn->prepare("CALL add_sale(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             }
+            
             $stmt->bindParam(1, $data['invoice_number'], PDO::PARAM_STR);
             $stmt->bindParam(2, $data['customer_id'], PDO::PARAM_INT);
             $stmt->bindParam(3, $data['date'], PDO::PARAM_STR);
@@ -246,6 +247,10 @@ try {
             $created_by = 1; // Replace with actual user ID when authentication is implemented
             $stmt->bindParam(11, $created_by, PDO::PARAM_INT);
             $stmt->bindParam(12, $products_json_string, PDO::PARAM_STR);
+            $is_delivery = isset($data['is_delivery']) ? 1 : 0;
+            $stmt->bindParam(13, $is_delivery, PDO::PARAM_INT);
+            $delivery_address = isset($data['delivery_address']) ? $data['delivery_address'] : null;
+            $stmt->bindParam(14, $delivery_address, PDO::PARAM_STR);
             
             $stmt->execute();
             

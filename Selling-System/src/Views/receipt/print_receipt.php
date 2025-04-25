@@ -328,7 +328,7 @@ $dir = $lang === 'ar' ? 'rtl' : 'rtl';
         
         /* Header design */
         .receipt-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            background: var(--primary-color);
             padding: 25px;
             display: flex;
             justify-content: space-between;

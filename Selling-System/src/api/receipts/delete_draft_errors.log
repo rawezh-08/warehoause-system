@@ -1,0 +1,32 @@
+[25-Apr-2025 15:33:34 Europe/Berlin] Starting delete_draft.php script
+[25-Apr-2025 15:33:34 Europe/Berlin] POST data received: Array
+(
+    [receipt_id] => 239
+)
+
+[25-Apr-2025 15:33:34 Europe/Berlin] Processing draft receipt_id: 239
+[25-Apr-2025 15:33:34 Europe/Berlin] Database connection established successfully
+[25-Apr-2025 15:49:22 Europe/Berlin] Starting delete_draft.php script
+[25-Apr-2025 15:49:22 Europe/Berlin] POST data received: Array
+(
+    [receipt_id] => 241
+)
+
+[25-Apr-2025 15:49:22 Europe/Berlin] Processing draft receipt_id: 241
+[25-Apr-2025 15:49:22 Europe/Berlin] Database connection established successfully
+[25-Apr-2025 16:03:11 Europe/Berlin] Starting delete_draft.php script
+[25-Apr-2025 16:03:11 Europe/Berlin] POST data received: Array
+(
+    [receipt_id] => 245
+)
+
+[25-Apr-2025 16:03:11 Europe/Berlin] Processing draft receipt_id: 245
+[25-Apr-2025 16:03:11 Europe/Berlin] Database connection established successfully
+[25-Apr-2025 16:07:38 Europe/Berlin] Starting delete_draft.php script
+[25-Apr-2025 16:07:38 Europe/Berlin] POST data received: Array
+(
+    [receipt_id] => 244
+)
+
+[25-Apr-2025 16:07:38 Europe/Berlin] Processing draft receipt_id: 244
+[25-Apr-2025 16:07:38 Europe/Berlin] Database connection established successfully
