@@ -703,11 +703,14 @@ require_once '../../config/database.php';
                     return;
                 }
                 
+                // Disable the button immediately
+                saveButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> چاوەڕێ بکە...');
+                
                 // Get current receipt data
                 const currentTab = $('.tab-pane.active');
                 const receiptData = {
                     receipt_type: 'selling',
-                    is_draft: true, // Set is_draft to true for draft receipts
+                    is_draft: true,
                     invoice_number: currentTab.find('.receipt-number').val(),
                     customer_id: currentTab.find('.customer-select').val(),
                     date: currentTab.find('.sale-date').val(),
@@ -734,9 +737,6 @@ require_once '../../config/database.php';
                         });
                     }
                 });
-
-                // Show loading state
-                saveButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> چاوەڕێ بکە...');
 
                 // Save draft receipt via AJAX
                 $.ajax({
