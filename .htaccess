@@ -14,6 +14,11 @@ AddDefaultCharset UTF-8
 RewriteEngine On
 RewriteBase /warehouse-system/
 
+# Handle case-insensitive URLs
+RewriteMap lc int:tolower
+RewriteCond %{REQUEST_URI} [A-Z]
+RewriteRule (.*) ${lc:$1} [R=301,L]
+
 # Ensure PHP files are processed as PHP
 <FilesMatch "\.php$">
     SetHandler application/x-httpd-php
