@@ -1,29 +1,29 @@
 <?php
+// Include database connection
 require_once '../../config/database.php';
-require_once '../../includes/auth.php';
 
+// Set header to return JSON
 header('Content-Type: application/json');
 
+// Check if wasting_id is provided
+if (!isset($_POST['wasting_id'])) {
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'ID ی بەفیڕۆچوو پێویستە'
+    ]);
+    exit;
+}
+
+$wasting_id = $_POST['wasting_id'];
+
 try {
-    // Get wasting ID from POST data
-    $wasting_id = isset($_POST['wasting_id']) ? intval($_POST['wasting_id']) : 0;
-    
-    if ($wasting_id <= 0) {
-        throw new Exception('IDی بەفیڕۆچوو نادروستە');
-    }
-    
-    // Get wasting header information
-    $header_stmt = $conn->prepare("
+    // Get wasting details
+    $stmt = $conn->prepare("
         SELECT w.*, 
                GROUP_CONCAT(
-                   CONCAT(p.name, ' (', wi.quantity, ' ', 
-                   CASE wi.unit_type 
-                       WHEN 'piece' THEN 'دانە'
-                       WHEN 'box' THEN 'کارتۆن'
-                       WHEN 'set' THEN 'سێت'
-                   END, ')')
-               SEPARATOR ', ') as products_list,
-               SUM(wi.total_price) as total_amount
+                   CONCAT(p.name, '|', wi.quantity, '|', wi.unit_type, '|', wi.unit_price, '|', wi.total_price)
+                   SEPARATOR '||'
+               ) as items_data
         FROM wastings w
         LEFT JOIN wasting_items wi ON w.id = wi.wasting_id
         LEFT JOIN products p ON wi.product_id = p.id
@@ -31,42 +31,47 @@ try {
         GROUP BY w.id
     ");
     
-    $header_stmt->execute([$wasting_id]);
-    $header = $header_stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if (!$header) {
-        throw new Exception('بەفیڕۆچووەکە نەدۆزرایەوە');
+    $stmt->execute([$wasting_id]);
+    $wasting = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$wasting) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'بەفیڕۆچووەکە نەدۆزرایەوە'
+        ]);
+        exit;
     }
+
+    // Parse items data
+    $items = [];
+    if ($wasting['items_data']) {
+        $items_array = explode('||', $wasting['items_data']);
+        foreach ($items_array as $item) {
+            list($name, $quantity, $unit_type, $unit_price, $total_price) = explode('|', $item);
+            $items[] = [
+                'product_name' => $name,
+                'quantity' => $quantity,
+                'unit_type' => $unit_type,
+                'unit_price' => $unit_price,
+                'total_price' => $total_price
+            ];
+        }
+    }
+
+    // Remove items_data from wasting array
+    unset($wasting['items_data']);
     
-    // Get wasting items
-    $items_stmt = $conn->prepare("
-        SELECT wi.*, 
-               p.name as product_name,
-               p.code as product_code,
-               p.image as product_image
-        FROM wasting_items wi
-        LEFT JOIN products p ON wi.product_id = p.id
-        WHERE wi.wasting_id = ?
-    ");
-    
-    $items_stmt->execute([$wasting_id]);
-    $items = $items_stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Format the response
-    $response = [
+    // Add items to wasting array
+    $wasting['items'] = $items;
+
+    echo json_encode([
         'status' => 'success',
-        'wasting' => [
-            'header' => $header,
-            'items' => $items
-        ]
-    ];
-    
-    echo json_encode($response);
-    
-} catch (Exception $e) {
-    http_response_code(400);
+        'wasting' => $wasting
+    ]);
+
+} catch (PDOException $e) {
     echo json_encode([
         'status' => 'error',
-        'message' => $e->getMessage()
+        'message' => 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان'
     ]);
 } 
