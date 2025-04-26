@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json');
-require_once '../../config/database.php';
-require_once '../../controllers/receipts/SaleReceiptsController.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../Controllers/receipts/SaleReceiptsController.php';
 
 try {
     // Set up filters based on request parameters
