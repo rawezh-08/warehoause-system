@@ -3,14 +3,14 @@
 # Navigate to the project directory
 cd /var/www/html/warehoause-system
 
-# Configure Git to use rebase strategy
-git config pull.rebase true
+# Configure Git to use merge strategy
+git config pull.rebase false
 
 # Save any local changes
 git stash
 
-# Pull the latest changes with rebase
-git pull --rebase origin main
+# Pull the latest changes with merge
+git pull --no-rebase origin main
 
 # Apply any saved changes
 git stash pop
