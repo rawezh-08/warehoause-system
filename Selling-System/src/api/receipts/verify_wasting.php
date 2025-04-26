@@ -12,7 +12,10 @@ try {
         throw new Exception('IDی بەفیڕۆچوو نادروستە');
     }
     
-    // Check if wasting record exists
+    // Debug: Log the wasting ID
+    error_log("Checking wasting ID: " . $wasting_id);
+    
+    // Check if wasting exists
     $stmt = $conn->prepare("
         SELECT COUNT(*) as count 
         FROM wastings 
@@ -20,6 +23,9 @@ try {
     ");
     $stmt->execute([$wasting_id]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    // Debug: Log the query result
+    error_log("Query result: " . print_r($result, true));
     
     // Return result
     echo json_encode([
@@ -29,6 +35,9 @@ try {
     ]);
     
 } catch (Exception $e) {
+    // Debug: Log any errors
+    error_log("Error in verify_wasting.php: " . $e->getMessage());
+    
     http_response_code(400);
     echo json_encode([
         'success' => false,
