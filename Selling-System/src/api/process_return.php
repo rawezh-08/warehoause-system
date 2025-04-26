@@ -19,9 +19,6 @@ try {
         throw new Exception('Missing receipt_id or receipt_type');
     }
     
-    // Convert receipt_type to match database enum values
-    $receipt_type = $data['receipt_type'] === 'sale' ? 'selling' : 'buying';
-    
     if (empty($data['items']) || !is_array($data['items'])) {
         // Check if items is a JSON string
         if (isset($data['items']) && is_string($data['items'])) {
@@ -29,7 +26,7 @@ try {
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new Exception('Invalid items format: ' . json_last_error_msg());
             }
-        } else {
+    } else {
             throw new Exception('Missing or invalid items data');
         }
     }
@@ -60,7 +57,7 @@ try {
 
     $stmt->execute([
         ':receipt_id' => $data['receipt_id'],
-        ':receipt_type' => $receipt_type,
+        ':receipt_type' => $data['receipt_type'],
         ':reason' => isset($data['items'][0]['reason']) ? $data['items'][0]['reason'] : 'other',
         ':notes' => $data['notes'] ?? ''
     ]);
@@ -69,7 +66,7 @@ try {
     $total_return_amount = 0;
 
     // Get receipt details
-    if ($receipt_type === 'selling') {
+    if ($data['receipt_type'] === 'sale') {
         $stmt = $conn->prepare("
             SELECT id, customer_id, payment_type 
             FROM sales 
@@ -91,7 +88,7 @@ try {
 
     if (!$receipt) {
         throw new Exception('پسووڵەی داواکراو نەدۆزرایەوە');
-    }
+        }
 
     // Process each returned item
     foreach ($data['items'] as $item) {
@@ -107,7 +104,7 @@ try {
         $reason = $item['reason'] ?? 'other';
 
         // Get original receipt item details
-        if ($receipt_type === 'selling') {
+        if ($data['receipt_type'] === 'sale') {
             $stmt = $conn->prepare("
                 SELECT quantity, returned_quantity, unit_price, unit_type
                 FROM sale_items 
@@ -207,7 +204,7 @@ try {
         ]);
 
         // Update returned quantity in original receipt items
-        if ($receipt_type === 'selling') {
+        if ($data['receipt_type'] === 'sale') {
             $stmt = $conn->prepare("
                 UPDATE sale_items 
                 SET returned_quantity = COALESCE(returned_quantity, 0) + :quantity 
@@ -228,16 +225,16 @@ try {
         ]);
 
         // Update product quantity
-        if ($receipt_type === 'selling') {
+        if ($data['receipt_type'] === 'sale') {
             // For sales returns, add back to inventory
-            $stmt = $conn->prepare("
-                UPDATE products 
-                SET current_quantity = current_quantity + :quantity
-                WHERE id = :product_id
-            ");
+        $stmt = $conn->prepare("
+            UPDATE products 
+            SET current_quantity = current_quantity + :quantity
+            WHERE id = :product_id
+        ");
         } else {
             // For purchase returns, subtract from inventory
-            $stmt = $conn->prepare("
+        $stmt = $conn->prepare("
                 UPDATE products 
                 SET current_quantity = current_quantity - :quantity 
                 WHERE id = :product_id
@@ -251,7 +248,7 @@ try {
     }
 
     // Update receipt total and remaining amounts
-    if ($receipt_type === 'selling') {
+    if ($data['receipt_type'] === 'sale') {
         // Get current sales data
         $stmt = $conn->prepare("
             SELECT s.*, 
@@ -458,7 +455,7 @@ try {
     $conn->commit();
 
     echo json_encode([
-        'success' => true,
+        'status' => 'success',
         'message' => 'کاڵاکان بە سەرکەوتوویی گەڕێنرانەوە',
         'return_amount' => $total_return_amount
     ]);
@@ -471,7 +468,7 @@ try {
     error_log("Error in process_return.php: " . $e->getMessage());
     
     echo json_encode([
-        'success' => false,
-        'message' => 'هەڵەیەک ڕوویدا: ' . $e->getMessage()
+        'status' => 'error',
+        'message' => $e->getMessage()
     ]);
 } 
