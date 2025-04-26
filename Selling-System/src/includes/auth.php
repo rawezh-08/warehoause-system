@@ -1,4 +1,7 @@
 <?php
+// Set session configuration
+ini_set('session.gc_maxlifetime', 28800); // 8 hours
+ini_set('session.cookie_lifetime', 28800); // 8 hours
 session_start();
 
 // Check if user is logged in
@@ -31,8 +34,8 @@ function checkAuth() {
     }
     
     // Check if the session is expired (optional)
-    if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 3600)) {
-        // Session expired (after 1 hour)
+    if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 28800)) {
+        // Session expired (after 8 hours)
         session_unset();
         session_destroy();
         
