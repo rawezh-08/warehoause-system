@@ -554,12 +554,16 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
                                                 title: 'سەرکەوتوو',
                                                 text: 'ڕەشنووسەکە بە سەرکەوتوویی سڕایەوە'
                                             }).then(() => {
-                                                location.reload();
+                                                if (typeof loadDraftReceipts === 'function') {
+                                                    loadDraftReceipts();
+                                                } else {
+                                                    location.reload();
+                                                }
                                             });
                                         } else {
                                             Swal.fire({
                                                 icon: 'error',
-                                                title: 'هەڵە!',
+                                                title: 'هەڵە',
                                                 text: response.message || 'هەڵەیەک ڕوویدا لە سڕینەوەی ڕەشنووس'
                                             });
                                         }
@@ -568,7 +572,7 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
                                         logDebug('هەڵەی AJAX: ' + xhr.responseText);
                                         Swal.fire({
                                             icon: 'error',
-                                            title: 'هەڵە!',
+                                            title: 'هەڵە',
                                             text: 'هەڵەیەک ڕوویدا لە پەیوەندی بە سێرڤەرەوە'
                                         });
                                     }
@@ -576,7 +580,7 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
                             } else {
                                 Swal.fire({
                                     icon: 'error',
-                                    title: 'هەڵە!',
+                                    title: 'هەڵە',
                                     text: 'ڕەشنووسەکە نەدۆزرایەوە'
                                 });
                             }
@@ -585,7 +589,7 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
                             logDebug('هەڵەی پشکنین: ' + xhr.responseText);
                             Swal.fire({
                                 icon: 'error',
-                                title: 'هەڵە!',
+                                title: 'هەڵە',
                                 text: 'هەڵەیەک ڕوویدا لە پشکنینی ڕەشنووس'
                             });
                         }
@@ -630,12 +634,16 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
                                                 title: 'سەرکەوتوو',
                                                 text: 'بەفیڕۆچووەکە بە سەرکەوتوویی سڕایەوە'
                                             }).then(() => {
-                                                location.reload();
+                                                if (typeof loadWastingData === 'function') {
+                                                    loadWastingData();
+                                                } else {
+                                                    location.reload();
+                                                }
                                             });
                                         } else {
                                             Swal.fire({
                                                 icon: 'error',
-                                                title: 'هەڵە!',
+                                                title: 'هەڵە',
                                                 text: response.message || 'هەڵەیەک ڕوویدا لە سڕینەوەی بەفیڕۆچوو'
                                             });
                                         }
@@ -644,7 +652,7 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
                                         logDebug('هەڵەی AJAX: ' + xhr.responseText);
                                         Swal.fire({
                                             icon: 'error',
-                                            title: 'هەڵە!',
+                                            title: 'هەڵە',
                                             text: 'هەڵەیەک ڕوویدا لە پەیوەندی بە سێرڤەرەوە'
                                         });
                                     }
@@ -652,7 +660,7 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
                             } else {
                                 Swal.fire({
                                     icon: 'error',
-                                    title: 'هەڵە!',
+                                    title: 'هەڵە',
                                     text: 'بەفیڕۆچووەکە نەدۆزرایەوە'
                                 });
                             }
@@ -661,7 +669,7 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
                             logDebug('هەڵەی پشکنین: ' + xhr.responseText);
                             Swal.fire({
                                 icon: 'error',
-                                title: 'هەڵە!',
+                                title: 'هەڵە',
                                 text: 'هەڵەیەک ڕوویدا لە پشکنینی بەفیڕۆچوو'
                             });
                         }
