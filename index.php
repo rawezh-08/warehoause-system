@@ -17,7 +17,7 @@ require_once 'Selling-System/src/process/login_handler.php';
         }
 
         :root {
-            --primary-color: #1a237e;
+            --primary-color:rgb(125, 26, 255);
             --secondary-color: #0d47a1;
             --accent-color: #ff4081;
             --text-color: #333;
