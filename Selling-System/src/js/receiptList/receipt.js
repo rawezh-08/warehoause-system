@@ -440,11 +440,11 @@ $(document).ready(function() {
         
         // Open print receipt page in new window with correct parameters
         if (type === 'sale') {
-            window.open(`/warehoause-system/Selling-System/src/Views/receipt/print_recipt.php?sale_id=${id}`, '_blank');
+            window.open(`/Selling-System/src/Views/receipt/print_recipt.php?sale_id=${id}`, '_blank');
         } else if (type === 'purchase') {
-            window.open(`/warehoause-system/Selling-System/src/Views/receipt/print_recipt.php?purchase_id=${id}`, '_blank');
+            window.open(`/Selling-System/src/Views/receipt/print_recipt.php?purchase_id=${id}`, '_blank');
         } else {
-            window.open(`/warehoause-system/Selling-System/src/Views/receipt/print_recipt.php?waste_id=${id}`, '_blank');
+            window.open(`/Selling-System/src/Views/receipt/print_recipt.php?waste_id=${id}`, '_blank');
         }
     });
 
