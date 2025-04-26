@@ -438,16 +438,13 @@ $(document).ready(function() {
                 return;
         }
         
-        // Get base URL dynamically
-        const baseUrl = window.location.origin;
-        
         // Open print receipt page in new window with correct parameters
         if (type === 'sale') {
-            window.open(`${baseUrl}/warehoause-system/Selling-System/src/views/receipt/print_receipt.php?sale_id=${id}`, '_blank');
+            window.open(`/warehouse-system/Selling-System/src/views/receipt/print_receipt.php?sale_id=${id}`, '_blank');
         } else if (type === 'purchase') {
-            window.open(`${baseUrl}/warehoause-system/Selling-System/src/views/receipt/print_receipt.php?purchase_id=${id}`, '_blank');
+            window.open(`/warehouse-system/Selling-System/src/views/receipt/print_receipt.php?purchase_id=${id}`, '_blank');
         } else {
-            window.open(`${baseUrl}/warehoause-system/Selling-System/src/views/receipt/print_receipt.php?waste_id=${id}`, '_blank');
+            window.open(`/warehouse-system/Selling-System/src/views/receipt/print_receipt.php?waste_id=${id}`, '_blank');
         }
     });
 
