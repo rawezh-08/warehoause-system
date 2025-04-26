@@ -1040,7 +1040,8 @@ $(document).ready(function() {
             }).then((result) => {
                 if (result.isConfirmed) {
                     // Open print window
-                    window.open(`../../Selling-System/src/views/receipt/print_receipt.php?sale_id=${receiptId}`, '_blank');
+                    window.open(`/Selling-System/src/views/receipt/print_receipt.php?sale_id=${receiptId}`, '_blank');
+                    window.open(`/warehoause-system/Selling-System/src/views/receipt/print_receipt.php?sale_id=${receiptId}`, '_blank');
                 }
                 
                 // Reset form after handling print dialog
