@@ -1,10 +1,10 @@
 <?php
 // Include authentication check
 require_once '../../includes/auth.php';
-require_once '../../controllers/receipts/SaleReceiptsController.php';
-require_once '../../controllers/receipts/PurchaseReceiptsController.php';
-require_once '../../controllers/receipts/WastingReceiptsController.php';
-require_once '../../controllers/receipts/DraftReceiptsController.php';
+require_once('/var/www/html/warehoause-system/Selling-System/src/Controllers/receipts/SaleReceiptsController.php');
+require_once '/var/www/html/warehoause-system/Selling-System/src/Controllers/receipts/PurchaseReceiptsController.php';
+require_once '/var/www/html/warehoause-system/Selling-System/src/Controllers/receipts/WastingReceiptsController.php';
+require_once '/var/www/html/warehoause-system/Selling-System/src/Controllers/receipts/DraftReceiptsController.php';
 
 // Custom number formatting function for Iraqi Dinar
 function numberFormat($number)
