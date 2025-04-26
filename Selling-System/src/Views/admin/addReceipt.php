@@ -218,7 +218,7 @@ require_once '../../config/database.php';
 
                     <!-- Submit Button -->
                     <div class="mt-4 text-start d-flex justify-content-start align-items-center">
-                        <button type="button" class="btn btn-outline-primary draft-btn ">
+                        <button type="button" class="btn btn-outline-primary draft-btn">
                             <i class="fas fa-file-alt"></i> ڕەشنووس
                         </button>
                         <button type="button" class="btn btn-outline-success delivery-btn ms-2">

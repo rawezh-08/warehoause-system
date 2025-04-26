@@ -651,7 +651,7 @@ $(document).ready(function() {
             $(`#${tabId} .save-btn`).before(costsBtn);
 
             // Add draft button handler
-            $(`#${tabId} .draft-btn`).on('click', function() {
+            $(`#${tabId} .draft-btn`).off('click').on('click', function() {
                 saveReceipt(tabId, tabType, true);
             });
         }
