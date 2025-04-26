@@ -29,8 +29,7 @@ try {
         throw new Exception('IDی بەفیڕۆچوو نادروستە');
     }
     
-    // Debug: Log the wasting ID
-    error_log("Deleting wasting ID: " . $wasting_id);
+    error_log("Processing wasting wasting_id: " . $wasting_id);
     
     // Initialize database connection
     $database = new Database();
@@ -43,41 +42,40 @@ try {
     
     error_log("Database connection established successfully");
     
-    // Check if wasting exists
-    $stmt = $conn->prepare("SELECT * FROM wastings WHERE id = ?");
-    $stmt->execute([$wasting_id]);
-    $wasting = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    // Debug: Log the query result
-    error_log("Query result: " . print_r($wasting, true));
-    
-    if (!$wasting) {
-        throw new Exception('بەفیڕۆچوو نەدۆزرایەوە');
-    }
-    
-    // Delete the wasting
-    $stmt = $conn->prepare("DELETE FROM wastings WHERE id = ?");
-    $stmt->execute([$wasting_id]);
-    
-    // Debug: Log the number of affected rows
-    error_log("Number of affected rows: " . $stmt->rowCount());
-    
-    if ($stmt->rowCount() > 0) {
+    try {
+        // Call the stored procedure to delete the wasting record
+        $stmt = $conn->prepare("CALL DeleteWastingRecord(?)");
+        $stmt->execute([$wasting_id]);
+        
         echo json_encode([
             'success' => true,
-            'message' => 'بەفیڕۆچوو بە سەرکەوتوویی سڕایەوە'
+            'message' => 'بەفیڕۆچووەکە بە سەرکەوتوویی سڕایەوە'
         ]);
-    } else {
-        throw new Exception('هیچ ڕیزێک نەگۆڕا');
+        
+    } catch (PDOException $e) {
+        // Check if this is a custom error from the stored procedure
+        if ($e->getCode() == '45000') {
+            throw new Exception($e->getMessage());
+        }
+        throw $e;
     }
     
 } catch (Exception $e) {
-    // Debug: Log any errors
+    // Log the error
     error_log("Error in delete_wasting.php: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
     
+    // Return error response
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage()
+        'message' => $e->getMessage(),
+        'debug_info' => [
+            'error_message' => $e->getMessage(),
+            'error_code' => $e->getCode(),
+            'error_file' => $e->getFile(),
+            'error_line' => $e->getLine(),
+            'stack_trace' => $e->getTraceAsString()
+        ]
     ]);
 } 

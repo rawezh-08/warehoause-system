@@ -12,9 +12,6 @@ try {
         throw new Exception('IDی ڕەشنووس نادروستە');
     }
     
-    // Debug: Log the receipt ID
-    error_log("Checking draft receipt ID: " . $receipt_id);
-    
     // Check if draft exists
     $stmt = $conn->prepare("
         SELECT COUNT(*) as count 
@@ -24,9 +21,6 @@ try {
     $stmt->execute([$receipt_id]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    // Debug: Log the query result
-    error_log("Query result: " . print_r($result, true));
-    
     // Return result
     echo json_encode([
         'success' => true,
@@ -35,9 +29,6 @@ try {
     ]);
     
 } catch (Exception $e) {
-    // Debug: Log any errors
-    error_log("Error in verify_draft.php: " . $e->getMessage());
-    
     http_response_code(400);
     echo json_encode([
         'success' => false,
