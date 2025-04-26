@@ -4,11 +4,12 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Include authentication check
-require_once dirname(__FILE__, 3) . '/includes/auth.php';
-require_once dirname(__FILE__, 3) . '/controllers/receipts/SaleReceiptsController.php';
-require_once dirname(__FILE__, 3) . '/controllers/receipts/PurchaseReceiptsController.php';
-require_once dirname(__FILE__, 3) . '/controllers/receipts/WastingReceiptsController.php';
-require_once dirname(__FILE__, 3) . '/controllers/receipts/DraftReceiptsController.php';
+$rootPath = realpath(dirname(__FILE__, 3));
+require_once $rootPath . '/includes/auth.php';
+require_once $rootPath . '/controllers/receipts/SaleReceiptsController.php';
+require_once $rootPath . '/controllers/receipts/PurchaseReceiptsController.php';
+require_once $rootPath . '/controllers/receipts/WastingReceiptsController.php';
+require_once $rootPath . '/controllers/receipts/DraftReceiptsController.php';
 
 // Custom number formatting function for Iraqi Dinar
 function numberFormat($number)
