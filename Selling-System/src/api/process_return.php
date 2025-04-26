@@ -458,7 +458,7 @@ try {
     $conn->commit();
 
     echo json_encode([
-        'status' => 'success',
+        'success' => true,
         'message' => 'کاڵاکان بە سەرکەوتوویی گەڕێنرانەوە',
         'return_amount' => $total_return_amount
     ]);
@@ -471,7 +471,7 @@ try {
     error_log("Error in process_return.php: " . $e->getMessage());
     
     echo json_encode([
-        'status' => 'error',
-        'message' => $e->getMessage()
+        'success' => false,
+        'message' => 'هەڵەیەک ڕوویدا: ' . $e->getMessage()
     ]);
 } 
