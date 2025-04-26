@@ -1039,8 +1039,8 @@ $(document).ready(function() {
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Open print window
-                    window.open(`../../views/receipt/print_receipt.php?sale_id=${receiptId}`, '_blank');
+                    // Open print window with correct path
+                    window.open(`/warehouse-system/Selling-System/src/views/receipt/print_receipt.php?sale_id=${receiptId}`, '_blank');
                 }
                 
                 // Reset form after handling print dialog
