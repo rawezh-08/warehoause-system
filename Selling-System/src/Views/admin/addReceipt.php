@@ -775,6 +775,9 @@ require_once '../../config/database.php';
                                         window.location.href = '../../views/admin/receiptList.php?tab=drafts';
                                     }
                                 });
+                                // Reset button state immediately after showing the error
+                                saveButton.prop('disabled', false).html('<i class="fas fa-file-alt"></i> ڕەشنووس');
+                                return; // Stop execution here
                             } else {
                                 Swal.fire({
                                     title: 'هەڵە!',
@@ -798,8 +801,10 @@ require_once '../../config/database.php';
                         });
                     },
                     complete: function() {
-                        // Reset button state
-                        saveButton.prop('disabled', false).html('<i class="fas fa-file-alt"></i> ڕەشنووس');
+                        // Only reset button state if we haven't already done so
+                        if (!saveButton.prop('disabled')) {
+                            saveButton.prop('disabled', false).html('<i class="fas fa-file-alt"></i> ڕەشنووس');
+                        }
                     }
                 });
             });
