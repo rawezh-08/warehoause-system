@@ -13,7 +13,6 @@ error_log("Starting delete_wasting.php script");
 
 require_once '../../config/database.php';
 require_once '../../includes/auth.php';
-require_once '../../controllers/receipts/WastingReceiptsController.php';
 
 // Set headers for JSON response
 header('Content-Type: application/json');
@@ -42,30 +41,62 @@ try {
     
     error_log("Database connection established successfully");
     
+    // Begin transaction
+    $conn->beginTransaction();
+    
     try {
-        // Call the stored procedure to delete the wasting record
-        $stmt = $conn->prepare("CALL DeleteWastingRecord(?)");
-        $stmt->execute([$wasting_id]);
+        // First check if the wasting record exists
+        $checkStmt = $conn->prepare("SELECT id FROM wastings WHERE id = ?");
+        $checkStmt->execute([$wasting_id]);
+        
+        if ($checkStmt->rowCount() === 0) {
+            throw new Exception('بەفیڕۆچووەکە نەدۆزرایەوە');
+        }
+        
+        // Get wasting items to restore product quantities
+        $itemsStmt = $conn->prepare("
+            SELECT product_id, quantity 
+            FROM wasting_items 
+            WHERE wasting_id = ?
+        ");
+        $itemsStmt->execute([$wasting_id]);
+        $items = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Restore product quantities
+        foreach ($items as $item) {
+            $updateStmt = $conn->prepare("
+                UPDATE products 
+                SET current_quantity = current_quantity + ? 
+                WHERE id = ?
+            ");
+            $updateStmt->execute([$item['quantity'], $item['product_id']]);
+        }
+        
+        // Delete wasting items
+        $deleteItemsStmt = $conn->prepare("DELETE FROM wasting_items WHERE wasting_id = ?");
+        $deleteItemsStmt->execute([$wasting_id]);
+        
+        // Delete wasting record
+        $deleteWastingStmt = $conn->prepare("DELETE FROM wastings WHERE id = ?");
+        $deleteWastingStmt->execute([$wasting_id]);
+        
+        // Commit transaction
+        $conn->commit();
         
         echo json_encode([
             'success' => true,
             'message' => 'بەفیڕۆچووەکە بە سەرکەوتوویی سڕایەوە'
         ]);
         
-    } catch (PDOException $e) {
-        // Check if this is a custom error from the stored procedure
-        if ($e->getCode() == '45000') {
-            throw new Exception($e->getMessage());
-        }
+    } catch (Exception $e) {
+        // Rollback transaction on error
+        $conn->rollBack();
         throw $e;
     }
     
 } catch (Exception $e) {
-    // Log the error
     error_log("Error in delete_wasting.php: " . $e->getMessage());
     error_log("Stack trace: " . $e->getTraceAsString());
-    
-    // Return error response
     http_response_code(400);
     echo json_encode([
         'success' => false,
