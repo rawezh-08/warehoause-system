@@ -36,12 +36,4 @@ RewriteRule ^ - [L]
 
 # PHP settings for security
 php_flag session.cookie_httponly on
-php_flag session.use_only_cookies on
-
-# Handle session timeout - redirect to main login page
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^Selling-System/.*$ /index.php [R=302,L]
-
-# Allow direct access to assets and API
-RewriteRule ^(assets|api|js)/.*$ - [L] 
+php_flag session.use_only_cookies on 
