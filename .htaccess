@@ -1,18 +1,37 @@
-# Basic security settings
+# Secure directory structure
 Options -Indexes
+
+# Deny access to sensitive files
+<FilesMatch "^(\.htaccess|\.htpasswd|config\.php|database\.php)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Set default character set
 AddDefaultCharset UTF-8
 
 # Enable rewriting
 RewriteEngine On
-RewriteBase /
+RewriteBase /warehouse-system/
 
-# Basic PHP handling
+# Ensure PHP files are processed as PHP
 <FilesMatch "\.php$">
     SetHandler application/x-httpd-php
 </FilesMatch>
 
-# Allow access to necessary directories
-RewriteCond %{REQUEST_URI} !^/Selling-System/src/(assets|css|js|uploads|controllers|views)/
+# Redirect direct access attempts of PHP files in protected directories
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s([^.]+)\.php [NC]
+RewriteCond %{REQUEST_URI} ^/warehouse-system/Selling-System/src/(config|process|models|controllers|Core)/ [NC]
+RewriteRule ^ index.php [L,R=301]
+
+# Allow access to assets and necessary public files
+RewriteCond %{REQUEST_URI} !^/warehouse-system/(index\.php|logout\.php)
+RewriteCond %{REQUEST_URI} !^/warehouse-system/Selling-System/src/(assets|css|js|uploads)/
+
+# Special rule for views - must have a valid session
+RewriteCond %{REQUEST_URI} ^/warehouse-system/Selling-System/src/views/
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteCond %{REQUEST_URI} \.php$
 RewriteRule ^ - [L]
 
 # PHP settings for security
