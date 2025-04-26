@@ -17,13 +17,21 @@ if (!isset($_POST['wasting_id'])) {
 $wasting_id = $_POST['wasting_id'];
 
 try {
-    // Get wasting details
+    // Get wasting details with proper total calculation
     $stmt = $conn->prepare("
-        SELECT w.*, 
-               GROUP_CONCAT(
-                   CONCAT(p.name, '|', wi.quantity, '|', wi.unit_type, '|', wi.unit_price, '|', wi.total_price)
-                   SEPARATOR '||'
-               ) as items_data
+        SELECT 
+            w.*,
+            COALESCE(SUM(wi.total_price), 0) as total_amount,
+            GROUP_CONCAT(
+                CONCAT(
+                    p.name, '|',
+                    wi.quantity, '|',
+                    wi.unit_type, '|',
+                    wi.unit_price, '|',
+                    wi.total_price
+                )
+                SEPARATOR '||'
+            ) as items_data
         FROM wastings w
         LEFT JOIN wasting_items wi ON w.id = wi.wasting_id
         LEFT JOIN products p ON wi.product_id = p.id
@@ -50,10 +58,10 @@ try {
             list($name, $quantity, $unit_type, $unit_price, $total_price) = explode('|', $item);
             $items[] = [
                 'product_name' => $name,
-                'quantity' => $quantity,
+                'quantity' => floatval($quantity),
                 'unit_type' => $unit_type,
-                'unit_price' => $unit_price,
-                'total_price' => $total_price
+                'unit_price' => floatval($unit_price),
+                'total_price' => floatval($total_price)
             ];
         }
     }
@@ -63,6 +71,9 @@ try {
     
     // Add items to wasting array
     $wasting['items'] = $items;
+    
+    // Ensure total_amount is a number
+    $wasting['total_amount'] = floatval($wasting['total_amount']);
 
     echo json_encode([
         'status' => 'success',
