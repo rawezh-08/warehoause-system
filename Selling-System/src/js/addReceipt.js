@@ -1039,8 +1039,11 @@ $(document).ready(function() {
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
+                    // Get base URL dynamically
+                    const baseUrl = window.location.origin;
+                    
                     // Open print window with correct path
-                    window.open(`https://ashkan-warehouse.com/Selling-System/src/views/receipt/print_receipt.php?sale_id=${receiptId}`, '_blank');
+                    window.open(`${baseUrl}/warehoause-system/Selling-System/src/views/receipt/print_receipt.php?sale_id=${receiptId}`, '_blank');
                 }
                 
                 // Reset form after handling print dialog
