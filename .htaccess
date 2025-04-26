@@ -12,7 +12,7 @@ AddDefaultCharset UTF-8
 
 # Enable rewriting
 RewriteEngine On
-RewriteBase /warehouse-system/
+RewriteBase /
 
 # Ensure PHP files are processed as PHP
 <FilesMatch "\.php$">
@@ -20,22 +20,22 @@ RewriteBase /warehouse-system/
 </FilesMatch>
 
 # Allow access to controllers directory
-<Directory "/warehouse-system/Selling-System/src/controllers">
+<Directory "Selling-System/src/controllers">
     Options -Indexes
     Allow from all
 </Directory>
 
 # Redirect direct access attempts of PHP files in protected directories
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s([^.]+)\.php [NC]
-RewriteCond %{REQUEST_URI} ^/warehouse-system/Selling-System/src/(config|process|models|Core)/ [NC]
+RewriteCond %{REQUEST_URI} ^/Selling-System/src/(config|process|models|Core)/ [NC]
 RewriteRule ^ index.php [L,R=301]
 
 # Allow access to assets and necessary public files
-RewriteCond %{REQUEST_URI} !^/warehouse-system/(index\.php|logout\.php)
-RewriteCond %{REQUEST_URI} !^/warehouse-system/Selling-System/src/(assets|css|js|uploads|controllers)/
+RewriteCond %{REQUEST_URI} !^/(index\.php|logout\.php)
+RewriteCond %{REQUEST_URI} !^/Selling-System/src/(assets|css|js|uploads|controllers)/
 
 # Special rule for views - must have a valid session
-RewriteCond %{REQUEST_URI} ^/warehouse-system/Selling-System/src/views/
+RewriteCond %{REQUEST_URI} ^/Selling-System/src/views/
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteCond %{REQUEST_URI} \.php$
 RewriteRule ^ - [L]
