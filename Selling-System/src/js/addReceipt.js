@@ -611,7 +611,7 @@ $(document).ready(function() {
             
             if (receiptId) {
                 // Open print window for the saved receipt
-                window.open(`../views/receipt/print_receipt.php?sale_id=${receiptId}`, '_blank');
+                window.open(`/../views/receipt/print_receipt.php?sale_id=${receiptId}`, '_blank');
             } else {
                 Swal.fire({
                     title: 'پسوڵە پاشەکەوت نەکراوە',
@@ -1040,7 +1040,7 @@ $(document).ready(function() {
             }).then((result) => {
                 if (result.isConfirmed) {
                     // Open print window
-                    window.open(`../views/receipt/print_receipt.php?sale_id=${receiptId}`, '_blank');
+                    window.open(`/../views/receipt/print_receipt.php?sale_id=${receiptId}`, '_blank');
                 }
                 
                 // Reset form after handling print dialog
