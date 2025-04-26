@@ -14,26 +14,19 @@ AddDefaultCharset UTF-8
 RewriteEngine On
 RewriteBase /warehouse-system/
 
-# Handle case-insensitive URLs
-RewriteMap lc int:tolower
-RewriteCond %{REQUEST_URI} [A-Z]
-RewriteRule (.*) ${lc:$1} [R=301,L]
-
 # Ensure PHP files are processed as PHP
 <FilesMatch "\.php$">
     SetHandler application/x-httpd-php
 </FilesMatch>
 
-# Allow access to controllers directory
-<Directory "/var/www/html/warehoause-system/Selling-System/src/controllers">
-    Options +FollowSymLinks
-    AllowOverride All
-    Require all granted
-</Directory>
+# Redirect direct access attempts of PHP files in protected directories
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s([^.]+)\.php [NC]
+RewriteCond %{REQUEST_URI} ^/warehouse-system/Selling-System/src/(config|process|models|controllers|Core)/ [NC]
+RewriteRule ^ index.php [L,R=301]
 
 # Allow access to assets and necessary public files
 RewriteCond %{REQUEST_URI} !^/warehouse-system/(index\.php|logout\.php)
-RewriteCond %{REQUEST_URI} !^/warehouse-system/Selling-System/src/(assets|css|js|uploads|controllers)/
+RewriteCond %{REQUEST_URI} !^/warehouse-system/Selling-System/src/(assets|css|js|uploads)/
 
 # Special rule for views - must have a valid session
 RewriteCond %{REQUEST_URI} ^/warehouse-system/Selling-System/src/views/
