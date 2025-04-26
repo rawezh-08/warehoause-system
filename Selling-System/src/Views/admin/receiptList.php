@@ -5,10 +5,10 @@ ini_set('display_errors', 1);
 
 // Include authentication check
 require_once '../../includes/auth.php';
-require_once '../../controllers/receipts/SaleReceiptsController.php';
-require_once '../../controllers/receipts/PurchaseReceiptsController.php';
-require_once '../../controllers/receipts/WastingReceiptsController.php';
-require_once '../../controllers/receipts/DraftReceiptsController.php';
+require_once __DIR__ . '/../../controllers/receipts/SaleReceiptsController.php';
+require_once __DIR__ . '/../../controllers/receipts/PurchaseReceiptsController.php';
+require_once __DIR__ . '/../../controllers/receipts/WastingReceiptsController.php';
+require_once __DIR__ . '/../../controllers/receipts/DraftReceiptsController.php';
 
 // Custom number formatting function for Iraqi Dinar
 function numberFormat($number)
