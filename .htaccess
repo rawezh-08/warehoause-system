@@ -24,14 +24,16 @@ RewriteRule (.*) ${lc:$1} [R=301,L]
     SetHandler application/x-httpd-php
 </FilesMatch>
 
-# Redirect direct access attempts of PHP files in protected directories
-RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s([^.]+)\.php [NC]
-RewriteCond %{REQUEST_URI} ^/warehouse-system/Selling-System/src/(config|process|models|controllers|Core)/ [NC]
-RewriteRule ^ index.php [L,R=301]
+# Allow access to controllers directory
+<Directory "/var/www/html/warehoause-system/Selling-System/src/controllers">
+    Options +FollowSymLinks
+    AllowOverride All
+    Require all granted
+</Directory>
 
 # Allow access to assets and necessary public files
 RewriteCond %{REQUEST_URI} !^/warehouse-system/(index\.php|logout\.php)
-RewriteCond %{REQUEST_URI} !^/warehouse-system/Selling-System/src/(assets|css|js|uploads)/
+RewriteCond %{REQUEST_URI} !^/warehouse-system/Selling-System/src/(assets|css|js|uploads|controllers)/
 
 # Special rule for views - must have a valid session
 RewriteCond %{REQUEST_URI} ^/warehouse-system/Selling-System/src/views/
