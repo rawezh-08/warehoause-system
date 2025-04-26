@@ -643,7 +643,7 @@ function showSaleDetails(data) {
  */
 function printSaleReceipt(saleId) {
     // Open print receipt page in new window
-    window.open(`/Selling-System/src/Views/receipt/print_recipt.php?sale_id=${saleId}`, '_blank');
+    window.open(`../../Views/receipt/print_recipt.php?sale_id=${saleId}`, '_blank');
 }
 
 /**

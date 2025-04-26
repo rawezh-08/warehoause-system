@@ -611,7 +611,7 @@ $(document).ready(function() {
             
             if (receiptId) {
                 // Open print window for the saved receipt
-                window.open(`/Selling-System/src/Views/receipt/print_recipt.php?sale_id=${receiptId}`, '_blank');
+                window.open(`../../Views/receipt/print_recipt.php?sale_id=${receiptId}`, '_blank');
             } else {
                 Swal.fire({
                     title: 'پسوڵە پاشەکەوت نەکراوە',
