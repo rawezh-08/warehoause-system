@@ -3,15 +3,12 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Define the root directory path (going up 3 levels from current file)
-$rootDir = realpath(__DIR__ . '/../../');
-
 // Include authentication check
-require_once $rootDir . '/includes/auth.php';
-require_once $rootDir . '/controllers/receipts/SaleReceiptsController.php';
-require_once $rootDir . '/controllers/receipts/PurchaseReceiptsController.php';
-require_once $rootDir . '/controllers/receipts/WastingReceiptsController.php';
-require_once $rootDir . '/controllers/receipts/DraftReceiptsController.php';
+require_once '../../includes/auth.php';
+require_once '../../controllers/receipts/SaleReceiptsController.php';
+require_once '../../controllers/receipts/PurchaseReceiptsController.php';
+require_once '../../controllers/receipts/WastingReceiptsController.php';
+require_once '../../controllers/receipts/DraftReceiptsController.php';
 
 // Custom number formatting function for Iraqi Dinar
 function numberFormat($number)
