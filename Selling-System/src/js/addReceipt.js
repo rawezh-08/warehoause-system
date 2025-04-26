@@ -605,21 +605,15 @@ $(document).ready(function() {
         });
         
         // Print button handler
-        $(`#${tabId} .print-btn`).on('click', function() {
-            // Check if we have a saved receipt ID
-            const receiptId = $(`#${tabId}`).data('saved-receipt-id');
+        $(`#${tabId} .print-btn`).off('click').on('click', function() {
+            const receiptId = $(this).data('id');
+            const printWindow = window.open(`../../Views/receipt/print_receipt.php?sale_id=${receiptId}`, '_blank');
             
-            if (receiptId) {
-                // Open print window for the saved receipt
-                window.open(`../../Views/receipt/print_receipt.php?sale_id=${receiptId}`, '_blank');
-            } else {
-                Swal.fire({
-                    title: 'پسوڵە پاشەکەوت نەکراوە',
-                    text: 'تکایە سەرەتا پسوڵەکە پاشەکەوت بکە',
-                    icon: 'warning',
-                    confirmButtonText: 'باشە'
-                });
-            }
+            // Add event listener for when the print window is closed
+            printWindow.onbeforeunload = function() {
+                // Reload the current page
+                window.location.reload();
+            };
         });
         
         // Shipping cost, discount, other cost change handlers

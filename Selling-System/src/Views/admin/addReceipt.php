@@ -1031,6 +1031,23 @@ require_once '../../config/database.php';
             $('#deliveryReceiptModal').on('hidden.bs.modal', function() {
                 $('#deliveryReceiptForm')[0].reset();
             });
+
+            // Handle print button click
+            $('.print-btn').on('click', function(e) {
+                e.preventDefault();
+                
+                // Get the receipt ID
+                const receiptId = $(this).data('id');
+                
+                // Open print window
+                const printWindow = window.open(`/warehoause-system/Selling-System/src/Views/receipt/print_receipt.php?sale_id=${receiptId}`, '_blank');
+                
+                // Add event listener for when the print window is closed
+                printWindow.onbeforeunload = function() {
+                    // Reload the current page
+                    window.location.reload();
+                };
+            });
         });
     </script>
 
