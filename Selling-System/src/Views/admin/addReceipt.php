@@ -693,15 +693,21 @@ require_once '../../config/database.php';
     <!-- Test Script -->
     <script>
         $(document).ready(function() {
+            // Add a flag to track submission state
+            let isSubmitting = false;
+
             // Handle draft button click
             $('.draft-btn').on('click', function(e) {
                 e.preventDefault();
                 
                 // Prevent multiple submissions
                 const saveButton = $(this);
-                if (saveButton.prop('disabled')) {
+                if (saveButton.prop('disabled') || isSubmitting) {
                     return;
                 }
+                
+                // Set submitting flag
+                isSubmitting = true;
                 
                 // Disable the button immediately
                 saveButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> چاوەڕێ بکە...');
@@ -777,6 +783,7 @@ require_once '../../config/database.php';
                                 });
                                 // Reset button state immediately after showing the error
                                 saveButton.prop('disabled', false).html('<i class="fas fa-file-alt"></i> ڕەشنووس');
+                                isSubmitting = false; // Reset submitting flag
                                 return; // Stop execution here
                             } else {
                                 Swal.fire({
@@ -801,6 +808,9 @@ require_once '../../config/database.php';
                         });
                     },
                     complete: function() {
+                        // Reset submitting flag
+                        isSubmitting = false;
+                        
                         // Only reset button state if we haven't already done so
                         if (!saveButton.prop('disabled')) {
                             saveButton.prop('disabled', false).html('<i class="fas fa-file-alt"></i> ڕەشنووس');
