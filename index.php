@@ -1,4 +1,25 @@
 <?php
+session_start();
+
+// Set session timeout to 8 hours (28800 seconds)
+ini_set('session.gc_maxlifetime', 28800);
+session_set_cookie_params(28800);
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id']) && !in_array($_SERVER['REQUEST_URI'], ['/index.php', '/login.php'])) {
+    header('Location: /index.php');
+    exit;
+}
+
+// Add session keep-alive mechanism
+if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > 28800)) {
+    session_unset();
+    session_destroy();
+    header('Location: /index.php');
+    exit;
+}
+$_SESSION['LAST_ACTIVITY'] = time();
+
 // Include the login handler
 require_once 'Selling-System/src/process/login_handler.php';
 ?>
