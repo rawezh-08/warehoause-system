@@ -5,7 +5,7 @@ ini_set('display_errors', 1);
 
 // Include authentication check
 require_once '../../includes/auth.php';
-require_once('/var/www/html/warehoause-system/Selling-System/src/Controllers/receipts/SaleReceiptsController.php');
+require_once '/var/www/html/warehoause-system/Selling-System/src/Controllers/receipts/SaleReceiptsController.php';
 require_once '/var/www/html/warehoause-system/Selling-System/src/Controllers/receipts/PurchaseReceiptsController.php';
 require_once '/var/www/html/warehoause-system/Selling-System/src/Controllers/receipts/WastingReceiptsController.php';
 require_once '/var/www/html/warehoause-system/Selling-System/src/Controllers/receipts/DraftReceiptsController.php';

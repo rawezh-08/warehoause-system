@@ -64,7 +64,7 @@ $(document).ready(function() {
 
         // Fetch sale items
         $.ajax({
-            url: '../../api/receipts/get_sale_items.php',
+            url: '../../controllers/receipts/get_sale_items.php',
             type: 'POST',
             data: { sale_id: saleId },
             success: function(response) {
