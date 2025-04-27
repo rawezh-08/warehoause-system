@@ -43,14 +43,16 @@ require_once 'Selling-System/src/process/login_handler.php';
         }
 
         .login-wrapper {
-            width: 100%;
-            max-width: 1000px;
-            display: flex;
-            background: white;
+            max-width: 420px;
+            margin: 40px auto;
             border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            background: #fff;
+            padding: 32px 24px 24px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .login-image {
@@ -101,12 +103,8 @@ require_once 'Selling-System/src/process/login_handler.php';
         }
 
         .login-form {
-            flex: 1;
-            padding: 60px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            background: white;
+            width: 100%;
+            padding: 0;
         }
 
         .login-header {
