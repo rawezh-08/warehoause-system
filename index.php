@@ -17,12 +17,13 @@ require_once 'Selling-System/src/process/login_handler.php';
         }
 
         :root {
-            --primary-color:rgb(125, 26, 255);
-            --secondary-color: #0d47a1;
-            --accent-color: #ff4081;
-            --text-color: #333;
-            --light-bg: #f5f5f5;
-            --danger-color: #dc3545;
+            --primary-color: #4a90e2;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --text-color: #2c3e50;
+            --light-bg: #f8f9fa;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
         }
 
         * {
@@ -33,7 +34,7 @@ require_once 'Selling-System/src/process/login_handler.php';
         }
 
         body {
-            background: var(--light-bg);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -43,12 +44,13 @@ require_once 'Selling-System/src/process/login_handler.php';
 
         .login-wrapper {
             width: 100%;
-            max-width: 1200px;
+            max-width: 1000px;
             display: flex;
             background: white;
             border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
 
         .login-image {
@@ -61,22 +63,41 @@ require_once 'Selling-System/src/process/login_handler.php';
             align-items: center;
             color: white;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('Selling-System/src/assets/images/warehouse-bg.jpg') center/cover;
+            opacity: 0.1;
         }
 
         .login-image img {
             max-width: 80%;
             margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
         }
 
         .login-image h1 {
             font-size: 2.5rem;
             margin-bottom: 20px;
             font-weight: bold;
+            position: relative;
+            z-index: 1;
         }
 
         .login-image p {
             font-size: 1.1rem;
             opacity: 0.9;
+            position: relative;
+            z-index: 1;
         }
 
         .login-form {
@@ -85,6 +106,7 @@ require_once 'Selling-System/src/process/login_handler.php';
             display: flex;
             flex-direction: column;
             justify-content: center;
+            background: white;
         }
 
         .login-header {
@@ -126,22 +148,24 @@ require_once 'Selling-System/src/process/login_handler.php';
             transition: all 0.3s ease;
             padding-right: 15px;
             padding-left: 45px;
-            height: 48px; /* Fixed height for inputs */
-            line-height: 24px; /* Ensure text is centered vertically */
+            height: 48px;
+            line-height: 24px;
+            background: #f8f9fa;
         }
 
         .form-control:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+            background: white;
         }
 
         .input-icon {
             position: absolute;
             left: 15px;
-            top: 40px; /* Position aligned with the form-control */
-            transform: translateY(50%); /* Center vertically within the input */
-            color: #666;
-            font-size: 18px; /* Increased size for better visibility */
+            top: 40px;
+            transform: translateY(50%);
+            color: var(--primary-color);
+            font-size: 18px;
         }
 
         .btn-login {
@@ -156,11 +180,28 @@ require_once 'Selling-System/src/process/login_handler.php';
             transition: all 0.3s ease;
             width: 100%;
             margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .btn-login:hover::before {
+            left: 100%;
         }
 
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(26, 35, 126, 0.3);
+            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
         }
 
         .alert {
@@ -168,10 +209,22 @@ require_once 'Selling-System/src/process/login_handler.php';
             padding: 15px;
             margin-bottom: 25px;
             border: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
         .alert-danger {
-            background-color: rgba(220, 53, 69, 0.1);
+            background-color: rgba(231, 76, 60, 0.1);
             color: var(--danger-color);
             border-left: 4px solid var(--danger-color);
         }
@@ -203,7 +256,10 @@ require_once 'Selling-System/src/process/login_handler.php';
 </head>
 <body>
     <div class="login-wrapper">
-     
+        <div class="login-image">
+            <h1>بەخێربێیت بۆ سیستەمی کۆگا</h1>
+            <p>بەڕێوەبردنی کۆگا بە شێوەیەکی ئاسان و کارامە</p>
+        </div>
         
         <div class="login-form">
             <div class="login-header">
@@ -230,11 +286,6 @@ require_once 'Selling-System/src/process/login_handler.php';
                 
                 <button type="submit" class="btn btn-login">چوونەژوورەوە</button>
             </form>
-        </div>
-        <div class="login-image">
-            <img src="Selling-System/src/assets/img/login-image.png" alt="Warehouse System">
-            <h1>سیستەمی بەڕێوەبردنی کۆگا</h1>
-            <!-- <p>بەڕێوەبردنی کۆگا بە شێوازێکی سەردەمیانە و کارامە</p> -->
         </div>
     </div>
     
