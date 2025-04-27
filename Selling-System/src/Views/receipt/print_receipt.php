@@ -670,7 +670,7 @@ $dir = $lang === 'ar' ? 'rtl' : 'rtl';
         <header class="receipt-header">
             <div class="logo-section">
           
-                <div class="company-info">
+                <div class="company-info d-flex justify-content-start align-items-center">
                     <h1><?php echo $t['company_name']; ?></h1>
                     <p><?php echo $t['address']; ?></p>
                     <p style="direction: ltr;"><i class="fas fa-phone"></i> 0771 225 5656</p>
