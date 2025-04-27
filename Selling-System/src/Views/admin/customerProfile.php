@@ -322,6 +322,28 @@ foreach ($debtTransactions as $debtTransaction) {
         #resetFilters:active {
             transform: scale(0.95);
         }
+
+        /* Draft Receipts Styles */
+        .draft-badge {
+            background-color: #FFC107;
+            color: #333;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+        }
+
+        .action-buttons .btn {
+            margin: 0 2px;
+        }
+
+        .action-buttons .btn i {
+            font-size: 0.875rem;
+        }
+
+        .table td {
+            vertical-align: middle;
+        }
     </style>
 </head>
 
@@ -510,6 +532,11 @@ foreach ($debtTransactions as $debtTransaction) {
                                 data-bs-target="#advance-payment-history-content" type="button" role="tab"
                                 aria-controls="advance-payment-history-content" aria-selected="false">
                                 <i class="fas fa-history"></i>مێژووی پارەی پێشەکی
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="draft-receipts-tab" data-bs-toggle="tab" data-bs-target="#draft-receipts-content" type="button" role="tab" aria-controls="draft-receipts-content" aria-selected="false">
+                                <i class="fas fa-file-alt"></i>ڕەشنووسەکان
                             </button>
                         </li>
                     </ul>
@@ -1320,6 +1347,135 @@ foreach ($debtTransactions as $debtTransaction) {
                                         <?php endif; ?>
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+
+                        <!-- Draft Receipts Tab -->
+                        <div class="tab-pane fade" id="draft-receipts-content" role="tabpanel" aria-labelledby="draft-receipts-tab">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">ڕەشنووسی پسووڵەکان</h5>
+                                <button class="btn btn-sm btn-outline-primary refresh-btn">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+
+                            <div class="table-container">
+                                <!-- Table Controls -->
+                                <div class="table-controls mb-3">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
+                                            <div class="records-per-page">
+                                                <label class="me-2">نیشاندان:</label>
+                                                <div class="custom-select-wrapper">
+                                                    <select id="draftRecordsPerPage" class="form-select form-select-sm rounded-pill">
+                                                        <option value="5">5</option>
+                                                        <option value="10" selected>10</option>
+                                                        <option value="25">25</option>
+                                                        <option value="50">50</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8 col-sm-6">
+                                            <div class="search-container">
+                                                <div class="input-group">
+                                                    <input type="text" id="draftTableSearch" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
+                                                    <span class="input-group-text rounded-pill-end bg-light">
+                                                        <i class="fas fa-search"></i>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Table Content -->
+                                <div class="table-responsive">
+                                    <table id="draftHistoryTable" class="table table-bordered custom-table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>ژمارەی پسووڵە</th>
+                                                <th>بەروار</th>
+                                                <th>جۆری پارەدان</th>
+                                                <th>کۆی گشتی</th>
+                                                <th>کردارەکان</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php
+                                            // Get draft receipts for this customer
+                                            $stmt = $conn->prepare("
+                                                SELECT s.*, 
+                                                       COALESCE(SUM(si.total_price), 0) as subtotal,
+                                                       (COALESCE(SUM(si.total_price), 0) + s.shipping_cost + s.other_costs - s.discount) as total_amount
+                                                FROM sales s
+                                                LEFT JOIN sale_items si ON s.id = si.sale_id
+                                                WHERE s.is_draft = 1 AND s.customer_id = :customer_id
+                                                GROUP BY s.id
+                                                ORDER BY s.created_at DESC
+                                            ");
+                                            $stmt->bindParam(':customer_id', $customerId);
+                                            $stmt->execute();
+                                            $draft_receipts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                            
+                                            if (count($draft_receipts) > 0) {
+                                                foreach ($draft_receipts as $index => $receipt) {
+                                                    echo '<tr>';
+                                                    echo '<td>' . ($index + 1) . '</td>';
+                                                    echo '<td>' . htmlspecialchars($receipt['invoice_number']) . ' <span class="draft-badge">ڕەشنووس</span></td>';
+                                                    echo '<td>' . date('Y-m-d', strtotime($receipt['date'])) . '</td>';
+                                                    echo '<td>' . ($receipt['payment_type'] == 'cash' ? 'نەقد' : 'قەرز') . '</td>';
+                                                    echo '<td>' . number_format($receipt['total_amount']) . ' دینار</td>';
+                                                    echo '<td>
+                                                        <div class="action-buttons">
+                                                            <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="' . $receipt['id'] . '">
+                                                                <i class="fas fa-eye"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="' . $receipt['id'] . '">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-outline-success rounded-circle finalize-btn" data-id="' . $receipt['id'] . '">
+                                                                <i class="fas fa-check"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="' . $receipt['id'] . '">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>';
+                                                    echo '</tr>';
+                                                }
+                                            } else {
+                                                echo '<tr><td colspan="6" class="text-center">هیچ ڕەشنووسێک نەدۆزرایەوە</td></tr>';
+                                            }
+                                            ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Table Pagination -->
+                                <div class="table-pagination mt-3">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-6 mb-2 mb-md-0">
+                                            <div class="pagination-info">
+                                                نیشاندانی <span id="draftStartRecord">1</span> تا <span id="draftEndRecord">10</span> لە کۆی <span id="draftTotalRecords"><?php echo count($draft_receipts); ?></span> تۆمار
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="pagination-controls d-flex justify-content-md-end">
+                                                <button id="draftPrevPageBtn" class="btn btn-sm btn-outline-primary rounded-circle me-2" disabled>
+                                                    <i class="fas fa-chevron-right"></i>
+                                                </button>
+                                                <div id="draftPaginationNumbers" class="pagination-numbers d-flex">
+                                                    <!-- Will be populated by JavaScript -->
+                                                </div>
+                                                <button id="draftNextPageBtn" class="btn btn-sm btn-outline-primary rounded-circle">
+                                                    <i class="fas fa-chevron-left"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2322,6 +2478,145 @@ foreach ($debtTransactions as $debtTransaction) {
             // Handle save button click
             $('#saveSaleEdit').on('click', function() {
                 saveSaleChanges();
+            });
+
+            // Draft Receipts Tab Functionality
+            function handleDeleteDraft(receiptId) {
+                Swal.fire({
+                    title: 'دڵنیای',
+                    text: 'دڵنیای لە سڕینەوەی ئەم ڕەشنووسە؟',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'بەڵێ',
+                    cancelButtonText: 'نەخێر'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '../../api/receipts/verify_draft.php',
+                            method: 'POST',
+                            data: { receipt_id: receiptId },
+                            success: function(response) {
+                                if (response.exists) {
+                                    $.ajax({
+                                        url: '../../api/receipts/delete_draft.php',
+                                        method: 'POST',
+                                        data: { receipt_id: receiptId },
+                                        success: function(response) {
+                                            if (response.success) {
+                                                Swal.fire({
+                                                    icon: 'success',
+                                                    title: 'سەرکەوتوو',
+                                                    text: 'ڕەشنووسەکە بە سەرکەوتوویی سڕایەوە'
+                                                }).then(() => {
+                                                    location.reload();
+                                                });
+                                            } else {
+                                                Swal.fire({
+                                                    icon: 'error',
+                                                    title: 'هەڵە',
+                                                    text: response.message || 'هەڵەیەک ڕوویدا لە سڕینەوەی ڕەشنووس'
+                                                });
+                                            }
+                                        },
+                                        error: function() {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'هەڵە',
+                                                text: 'هەڵەیەک ڕوویدا لە پەیوەندی بە سێرڤەرەوە'
+                                            });
+                                        }
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'هەڵە',
+                                        text: 'ڕەشنووسەکە نەدۆزرایەوە'
+                                    });
+                                }
+                            },
+                            error: function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'هەڵە',
+                                    text: 'هەڵەیەک ڕوویدا لە پشکنینی ڕەشنووس'
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Handle draft receipt actions
+            $(document).on('click', '#draft-receipts-content .view-btn', function() {
+                const receiptId = $(this).data('id');
+                window.location.href = `viewReceipt.php?id=${receiptId}&type=draft`;
+            });
+
+            $(document).on('click', '#draft-receipts-content .edit-btn', function() {
+                const receiptId = $(this).data('id');
+                window.location.href = `editReceipt.php?id=${receiptId}&type=draft`;
+            });
+
+            $(document).on('click', '#draft-receipts-content .finalize-btn', function() {
+                const receiptId = $(this).data('id');
+                Swal.fire({
+                    title: 'دڵنیای',
+                    text: 'دڵنیای لە تەواوکردنی ئەم ڕەشنووسە؟',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'بەڵێ',
+                    cancelButtonText: 'نەخێر'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '../../api/receipts/finalize_draft.php',
+                            method: 'POST',
+                            data: { receipt_id: receiptId },
+                            success: function(response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'سەرکەوتوو',
+                                        text: 'ڕەشنووسەکە بە سەرکەوتوویی تەواوکرا'
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'هەڵە',
+                                        text: response.message || 'هەڵەیەک ڕوویدا لە تەواوکردنی ڕەشنووس'
+                                    });
+                                }
+                            },
+                            error: function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'هەڵە',
+                                    text: 'هەڵەیەک ڕوویدا لە پەیوەندی بە سێرڤەرەوە'
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+
+            $(document).on('click', '#draft-receipts-content .delete-btn', function() {
+                const receiptId = $(this).data('id');
+                handleDeleteDraft(receiptId);
+            });
+
+            // Initialize draft receipts table pagination
+            initTablePagination({
+                tableId: 'draftHistoryTable',
+                recordsPerPageId: 'draftRecordsPerPage',
+                paginationNumbersId: 'draftPaginationNumbers',
+                prevBtnId: 'draftPrevPageBtn',
+                nextBtnId: 'draftNextPageBtn',
+                startRecordId: 'draftStartRecord',
+                endRecordId: 'draftEndRecord',
+                totalRecordsId: 'draftTotalRecords',
+                searchInputId: 'draftTableSearch'
             });
         });
 
