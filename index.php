@@ -11,16 +11,19 @@ require_once 'Selling-System/src/process/login_handler.php';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @font-face {
-            font-family: 'Rabar_021';
-            src: url('Selling-System/src/assets/fonts/Rabar_021.ttf') format('truetype');
-        }
-        body {
-            font-family: 'Rabar_021', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-        }
-        .btn-primary, .text-primary, .input-group-text .fa-user, .input-group-text .fa-lock {
+:root {
+    --primary-color: #4a90e2;
+}
+@font-face {
+    font-family: 'Rabar_021';
+    src: url('Selling-System/src/assets/fonts/Rabar_021.ttf') format('truetype');
+}
+body {
+    font-family: 'Rabar_021', sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+}
+.btn-primary, .text-primary, .input-group-text .fa-user, .input-group-text .fa-lock {
     background: var(--primary-color) !important;
     border-color: var(--primary-color) !important;
     color: #fff !important;
