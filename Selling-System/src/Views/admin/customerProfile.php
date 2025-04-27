@@ -2069,8 +2069,8 @@ foreach ($debtTransactions as $debtTransaction) {
                     data: {
                         sale_id: saleId
                     },
-                    success: function(response) {
-                        const data = JSON.parse(response);
+                    dataType: 'json',
+                    success: function(data) {
                         if (data.success) {
                             // Create return form
                             let itemsHtml = '<form id="returnSaleForm">';
@@ -2112,12 +2112,13 @@ foreach ($debtTransactions as $debtTransaction) {
                                         type: 'POST',
                                         data: formData,
                                         processData: false,
-                                        contentType: false
+                                        contentType: false,
+                                        dataType: 'json'
                                     });
                                 }
                             }).then((result) => {
                                 if (result.isConfirmed) {
-                                    const response = JSON.parse(result.value);
+                                    const response = result.value;
                                     if (response.success) {
                                         Swal.fire({
                                             title: 'سەرکەوتوو بوو!',
@@ -2146,7 +2147,8 @@ foreach ($debtTransactions as $debtTransaction) {
                             });
                         }
                     },
-                    error: function() {
+                    error: function(xhr, status, error) {
+                        console.error('Ajax error:', error);
                         Swal.fire({
                             title: 'هەڵە!',
                             text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
