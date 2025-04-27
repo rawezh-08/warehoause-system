@@ -113,9 +113,9 @@ try {
         
         // Update inventory (deduct products from stock)
         $updateInventoryStmt = $conn->prepare("
-            UPDATE inventory i
-            JOIN sale_items si ON i.product_id = si.product_id
-            SET i.stock = i.stock - si.pieces_count
+            UPDATE products p
+            JOIN sale_items si ON p.id = si.product_id
+            SET p.current_quantity = p.current_quantity - si.pieces_count
             WHERE si.sale_id = :receipt_id
         ");
         $updateInventoryStmt->bindParam(':receipt_id', $receiptId);
