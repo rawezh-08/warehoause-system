@@ -35,13 +35,13 @@ try {
         exit;
     }
 
-    // Get stock information
+    // Get stock information from inventory table
     $stmt = $conn->prepare("
         SELECT 
             SUM(CASE WHEN unit_type = 'piece' THEN quantity ELSE 0 END) as pieces,
             SUM(CASE WHEN unit_type = 'box' THEN quantity ELSE 0 END) as boxes,
             SUM(CASE WHEN unit_type = 'set' THEN quantity ELSE 0 END) as sets
-        FROM product_stock
+        FROM inventory
         WHERE product_id = ?
     ");
     $stmt->execute([$product_id]);
