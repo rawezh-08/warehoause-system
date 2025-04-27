@@ -137,7 +137,7 @@ require_once '../../config/database.php';
                                         <button type="button" class="btn btn-danger btn-sm remove-row">
                                             <i class="fas fa-times"></i>
                                         </button>
-                                        <button type="button" class="btn btn-info btn-sm show-inventory-info" title="زانیاری کۆگا">
+                                        <button type="button" class="btn btn-danger btn-sm show-inventory-info" title="زانیاری کۆگا">
                                             <i class="fas fa-boxes"></i>
                                         </button>
                                     </td>
@@ -294,7 +294,7 @@ require_once '../../config/database.php';
                                 <button type="button" class="btn btn-danger btn-sm remove-row">
                                     <i class="fas fa-times"></i>
                                 </button>
-                                <button type="button" class="btn btn-info btn-sm show-inventory-info" title="زانیاری کۆگا">
+                                <button type="button" class="btn btn-danger btn-sm show-inventory-info" title="زانیاری کۆگا">
                                     <i class="fas fa-boxes"></i>
                                 </button>
                             </td>
@@ -525,7 +525,7 @@ require_once '../../config/database.php';
                                 <button type="button" class="btn btn-danger btn-sm remove-row">
                                     <i class="fas fa-times"></i>
                                 </button>
-                                <button type="button" class="btn btn-info btn-sm show-inventory-info" title="زانیاری کۆگا">
+                                <button type="button" class="btn btn-danger btn-sm show-inventory-info" title="زانیاری کۆگا">
                                     <i class="fas fa-boxes"></i>
                                 </button>
                             </td>
