@@ -767,7 +767,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             </ul>
                                         </div>
                                     </div>
-                                    <h6 class="stat-title">کۆی فرۆشتنەکان</h6>
+                                    <h6 class="stat-title">کۆی </h6>
                                     <h3 class="stat-value"><?php echo number_format($totalSales); ?> د.ع</h3>
                                     <div class="d-flex justify-content-between align-items-center mt-3">
                                         <div class="text-success">
