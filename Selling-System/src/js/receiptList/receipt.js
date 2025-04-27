@@ -276,12 +276,6 @@ $(document).ready(function() {
                                 <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${sale.id}">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="${sale.id}">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-warning rounded-circle return-btn" data-id="${sale.id}" data-receipt-type="selling">
-                                    <i class="fas fa-undo"></i>
-                                </button>
                                 <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" data-id="${sale.id}">
                                     <i class="fas fa-print"></i>
                                 </button>
@@ -378,13 +372,6 @@ $(document).ready(function() {
             tbody.html('<tr><td colspan="7" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td></tr>');
         }
     }
-
-    // Handle view button clicks
-    $(document).on('click', '#receiptList .view-btn', function() {
-        const id = $(this).data('id');
-        const type = $(this).closest('.tab-pane').attr('id');
-        viewReceipt(id, type);
-    });
 
     // Handle edit button clicks
     $(document).on('click', '.edit-btn', function() {
