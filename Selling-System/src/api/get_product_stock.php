@@ -35,14 +35,15 @@ try {
         exit;
     }
 
-    // Get stock information from inventory table
+    // Get stock information from inventory table with unit types
     $stmt = $conn->prepare("
         SELECT 
-            SUM(CASE WHEN unit_type = 'piece' THEN quantity ELSE 0 END) as pieces,
-            SUM(CASE WHEN unit_type = 'box' THEN quantity ELSE 0 END) as boxes,
-            SUM(CASE WHEN unit_type = 'set' THEN quantity ELSE 0 END) as sets
-        FROM inventory
-        WHERE product_id = ?
+            SUM(CASE WHEN u.is_piece = 1 THEN i.quantity ELSE 0 END) as pieces,
+            SUM(CASE WHEN u.is_box = 1 THEN i.quantity ELSE 0 END) as boxes,
+            SUM(CASE WHEN u.is_set = 1 THEN i.quantity ELSE 0 END) as sets
+        FROM inventory i
+        JOIN units u ON i.unit_id = u.id
+        WHERE i.product_id = ?
     ");
     $stmt->execute([$product_id]);
     $stock = $stmt->fetch(PDO::FETCH_ASSOC);
