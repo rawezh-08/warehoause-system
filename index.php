@@ -199,6 +199,51 @@ require_once 'Selling-System/src/process/login_handler.php';
                 font-size: 2rem;
             }
         }
+
+        @media (max-width: 768px) {
+            .login-wrapper {
+                flex-direction: column;
+                max-width: 95vw;
+                min-width: unset;
+            }
+            .login-image, .login-form {
+                padding: 20px;
+                max-width: 100%;
+            }
+            .login-form {
+                padding: 20px 10px;
+            }
+            .login-header h2 {
+                font-size: 1.5rem;
+            }
+            .form-control {
+                font-size: 0.95rem;
+                height: 40px;
+                padding: 10px 10px 10px 40px;
+            }
+            .input-icon {
+                font-size: 16px;
+                top: 32px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-wrapper {
+                border-radius: 10px;
+                box-shadow: none;
+                padding: 0;
+            }
+            .login-form, .login-image {
+                padding: 10px 5px;
+            }
+            .login-header h2 {
+                font-size: 1.1rem;
+            }
+            .form-control {
+                font-size: 0.9rem;
+                height: 36px;
+            }
+        }
     </style>
 </head>
 <body>
