@@ -1243,7 +1243,7 @@ foreach ($purchases as $purchase) {
                                     <button class="btn btn-sm btn-outline-primary refresh-returns-btn">
                                         <i class="fas fa-sync-alt"></i>
                                     </button>
-                                </div>
+                        </div>
 
                                 <div class="table-responsive">
                                     <table id="returnsHistoryTable" class="table table-bordered custom-table table-hover">
@@ -2721,7 +2721,7 @@ foreach ($purchases as $purchase) {
                                 </table>
                             </div>
                         `;
-                                        
+                                
                                 // Display the modal with purchase items
                                 Swal.fire({
                                     title: `پسووڵەی ژمارە ${invoiceNumber}`,
