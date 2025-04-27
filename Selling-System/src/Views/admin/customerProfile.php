@@ -25,13 +25,13 @@ if (!$customer) {
 $salesQuery = "SELECT s.*, 
                si.quantity, si.unit_type, si.pieces_count, si.unit_price, si.total_price,
                p.name as product_name, p.code as product_code,
-               SUM(si.total_price) as total_amount,
+               SUM(si.total_price) as sale_total,
                (SELECT SUM(total_price) FROM sale_items WHERE sale_id = s.id) as invoice_total
                FROM sales s 
                JOIN sale_items si ON s.id = si.sale_id 
                JOIN products p ON si.product_id = p.id
                WHERE s.customer_id = :customer_id 
-               GROUP BY s.id, si.id
+               GROUP BY s.id, si.id, p.id
                ORDER BY s.date DESC";
 $salesStmt = $conn->prepare($salesQuery);
 $salesStmt->bindParam(':customer_id', $customerId);
@@ -68,9 +68,9 @@ $totalSales = 0;
 $monthlySales = 0;
 
 foreach ($sales as $sale) {
-    $totalSales += $sale['total_amount'];
+    $totalSales += $sale['sale_total'];
     if (date('Y-m', strtotime($sale['date'])) === date('Y-m')) {
-        $monthlySales += $sale['total_amount'];
+        $monthlySales += $sale['sale_total'];
     }
 }
 
