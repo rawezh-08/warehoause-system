@@ -300,7 +300,10 @@ require_once '../../process/addProduct_logic.php';
                             <label for="categoryName" class="form-label">ناوی جۆر</label>
                             <input type="text" class="form-control" id="categoryName" name="name" required>
                         </div>
-                       
+                        <div class="mb-3">
+                            <label for="categoryDescription" class="form-label">وەسف (ئارەزوومەندانە)</label>
+                            <textarea class="form-control" id="categoryDescription" name="description" rows="3"></textarea>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
