@@ -11,69 +11,95 @@ ini_set('error_log', __DIR__ . '/delete_draft_errors.log');
 // Log the start of the script
 error_log("Starting delete_draft.php script");
 
+// Include database connection
 require_once '../../config/database.php';
 
-// Set headers for JSON response
+// Set response headers
 header('Content-Type: application/json');
 
-// Log POST data
-error_log("POST data received: " . print_r($_POST, true));
+// Check if request method is POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Invalid request method. Only POST is allowed.'
+    ]);
+    exit;
+}
+
+// Check if receipt_id is provided
+if (!isset($_POST['receipt_id']) || empty($_POST['receipt_id'])) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Receipt ID is required.'
+    ]);
+    exit;
+}
+
+// Sanitize input
+$receiptId = intval($_POST['receipt_id']);
 
 try {
-    // Validate input
-    if (!isset($_POST['receipt_id']) || empty($_POST['receipt_id'])) {
-        error_log("Receipt ID is missing from POST data");
-        throw new Exception('پێناسەی پسووڵە پێویستە');
+    // Connect to database
+    $db = new Database();
+    $conn = $db->getConnection();
+    
+    // Start transaction
+    $conn->beginTransaction();
+    
+    // Check if the draft receipt exists
+    $stmt = $conn->prepare("SELECT id FROM sales WHERE id = :receipt_id AND is_draft = 1");
+    $stmt->bindParam(':receipt_id', $receiptId);
+    $stmt->execute();
+    
+    if ($stmt->rowCount() === 0) {
+        // Draft doesn't exist
+        $conn->rollBack();
+        echo json_encode([
+            'success' => false,
+            'message' => 'Draft receipt not found.'
+        ]);
+        exit;
     }
     
-    $receipt_id = intval($_POST['receipt_id']);
+    // Delete sale items first (foreign key constraint)
+    $deleteItemsStmt = $conn->prepare("DELETE FROM sale_items WHERE sale_id = :receipt_id");
+    $deleteItemsStmt->bindParam(':receipt_id', $receiptId);
+    $deleteItemsStmt->execute();
     
-    error_log("Processing draft receipt_id: " . $receipt_id);
+    // Delete the sale record
+    $deleteSaleStmt = $conn->prepare("DELETE FROM sales WHERE id = :receipt_id AND is_draft = 1");
+    $deleteSaleStmt->bindParam(':receipt_id', $receiptId);
+    $result = $deleteSaleStmt->execute();
     
-    // Initialize database connection
-    $database = new Database();
-    $conn = $database->getConnection();
-    
-    if (!$conn) {
-        error_log("Failed to establish database connection");
-        throw new Exception('کێشە هەیە لە پەیوەندی بە داتابەیسەوە');
-    }
-    
-    error_log("Database connection established successfully");
-    
-    try {
-        // Call the stored procedure to delete the draft receipt
-        $stmt = $conn->prepare("CALL DeleteDraftReceipt(?)");
-        $stmt->execute([$receipt_id]);
+    if ($result) {
+        // Commit the transaction
+        $conn->commit();
         
         echo json_encode([
             'success' => true,
-            'message' => 'ڕەشنووسی پسووڵە بە سەرکەوتوویی سڕایەوە'
+            'message' => 'Draft receipt has been deleted successfully.'
         ]);
+    } else {
+        // Rollback on failure
+        $conn->rollBack();
         
-    } catch (PDOException $e) {
-        // Check if this is a custom error from the stored procedure
-        if ($e->getCode() == '45000') {
-            throw new Exception($e->getMessage());
-        }
-        throw $e;
+        echo json_encode([
+            'success' => false,
+            'message' => 'Failed to delete draft receipt.'
+        ]);
     }
     
-} catch (Exception $e) {
-    // Log the error
-    error_log("Error in delete_draft.php: " . $e->getMessage());
-    error_log("Stack trace: " . $e->getTraceAsString());
+} catch (PDOException $e) {
+    // Rollback transaction on error
+    if ($conn && $conn->inTransaction()) {
+        $conn->rollBack();
+    }
     
-    // Return error response
+    // Handle database errors
+    error_log('Database error: ' . $e->getMessage());
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage(),
-        'debug_info' => [
-            'error_message' => $e->getMessage(),
-            'error_code' => $e->getCode(),
-            'error_file' => $e->getFile(),
-            'error_line' => $e->getLine(),
-            'stack_trace' => $e->getTraceAsString()
-        ]
+        'message' => 'Database error: ' . $e->getMessage()
     ]);
+    exit;
 } 

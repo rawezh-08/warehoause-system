@@ -11,94 +11,145 @@ ini_set('error_log', __DIR__ . '/finalize_draft_errors.log');
 // Log the start of the script
 error_log("Starting finalize_draft.php script");
 
+// Include database connection
 require_once '../../config/database.php';
 
-// Set headers for JSON response
+// Set response headers
 header('Content-Type: application/json');
 
-// Log POST data
-error_log("POST data received: " . print_r($_POST, true));
+// Check if request method is POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Invalid request method. Only POST is allowed.'
+    ]);
+    exit;
+}
+
+// Check if receipt_id is provided
+if (!isset($_POST['receipt_id']) || empty($_POST['receipt_id'])) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Receipt ID is required.'
+    ]);
+    exit;
+}
+
+// Sanitize input
+$receiptId = intval($_POST['receipt_id']);
 
 try {
-    // Validate input
-    if (!isset($_POST['receipt_id']) || empty($_POST['receipt_id'])) {
-        error_log("Receipt ID is missing from POST data");
-        throw new Exception('پێناسەی پسووڵە پێویستە');
-    }
+    // Connect to database
+    $db = new Database();
+    $conn = $db->getConnection();
     
-    $receipt_id = intval($_POST['receipt_id']);
-    
-    error_log("Processing draft receipt_id: " . $receipt_id);
-    
-    // Initialize database connection
-    $database = new Database();
-    $conn = $database->getConnection();
-    
-    if (!$conn) {
-        error_log("Failed to establish database connection");
-        throw new Exception('کێشە هەیە لە پەیوەندی بە داتابەیسەوە');
-    }
-    
-    error_log("Database connection established successfully");
-    
-    // Begin transaction
+    // Start transaction
     $conn->beginTransaction();
     
-    try {
-        // Check if draft exists
-        $stmt = $conn->prepare("SELECT * FROM sales WHERE id = ? AND is_draft = 1");
-        $stmt->execute([$receipt_id]);
-        $receipt = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$receipt) {
-            throw new Exception('ڕەشنووسی پسووڵە نەدۆزرایەوە - ID: ' . $receipt_id);
+    // Check if the draft receipt exists
+    $stmt = $conn->prepare("SELECT id, customer_id, payment_type FROM sales WHERE id = :receipt_id AND is_draft = 1");
+    $stmt->bindParam(':receipt_id', $receiptId);
+    $stmt->execute();
+    
+    if ($stmt->rowCount() === 0) {
+        // Draft doesn't exist
+        $conn->rollBack();
+        echo json_encode([
+            'success' => false,
+            'message' => 'Draft receipt not found.'
+        ]);
+        exit;
+    }
+    
+    $sale = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    // Update the draft status
+    $updateStmt = $conn->prepare("UPDATE sales SET is_draft = 0 WHERE id = :receipt_id");
+    $updateStmt->bindParam(':receipt_id', $receiptId);
+    $updateResult = $updateStmt->execute();
+    
+    if ($updateResult) {
+        // If it's a credit sale, we need to update customer debt
+        if ($sale['payment_type'] == 'credit') {
+            // Calculate total sale amount
+            $totalStmt = $conn->prepare("
+                SELECT SUM(si.total_price) as total_price,
+                       s.shipping_cost, s.other_costs, s.discount
+                FROM sales s
+                LEFT JOIN sale_items si ON s.id = si.sale_id
+                WHERE s.id = :receipt_id
+                GROUP BY s.id
+            ");
+            $totalStmt->bindParam(':receipt_id', $receiptId);
+            $totalStmt->execute();
+            $totalData = $totalStmt->fetch(PDO::FETCH_ASSOC);
+            
+            $totalAmount = ($totalData['total_price'] ?? 0) + 
+                          ($totalData['shipping_cost'] ?? 0) + 
+                          ($totalData['other_costs'] ?? 0) - 
+                          ($totalData['discount'] ?? 0);
+            
+            // Add to customer debt
+            $debtStmt = $conn->prepare("
+                INSERT INTO debt_transactions 
+                (customer_id, amount, transaction_type, reference_id, notes, created_by)
+                VALUES (:customer_id, :amount, 'sale', :receipt_id, 'Finalized from draft', 1)
+            ");
+            $debtStmt->bindParam(':customer_id', $sale['customer_id']);
+            $debtStmt->bindParam(':amount', $totalAmount);
+            $debtStmt->bindParam(':receipt_id', $receiptId);
+            $debtStmt->execute();
+            
+            // Update customer's debt in the customers table
+            $updateCustomerStmt = $conn->prepare("
+                UPDATE customers
+                SET debt = debt + :amount
+                WHERE id = :customer_id
+            ");
+            $updateCustomerStmt->bindParam(':amount', $totalAmount);
+            $updateCustomerStmt->bindParam(':customer_id', $sale['customer_id']);
+            $updateCustomerStmt->execute();
         }
         
-        // Get sale items
-        $stmt = $conn->prepare("SELECT * FROM sale_items WHERE sale_id = ?");
-        $stmt->execute([$receipt_id]);
-        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // Update inventory (deduct products from stock)
+        $updateInventoryStmt = $conn->prepare("
+            UPDATE inventory i
+            JOIN sale_items si ON i.product_id = si.product_id
+            SET i.stock = i.stock - si.pieces_count
+            WHERE si.sale_id = :receipt_id
+        ");
+        $updateInventoryStmt->bindParam(':receipt_id', $receiptId);
+        $updateInventoryStmt->execute();
         
-        // Update product quantities
-        foreach ($items as $item) {
-            $stmt = $conn->prepare("UPDATE products SET current_quantity = current_quantity - ? WHERE id = ?");
-            $stmt->execute([$item['pieces_count'], $item['product_id']]);
-        }
-        
-        // Update sale record to finalize it
-        $stmt = $conn->prepare("UPDATE sales SET is_draft = 0 WHERE id = ?");
-        $stmt->execute([$receipt_id]);
-        
-        // Commit transaction
+        // Commit the transaction
         $conn->commit();
         
         echo json_encode([
             'success' => true,
-            'message' => 'ڕەشنووسی پسووڵە بە سەرکەوتوویی تەواوکرا'
+            'message' => 'Draft receipt has been finalized successfully.'
         ]);
-        
-    } catch (Exception $e) {
-        // Rollback transaction on error
+    } else {
+        // Rollback on failure
         $conn->rollBack();
-        throw $e;
+        
+        echo json_encode([
+            'success' => false,
+            'message' => 'Failed to finalize draft receipt.'
+        ]);
     }
     
-} catch (Exception $e) {
-    // Log the error
-    error_log("Error in finalize_draft.php: " . $e->getMessage());
-    error_log("Stack trace: " . $e->getTraceAsString());
+} catch (PDOException $e) {
+    // Rollback transaction on error
+    if ($conn && $conn->inTransaction()) {
+        $conn->rollBack();
+    }
     
-    // Return error response
+    // Handle database errors
+    error_log('Database error: ' . $e->getMessage());
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage(),
-        'debug_info' => [
-            'error_message' => $e->getMessage(),
-            'error_code' => $e->getCode(),
-            'error_file' => $e->getFile(),
-            'error_line' => $e->getLine(),
-            'stack_trace' => $e->getTraceAsString()
-        ]
+        'message' => 'Database error: ' . $e->getMessage()
     ]);
+    exit;
 }
 ?> 

@@ -2618,6 +2618,186 @@ foreach ($debtTransactions as $debtTransaction) {
                 totalRecordsId: 'draftTotalRecords',
                 searchInputId: 'draftTableSearch'
             });
+
+            // Make sure initTablePagination function properly handles the options
+            function initTablePagination(options) {
+                if (typeof options !== 'object' || options === null) {
+                    console.error('Invalid options for table pagination');
+                    return;
+                }
+                
+                const tableId = options.tableId || '';
+                const recordsPerPageId = options.recordsPerPageId || '';
+                const paginationNumbersId = options.paginationNumbersId || '';
+                const prevBtnId = options.prevBtnId || '';
+                const nextBtnId = options.nextBtnId || '';
+                const startRecordId = options.startRecordId || '';
+                const endRecordId = options.endRecordId || '';
+                const totalRecordsId = options.totalRecordsId || '';
+                const searchInputId = options.searchInputId || '';
+                
+                // Ensure all elements exist before proceeding
+                if (!$('#' + tableId).length) {
+                    console.error('Table not found: ' + tableId);
+                    return;
+                }
+                
+                const table = $('#' + tableId);
+                const tbody = table.find('tbody');
+                const rows = tbody.find('tr').not('.no-records');
+                
+                let currentPage = 1;
+                let recordsPerPage = parseInt($('#' + recordsPerPageId).val()) || 10;
+                
+                // Initialize
+                updatePagination();
+                
+                // Records per page change event
+                $('#' + recordsPerPageId).on('change', function() {
+                    recordsPerPage = parseInt($(this).val());
+                    currentPage = 1;
+                    updatePagination();
+                });
+                
+                // Previous page button
+                $('#' + prevBtnId).on('click', function() {
+                    if (!$(this).prop('disabled')) {
+                        currentPage--;
+                        updatePagination();
+                    }
+                });
+                
+                // Next page button
+                $('#' + nextBtnId).on('click', function() {
+                    if (!$(this).prop('disabled')) {
+                        currentPage++;
+                        updatePagination();
+                    }
+                });
+                
+                // Search functionality
+                $('#' + searchInputId).on('keyup', function() {
+                    currentPage = 1;
+                    updatePagination();
+                });
+                
+                // Function to update pagination
+                function updatePagination() {
+                    const searchTerm = $('#' + searchInputId).val().toLowerCase();
+                    
+                    // Filter rows based on search term
+                    const filteredRows = rows.filter(function() {
+                        const rowText = $(this).text().toLowerCase();
+                        return searchTerm === '' || rowText.indexOf(searchTerm) > -1;
+                    });
+                    
+                    const totalRecords = filteredRows.length;
+                    const totalPages = Math.ceil(totalRecords / recordsPerPage);
+                    
+                    // Update pagination info
+                    $('#' + totalRecordsId).text(totalRecords);
+                    
+                    // Ensure current page is valid
+                    currentPage = Math.max(1, Math.min(currentPage, totalPages || 1));
+                    
+                    // Calculate start and end indices
+                    const startIndex = (currentPage - 1) * recordsPerPage;
+                    const endIndex = Math.min(startIndex + recordsPerPage - 1, totalRecords - 1);
+                    
+                    // Update pagination info
+                    $('#' + startRecordId).text(totalRecords > 0 ? startIndex + 1 : 0);
+                    $('#' + endRecordId).text(totalRecords > 0 ? endIndex + 1 : 0);
+                    
+                    // Show/hide rows based on current page
+                    tbody.find('tr').hide();
+                    filteredRows.each(function(index) {
+                        if (index >= startIndex && index <= endIndex) {
+                            $(this).show();
+                        }
+                    });
+                    
+                    // No records message
+                    if (totalRecords === 0) {
+                        if (tbody.find('tr.no-records').length === 0) {
+                            const colCount = table.find('thead th').length;
+                            tbody.append(`<tr class="no-records"><td colspan="${colCount}" class="text-center">هیچ تۆمارێک نەدۆزرایەوە</td></tr>`);
+                        }
+                        tbody.find('tr.no-records').show();
+                    } else {
+                        tbody.find('tr.no-records').remove();
+                    }
+                    
+                    // Update pagination controls
+                    $('#' + prevBtnId).prop('disabled', currentPage === 1);
+                    $('#' + nextBtnId).prop('disabled', currentPage === totalPages || totalPages === 0);
+                    
+                    // Update pagination numbers
+                    updatePaginationNumbers();
+                }
+                
+                // Function to update pagination number buttons
+                function updatePaginationNumbers() {
+                    const totalRecords = rows.filter(function() {
+                        const rowText = $(this).text().toLowerCase();
+                        const searchTerm = $('#' + searchInputId).val().toLowerCase();
+                        return searchTerm === '' || rowText.indexOf(searchTerm) > -1;
+                    }).length;
+                    
+                    const totalPages = Math.ceil(totalRecords / recordsPerPage);
+                    const paginationNumbersContainer = $('#' + paginationNumbersId);
+                    
+                    // Clear existing pagination numbers
+                    paginationNumbersContainer.empty();
+                    
+                    // Calculate which page numbers to show
+                    let startPage = Math.max(1, currentPage - 2);
+                    let endPage = Math.min(totalPages, startPage + 4);
+                    
+                    if (endPage - startPage < 4 && startPage > 1) {
+                        startPage = Math.max(1, endPage - 4);
+                    }
+                    
+                    // Add first page button if needed
+                    if (startPage > 1) {
+                        paginationNumbersContainer.append(`
+                            <button class="btn btn-sm btn-outline-primary rounded-pill me-1 page-number" data-page="1">1</button>
+                        `);
+                        
+                        if (startPage > 2) {
+                            paginationNumbersContainer.append(`
+                                <span class="d-flex align-items-center mx-1">...</span>
+                            `);
+                        }
+                    }
+                    
+                    // Add page number buttons
+                    for (let i = startPage; i <= endPage; i++) {
+                        const activeClass = i === currentPage ? 'btn-primary text-white' : 'btn-outline-primary';
+                        paginationNumbersContainer.append(`
+                            <button class="btn btn-sm ${activeClass} rounded-pill me-1 page-number" data-page="${i}">${i}</button>
+                        `);
+                    }
+                    
+                    // Add last page button if needed
+                    if (endPage < totalPages) {
+                        if (endPage < totalPages - 1) {
+                            paginationNumbersContainer.append(`
+                                <span class="d-flex align-items-center mx-1">...</span>
+                            `);
+                        }
+                        
+                        paginationNumbersContainer.append(`
+                            <button class="btn btn-sm btn-outline-primary rounded-pill me-1 page-number" data-page="${totalPages}">${totalPages}</button>
+                        `);
+                    }
+                    
+                    // Handle pagination button clicks
+                    paginationNumbersContainer.find('.page-number').on('click', function() {
+                        currentPage = parseInt($(this).data('page'));
+                        updatePagination();
+                    });
+                }
+            }
         });
 
         // Load sale data for editing
