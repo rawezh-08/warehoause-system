@@ -137,9 +137,6 @@ require_once '../../config/database.php';
                                         <button type="button" class="btn btn-danger btn-sm remove-row">
                                             <i class="fas fa-times"></i>
                                         </button>
-                                        <button type="button" class="btn btn-info btn-sm show-stock-info" title="نیشاندانی زانیاری بەردەستی">
-                                            <i class="fas fa-boxes"></i>
-                                        </button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -687,102 +684,6 @@ require_once '../../config/database.php';
         </div>
     </div>
 
-    <!-- Add this modal after the main content div -->
-    <div class="modal fade" id="stockInfoModal" tabindex="-1" role="dialog" aria-labelledby="stockInfoModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="stockInfoModalLabel">زانیاری بەردەستی کاڵا</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="stock-info-card">
-                        <div class="product-header">
-                            <img src="" alt="" class="product-image" id="stockProductImage">
-                            <div class="product-details">
-                                <h6 id="stockProductName"></h6>
-                                <p id="stockProductCode" class="text-muted"></p>
-                            </div>
-                        </div>
-                        <div class="stock-details">
-                            <div class="stock-item">
-                                <div class="stock-label">دانە بەردەست:</div>
-                                <div class="stock-value" id="stockPieces"></div>
-                            </div>
-                            <div class="stock-item">
-                                <div class="stock-label">کارتۆن بەردەست:</div>
-                                <div class="stock-value" id="stockBoxes"></div>
-                            </div>
-                            <div class="stock-item">
-                                <div class="stock-label">سێت بەردەست:</div>
-                                <div class="stock-value" id="stockSets"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <style>
-    .stock-info-card {
-        background: #fff;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        padding: 20px;
-    }
-
-    .product-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-
-    .product-image {
-        width: 60px;
-        height: 60px;
-        object-fit: cover;
-        border-radius: 8px;
-        margin-left: 15px;
-    }
-
-    .product-details h6 {
-        margin: 0;
-        font-size: 1.1rem;
-        color: #333;
-    }
-
-    .product-details p {
-        margin: 5px 0 0;
-        font-size: 0.9rem;
-    }
-
-    .stock-details {
-        display: grid;
-        gap: 15px;
-    }
-
-    .stock-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px;
-        background: #f8f9fa;
-        border-radius: 8px;
-    }
-
-    .stock-label {
-        font-weight: 500;
-        color: #666;
-    }
-
-    .stock-value {
-        font-weight: bold;
-        color: #0d6efd;
-        font-size: 1.1rem;
-    }
-    </style>
-
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -1146,58 +1047,6 @@ require_once '../../config/database.php';
                     // Reload the current page
                     window.location.reload();
                 };
-            });
-
-            // Handle stock info button click
-            $(document).on('click', '.show-stock-info', function() {
-                const row = $(this).closest('tr');
-                const productId = row.find('.product-select').val();
-                
-                if (!productId) {
-                    Swal.fire({
-                        title: 'هەڵە!',
-                        text: 'تکایە سەرەتا کاڵا هەڵبژێرە',
-                        icon: 'error',
-                        confirmButtonText: 'باشە'
-                    });
-                    return;
-                }
-
-                // Get product stock information via AJAX
-                $.ajax({
-                    url: '../../api/get_product_stock.php',
-                    type: 'GET',
-                    data: { product_id: productId },
-                    success: function(response) {
-                        if (response.success) {
-                            // Update modal content
-                            $('#stockProductImage').attr('src', response.product.image || '../../assets/images/no-image.png');
-                            $('#stockProductName').text(response.product.name);
-                            $('#stockProductCode').text(response.product.code);
-                            $('#stockPieces').text(response.stock.pieces + ' دانە');
-                            $('#stockBoxes').text(response.stock.boxes + ' کارتۆن');
-                            $('#stockSets').text(response.stock.sets + ' سێت');
-                            
-                            // Show modal
-                            $('#stockInfoModal').modal('show');
-                        } else {
-                            Swal.fire({
-                                title: 'هەڵە!',
-                                text: response.message || 'هەڵەیەک ڕوویدا',
-                                icon: 'error',
-                                confirmButtonText: 'باشە'
-                            });
-                        }
-                    },
-                    error: function() {
-                        Swal.fire({
-                            title: 'هەڵە!',
-                            text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە سێرڤەرەوە',
-                            icon: 'error',
-                            confirmButtonText: 'باشە'
-                        });
-                    }
-                });
             });
         });
     </script>
