@@ -635,6 +635,7 @@ foreach ($debtTransactions as $debtTransaction) {
                                                                 <?php
                                                                 // Check if sale can be returned (no payments made)
                                                                 $canReturn = true;
+                                                                $canDelete = true;
                                                                 
                                                                 // Check for debt transactions
                                                                 foreach ($debtTransactions as $transaction) {
@@ -642,8 +643,20 @@ foreach ($debtTransactions as $debtTransaction) {
                                                                         ($transaction['transaction_type'] == 'collection' || 
                                                                          $transaction['transaction_type'] == 'payment')) {
                                                                         $canReturn = false;
+                                                                        $canDelete = false;
                                                                         break;
                                                                     }
+                                                                }
+                                                                
+                                                                // Check for product returns
+                                                                $returnQuery = "SELECT COUNT(*) as count FROM product_returns WHERE receipt_id = :sale_id AND receipt_type = 'selling'";
+                                                                $returnStmt = $conn->prepare($returnQuery);
+                                                                $returnStmt->bindParam(':sale_id', $sale['id']);
+                                                                $returnStmt->execute();
+                                                                $returnCount = $returnStmt->fetch(PDO::FETCH_ASSOC)['count'];
+                                                                
+                                                                if ($returnCount > 0) {
+                                                                    $canDelete = false;
                                                                 }
                                                                 
                                                                 if ($canReturn):
