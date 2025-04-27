@@ -493,12 +493,26 @@ require_once '../../process/dashboard_logic.php';
                 error: function(xhr, status, error) {
                     // Show error message with more details
                     let errorMessage = 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردنەوەدا';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMessage = xhr.responseJSON.message;
+                    let errorDetails = '';
+                    
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.message) {
+                            errorMessage = response.message;
+                        }
+                    } catch (e) {
+                        errorDetails = `Status: ${status}, Error: ${error}`;
                     }
+                    
+                    console.error('AJAX Error:', {
+                        status: status,
+                        error: error,
+                        response: xhr.responseText
+                    });
+                    
                     Swal.fire({
                         title: 'هەڵە!',
-                        text: errorMessage,
+                        text: errorMessage + (errorDetails ? `\n\n${errorDetails}` : ''),
                         icon: 'error',
                         confirmButtonText: 'باشە'
                     });

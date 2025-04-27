@@ -1,4 +1,8 @@
 <?php
+// Enable error reporting
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // Include authentication check
 require_once '../../includes/auth.php';
 
@@ -37,6 +41,9 @@ try {
             $previousPeriodEnd = date('Y-m-d', strtotime('-1 day'));
     }
 
+    // Log the date ranges for debugging
+    error_log("Date ranges - Start: $startDate, Previous Start: $previousPeriodStart, Previous End: $previousPeriodEnd");
+
     // Fetch current period cash sales
     $currentCashSalesQuery = "SELECT COALESCE(SUM(si.total_price), 0) as total 
                              FROM sales s 
@@ -46,6 +53,9 @@ try {
     $stmt = $conn->prepare($currentCashSalesQuery);
     $stmt->execute(['startDate' => $startDate]);
     $cashSales = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+    // Log the query result
+    error_log("Cash sales query result: " . print_r($cashSales, true));
 
     // Fetch previous period cash sales
     $previousCashSalesQuery = "SELECT COALESCE(SUM(si.total_price), 0) as total 
@@ -277,6 +287,10 @@ try {
         ]
     ]);
 } catch (Exception $e) {
+    // Log the error details
+    error_log("Error in dashboard_ajax.php: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
+    
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()
