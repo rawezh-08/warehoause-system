@@ -501,6 +501,11 @@ foreach ($purchases as $purchase) {
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="recent-debt-payments-tab" data-bs-toggle="tab" data-bs-target="#recent-debt-payments-content" type="button" role="tab" aria-controls="recent-debt-payments-content" aria-selected="false">
+                                    <i class="fas fa-history"></i>دوایین پارەدانەکان
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="advance-payment-tab" data-bs-toggle="tab" data-bs-target="#advance-payment-content" type="button" role="tab" aria-controls="advance-payment-content" aria-selected="false">
                                     <i class="fas fa-coins"></i>پارەی پێشەکی
                                 </button>
@@ -925,11 +930,6 @@ foreach ($purchases as $purchase) {
                                                 </select>
                                             </div>
                                             
-                                            <div class="mb-3">
-                                                <label for="referenceNumber" class="form-label">ژمارەی مەرجەع</label>
-                                                <input type="text" class="form-control" id="referenceNumber" name="reference_number">
-                                            </div>
-                                            
                                             <div class="text-end">
                                                 <button type="reset" class="btn btn-outline-secondary me-2">
                                                     <i class="fas fa-undo me-2"></i> ڕیسێت
@@ -942,86 +942,85 @@ foreach ($purchases as $purchase) {
                                     </div>
                                 </div>
                                 
-                                <!-- Recent Debt Payments -->
-                                <div class="row mt-4">
-                                    <div class="col-12">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <h5 class="card-title mb-0">دوایین پارەدانەکانی قەرز</h5>
-                                        </div>
-                                        <div class="table-responsive">
-                                            <table id="debtPaymentTable" class="table table-bordered custom-table table-hover">
-                                                <thead class="table-light">
-                                                    <tr>
-                                                        <th>#</th>
-                                                        <th>بەروار</th>
-                                                        <th>بڕی پارە</th>
-                                                        <th>تێبینی</th>
-                                                        <th>شێوازی پارەدان</th>
-                                                        <th>ژمارەی مەرجەع</th>
-                                                        <th>کردارەکان</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php
-                                                    // Get supplier debt payment transactions
-                                                    $debtPaymentQuery = "SELECT * FROM supplier_debt_transactions 
-                                                                      WHERE supplier_id = :supplier_id 
-                                                                      AND transaction_type = 'payment'
-                                                                      ORDER BY created_at DESC";
-                                                    $debtPaymentStmt = $conn->prepare($debtPaymentQuery);
-                                                    $debtPaymentStmt->bindParam(':supplier_id', $supplierId);
-                                                    $debtPaymentStmt->execute();
-                                                    $debtPayments = $debtPaymentStmt->fetchAll(PDO::FETCH_ASSOC);
-                                                    
-                                                    if (count($debtPayments) > 0):
-                                                        $counter = 1;
-                                                        foreach ($debtPayments as $payment):
-                                                            $notesData = json_decode($payment['notes'], true);
-                                                            $paymentMethod = isset($notesData['paymentMethod']) ? $notesData['paymentMethod'] : 'cash';
-                                                            $referenceNumber = isset($notesData['referenceNumber']) ? $notesData['referenceNumber'] : '-';
-                                                            $displayNotes = isset($notesData['originalNotes']) ? $notesData['originalNotes'] : $payment['notes'];
-                                                            ?>
-                                                            <tr>
-                                                                <td><?php echo $counter++; ?></td>
-                                                                <td><?php echo date('Y/m/d', strtotime($payment['created_at'])); ?></td>
-                                                                <td class="text-success">
-                                                                    <?php echo number_format($payment['amount']); ?> دینار</td>
-                                                                <td><?php echo !empty($displayNotes) ? htmlspecialchars($displayNotes) : '-'; ?></td>
-                                                                <td>
-                                                                    <?php
-                                                                    switch ($paymentMethod) {
-                                                                        case 'cash':
-                                                                            echo '<span class="badge bg-success">نەقد</span>';
-                                                                            break;
-                                                                        case 'transfer':
-                                                                            echo '<span class="badge bg-info">FIB یان FastPay</span>';
-                                                                            break;
-                                                                        default:
-                                                                            echo '<span class="badge bg-secondary">هی تر</span>';
-                                                                    }
-                                                                    ?>
-                                                                </td>
-                                                                <td><?php echo htmlspecialchars($referenceNumber); ?></td>
-                                                                <td>
-                                                                    <div class="action-buttons">
-                                                                        <a href="../../views/receipt/supplier_payment_receipt.php?transaction_id=<?php echo $payment['id']; ?>"
-                                                                           class="btn btn-sm btn-outline-info rounded-circle print-receipt-btn"
-                                                                           target="_blank"
-                                                                           title="چاپکردن">
-                                                                            <i class="fas fa-print"></i>
-                                                                        </a>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        <?php endforeach; ?>
-                                                    <?php else: ?>
+                                <!-- Recent Debt Payments Tab -->
+                                <div class="tab-pane fade" id="recent-debt-payments-content" role="tabpanel" aria-labelledby="recent-debt-payments-tab">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="card-title mb-0">دوایین پارەدانەکانی قەرز</h5>
+                                        <button class="btn btn-sm btn-outline-primary refresh-btn">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </button>
+                                    </div>
+
+                                    <div class="table-responsive">
+                                        <table id="debtPaymentTable" class="table table-bordered custom-table table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>بەروار</th>
+                                                    <th>بڕی پارە</th>
+                                                    <th>تێبینی</th>
+                                                    <th>شێوازی پارەدان</th>
+                                                    <th>کردارەکان</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php
+                                                // Get supplier debt payment transactions
+                                                $debtPaymentQuery = "SELECT * FROM supplier_debt_transactions 
+                                                                  WHERE supplier_id = :supplier_id 
+                                                                  AND transaction_type = 'payment'
+                                                                  ORDER BY created_at DESC";
+                                                $debtPaymentStmt = $conn->prepare($debtPaymentQuery);
+                                                $debtPaymentStmt->bindParam(':supplier_id', $supplierId);
+                                                $debtPaymentStmt->execute();
+                                                $debtPayments = $debtPaymentStmt->fetchAll(PDO::FETCH_ASSOC);
+                                                
+                                                if (count($debtPayments) > 0):
+                                                    $counter = 1;
+                                                    foreach ($debtPayments as $payment):
+                                                        $notesData = json_decode($payment['notes'], true);
+                                                        $paymentMethod = isset($notesData['paymentMethod']) ? $notesData['paymentMethod'] : 'cash';
+                                                        $displayNotes = isset($notesData['originalNotes']) ? $notesData['originalNotes'] : $payment['notes'];
+                                                        ?>
                                                         <tr>
-                                                            <td colspan="7" class="text-center">هیچ پارەدانێک نەدۆزرایەوە</td>
+                                                            <td><?php echo $counter++; ?></td>
+                                                            <td><?php echo date('Y/m/d', strtotime($payment['created_at'])); ?></td>
+                                                            <td class="text-success">
+                                                                <?php echo number_format($payment['amount']); ?> دینار</td>
+                                                            <td><?php echo !empty($displayNotes) ? htmlspecialchars($displayNotes) : '-'; ?></td>
+                                                            <td>
+                                                                <?php
+                                                                switch ($paymentMethod) {
+                                                                    case 'cash':
+                                                                        echo '<span class="badge bg-success">نەقد</span>';
+                                                                        break;
+                                                                    case 'transfer':
+                                                                        echo '<span class="badge bg-info">FIB یان FastPay</span>';
+                                                                        break;
+                                                                    default:
+                                                                        echo '<span class="badge bg-secondary">هی تر</span>';
+                                                                }
+                                                                ?>
+                                                            </td>
+                                                            <td>
+                                                                <div class="action-buttons">
+                                                                    <a href="../../views/receipt/supplier_payment_receipt.php?transaction_id=<?php echo $payment['id']; ?>"
+                                                                       class="btn btn-sm btn-outline-info rounded-circle print-receipt-btn"
+                                                                       target="_blank"
+                                                                       title="چاپکردن">
+                                                                        <i class="fas fa-print"></i>
+                                                                    </a>
+                                                                </div>
+                                                            </td>
                                                         </tr>
-                                                    <?php endif; ?>
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                                    <?php endforeach; ?>
+                                                <?php else: ?>
+                                                    <tr>
+                                                        <td colspan="6" class="text-center">هیچ پارەدانێک نەدۆزرایەوە</td>
+                                                    </tr>
+                                                <?php endif; ?>
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
@@ -1432,7 +1431,6 @@ foreach ($purchases as $purchase) {
                 const paymentDate = form.find('input[name="payment_date"]').val();
                 const notes = form.find('textarea[name="notes"]').val();
                 const paymentMethod = form.find('select[name="payment_method"]').val();
-                const referenceNumber = form.find('input[name="reference_number"]').val();
 
                 // Check if amount is greater than total debt
                 const totalDebt = <?php echo $supplier['debt_on_myself']; ?>;
@@ -1449,7 +1447,6 @@ foreach ($purchases as $purchase) {
                 // Prepare metadata as JSON for storing in notes field
                 const metadata = {
                     paymentMethod: paymentMethod,
-                    referenceNumber: referenceNumber || '',
                     originalNotes: notes || ''
                 };
 
