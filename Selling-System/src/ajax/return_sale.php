@@ -63,7 +63,8 @@ try {
             // Add to returned items
             $returnedItems[] = [
                 'product_name' => $item['product_name'],
-                'quantity' => $quantity,
+                'original_quantity' => $item['quantity'],
+                'returned_quantity' => $quantity,
                 'unit_price' => $item['unit_price'],
                 'total_price' => $returnAmount
             ];

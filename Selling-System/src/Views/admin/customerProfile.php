@@ -621,7 +621,7 @@ foreach ($debtTransactions as $debtTransaction) {
                                                         </td>
                                                         <td>
                                                             <div class="action-buttons">
-                                                                <a href="../../views/receipt/print_receipt.php?sale_id=<?php echo $sale['id']; ?>"
+                                                                <a href="../../Views/receipt/print_receipt.php?sale_id=<?php echo $sale['id']; ?>"
                                                                     class="btn btn-sm btn-outline-success rounded-circle"
                                                                     title="چاپکردن">
                                                                     <i class="fas fa-print"></i>
@@ -1063,7 +1063,7 @@ foreach ($debtTransactions as $debtTransaction) {
                                                         </td>
                                                         <td>
                                                             <div class="action-buttons">
-                                                                <a href="../../views/receipt/customer_history_receipt.php?transaction_id=<?php echo $transaction['id']; ?>"
+                                                                <a href="../../Views/receipt/customer_history_receipt.php?transaction_id=<?php echo $transaction['id']; ?>"
                                                                     class="btn btn-sm btn-outline-warning rounded-circle"
                                                                     target="_blank"
                                                                     title="بینینی مێژوو">
@@ -1285,7 +1285,7 @@ foreach ($debtTransactions as $debtTransaction) {
                                                     </td>
                                                     <td>
                                                         <div class="action-buttons">
-                                                            <a href="../../views/receipt/customer_advance_receipt.php?transaction_id=<?php echo $transaction['id']; ?>"
+                                                            <a href="../../Views/receipt/customer_advance_receipt.php?transaction_id=<?php echo $transaction['id']; ?>"
                                                                 class="btn btn-sm btn-outline-warning rounded-circle"
                                                                 target="_blank"
                                                                 title="بینینی مێژوو">
@@ -1670,7 +1670,7 @@ foreach ($debtTransactions as $debtTransaction) {
             $(document).on('click', '.print-receipt-btn', function(e) {
                 e.preventDefault(); // Prevent default action
                 const transactionId = $(this).data('id');
-                const printWindow = window.open(`../../views/receipt/customer_history_receipt.php?transaction_id=${transactionId}`, '_blank');
+                const printWindow = window.open(`../../Views/receipt/customer_history_receipt.php?transaction_id=${transactionId}`, '_blank');
                 
                 if (printWindow) {
                     printWindow.addEventListener('load', function() {
@@ -1987,7 +1987,7 @@ foreach ($debtTransactions as $debtTransaction) {
             $(document).on('click', '.print-receipt-btn', function(e) {
                 e.preventDefault(); // Prevent default action
                 const transactionId = $(this).data('id');
-                const printWindow = window.open(`../../views/receipt/customer_advance_receipt.php?transaction_id=${transactionId}`, '_blank');
+                const printWindow = window.open(`../../Views/receipt/customer_advance_receipt.php?transaction_id=${transactionId}`, '_blank');
                 
                 if (printWindow) {
                     printWindow.addEventListener('load', function() {
@@ -2153,13 +2153,14 @@ foreach ($debtTransactions as $debtTransaction) {
                                         // Returned items
                                         summaryHtml += '<div class="mb-2"><strong>کاڵاکانی گەڕاوە:</strong></div>';
                                         summaryHtml += '<div class="table-responsive"><table class="table table-sm table-bordered">';
-                                        summaryHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕ</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
+                                        summaryHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی کڕین</th><th>بڕی گەڕانەوە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
                                         summaryHtml += '<tbody>';
                                         
                                         response.summary.returned_items.forEach(item => {
                                             summaryHtml += `<tr>
                                                 <td>${item.product_name}</td>
-                                                <td>${item.quantity}</td>
+                                                <td>${item.original_quantity}</td>
+                                                <td>${item.returned_quantity}</td>
                                                 <td>${item.unit_price.toLocaleString()} دینار</td>
                                                 <td>${item.total_price.toLocaleString()} دینار</td>
                                             </tr>`;
