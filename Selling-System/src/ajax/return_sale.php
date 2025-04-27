@@ -68,8 +68,8 @@ try {
     
     // Record the return
     $returnQuery = "INSERT INTO product_returns 
-                   (receipt_id, receipt_type, total_amount, notes, created_at) 
-                   VALUES (?, 'selling', ?, ?, NOW())";
+                   (receipt_id, receipt_type, return_date, total_amount, notes, created_at) 
+                   VALUES (?, 'selling', NOW(), ?, ?, NOW())";
     $returnStmt = $conn->prepare($returnQuery);
     $returnStmt->execute([$sale_id, $totalReturnAmount, $notes]);
     $return_id = $conn->lastInsertId();
@@ -83,15 +83,18 @@ try {
             $item = $itemStmt->fetch(PDO::FETCH_ASSOC);
             
             $returnItemQuery = "INSERT INTO return_items 
-                              (return_id, product_id, quantity, unit_price, total_price) 
-                              VALUES (?, ?, ?, ?, ?)";
+                              (return_id, product_id, quantity, unit_price, total_price, unit_type, original_unit_type, original_quantity) 
+                              VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             $returnItemStmt = $conn->prepare($returnItemQuery);
             $returnItemStmt->execute([
                 $return_id,
                 $item['product_id'],
                 $quantity,
                 $item['unit_price'],
-                $item['unit_price'] * $quantity
+                $item['unit_price'] * $quantity,
+                $item['unit_type'],
+                $item['unit_type'],
+                $item['quantity']
             ]);
         }
     }
