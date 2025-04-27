@@ -450,8 +450,8 @@ require_once '../../process/dashboard_logic.php';
             window.purchasesPercentage = 0;
         }
     </script>
-    <!-- Add the script reference at the bottom of the file, before closing body tag -->
-    <script src="Selling-System/src/js/dashboard/filter.js"></script>
+    <!-- Dashboard filter script -->
+    <script src="../../js/dashboard/filter.js"></script>
 </body>
 
 </html>

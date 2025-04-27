@@ -9,7 +9,7 @@ function handlePeriodFilter(period) {
     document.querySelector(`[data-period="${period}"]`).classList.add('btn-primary');
 
     // Make AJAX request to get filtered data
-    fetch(`Selling-System/src/process/dashboard_ajax.php?period=${period}`)
+    fetch(`../../process/dashboard_ajax.php?period=${period}`)
         .then(response => response.json())
         .then(data => {
             // Update KPI values
