@@ -49,7 +49,10 @@ try {
     
     foreach ($return_quantities as $item_id => $quantity) {
         if ($quantity > 0) {
-            $itemQuery = "SELECT * FROM sale_items WHERE id = ?";
+            $itemQuery = "SELECT si.*, p.name as product_name 
+                         FROM sale_items si 
+                         JOIN products p ON si.product_id = p.id 
+                         WHERE si.id = ?";
             $itemStmt = $conn->prepare($itemQuery);
             $itemStmt->execute([$item_id]);
             $item = $itemStmt->fetch(PDO::FETCH_ASSOC);
@@ -107,7 +110,10 @@ try {
     // Record return items
     foreach ($return_quantities as $item_id => $quantity) {
         if ($quantity > 0) {
-            $itemQuery = "SELECT * FROM sale_items WHERE id = ?";
+            $itemQuery = "SELECT si.*, p.name as product_name 
+                         FROM sale_items si 
+                         JOIN products p ON si.product_id = p.id 
+                         WHERE si.id = ?";
             $itemStmt = $conn->prepare($itemQuery);
             $itemStmt->execute([$item_id]);
             $item = $itemStmt->fetch(PDO::FETCH_ASSOC);
