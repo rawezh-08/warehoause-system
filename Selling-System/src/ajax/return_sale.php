@@ -17,7 +17,12 @@ try {
     $conn->beginTransaction();
     
     // Get sale details
-    $saleQuery = "SELECT * FROM sales WHERE id = ?";
+    $saleQuery = "SELECT s.*, 
+                  (SELECT SUM(total_price) FROM sale_items WHERE sale_id = s.id) as total_amount,
+                  c.debit_on_business as customer_debt
+                  FROM sales s 
+                  JOIN customers c ON s.customer_id = c.id 
+                  WHERE s.id = ?";
     $saleStmt = $conn->prepare($saleQuery);
     $saleStmt->execute([$sale_id]);
     $sale = $saleStmt->fetch(PDO::FETCH_ASSOC);
@@ -37,8 +42,11 @@ try {
         throw new Exception('ناتوانرێت ئەم پسووڵە بگەڕێتەوە چونکە پارەدانەوەی لەسەر تۆمار کراوە');
     }
     
-    // Calculate total return amount
+    // Calculate total return amount and items
     $totalReturnAmount = 0;
+    $returnedItems = [];
+    $remainingItems = [];
+    
     foreach ($return_quantities as $item_id => $quantity) {
         if ($quantity > 0) {
             $itemQuery = "SELECT * FROM sale_items WHERE id = ?";
@@ -46,7 +54,24 @@ try {
             $itemStmt->execute([$item_id]);
             $item = $itemStmt->fetch(PDO::FETCH_ASSOC);
             
-            $totalReturnAmount += $item['unit_price'] * $quantity;
+            $returnAmount = $item['unit_price'] * $quantity;
+            $totalReturnAmount += $returnAmount;
+            
+            // Add to returned items
+            $returnedItems[] = [
+                'product_name' => $item['product_name'],
+                'quantity' => $quantity,
+                'unit_price' => $item['unit_price'],
+                'total_price' => $returnAmount
+            ];
+            
+            // Add to remaining items
+            $remainingItems[] = [
+                'product_name' => $item['product_name'],
+                'quantity' => $item['quantity'] - $quantity,
+                'unit_price' => $item['unit_price'],
+                'total_price' => $item['total_price'] - $returnAmount
+            ];
             
             // Update product quantity
             $updateProductQuery = "UPDATE products 
@@ -57,13 +82,18 @@ try {
         }
     }
     
+    // Calculate remaining amount
+    $remainingAmount = $sale['total_amount'] - $totalReturnAmount;
+    
     // Update customer debt
+    $newDebt = $sale['customer_debt'];
     if ($sale['payment_type'] == 'credit') {
+        $newDebt -= $totalReturnAmount;
         $updateCustomerQuery = "UPDATE customers 
-                              SET debit_on_business = debit_on_business - ? 
+                              SET debit_on_business = ? 
                               WHERE id = ?";
         $updateCustomerStmt = $conn->prepare($updateCustomerQuery);
-        $updateCustomerStmt->execute([$totalReturnAmount, $sale['customer_id']]);
+        $updateCustomerStmt->execute([$newDebt, $sale['customer_id']]);
     }
     
     // Record the return
@@ -102,9 +132,20 @@ try {
     // Commit transaction
     $conn->commit();
     
+    // Prepare summary for response
+    $summary = [
+        'original_total' => $sale['total_amount'],
+        'returned_amount' => $totalReturnAmount,
+        'remaining_amount' => $remainingAmount,
+        'returned_items' => $returnedItems,
+        'remaining_items' => $remainingItems,
+        'new_debt' => $newDebt
+    ];
+    
     echo json_encode([
         'success' => true,
-        'message' => 'کاڵاکان بە سەرکەوتوویی گەڕایەوە'
+        'message' => 'کاڵاکان بە سەرکەوتوویی گەڕایەوە',
+        'summary' => $summary
     ]);
     
 } catch (Exception $e) {

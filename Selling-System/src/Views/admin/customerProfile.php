@@ -2120,9 +2120,74 @@ foreach ($debtTransactions as $debtTransaction) {
                                 if (result.isConfirmed) {
                                     const response = result.value;
                                     if (response.success) {
+                                        // Create summary HTML
+                                        let summaryHtml = '<div class="return-summary mt-3">';
+                                        summaryHtml += '<h5 class="mb-3">کورتەی گەڕانەوە</h5>';
+                                        
+                                        // Original total
+                                        summaryHtml += `<div class="mb-2">
+                                            <strong>کۆی گشتی پسووڵە:</strong> 
+                                            ${response.summary.original_total.toLocaleString()} دینار
+                                        </div>`;
+                                        
+                                        // Returned amount
+                                        summaryHtml += `<div class="mb-2">
+                                            <strong>کۆی گشتی گەڕاوە:</strong> 
+                                            ${response.summary.returned_amount.toLocaleString()} دینار
+                                        </div>`;
+                                        
+                                        // Remaining amount
+                                        summaryHtml += `<div class="mb-2">
+                                            <strong>کۆی گشتی ماوە:</strong> 
+                                            ${response.summary.remaining_amount.toLocaleString()} دینار
+                                        </div>`;
+                                        
+                                        // New debt
+                                        if (response.summary.new_debt !== undefined) {
+                                            summaryHtml += `<div class="mb-2">
+                                                <strong>قەرزی نوێ:</strong> 
+                                                ${response.summary.new_debt.toLocaleString()} دینار
+                                            </div>`;
+                                        }
+                                        
+                                        // Returned items
+                                        summaryHtml += '<div class="mb-2"><strong>کاڵاکانی گەڕاوە:</strong></div>';
+                                        summaryHtml += '<div class="table-responsive"><table class="table table-sm table-bordered">';
+                                        summaryHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕ</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
+                                        summaryHtml += '<tbody>';
+                                        
+                                        response.summary.returned_items.forEach(item => {
+                                            summaryHtml += `<tr>
+                                                <td>${item.product_name}</td>
+                                                <td>${item.quantity}</td>
+                                                <td>${item.unit_price.toLocaleString()} دینار</td>
+                                                <td>${item.total_price.toLocaleString()} دینار</td>
+                                            </tr>`;
+                                        });
+                                        
+                                        summaryHtml += '</tbody></table></div>';
+                                        
+                                        // Remaining items
+                                        summaryHtml += '<div class="mb-2"><strong>کاڵاکانی ماوە:</strong></div>';
+                                        summaryHtml += '<div class="table-responsive"><table class="table table-sm table-bordered">';
+                                        summaryHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕ</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
+                                        summaryHtml += '<tbody>';
+                                        
+                                        response.summary.remaining_items.forEach(item => {
+                                            summaryHtml += `<tr>
+                                                <td>${item.product_name}</td>
+                                                <td>${item.quantity}</td>
+                                                <td>${item.unit_price.toLocaleString()} دینار</td>
+                                                <td>${item.total_price.toLocaleString()} دینار</td>
+                                            </tr>`;
+                                        });
+                                        
+                                        summaryHtml += '</tbody></table></div>';
+                                        summaryHtml += '</div>';
+                                        
                                         Swal.fire({
                                             title: 'سەرکەوتوو بوو!',
-                                            text: response.message,
+                                            html: response.message + summaryHtml,
                                             icon: 'success',
                                             confirmButtonText: 'باشە'
                                         }).then(() => {
