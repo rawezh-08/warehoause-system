@@ -355,11 +355,8 @@ function updateSalesTable(salesData) {
                 <td>${sale.notes || ''}</td>
                 <td>
                     <div class="action-buttons">
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" title="دەستکاری" data-id="${sale.id}">
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${sale.id}">
                             <i class="fas fa-edit"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" title="بینین" data-id="${sale.id}">
-                            <i class="fas fa-eye"></i>
                         </button>
                         <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" title="پرینت" data-id="${sale.id}">
                             <i class="fas fa-print"></i>
