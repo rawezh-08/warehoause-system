@@ -751,7 +751,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         <!-- Total Sales -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
-                            <div class="report-card">
+                            <div class="report-card " data-bs-toggle="dropdown">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon bg-success-light">
@@ -2059,4 +2059,4 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </script>
 </body>
 
-</html>
+</html>Rawezh.Jaza@0894
