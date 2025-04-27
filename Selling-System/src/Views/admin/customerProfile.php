@@ -575,6 +575,9 @@ foreach ($debtTransactions as $debtTransaction) {
                                                 <th>یەکە</th>
                                                 <th>نرخی تاک</th>
                                                 <th>نرخی گشتی</th>
+                                                <th>کرێی گواستنەوە</th>
+                                                <th>خەرجی تر</th>
+                                                <th>داشکاندن</th>
                                                 <th>جۆری پارەدان</th>
                                                 <th>کردارەکان</th>
                                             </tr>
@@ -612,6 +615,9 @@ foreach ($debtTransactions as $debtTransaction) {
                                                         </td>
                                                         <td><?php echo number_format($sale['unit_price']); ?> دینار</td>
                                                         <td><?php echo number_format($sale['total_price']); ?> دینار</td>
+                                                        <td><?php echo number_format($sale['shipping_cost'] ?? 0); ?> دینار</td>
+                                                        <td><?php echo number_format($sale['other_costs'] ?? 0); ?> دینار</td>
+                                                        <td><?php echo number_format($sale['discount'] ?? 0); ?> دینار</td>
                                                         <td>
                                                             <?php if ($sale['payment_type'] == 'cash'): ?>
                                                                 <span class="badge bg-success">نەقد</span>
