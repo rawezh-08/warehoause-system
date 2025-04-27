@@ -672,6 +672,183 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     <link rel="stylesheet" href="../../test/main.css">
 
+    <style>
+        /* Modern Card Design */
+        .report-card {
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            border: none;
+            overflow: hidden;
+        }
+
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .report-card .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Statistics Cards */
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0.5rem 0;
+            color: #2c3e50;
+        }
+
+        .stat-change {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .stat-change.positive {
+            color: #2ecc71;
+        }
+
+        .stat-change.negative {
+            color: #e74c3c;
+        }
+
+        /* Table Styles */
+        .report-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .report-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            padding: 1rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .report-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
+        }
+
+        .report-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Chart Containers */
+        .chart-container {
+            background: #fff;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Loading States */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            border-radius: 15px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .report-card .card-body {
+                padding: 1rem;
+            }
+
+            .chart-container {
+                padding: 1rem;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Date Range Picker Enhancement */
+        .date-filter {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .date-filter:hover {
+            border-color: #3498db;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.1);
+        }
+
+        /* Print Styles */
+        @media print {
+            .report-card {
+                break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #e9ecef;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -710,15 +887,12 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <!-- Statistics Cards -->
                     <div class="row mb-4">
                         <!-- Products Count -->
-                        
-
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
                             <div class="report-card">
                                 <div class="card-body">
-                                    
                                     <div class="report-icon-wrapper">
                                         <h3 class="report-title">کۆی کاڵاکان</h3>
-                                        <div class=" stat-icon bg-primary-light ">
+                                        <div class="stat-icon bg-primary-light">
                                             <i class="fas fa-box text-primary"></i>
                                         </div>
                                     </div>
@@ -732,13 +906,12 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         <!-- Warehouse Value -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
-                            <div class=" report-card">
+                            <div class="report-card">
                                 <div class="card-body">
-                                   
                                     <div class="report-icon-wrapper">
-                                        <h3 class="report-title">کۆی کاڵاکان</h3>
-                                        <div class=" stat-icon bg-primary-light ">
-                                        <i class="fas fa-warehouse text-warning"></i>
+                                        <h3 class="report-title">بەهای کۆگا</h3>
+                                        <div class="stat-icon bg-warning-light">
+                                            <i class="fas fa-warehouse text-warning"></i>
                                         </div>
                                     </div>
                                     <h3 class="stat-value"><?php echo number_format($totalInventoryValue); ?> د.ع</h3>
@@ -767,7 +940,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             </ul>
                                         </div>
                                     </div>
-                                    <h6 class="stat-title">کۆی </h6>
+                                    <h6 class="stat-title">کۆی فرۆشتن</h6>
                                     <h3 class="stat-value"><?php echo number_format($totalSales); ?> د.ع</h3>
                                     <div class="d-flex justify-content-between align-items-center mt-3">
                                         <div class="text-success">
@@ -1042,155 +1215,17 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
 
                     <!-- Charts Section -->
-
-                    <!-- Tabs for Different Reports -->
                     <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="report-card">
-                                <div class="card-body">
-                                    <ul class="nav nav-tabs" id="reportTabs" role="tablist">
-                                        <li class="nav-item" role="presentation">
-                                            <button class="nav-link active" id="top-products-tab" data-bs-toggle="tab" data-bs-target="#top-products" type="button" role="tab" aria-controls="top-products" aria-selected="true">باشترین کاڵاکان</button>
-                                        </li>
-                                        <li class="nav-item" role="presentation">
-                                            <button class="nav-link" id="low-stock-tab" data-bs-toggle="tab" data-bs-target="#low-stock" type="button" role="tab" aria-controls="low-stock" aria-selected="false">کاڵای کەم</button>
-                                        </li>
-                                        <li class="nav-item" role="presentation">
-                                            <button class="nav-link" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions" type="button" role="tab" aria-controls="transactions" aria-selected="false">دوا مامەڵەکان</button>
-                                        </li>
-                                    </ul>
-                                    <div class="tab-content" id="reportTabsContent">
-                                        <!-- Top Products Tab -->
-                                        <div class="tab-pane fade show active" id="top-products" role="tabpanel" aria-labelledby="top-products-tab">
-                                            <div class="table-responsive">
-                                                <table class="table report-table">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>#</th>
-                                                            <th>ناوی کاڵا</th>
-                                                            <th>ژمارەی فرۆشراو</th>
-                                                            <th>بەهای فرۆشتن</th>
-                                                            <th>کردار</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <?php foreach ($topProducts as $index => $product): ?>
-                                                            <tr>
-                                                                <td><?php echo $index + 1; ?></td>
-                                                                <td><?php echo htmlspecialchars($product['name']); ?></td>
-                                                                <td><?php echo number_format($product['quantity']); ?></td>
-                                                                <td><?php echo number_format($product['amount']); ?> د.ع</td>
-                                                                <td>
-                                                                    <a href="#" class="btn btn-sm btn-outline-primary">
-                                                                        <i class="fas fa-eye"></i> بینین
-                                                                    </a>
-                                                                </td>
-                                                            </tr>
-                                                        <?php endforeach; ?>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            <div class="text-center mt-4">
-                                                <a href="#" class="btn btn-outline-primary">
-                                                    <i class="fas fa-external-link-alt me-2"></i> بینینی هەموو کاڵاکان
-                                                </a>
-                                            </div>
-                                        </div>
-
-                                        <!-- Low Stock Products Tab -->
-                                        <div class="tab-pane fade" id="low-stock" role="tabpanel" aria-labelledby="low-stock-tab">
-                                            <div class="table-responsive">
-                                                <table class="table report-table">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>#</th>
-                                                            <th>ناوی کاڵا</th>
-                                                            <th>بڕی ئێستا</th>
-                                                            <th>کەمترین بڕ</th>
-                                                            <th>ئاستی کۆگا</th>
-                                                            <th>کردار</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <?php foreach ($lowStockProducts as $index => $product):
-                                                            $percentage = min(100, ($product['current'] / $product['min']) * 100);
-                                                            $stockClass = $percentage <= 30 ? 'critical' : ($percentage <= 60 ? 'warning' : 'good');
-                                                        ?>
-                                                            <tr>
-                                                                <td><?php echo $index + 1; ?></td>
-                                                                <td><?php echo htmlspecialchars($product['name']); ?></td>
-                                                                <td><?php echo number_format($product['current']); ?></td>
-                                                                <td><?php echo number_format($product['min']); ?></td>
-                                                                <td>
-                                                                    <div class="stock-indicator">
-                                                                        <div class="stock-level <?php echo $stockClass; ?>" style="width: <?php echo $percentage; ?>%"></div>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <a href="#" class="btn btn-sm btn-outline-primary">
-                                                                        <i class="fas fa-shopping-cart"></i> داواکردن
-                                                                    </a>
-                                                                </td>
-                                                            </tr>
-                                                        <?php endforeach; ?>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            <div class="text-center mt-4">
-                                                <a href="#" class="btn btn-outline-primary">
-                                                    <i class="fas fa-external-link-alt me-2"></i> بینینی هەموو مامەڵەکان
-                                                </a>
-                                            </div>
-                                        </div>
-
-                                        <!-- Recent Transactions Tab -->
-                                        <div class="tab-pane fade" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
-                                            <div class="table-responsive">
-                                                <table class="table report-table">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>ڕێکەوت</th>
-                                                            <th>جۆر</th>
-                                                            <th>بڕی پارە</th>
-                                                            <th>دۆخ</th>
-                                                            <th>کردار</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <?php foreach ($recentTransactions as $transaction):
-                                                            $statusClass = $transaction['type'] === 'فرۆشتن' ? 'success' : 'info';
-                                                        ?>
-                                                            <tr>
-                                                                <td><?php echo date('Y/m/d', strtotime($transaction['date'])); ?></td>
-                                                                <td>
-                                                                    <span class="badge rounded-pill bg-<?php echo $statusClass; ?>-light text-<?php echo $statusClass; ?>">
-                                                                        <?php echo htmlspecialchars($transaction['type']); ?>
-                                                                    </span>
-                                                                </td>
-                                                                <td><?php echo number_format($transaction['amount']); ?> د.ع</td>
-                                                                <td>
-                                                                    <span class="table-status bg-success-light text-success">
-                                                                        <?php echo htmlspecialchars($transaction['status']); ?>
-                                                                    </span>
-                                                                </td>
-                                                                <td>
-                                                                    <a href="#" class="btn btn-sm btn-outline-primary">
-                                                                        <i class="fas fa-eye"></i> بینین
-                                                                    </a>
-                                                                </td>
-                                                            </tr>
-                                                        <?php endforeach; ?>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            <div class="text-center mt-4">
-                                                <a href="#" class="btn btn-outline-primary">
-                                                    <i class="fas fa-external-link-alt me-2"></i> بینینی هەموو مامەڵەکان
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="col-md-8">
+                            <div class="chart-container">
+                                <h5 class="card-title mb-4">شیکاری قازانج و زەرەر بەپێی مانگ</h5>
+                                <div id="monthlyProfitChart" style="height: 350px;"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="chart-container">
+                                <h5 class="card-title mb-4">فرۆشتن بەپێی کاتەگۆری</h5>
+                                <div id="categorySalesChart" style="height: 350px;"></div>
                             </div>
                         </div>
                     </div>
@@ -1365,11 +1400,13 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                         <td>
                                                             <div class="d-flex align-items-center">
                                                                 <?php if ($product['image']): ?>
-                                                                    <img src="../../<?php echo $product['image']; ?>" class="me-2" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">
+                                                                    <img src="../../<?php echo $product['image']; ?>" class="me-2" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;" alt="<?php echo htmlspecialchars($product['name']); ?>">
                                                                 <?php else: ?>
-                                                                    <div class="me-2" style="width: 40px; height: 40px; background-color: #f8f9fa; border-radius: 5px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-box text-muted"></i></div>
+                                                                    <div class="me-2" style="width: 40px; height: 40px; background-color: #f8f9fa; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
+                                                                        <i class="fas fa-box text-muted"></i>
+                                                                    </div>
                                                                 <?php endif; ?>
-                                                                <span><?php echo $product['name']; ?></span>
+                                                                <span><?php echo htmlspecialchars($product['name']); ?></span>
                                                             </div>
                                                         </td>
                                                         <td><?php echo $product['code']; ?></td>
