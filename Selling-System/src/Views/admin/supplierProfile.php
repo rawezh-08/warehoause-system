@@ -1046,7 +1046,7 @@ foreach ($purchases as $purchase) {
                                                 </div>
                                             </div>
                                             <div class="row">
-                                                <div class="col-md-6 mb-3">
+                                                <div class="col-md-12 mb-3">
                                                     <h6 class="text-muted mb-2">دۆخی ئێستا</h6>
                                                     <?php if ($supplier['debt_on_myself'] > 0): ?>
                                                     <p class="h4 text-danger">
@@ -1061,11 +1061,6 @@ foreach ($purchases as $purchase) {
                                                         هاوسەنگ
                                                     </p>
                                                     <?php endif; ?>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <h6 class="text-muted mb-2">کۆی کڕینەکان</h6>
-                                                    <p class="h4 text-primary"><?php echo number_format($totalPurchases); ?>
-                                                        دینار</p>
                                                 </div>
                                             </div>
                                         </div>
