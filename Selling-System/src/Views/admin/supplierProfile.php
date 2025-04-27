@@ -26,8 +26,7 @@ $purchasesQuery = "SELECT p.*,
                pi.quantity, pi.unit_price, pi.total_price, pi.unit_type,
                pr.name as product_name, pr.code as product_code,
                SUM(pi.total_price) as total_amount,
-               p.shipping_cost, p.other_cost, p.discount,
-               (SELECT SUM(total_price) FROM purchase_items WHERE purchase_id = p.id) as invoice_number
+               p.shipping_cost, p.other_cost, p.discount
                FROM purchases p 
                JOIN purchase_items pi ON p.id = pi.purchase_id 
                JOIN products pr ON pi.product_id = pr.id
@@ -618,7 +617,12 @@ foreach ($purchases as $purchase) {
                                                         </td>
                                                         <td>
                                                             <div class="action-buttons">
-                                                                <button type="button" class="btn btn-sm btn-outline-primary rounded-circle view-purchase-details" 
+                                                                <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-purchase" 
+                                                                    data-id="<?php echo $purchase['id']; ?>"
+                                                                    title="دەستکاری">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </button>
+                                                                <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-purchase-details" 
                                                                     data-id="<?php echo $purchase['id']; ?>"
                                                                     data-invoice="<?php echo $purchase['invoice_number']; ?>"
                                                                     title="بینین">
@@ -802,7 +806,12 @@ foreach ($purchases as $purchase) {
                                                         <td><?php echo number_format($purchase['discount']); ?> دینار</td>
                                                         <td>
                                                             <div class="action-buttons">
-                                                                <button type="button" class="btn btn-sm btn-outline-primary rounded-circle view-purchase-details" 
+                                                                <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-purchase" 
+                                                                    data-id="<?php echo $purchase['id']; ?>"
+                                                                    title="دەستکاری">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </button>
+                                                                <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-purchase-details" 
                                                                     data-id="<?php echo $purchase['id']; ?>"
                                                                     data-invoice="<?php echo $purchase['invoice_number']; ?>"
                                                                     title="بینین">
@@ -1842,6 +1851,14 @@ foreach ($purchases as $purchase) {
                         }
                     });
                 });
+            });
+
+            // Handle edit purchase button
+            $(document).on('click', '.edit-purchase', function() {
+                const purchaseId = $(this).data('id');
+                
+                // Navigate to the edit purchase page
+                window.location.href = `editPurchase.php?id=${purchaseId}`;
             });
         });
     </script>
