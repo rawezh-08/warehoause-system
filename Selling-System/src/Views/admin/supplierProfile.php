@@ -629,7 +629,8 @@ foreach ($purchases as $purchase) {
                                                                     <i class="fas fa-eye"></i>
                                                                 </button>
                                                                 <?php
-                                                                // Check if purchase can be deleted (no returns or payments)
+                                                                // Check if purchase can be returned (no payments made)
+                                                                $canReturn = true;
                                                                 $canDelete = true;
                                                                 
                                                                 // Check for debt transactions (payments)
@@ -642,6 +643,7 @@ foreach ($purchases as $purchase) {
                                                                 $paymentCount = $paymentStmt->fetch(PDO::FETCH_ASSOC)['count'];
                                                                 
                                                                 if ($paymentCount > 0) {
+                                                                    $canReturn = false;
                                                                     $canDelete = false;
                                                                 }
                                                                 
@@ -657,8 +659,18 @@ foreach ($purchases as $purchase) {
                                                                     $canDelete = false;
                                                                 }
                                                                 
-                                                                if ($canDelete):
+                                                                if ($canReturn):
                                                                 ?>
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-warning rounded-circle return-purchase"
+                                                                    data-id="<?php echo $purchase['id']; ?>"
+                                                                    data-invoice="<?php echo $purchase['invoice_number']; ?>"
+                                                                    title="گەڕانەوەی کاڵا">
+                                                                    <i class="fas fa-undo"></i>
+                                                                </button>
+                                                                <?php endif; ?>
+                                                                
+                                                                <?php if ($canDelete): ?>
                                                                 <button type="button" 
                                                                     class="btn btn-sm btn-outline-danger rounded-circle delete-purchase"
                                                                     data-id="<?php echo $purchase['id']; ?>"
@@ -2275,6 +2287,172 @@ foreach ($purchases as $purchase) {
                 });
             });
         });
+    </script>
+
+    <!-- Return Purchase Modal -->
+    <div class="modal fade" id="returnPurchaseModal" tabindex="-1" role="dialog" aria-labelledby="returnPurchaseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="returnPurchaseModalLabel">گەڕانەوەی کاڵا</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="returnPurchaseForm">
+                        <input type="hidden" id="returnPurchaseId" name="purchase_id">
+                        <input type="hidden" id="returnPurchaseInvoice" name="invoice_number">
+                        
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>کاڵا</th>
+                                        <th>بڕی کڕین</th>
+                                        <th>بڕی گەڕاوە</th>
+                                        <th>بڕی گەڕانەوە</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="returnItemsList">
+                                    <!-- Items will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" id="submitReturn">گەڕانەوە</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ... existing code ...
+
+    // Return Purchase Handler
+    $(document).on('click', '.return-purchase', function() {
+        const purchaseId = $(this).data('id');
+        const invoiceNumber = $(this).data('invoice');
+        
+        // Set purchase ID and invoice number in the form
+        $('#returnPurchaseId').val(purchaseId);
+        $('#returnPurchaseInvoice').val(invoiceNumber);
+        
+        // Fetch purchase details
+        $.ajax({
+            url: '../../ajax/get_purchase_details.php',
+            type: 'POST',
+            data: { purchase_id: purchaseId },
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    // Populate items list
+                    let itemsHtml = '';
+                    response.data.items.forEach(function(item) {
+                        itemsHtml += `
+                            <tr>
+                                <td>${item.product_name}</td>
+                                <td>${item.quantity}</td>
+                                <td>${item.returned_quantity || 0}</td>
+                                <td>
+                                    <input type="number" 
+                                           class="form-control return-quantity" 
+                                           name="return_quantities[${item.id}]" 
+                                           min="0" 
+                                           max="${item.quantity - (item.returned_quantity || 0)}" 
+                                           value="0">
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    $('#returnItemsList').html(itemsHtml);
+                    
+                    // Show modal
+                    $('#returnPurchaseModal').modal('show');
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: response.message || 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان'
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان'
+                });
+            }
+        });
+    });
+
+    // Submit Return
+    $('#submitReturn').click(function() {
+        const purchaseId = $('#returnPurchaseId').val();
+        const invoiceNumber = $('#returnPurchaseInvoice').val();
+        const returnQuantities = {};
+        
+        // Collect return quantities
+        $('.return-quantity').each(function() {
+            const itemId = $(this).attr('name').match(/\[(\d+)\]/)[1];
+            const quantity = parseInt($(this).val());
+            if (quantity > 0) {
+                returnQuantities[itemId] = quantity;
+            }
+        });
+        
+        // Check if any items are being returned
+        if (Object.keys(returnQuantities).length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'ئاگادارکردنەوە',
+                text: 'تکایە بڕی گەڕانەوە دیاری بکە'
+            });
+            return;
+        }
+        
+        // Submit return
+        $.ajax({
+            url: '../../ajax/return_purchase.php',
+            type: 'POST',
+            data: {
+                purchase_id: purchaseId,
+                invoice_number: invoiceNumber,
+                return_quantities: returnQuantities
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'سەرکەوتوو',
+                        text: 'کاڵاکان بە سەرکەوتوویی گەڕایەوە'
+                    }).then(() => {
+                        // Close modal and refresh page
+                        $('#returnPurchaseModal').modal('hide');
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: response.message || 'هەڵەیەک ڕوویدا لە کاتی گەڕانەوەی کاڵاکان'
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: 'هەڵەیەک ڕوویدا لە کاتی گەڕانەوەی کاڵاکان'
+                });
+            }
+        });
+    });
     </script>
 </body>
 </html>
