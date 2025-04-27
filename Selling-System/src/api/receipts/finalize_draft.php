@@ -103,7 +103,7 @@ try {
             // Update customer's debt in the customers table
             $updateCustomerStmt = $conn->prepare("
                 UPDATE customers
-                SET debt = debt + :amount
+                SET debit_on_business = debit_on_business + :amount
                 WHERE id = :customer_id
             ");
             $updateCustomerStmt->bindParam(':amount', $totalAmount);
