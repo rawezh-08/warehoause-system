@@ -4,15 +4,48 @@ require_once '../includes/auth.php';
 
 header('Content-Type: application/json');
 
+// Enable error logging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Log raw POST data for debugging
+error_log("return_purchase.php - Raw POST data: " . print_r($_POST, true));
+
 try {
     $database = new Database();
     $conn = $database->getConnection();
     
     // Get purchase ID and return quantities
     $purchase_id = $_POST['purchase_id'];
-    $return_quantities = $_POST['return_quantities'];
+    
+    // Properly handle return_quantities which might be a JSON string or a nested array in $_POST
+    if (isset($_POST['return_quantities']) && is_string($_POST['return_quantities'])) {
+        // If it's a JSON string, decode it
+        $return_quantities = json_decode($_POST['return_quantities'], true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log("Error decoding return_quantities JSON: " . json_last_error_msg());
+            throw new Exception('بڕی گەڕاندنەوەی کاڵاکان بە شێوەیەکی دروست نەدراوە');
+        }
+    } else {
+        // Handle array format from $_POST (PHP converts foo[bar] notation to nested arrays)
+        $return_quantities = $_POST['return_quantities'] ?? [];
+    }
+    
     $notes = $_POST['notes'] ?? '';
     $reason = $_POST['reason'] ?? 'other';
+    
+    // Log the data received
+    error_log("Purchase ID: $purchase_id");
+    error_log("Return Quantities: " . print_r($return_quantities, true));
+    error_log("Notes: $notes");
+    error_log("Reason: $reason");
+    
+    // Check if we have valid return quantities
+    if (empty($return_quantities) || !is_array($return_quantities)) {
+        error_log("Error: return_quantities is not valid: " . gettype($return_quantities));
+        throw new Exception('بڕی گەڕاندنەوەی کاڵاکان بە شێوەیەکی دروست نەدراوە');
+    }
     
     // Start transaction
     $conn->beginTransaction();
@@ -53,6 +86,9 @@ try {
     $remainingItems = [];
     
     foreach ($return_quantities as $item_id => $quantity) {
+        // Convert to numeric to ensure proper comparison
+        $quantity = floatval($quantity);
+        
         if ($quantity > 0) {
             $itemQuery = "SELECT pi.*, p.name as product_name 
                          FROM purchase_items pi 
@@ -61,6 +97,11 @@ try {
             $itemStmt = $conn->prepare($itemQuery);
             $itemStmt->execute([$item_id]);
             $item = $itemStmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$item) {
+                error_log("Item not found for ID: $item_id");
+                throw new Exception("کاڵا نەدۆزرایەوە بۆ ناسنامەی $item_id");
+            }
             
             // Get previously returned quantity
             $prevReturnQuery = "SELECT COALESCE(SUM(ri.quantity), 0) as returned_quantity 
@@ -145,6 +186,9 @@ try {
     
     // Record return items
     foreach ($return_quantities as $item_id => $quantity) {
+        // Convert to numeric
+        $quantity = floatval($quantity);
+        
         if ($quantity > 0) {
             $itemQuery = "SELECT pi.*, p.name as product_name 
                          FROM purchase_items pi 
@@ -196,6 +240,8 @@ try {
     if (isset($conn)) {
         $conn->rollBack();
     }
+    
+    error_log("Error in return_purchase.php: " . $e->getMessage() . "\n" . $e->getTraceAsString());
     
     echo json_encode([
         'success' => false,

@@ -2308,7 +2308,7 @@ foreach ($purchases as $purchase) {
                             if (!returnData.return_quantities) {
                                 returnData.return_quantities = {};
                             }
-                            returnData.return_quantities[match[1]] = item.value;
+                            returnData.return_quantities[match[1]] = parseFloat(item.value);
                         }
                     } else {
                         returnData[item.name] = item.value;
@@ -2325,6 +2325,9 @@ foreach ($purchases as $purchase) {
                     }
                 });
                 
+                // For debugging
+                console.log('Sending return data:', returnData);
+                
                 // Send return request
                 $.ajax({
                     url: '../../ajax/return_purchase.php',
@@ -2332,7 +2335,10 @@ foreach ($purchases as $purchase) {
                     data: returnData,
                     success: function(response) {
                         try {
-                            const data = JSON.parse(response);
+                            // For debugging
+                            console.log('Raw response:', response);
+                            
+                            const data = typeof response === 'string' ? JSON.parse(response) : response;
                             
                             if (data.success) {
                                 // Show success summary
