@@ -89,6 +89,11 @@ try {
     // Calculate remaining amount
     $remainingAmount = $sale['total_amount'] - $totalReturnAmount;
     
+    // Update sale remaining amount
+    $updateSaleQuery = "UPDATE sales SET remaining_amount = ? WHERE id = ?";
+    $updateSaleStmt = $conn->prepare($updateSaleQuery);
+    $updateSaleStmt->execute([$remainingAmount, $sale_id]);
+    
     // Update customer debt
     $newDebt = $sale['customer_debt'];
     if ($sale['payment_type'] == 'credit') {

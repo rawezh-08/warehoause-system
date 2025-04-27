@@ -298,7 +298,7 @@ foreach ($customers as $customer) {
                                                                 <a href="customerProfile.php?id=<?php echo $customer['id']; ?>" class="btn btn-sm btn-outline-primary rounded-circle">
                                                                     <i class="fas fa-user-circle"></i>
                                                                 </a>
-                                                                <a href="../../views/receipt/customer_history_receipt.php?customer_id=<?php echo $customer['id']; ?>" class="btn btn-sm btn-outline-warning rounded-circle" target="_blank" title="بینینی مێژوو">
+                                                                <a href="../../Views/receipt/customer_history_receipt.php?customer_id=<?php echo $customer['id']; ?>" class="btn btn-sm btn-outline-warning rounded-circle" target="_blank" title="بینینی مێژوو">
                                                                     <i class="fas fa-print"></i>
                                                                 </a>
                                                             
