@@ -1,3 +1,5 @@
+<!-- report test -->
+
 <?php
 // Include authentication check
 require_once '../../includes/auth.php';
@@ -7,7 +9,8 @@ require_once '../../config/database.php';
 $conn->query("SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
 
 // Function to get total count from a table
-function getCount($table) {
+function getCount($table)
+{
     global $conn;
     $stmt = $conn->prepare("SELECT COUNT(*) as count FROM $table");
     $stmt->execute();
@@ -16,7 +19,8 @@ function getCount($table) {
 }
 
 // Function to get sum of a column
-function getSum($table, $column) {
+function getSum($table, $column)
+{
     global $conn;
     $stmt = $conn->prepare("SELECT COALESCE(SUM($column), 0) as total FROM $table");
     $stmt->execute();
@@ -421,7 +425,7 @@ foreach ($monthlyProfitLoss as $data) {
     $monthNum = substr($data['month'], -2);
     $year = substr($data['month'], 0, 4);
     $profit = $data['sales_revenue'] - $data['purchase_cost'] - $data['expenses'] - $data['employee_expenses'];
-    
+
     $monthlyProfitData[] = [
         "month" => $kurdishMonths[$monthNum] . ' ' . $year,
         "revenue" => $data['sales_revenue'],
@@ -491,10 +495,10 @@ for ($i = 1; $i <= 3; $i++) {
     // Calculate forecast month
     $forecastMonth = ($currentMonth + $i) > 12 ? ($currentMonth + $i - 12) : ($currentMonth + $i);
     $forecastYear = ($currentMonth + $i) > 12 ? ($currentYear + 1) : $currentYear;
-    
+
     // Apply growth rate
     $forecastAmount = $forecastAmount * $growthRate;
-    
+
     // Add to forecast array
     $salesForecast[] = [
         "month" => $kurdishMonths[sprintf("%02d", $forecastMonth)] . ' ' . $forecastYear,
@@ -606,7 +610,7 @@ $formattedCashFlow = [];
 foreach ($cashFlowData as $data) {
     $monthNum = substr($data['month'], -2);
     $year = substr($data['month'], 0, 4);
-    
+
     $formattedCashFlow[] = [
         "month" => $kurdishMonths[$monthNum] . ' ' . $year,
         "incoming" => $data['total_incoming'],
@@ -644,6 +648,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -658,84 +663,25 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
     <!-- DateRangePicker CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
-    
+
     <!-- Global CSS -->
-    <link rel="stylesheet" href="../../components/assets/css/custom.css">
-    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="../../assets/css/custom.css">
     <link rel="stylesheet" href="../../css/global.css">
-    <link rel="stylesheet" href="../../css/dashboard_styles.css">
+    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="../../css/reports.css">
+
     <link rel="stylesheet" href="../../test/main.css">
-    
-    <style>
-        /* Custom Scrollbar Styles */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
 
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-
-        /* Sidebar Active State */
-        body.sidebar-active .main-content {
-            margin-right: 260px;
-        }
-
-        /* Hover Effects */
-        .report-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(115, 128, 236, 0.1);
-        }
-
-        /* Active State for Sidebar */
-        #sidebar.active {
-            width: 260px;
-        }
-
-        #sidebar.active ~ .main-content {
-            margin-right: 260px;
-        }
-
-        /* Table Hover Effects */
-        .report-table tbody tr:hover {
-            background-color: rgba(115, 128, 236, 0.04);
-        }
-
-        .report-table tbody tr:hover td {
-            transform: translateX(3px);
-        }
-
-        /* Button Hover Effects */
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-
-        /* Card Hover Effects */
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(115, 128, 236, 0.1);
-        }
-    </style>
 </head>
+
 <body>
     <div>
         <!-- Navbar container - populated by JavaScript -->
         <div id="navbar-container"></div>
-        
+
         <!-- Sidebar container - populated by JavaScript -->
         <div id="sidebar-container"></div>
-        
+
         <!-- Main Content Wrapper -->
         <div id="content" class="content-wrapper">
             <div class="main-content p-3" id="main-content" style="margin-top: 100px;">
@@ -760,28 +706,22 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Statistics Cards -->
                     <div class="row mb-4">
                         <!-- Products Count -->
-                        <div class="col-xl-2 col-md-6 mb-4">
-                            <div class="card report-card">
+                        
+
+                        <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
+                            <div class="report-card">
                                 <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <div class="stat-icon bg-primary-light">
+                                    
+                                    <div class="report-icon-wrapper">
+                                        <h3 class="report-title">کۆی کاڵاکان</h3>
+                                        <div class=" stat-icon bg-primary-light ">
                                             <i class="fas fa-box text-primary"></i>
                                         </div>
-                                        <div class="dropdown">
-                                            <button class="btn btn-sm text-muted p-0" type="button" data-bs-toggle="dropdown">
-                                                <i class="fas fa-ellipsis-v"></i>
-                                            </button>
-                                            <ul class="dropdown-menu dropdown-menu-end">
-                                                <li><a class="dropdown-item" href="products.php">بینینی کاڵاکان</a></li>
-                                                <li><a class="dropdown-item" href="addProduct.php">زیادکردنی کاڵا</a></li>
-                                            </ul>
-                                        </div>
                                     </div>
-                                    <h6 class="stat-title">کۆی کاڵاکان</h6>
                                     <h3 class="stat-value"><?php echo number_format($totalProducts); ?></h3>
                                     <div class="stat-change positive mt-2">
                                         <i class="fas fa-arrow-up"></i> 12.5%
@@ -789,26 +729,18 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Warehouse Value -->
-                        <div class="col-xl-2 col-md-6 mb-4">
-                            <div class="card report-card">
+                        <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
+                            <div class=" report-card">
                                 <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <div class="stat-icon bg-warning-light">
-                                            <i class="fas fa-warehouse text-warning"></i>
-                                        </div>
-                                        <div class="dropdown">
-                                            <button class="btn btn-sm text-muted p-0" type="button" data-bs-toggle="dropdown">
-                                                <i class="fas fa-ellipsis-v"></i>
-                                            </button>
-                                            <ul class="dropdown-menu dropdown-menu-end">
-                                                <li><a class="dropdown-item" href="products.php">بینینی کاڵاکان</a></li>
-                                                <li><a class="dropdown-item" href="#">ڕاپۆرتی کۆگا</a></li>
-                                            </ul>
+                                   
+                                    <div class="report-icon-wrapper">
+                                        <h3 class="report-title">کۆی کاڵاکان</h3>
+                                        <div class=" stat-icon bg-primary-light ">
+                                        <i class="fas fa-warehouse text-warning"></i>
                                         </div>
                                     </div>
-                                    <h6 class="stat-title">بەهای کۆگا</h6>
                                     <h3 class="stat-value"><?php echo number_format($totalInventoryValue); ?> د.ع</h3>
                                     <div class="stat-change positive mt-2">
                                         <i class="fas fa-arrow-up"></i> 9.3%
@@ -816,10 +748,10 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Total Sales -->
-                        <div class="col-xl-2 col-md-6 mb-4">
-                            <div class="card report-card">
+                        <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon bg-success-light">
@@ -841,7 +773,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <div class="text-success">
                                             <i class="fas fa-money-bill-wave"></i> نەقد
                                             <div class="fw-bold"><?php echo number_format($totalCashSales); ?> د.ع</div>
-                                    </div>
+                                        </div>
                                         <div class="text-primary">
                                             <i class="fas fa-credit-card"></i> قەرز
                                             <div class="fw-bold"><?php echo number_format($totalCreditSales); ?> د.ع</div>
@@ -853,10 +785,10 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Total Purchases -->
-                        <div class="col-xl-2 col-md-6 mb-4">
-                            <div class="card report-card">
+                        <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon bg-warning-light">
@@ -878,7 +810,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <div class="text-warning">
                                             <i class="fas fa-money-bill-wave"></i> نەقد
                                             <div class="fw-bold"><?php echo number_format($totalCashPurchases); ?> د.ع</div>
-                                    </div>
+                                        </div>
                                         <div class="text-primary">
                                             <i class="fas fa-credit-card"></i> قەرز
                                             <div class="fw-bold"><?php echo number_format($totalCreditPurchases); ?> د.ع</div>
@@ -890,10 +822,10 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Net Profit -->
-                        <div class="col-xl-2 col-md-6 mb-4">
-                            <div class="card report-card <?php echo $netProfit >= 0 ? 'bg-success-light' : 'bg-danger-light'; ?>">
+                        <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
+                            <div class="report-card <?php echo $netProfit >= 0 ? 'bg-success-light' : 'bg-danger-light'; ?>">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon <?php echo $netProfit >= 0 ? 'bg-success-light' : 'bg-danger-light'; ?>">
@@ -919,10 +851,10 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Available Cash -->
-                        <div class="col-xl-2 col-md-6 mb-4">
-                            <div class="card report-card <?php echo $availableCash >= 0 ? 'bg-primary-light' : 'bg-danger-light'; ?>">
+                        <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
+                            <div class="report-card <?php echo $availableCash >= 0 ? 'bg-primary-light' : 'bg-danger-light'; ?>">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon <?php echo $availableCash >= 0 ? 'bg-primary-light' : 'bg-danger-light'; ?>">
@@ -949,12 +881,12 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Second Row of Cards -->
                     <div class="row mb-4">
                         <!-- Suppliers -->
-                        <div class="col-xl-2 col-md-6 mb-4">
-                            <div class="card report-card">
+                        <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon bg-danger-light">
@@ -977,10 +909,10 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Debt We Owe to Suppliers -->
-                        <div class="col-xl-2 col-md-6 mb-4">
-                            <div class="card report-card">
+                        <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon bg-danger-light">
@@ -999,14 +931,14 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <h3 class="stat-value"><?php echo number_format($totalDebtToSuppliers); ?> د.ع</h3>
                                     <div class="stat-change neutral mt-2">
                                         <i class="fas fa-info-circle"></i> قەرزی کۆمپانیا
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    
+
                         <!-- Debt Suppliers Owe to Us -->
-                        <div class="col-xl-2 col-md-6 mb-4">
-                            <div class="card report-card">
+                        <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon bg-info-light">
@@ -1029,10 +961,10 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Total Discounts -->
-                        <div class="col-xl-2 col-md-6 mb-4">
-                            <div class="card report-card">
+                        <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon bg-primary-light">
@@ -1055,10 +987,10 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Warehouse Expenses -->
-                        <div class="col-xl-2 col-md-6 mb-4">
-                            <div class="card report-card">
+                        <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon bg-warning-light">
@@ -1077,14 +1009,14 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <h3 class="stat-value"><?php echo number_format($warehouseExpenses); ?> د.ع</h3>
                                     <div class="stat-change negative mt-2">
                                         <i class="fas fa-arrow-down"></i> 3.1%
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                        
+
                         <!-- Employee Expenses -->
-                        <div class="col-xl-2 col-md-6 mb-4">
-                            <div class="card report-card">
+                        <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon bg-info-light">
@@ -1108,13 +1040,13 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Charts Section -->
-                    
+
                     <!-- Tabs for Different Reports -->
                     <div class="row mb-4">
                         <div class="col-12">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <ul class="nav nav-tabs" id="reportTabs" role="tablist">
                                         <li class="nav-item" role="presentation">
@@ -1143,17 +1075,17 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                     </thead>
                                                     <tbody>
                                                         <?php foreach ($topProducts as $index => $product): ?>
-                                                        <tr>
-                                                            <td><?php echo $index + 1; ?></td>
-                                                            <td><?php echo htmlspecialchars($product['name']); ?></td>
-                                                            <td><?php echo number_format($product['quantity']); ?></td>
-                                                            <td><?php echo number_format($product['amount']); ?> د.ع</td>
-                                                            <td>
-                                                                <a href="#" class="btn btn-sm btn-outline-primary">
-                                                                    <i class="fas fa-eye"></i> بینین
-                                                                </a>
-                                                            </td>
-                                                        </tr>
+                                                            <tr>
+                                                                <td><?php echo $index + 1; ?></td>
+                                                                <td><?php echo htmlspecialchars($product['name']); ?></td>
+                                                                <td><?php echo number_format($product['quantity']); ?></td>
+                                                                <td><?php echo number_format($product['amount']); ?> د.ع</td>
+                                                                <td>
+                                                                    <a href="#" class="btn btn-sm btn-outline-primary">
+                                                                        <i class="fas fa-eye"></i> بینین
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
                                                         <?php endforeach; ?>
                                                     </tbody>
                                                 </table>
@@ -1164,7 +1096,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 </a>
                                             </div>
                                         </div>
-                                        
+
                                         <!-- Low Stock Products Tab -->
                                         <div class="tab-pane fade" id="low-stock" role="tabpanel" aria-labelledby="low-stock-tab">
                                             <div class="table-responsive">
@@ -1180,26 +1112,26 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <?php foreach ($lowStockProducts as $index => $product): 
+                                                        <?php foreach ($lowStockProducts as $index => $product):
                                                             $percentage = min(100, ($product['current'] / $product['min']) * 100);
                                                             $stockClass = $percentage <= 30 ? 'critical' : ($percentage <= 60 ? 'warning' : 'good');
                                                         ?>
-                                                        <tr>
-                                                            <td><?php echo $index + 1; ?></td>
-                                                            <td><?php echo htmlspecialchars($product['name']); ?></td>
-                                                            <td><?php echo number_format($product['current']); ?></td>
-                                                            <td><?php echo number_format($product['min']); ?></td>
-                                                            <td>
-                                                                <div class="stock-indicator">
-                                                                    <div class="stock-level <?php echo $stockClass; ?>" style="width: <?php echo $percentage; ?>%"></div>
-                                                                </div>
-                                                            </td>
-                                                            <td>
-                                                                <a href="#" class="btn btn-sm btn-outline-primary">
-                                                                    <i class="fas fa-shopping-cart"></i> داواکردن
-                                                                </a>
-                                                            </td>
-                                                        </tr>
+                                                            <tr>
+                                                                <td><?php echo $index + 1; ?></td>
+                                                                <td><?php echo htmlspecialchars($product['name']); ?></td>
+                                                                <td><?php echo number_format($product['current']); ?></td>
+                                                                <td><?php echo number_format($product['min']); ?></td>
+                                                                <td>
+                                                                    <div class="stock-indicator">
+                                                                        <div class="stock-level <?php echo $stockClass; ?>" style="width: <?php echo $percentage; ?>%"></div>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <a href="#" class="btn btn-sm btn-outline-primary">
+                                                                        <i class="fas fa-shopping-cart"></i> داواکردن
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
                                                         <?php endforeach; ?>
                                                     </tbody>
                                                 </table>
@@ -1210,7 +1142,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 </a>
                                             </div>
                                         </div>
-                                        
+
                                         <!-- Recent Transactions Tab -->
                                         <div class="tab-pane fade" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
                                             <div class="table-responsive">
@@ -1225,28 +1157,28 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <?php foreach ($recentTransactions as $transaction): 
+                                                        <?php foreach ($recentTransactions as $transaction):
                                                             $statusClass = $transaction['type'] === 'فرۆشتن' ? 'success' : 'info';
                                                         ?>
-                                                        <tr>
-                                                            <td><?php echo date('Y/m/d', strtotime($transaction['date'])); ?></td>
-                                                            <td>
-                                                                <span class="badge rounded-pill bg-<?php echo $statusClass; ?>-light text-<?php echo $statusClass; ?>">
-                                                                    <?php echo htmlspecialchars($transaction['type']); ?>
-                                                                </span>
-                                                            </td>
-                                                            <td><?php echo number_format($transaction['amount']); ?> د.ع</td>
-                                                            <td>
-                                                                <span class="table-status bg-success-light text-success">
-                                                                    <?php echo htmlspecialchars($transaction['status']); ?>
-                                                                </span>
-                                                            </td>
-                                                            <td>
-                                                                <a href="#" class="btn btn-sm btn-outline-primary">
-                                                                    <i class="fas fa-eye"></i> بینین
-                                                                </a>
-                                                            </td>
-                                                        </tr>
+                                                            <tr>
+                                                                <td><?php echo date('Y/m/d', strtotime($transaction['date'])); ?></td>
+                                                                <td>
+                                                                    <span class="badge rounded-pill bg-<?php echo $statusClass; ?>-light text-<?php echo $statusClass; ?>">
+                                                                        <?php echo htmlspecialchars($transaction['type']); ?>
+                                                                    </span>
+                                                                </td>
+                                                                <td><?php echo number_format($transaction['amount']); ?> د.ع</td>
+                                                                <td>
+                                                                    <span class="table-status bg-success-light text-success">
+                                                                        <?php echo htmlspecialchars($transaction['status']); ?>
+                                                                    </span>
+                                                                </td>
+                                                                <td>
+                                                                    <a href="#" class="btn btn-sm btn-outline-primary">
+                                                                        <i class="fas fa-eye"></i> بینین
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
                                                         <?php endforeach; ?>
                                                     </tbody>
                                                 </table>
@@ -1262,11 +1194,11 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Export & Report Options -->
                     <div class="row mb-4">
                         <div class="col-lg-6 col-md-12 mb-4">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <h5 class="card-title mb-4">دەرهێنانی داتا</h5>
                                     <div class="row g-3">
@@ -1302,9 +1234,9 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="col-lg-6 col-md-12 mb-4">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <h5 class="card-title mb-4">ڕاپۆرتەکانی تر</h5>
                                     <div class="row g-3">
@@ -1341,18 +1273,18 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- New Report Sections -->
-                    
+
                     <!-- Low Stock Alert -->
                     <div class="row mb-4">
                         <div class="col-12">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-4">
                                         <h5 class="card-title">ئاگادارکردنەوەی کەمبوونی بەرهەمەکان</h5>
                                         <span class="badge bg-danger"><?php echo $criticalStockCount; ?> بەرهەم لە خوار سنووری کەمترین بڕ</span>
-                </div>
+                                    </div>
                                     <div class="table-responsive">
                                         <table class="table table-hover report-table">
                                             <thead>
@@ -1367,30 +1299,30 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             </thead>
                                             <tbody>
                                                 <?php foreach ($lowStockAlert as $product): ?>
-                                                <tr>
-                                                    <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <?php if ($product['image']): ?>
-                                                                <img src="../../<?php echo $product['image']; ?>" class="me-2" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">
-                                                            <?php else: ?>
-                                                                <div class="me-2" style="width: 40px; height: 40px; background-color: #f8f9fa; border-radius: 5px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-box text-muted"></i></div>
-                                                            <?php endif; ?>
-                                                            <span><?php echo $product['name']; ?></span>
-            </div>
-                                                    </td>
-                                                    <td><?php echo $product['code']; ?></td>
-                                                    <td><?php echo $product['category_name']; ?></td>
-                                                    <td><?php echo $product['current_quantity']; ?></td>
-                                                    <td><?php echo $product['min_quantity']; ?></td>
-                                                    <td>
-                                                        <div class="stock-indicator">
-                                                            <div class="stock-level <?php echo $product['stock_percentage'] < 50 ? 'critical' : ($product['stock_percentage'] < 100 ? 'warning' : 'good'); ?>" style="width: <?php echo min($product['stock_percentage'], 100); ?>%;"></div>
-                                                        </div>
-                                                        <div class="small mt-1 text-<?php echo $product['stock_percentage'] < 50 ? 'danger' : ($product['stock_percentage'] < 100 ? 'warning' : 'success'); ?>">
-                                                            <?php echo $product['stock_percentage']; ?>%
-                                                        </div>
-                                                    </td>
-                                                </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                <?php if ($product['image']): ?>
+                                                                    <img src="../../<?php echo $product['image']; ?>" class="me-2" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">
+                                                                <?php else: ?>
+                                                                    <div class="me-2" style="width: 40px; height: 40px; background-color: #f8f9fa; border-radius: 5px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-box text-muted"></i></div>
+                                                                <?php endif; ?>
+                                                                <span><?php echo $product['name']; ?></span>
+                                                            </div>
+                                                        </td>
+                                                        <td><?php echo $product['code']; ?></td>
+                                                        <td><?php echo $product['category_name']; ?></td>
+                                                        <td><?php echo $product['current_quantity']; ?></td>
+                                                        <td><?php echo $product['min_quantity']; ?></td>
+                                                        <td>
+                                                            <div class="stock-indicator">
+                                                                <div class="stock-level <?php echo $product['stock_percentage'] < 50 ? 'critical' : ($product['stock_percentage'] < 100 ? 'warning' : 'good'); ?>" style="width: <?php echo min($product['stock_percentage'], 100); ?>%;"></div>
+                                                            </div>
+                                                            <div class="small mt-1 text-<?php echo $product['stock_percentage'] < 50 ? 'danger' : ($product['stock_percentage'] < 100 ? 'warning' : 'success'); ?>">
+                                                                <?php echo $product['stock_percentage']; ?>%
+                                                            </div>
+                                                        </td>
+                                                    </tr>
                                                 <?php endforeach; ?>
                                             </tbody>
                                         </table>
@@ -1400,14 +1332,14 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     </div>
                                 </div>
                             </div>
-        </div>
-    </div>
+                        </div>
+                    </div>
 
                     <!-- Best Selling Products and Customer Debt Analysis -->
                     <div class="row mb-4">
                         <!-- Best Selling Products -->
                         <div class="col-md-7 mb-4 mb-md-0">
-                            <div class="card report-card h-100">
+                            <div class="report-card h-100">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-4">
                                         <h5 class="card-title">بەرهەمە باشفرۆشەکان</h5>
@@ -1429,22 +1361,22 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             </thead>
                                             <tbody>
                                                 <?php foreach ($bestSellingProducts as $product): ?>
-                                                <tr>
-                                                    <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <?php if ($product['image']): ?>
-                                                                <img src="../../<?php echo $product['image']; ?>" class="me-2" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">
-                                                            <?php else: ?>
-                                                                <div class="me-2" style="width: 40px; height: 40px; background-color: #f8f9fa; border-radius: 5px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-box text-muted"></i></div>
-                                                            <?php endif; ?>
-                                                            <span><?php echo $product['name']; ?></span>
-                                                        </div>
-                                                    </td>
-                                                    <td><?php echo $product['code']; ?></td>
-                                                    <td><?php echo number_format($product['total_quantity']); ?></td>
-                                                    <td><?php echo number_format($product['total_sales']); ?> د.ع</td>
-                                                    <td><?php echo number_format($product['total_profit']); ?> د.ع</td>
-                                                </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                <?php if ($product['image']): ?>
+                                                                    <img src="../../<?php echo $product['image']; ?>" class="me-2" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">
+                                                                <?php else: ?>
+                                                                    <div class="me-2" style="width: 40px; height: 40px; background-color: #f8f9fa; border-radius: 5px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-box text-muted"></i></div>
+                                                                <?php endif; ?>
+                                                                <span><?php echo $product['name']; ?></span>
+                                                            </div>
+                                                        </td>
+                                                        <td><?php echo $product['code']; ?></td>
+                                                        <td><?php echo number_format($product['total_quantity']); ?></td>
+                                                        <td><?php echo number_format($product['total_sales']); ?> د.ع</td>
+                                                        <td><?php echo number_format($product['total_profit']); ?> د.ع</td>
+                                                    </tr>
                                                 <?php endforeach; ?>
                                             </tbody>
                                         </table>
@@ -1452,10 +1384,10 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Customer Debt Analysis -->
                         <div class="col-md-5">
-                            <div class="card report-card h-100">
+                            <div class="report-card h-100">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-4">
                                         <h5 class="card-title">شیکاری قەرز</h5>
@@ -1473,12 +1405,12 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             </thead>
                                             <tbody>
                                                 <?php foreach ($topDebtCustomers as $customer): ?>
-                                                <tr>
-                                                    <td><?php echo $customer['name']; ?></td>
-                                                    <td><?php echo $customer['phone1']; ?></td>
-                                                    <td><?php echo number_format($customer['debt_amount']); ?> د.ع</td>
-                                                    <td><?php echo isset($customer['days_since_last_purchase']) ? $customer['days_since_last_purchase'] : '-'; ?> ڕۆژ</td>
-                                                </tr>
+                                                    <tr>
+                                                        <td><?php echo $customer['name']; ?></td>
+                                                        <td><?php echo $customer['phone1']; ?></td>
+                                                        <td><?php echo number_format($customer['debt_amount']); ?> د.ع</td>
+                                                        <td><?php echo isset($customer['days_since_last_purchase']) ? $customer['days_since_last_purchase'] : '-'; ?> ڕۆژ</td>
+                                                    </tr>
                                                 <?php endforeach; ?>
                                             </tbody>
                                         </table>
@@ -1490,22 +1422,22 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Monthly Profit/Loss Analysis and Category Sales -->
                     <div class="row mb-4">
                         <!-- Monthly Profit/Loss Analysis -->
                         <div class="col-md-8 mb-4 mb-md-0">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <h5 class="card-title">شیکاری قازانج و زەرەر بەپێی مانگ</h5>
                                     <div id="monthlyProfitChart" style="height: 350px;"></div>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Category Sales Analysis -->
                         <div class="col-md-4">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <h5 class="card-title">فرۆشتن بەپێی کاتەگۆری</h5>
                                     <div id="categorySalesChart" style="height: 350px;"></div>
@@ -1513,12 +1445,12 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Sales Forecast and Cash Flow -->
                     <div class="row mb-4">
                         <!-- Sales Forecast -->
                         <div class="col-md-6 mb-4 mb-md-0">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <h5 class="card-title">پێشبینی فرۆشتن (3 مانگی داهاتوو)</h5>
                                     <div id="salesForecastChart" style="height: 300px;"></div>
@@ -1528,10 +1460,10 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Cash Flow -->
                         <div class="col-md-6">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <h5 class="card-title">شیکاری پارەی گەڕاو</h5>
                                     <div id="cashFlowChart" style="height: 300px;"></div>
@@ -1539,11 +1471,11 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Customer Behavior Analysis -->
                     <div class="row mb-4">
                         <div class="col-12">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <h5 class="card-title">شیکاری هەڵسوکەوتی کڕیارەکان</h5>
                                     <div class="table-responsive">
@@ -1560,16 +1492,16 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             </thead>
                                             <tbody>
                                                 <?php foreach ($customerBehaviorAnalysis as $customer): ?>
-                                                <tr>
-                                                    <td><?php echo $customer['name']; ?></td>
-                                                    <td><?php echo $customer['purchase_count']; ?></td>
-                                                    <td><?php echo number_format($customer['total_spent']); ?> د.ع</td>
-                                                    <td><?php echo number_format($customer['avg_remaining']); ?> د.ع</td>
-                                                    <td><?php echo date('Y-m-d', strtotime($customer['last_purchase_date'])); ?> (<?php echo $customer['days_since_last_purchase']; ?> ڕۆژ)</td>
-                                                    <td>
-                                                        <a href="customerProfile.php?id=<?php echo $customer['id']; ?>" class="btn btn-sm btn-outline-primary">پڕۆفایل</a>
-                                                    </td>
-                                                </tr>
+                                                    <tr>
+                                                        <td><?php echo $customer['name']; ?></td>
+                                                        <td><?php echo $customer['purchase_count']; ?></td>
+                                                        <td><?php echo number_format($customer['total_spent']); ?> د.ع</td>
+                                                        <td><?php echo number_format($customer['avg_remaining']); ?> د.ع</td>
+                                                        <td><?php echo date('Y-m-d', strtotime($customer['last_purchase_date'])); ?> (<?php echo $customer['days_since_last_purchase']; ?> ڕۆژ)</td>
+                                                        <td>
+                                                            <a href="customerProfile.php?id=<?php echo $customer['id']; ?>" class="btn btn-sm btn-outline-primary">پڕۆفایل</a>
+                                                        </td>
+                                                    </tr>
                                                 <?php endforeach; ?>
                                             </tbody>
                                         </table>
@@ -1596,33 +1528,35 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <!-- DateRangePicker JS -->
     <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
-    
+
     <!-- Global JS -->
     <script src="../../js/include-components.js"></script>
-    
+
     <script>
         $(document).ready(function() {
             // Initialize tooltips
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function (tooltipTriggerEl) {
+            tooltipTriggerList.map(function(tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
             });
-            
+
             // Monthly Sales Chart
             const monthlySalesOptions = {
-            series: [{
-                name: 'فرۆشتن',
-                    data: [<?php echo implode(',', array_map(function($item) { return $item['sales']; }, $monthlySales)); ?>]
-            }],
-            chart: {
+                series: [{
+                    name: 'فرۆشتن',
+                    data: [<?php echo implode(',', array_map(function ($item) {
+                                return $item['sales'];
+                            }, $monthlySales)); ?>]
+                }],
+                chart: {
                     height: 300,
                     type: 'area',
                     fontFamily: 'rabar_021, sans-serif',
-                toolbar: {
-                    show: false
-                }
-            },
-                    dataLabels: {
+                    toolbar: {
+                        show: false
+                    }
+                },
+                dataLabels: {
                     enabled: false,
                     style: {
                         fontFamily: 'rabar_021, sans-serif'
@@ -1634,7 +1568,9 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 },
                 colors: ['#7380ec'],
                 xaxis: {
-                    categories: [<?php echo "'" . implode("','", array_map(function($item) { return $item['month']; }, $monthlySales)) . "'"; ?>],
+                    categories: [<?php echo "'" . implode("','", array_map(function ($item) {
+                                        return $item['month'];
+                                    }, $monthlySales)) . "'"; ?>],
                     labels: {
                         style: {
                             fontFamily: 'rabar_021, sans-serif'
@@ -1650,11 +1586,11 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 },
                 tooltip: {
                     y: {
-                        formatter: function (val) {
-                    return val.toLocaleString() + ' د.ع';
+                        formatter: function(val) {
+                            return val.toLocaleString() + ' د.ع';
                         }
-                },
-                style: {
+                    },
+                    style: {
                         fontFamily: 'rabar_021, sans-serif'
                     }
                 },
@@ -1677,24 +1613,30 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     }
                 }
             };
-            
+
             const monthlySalesChart = new ApexCharts(document.querySelector("#monthlySalesChart"), monthlySalesOptions);
             monthlySalesChart.render();
-            
+
             // Monthly Profit/Loss Chart
             const monthlyProfitOptions = {
                 series: [{
                     name: 'داهات',
                     type: 'column',
-                    data: [<?php echo implode(',', array_map(function($item) { return $item['revenue']; }, $monthlyProfitData)); ?>]
+                    data: [<?php echo implode(',', array_map(function ($item) {
+                                return $item['revenue'];
+                            }, $monthlyProfitData)); ?>]
                 }, {
                     name: 'خەرجی',
                     type: 'column',
-                    data: [<?php echo implode(',', array_map(function($item) { return $item['expenses']; }, $monthlyProfitData)); ?>]
+                    data: [<?php echo implode(',', array_map(function ($item) {
+                                return $item['expenses'];
+                            }, $monthlyProfitData)); ?>]
                 }, {
                     name: 'قازانج',
                     type: 'line',
-                    data: [<?php echo implode(',', array_map(function($item) { return $item['profit']; }, $monthlyProfitData)); ?>]
+                    data: [<?php echo implode(',', array_map(function ($item) {
+                                return $item['profit'];
+                            }, $monthlyProfitData)); ?>]
                 }],
                 chart: {
                     height: 350,
@@ -1715,20 +1657,21 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     width: [0, 0, 3]
                 },
                 colors: ['#7380ec', '#ff7782', '#41f1b6'],
-            xaxis: {
-                    categories: [<?php echo "'" . implode("','", array_map(function($item) { return $item['month']; }, $monthlyProfitData)) . "'"; ?>],
-                labels: {
-                    style: {
+                xaxis: {
+                    categories: [<?php echo "'" . implode("','", array_map(function ($item) {
+                                        return $item['month'];
+                                    }, $monthlyProfitData)) . "'"; ?>],
+                    labels: {
+                        style: {
                             fontFamily: 'rabar_021, sans-serif'
                         }
                     }
                 },
-                yaxis: [
-                    {
+                yaxis: [{
                         axisTicks: {
                             show: true,
-                },
-                axisBorder: {
+                        },
+                        axisBorder: {
                             show: true,
                             color: '#7380ec'
                         },
@@ -1737,7 +1680,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 colors: '#7380ec',
                                 fontFamily: 'rabar_021, sans-serif'
                             },
-                            formatter: function (val) {
+                            formatter: function(val) {
                                 return (val / 1000).toFixed(0) + ' هەزار';
                             }
                         },
@@ -1751,40 +1694,40 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     },
                     {
                         seriesName: 'خەرجی',
-                    show: false
-                },
+                        show: false
+                    },
                     {
                         opposite: true,
-                axisTicks: {
+                        axisTicks: {
                             show: true,
-            },
+                        },
                         axisBorder: {
                             show: true,
                             color: '#41f1b6'
                         },
-                labels: {
+                        labels: {
                             style: {
                                 colors: '#41f1b6',
                                 fontFamily: 'rabar_021, sans-serif'
                             },
-                            formatter: function (val) {
+                            formatter: function(val) {
                                 return (val / 1000).toFixed(0) + ' هەزار';
                             }
                         },
                         title: {
                             text: "قازانج",
-                    style: {
+                            style: {
                                 color: '#41f1b6',
                                 fontFamily: 'rabar_021, sans-serif'
                             }
                         }
                     },
                 ],
-            tooltip: {
-                y: {
-                        formatter: function (val) {
-                        return val.toLocaleString() + ' د.ع';
-                    }
+                tooltip: {
+                    y: {
+                        formatter: function(val) {
+                            return val.toLocaleString() + ' د.ع';
+                        }
                     },
                     style: {
                         fontFamily: 'rabar_021, sans-serif'
@@ -1797,19 +1740,23 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     }
                 }
             };
-            
+
             const monthlyProfitChart = new ApexCharts(document.querySelector("#monthlyProfitChart"), monthlyProfitOptions);
             monthlyProfitChart.render();
-            
+
             // Category Sales Chart
             const categorySalesOptions = {
-                series: [<?php echo implode(',', array_map(function($item) { return $item['percentage']; }, $categorySalesAnalysis)); ?>],
-            chart: {
+                series: [<?php echo implode(',', array_map(function ($item) {
+                                return $item['percentage'];
+                            }, $categorySalesAnalysis)); ?>],
+                chart: {
                     type: 'donut',
-                height: 350,
+                    height: 350,
                     fontFamily: 'rabar_021, sans-serif',
                 },
-                labels: [<?php echo "'" . implode("','", array_map(function($item) { return $item['category_name']; }, $categorySalesAnalysis)) . "'"; ?>],
+                labels: [<?php echo "'" . implode("','", array_map(function ($item) {
+                                return $item['category_name'];
+                            }, $categorySalesAnalysis)) . "'"; ?>],
                 colors: ['#7380ec', '#41f1b6', '#ffbb55', '#ff7782', '#9a86f3', '#4a3df5', '#f53d3d', '#1ea896', '#ffc107', '#6c757d'],
                 plotOptions: {
                     pie: {
@@ -1827,7 +1774,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     show: true,
                                     fontSize: '16px',
                                     fontFamily: 'rabar_021, sans-serif',
-                                    formatter: function (val) {
+                                    formatter: function(val) {
                                         return val + '%';
                                     }
                                 },
@@ -1835,7 +1782,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     show: true,
                                     label: 'کۆی گشتی',
                                     fontFamily: 'rabar_021, sans-serif',
-                                    formatter: function (w) {
+                                    formatter: function(w) {
                                         return '100%';
                                     }
                                 }
@@ -1843,29 +1790,29 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         }
                     }
                 },
-            legend: {
-                position: 'bottom',
+                legend: {
+                    position: 'bottom',
                     horizontalAlign: 'center',
                     fontFamily: 'rabar_021, sans-serif',
                     labels: {
                         useSeriesColors: false,
                         fontFamily: 'rabar_021, sans-serif'
                     },
-            },
-            responsive: [{
-                breakpoint: 480,
-                options: {
-                    chart: {
+                },
+                responsive: [{
+                    breakpoint: 480,
+                    options: {
+                        chart: {
                             height: 300
-                    },
-                    legend: {
-                        position: 'bottom'
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
                     }
-                }
-            }],
+                }],
                 tooltip: {
                     y: {
-                        formatter: function (val) {
+                        formatter: function(val) {
                             return val + '%';
                         }
                     },
@@ -1874,15 +1821,17 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     }
                 }
             };
-            
+
             const categorySalesChart = new ApexCharts(document.querySelector("#categorySalesChart"), categorySalesOptions);
             categorySalesChart.render();
-            
+
             // Sales Forecast Chart
             const salesForecastOptions = {
                 series: [{
                     name: 'پێشبینی فرۆشتن',
-                    data: [<?php echo implode(',', array_map(function($item) { return $item['forecast']; }, $salesForecast)); ?>]
+                    data: [<?php echo implode(',', array_map(function ($item) {
+                                return $item['forecast'];
+                            }, $salesForecast)); ?>]
                 }],
                 chart: {
                     height: 300,
@@ -1895,18 +1844,18 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 plotOptions: {
                     bar: {
                         borderRadius: 10,
-            dataLabels: {
+                        dataLabels: {
                             position: 'top'
                         },
                     }
                 },
                 dataLabels: {
                     enabled: true,
-                    formatter: function (val) {
+                    formatter: function(val) {
                         return (val / 1000).toFixed(0) + ' هەزار';
                     },
                     offsetY: -20,
-                style: {
+                    style: {
                         fontSize: '12px',
                         colors: ["#304758"],
                         fontFamily: 'rabar_021, sans-serif'
@@ -1914,7 +1863,9 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 },
                 colors: ['#9a86f3'],
                 xaxis: {
-                    categories: [<?php echo "'" . implode("','", array_map(function($item) { return $item['month']; }, $salesForecast)) . "'"; ?>],
+                    categories: [<?php echo "'" . implode("','", array_map(function ($item) {
+                                        return $item['month'];
+                                    }, $salesForecast)) . "'"; ?>],
                     position: 'bottom',
                     labels: {
                         style: {
@@ -1952,17 +1903,17 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     },
                     labels: {
                         show: true,
-                        formatter: function (val) {
+                        formatter: function(val) {
                             return (val / 1000).toFixed(0) + ' هەزار';
                         },
                         style: {
                             fontFamily: 'rabar_021, sans-serif'
                         }
-                }
-            },
-            tooltip: {
-                y: {
-                        formatter: function (val) {
+                    }
+                },
+                tooltip: {
+                    y: {
+                        formatter: function(val) {
                             return val.toLocaleString() + ' د.ع';
                         }
                     },
@@ -1990,21 +1941,27 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     }
                 }
             };
-            
+
             const salesForecastChart = new ApexCharts(document.querySelector("#salesForecastChart"), salesForecastOptions);
             salesForecastChart.render();
-            
+
             // Cash Flow Chart
             const cashFlowOptions = {
                 series: [{
                     name: 'پارەی هاتوو',
-                    data: [<?php echo implode(',', array_map(function($item) { return $item['incoming']; }, $formattedCashFlow)); ?>]
+                    data: [<?php echo implode(',', array_map(function ($item) {
+                                return $item['incoming'];
+                            }, $formattedCashFlow)); ?>]
                 }, {
                     name: 'پارەی چوو',
-                    data: [<?php echo implode(',', array_map(function($item) { return $item['outgoing']; }, $formattedCashFlow)); ?>]
+                    data: [<?php echo implode(',', array_map(function ($item) {
+                                return $item['outgoing'];
+                            }, $formattedCashFlow)); ?>]
                 }, {
                     name: 'کۆی پارەی ماوە',
-                    data: [<?php echo implode(',', array_map(function($item) { return $item['net']; }, $formattedCashFlow)); ?>]
+                    data: [<?php echo implode(',', array_map(function ($item) {
+                                return $item['net'];
+                            }, $formattedCashFlow)); ?>]
                 }],
                 chart: {
                     type: 'bar',
@@ -2034,8 +1991,10 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     curve: 'smooth'
                 },
                 colors: ['#41f1b6', '#ff7782', '#7380ec'],
-                    xaxis: {
-                    categories: [<?php echo "'" . implode("','", array_map(function($item) { return $item['month']; }, $formattedCashFlow)) . "'"; ?>],
+                xaxis: {
+                    categories: [<?php echo "'" . implode("','", array_map(function ($item) {
+                                        return $item['month'];
+                                    }, $formattedCashFlow)) . "'"; ?>],
                     labels: {
                         style: {
                             fontFamily: 'rabar_021, sans-serif'
@@ -2047,7 +2006,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         text: ''
                     },
                     labels: {
-                        formatter: function (val) {
+                        formatter: function(val) {
                             return (val / 1000).toFixed(0) + ' هەزار';
                         },
                         style: {
@@ -2057,7 +2016,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 },
                 tooltip: {
                     y: {
-                        formatter: function (val) {
+                        formatter: function(val) {
                             return val.toLocaleString() + ' د.ع';
                         }
                     },
@@ -2078,25 +2037,26 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     opacity: 1
                 }
             };
-            
+
             const cashFlowChart = new ApexCharts(document.querySelector("#cashFlowChart"), cashFlowOptions);
             cashFlowChart.render();
-            
+
             // Sort Best Selling Products
             $('#sortBySales').click(function() {
                 $(this).addClass('active');
                 $('#sortByProfit').removeClass('active');
-                
+
                 // Sort by sales logic here (if needed - otherwise the default sorting)
             });
-            
+
             $('#sortByProfit').click(function() {
                 $(this).addClass('active');
                 $('#sortBySales').removeClass('active');
-                
+
                 // Sort by profit logic here (if needed)
             });
-    });
+        });
     </script>
 </body>
-</html> 
+
+</html>

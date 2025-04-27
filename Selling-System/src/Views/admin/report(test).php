@@ -751,7 +751,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         <!-- Total Sales -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon bg-success-light">
@@ -788,7 +788,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         <!-- Total Purchases -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon bg-warning-light">
@@ -825,7 +825,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         <!-- Net Profit -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
-                            <div class="card report-card <?php echo $netProfit >= 0 ? 'bg-success-light' : 'bg-danger-light'; ?>">
+                            <div class="report-card <?php echo $netProfit >= 0 ? 'bg-success-light' : 'bg-danger-light'; ?>">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon <?php echo $netProfit >= 0 ? 'bg-success-light' : 'bg-danger-light'; ?>">
@@ -854,7 +854,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         <!-- Available Cash -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
-                            <div class="card report-card <?php echo $availableCash >= 0 ? 'bg-primary-light' : 'bg-danger-light'; ?>">
+                            <div class="report-card <?php echo $availableCash >= 0 ? 'bg-primary-light' : 'bg-danger-light'; ?>">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon <?php echo $availableCash >= 0 ? 'bg-primary-light' : 'bg-danger-light'; ?>">
@@ -886,7 +886,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="row mb-4">
                         <!-- Suppliers -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon bg-danger-light">
@@ -912,7 +912,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         <!-- Debt We Owe to Suppliers -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon bg-danger-light">
@@ -938,7 +938,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         <!-- Debt Suppliers Owe to Us -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon bg-info-light">
@@ -964,7 +964,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         <!-- Total Discounts -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon bg-primary-light">
@@ -990,7 +990,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         <!-- Warehouse Expenses -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon bg-warning-light">
@@ -1016,7 +1016,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         <!-- Employee Expenses -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon bg-info-light">
@@ -1046,7 +1046,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <!-- Tabs for Different Reports -->
                     <div class="row mb-4">
                         <div class="col-12">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <ul class="nav nav-tabs" id="reportTabs" role="tablist">
                                         <li class="nav-item" role="presentation">
@@ -1198,7 +1198,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <!-- Export & Report Options -->
                     <div class="row mb-4">
                         <div class="col-lg-6 col-md-12 mb-4">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <h5 class="card-title mb-4">دەرهێنانی داتا</h5>
                                     <div class="row g-3">
@@ -1236,7 +1236,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </div>
 
                         <div class="col-lg-6 col-md-12 mb-4">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <h5 class="card-title mb-4">ڕاپۆرتەکانی تر</h5>
                                     <div class="row g-3">
@@ -1279,7 +1279,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <!-- Low Stock Alert -->
                     <div class="row mb-4">
                         <div class="col-12">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-4">
                                         <h5 class="card-title">ئاگادارکردنەوەی کەمبوونی بەرهەمەکان</h5>
@@ -1339,7 +1339,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="row mb-4">
                         <!-- Best Selling Products -->
                         <div class="col-md-7 mb-4 mb-md-0">
-                            <div class="card report-card h-100">
+                            <div class="report-card h-100">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-4">
                                         <h5 class="card-title">بەرهەمە باشفرۆشەکان</h5>
@@ -1387,7 +1387,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         <!-- Customer Debt Analysis -->
                         <div class="col-md-5">
-                            <div class="card report-card h-100">
+                            <div class="report-card h-100">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-4">
                                         <h5 class="card-title">شیکاری قەرز</h5>
@@ -1427,7 +1427,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="row mb-4">
                         <!-- Monthly Profit/Loss Analysis -->
                         <div class="col-md-8 mb-4 mb-md-0">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <h5 class="card-title">شیکاری قازانج و زەرەر بەپێی مانگ</h5>
                                     <div id="monthlyProfitChart" style="height: 350px;"></div>
@@ -1437,7 +1437,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         <!-- Category Sales Analysis -->
                         <div class="col-md-4">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <h5 class="card-title">فرۆشتن بەپێی کاتەگۆری</h5>
                                     <div id="categorySalesChart" style="height: 350px;"></div>
@@ -1450,7 +1450,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="row mb-4">
                         <!-- Sales Forecast -->
                         <div class="col-md-6 mb-4 mb-md-0">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <h5 class="card-title">پێشبینی فرۆشتن (3 مانگی داهاتوو)</h5>
                                     <div id="salesForecastChart" style="height: 300px;"></div>
@@ -1463,7 +1463,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         <!-- Cash Flow -->
                         <div class="col-md-6">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <h5 class="card-title">شیکاری پارەی گەڕاو</h5>
                                     <div id="cashFlowChart" style="height: 300px;"></div>
@@ -1475,7 +1475,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <!-- Customer Behavior Analysis -->
                     <div class="row mb-4">
                         <div class="col-12">
-                            <div class="card report-card">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <h5 class="card-title">شیکاری هەڵسوکەوتی کڕیارەکان</h5>
                                     <div class="table-responsive">
