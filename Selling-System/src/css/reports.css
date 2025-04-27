@@ -35,6 +35,7 @@
         backdrop-filter: blur(5px);
         -webkit-backdrop-filter: blur(5px);
         background: rgba(255, 255, 255, 0.34);
+        
     }
     
     .report-card:hover {
