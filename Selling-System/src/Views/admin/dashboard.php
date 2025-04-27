@@ -95,9 +95,9 @@ require_once '../../process/dashboard_logic.php';
                     <div class="row g-3 mb-3">
                         <div class="col-12">
                             <div class="filter-buttons">
-                                <button data-period="today" class="btn <?php echo (!isset($_GET['period']) || $_GET['period'] == 'today') ? 'btn-primary' : 'btn-outline-primary'; ?>">ئەمڕۆ</button>
-                                <button data-period="month" class="btn <?php echo (isset($_GET['period']) && $_GET['period'] == 'month') ? 'btn-primary' : 'btn-outline-primary'; ?>">ئەم مانگە</button>
-                                <button data-period="year" class="btn <?php echo (isset($_GET['period']) && $_GET['period'] == 'year') ? 'btn-primary' : 'btn-outline-primary'; ?>">ئەم ساڵ</button>
+                                <a href="?period=today" class="btn <?php echo (!isset($_GET['period']) || $_GET['period'] == 'today') ? 'btn-primary' : 'btn-outline-primary'; ?>">ئەمڕۆ</a>
+                                <a href="?period=month" class="btn <?php echo (isset($_GET['period']) && $_GET['period'] == 'month') ? 'btn-primary' : 'btn-outline-primary'; ?>">ئەم مانگە</a>
+                                <a href="?period=year" class="btn <?php echo (isset($_GET['period']) && $_GET['period'] == 'year') ? 'btn-primary' : 'btn-outline-primary'; ?>">ئەم ساڵ</a>
                             </div>
                         </div>
                     </div>
@@ -450,8 +450,6 @@ require_once '../../process/dashboard_logic.php';
             window.purchasesPercentage = 0;
         }
     </script>
-    <!-- Dashboard filter script -->
-    <script src="../../js/dashboard/filter.js"></script>
 </body>
 
 </html>
