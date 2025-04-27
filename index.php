@@ -232,7 +232,7 @@ require_once 'Selling-System/src/process/login_handler.php';
             </form>
         </div>
         <div class="login-image">
-            <img src="Selling-System/src/assets/img/logo-image.png" alt="Warehouse System">
+            <img src="Selling-System/src/assets/img/login-image.png" alt="Warehouse System">
             <h1>سیستەمی بەڕێوەبردنی کۆگا</h1>
             <!-- <p>بەڕێوەبردنی کۆگا بە شێوازێکی سەردەمیانە و کارامە</p> -->
         </div>
