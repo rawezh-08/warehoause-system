@@ -426,6 +426,8 @@ require_once '../../process/dashboard_logic.php';
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Chart.js - Using a specific version for compatibility -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <!-- Component loading script -->
@@ -488,11 +490,15 @@ require_once '../../process/dashboard_logic.php';
                         });
                     }
                 },
-                error: function() {
-                    // Show error message
+                error: function(xhr, status, error) {
+                    // Show error message with more details
+                    let errorMessage = 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردنەوەدا';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
                     Swal.fire({
                         title: 'هەڵە!',
-                        text: 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردنەوەدا',
+                        text: errorMessage,
                         icon: 'error',
                         confirmButtonText: 'باشە'
                     });
