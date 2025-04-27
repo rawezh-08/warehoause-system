@@ -2088,16 +2088,6 @@ foreach ($debtTransactions as $debtTransaction) {
                                             name="return_quantities[${item.id}]" 
                                             min="0" max="${item.quantity}" value="0">
                                     </td>
-                                    <td>
-                                        <select class="form-select return-reason" 
-                                            name="return_reasons[${item.id}]">
-                                            <option value="">هۆکاری گەڕانەوە هەڵبژێرە</option>
-                                            <option value="damaged">زیان</option>
-                                            <option value="wrong_product">کاڵای هەڵە</option>
-                                            <option value="customer_request">داواکاری کڕیار</option>
-                                            <option value="other">هی تر</option>
-                                        </select>
-                                    </td>
                                 </tr>`;
                             });
                             
@@ -2116,34 +2106,7 @@ foreach ($debtTransactions as $debtTransaction) {
                                 cancelButtonText: 'هەڵوەشاندنەوە',
                                 showLoaderOnConfirm: true,
                                 preConfirm: () => {
-                                    const form = document.getElementById('returnSaleForm');
-                                    const formData = new FormData(form);
-                                    
-                                    // Validate return quantities and reasons
-                                    let hasReturn = false;
-                                    let isValid = true;
-                                    const quantities = formData.getAll('return_quantities[]');
-                                    const reasons = formData.getAll('return_reasons[]');
-                                    
-                                    quantities.forEach((quantity, index) => {
-                                        if (quantity > 0) {
-                                            hasReturn = true;
-                                            if (!reasons[index]) {
-                                                isValid = false;
-                                            }
-                                        }
-                                    });
-                                    
-                                    if (!hasReturn) {
-                                        Swal.showValidationMessage('تکایە بڕی گەڕانەوە دیاری بکە');
-                                        return false;
-                                    }
-                                    
-                                    if (!isValid) {
-                                        Swal.showValidationMessage('تکایە هۆکاری گەڕانەوە بۆ هەموو کاڵایەک دیاری بکە');
-                                        return false;
-                                    }
-                                    
+                                    const formData = new FormData(document.getElementById('returnSaleForm'));
                                     return $.ajax({
                                         url: '../../ajax/return_sale.php',
                                         type: 'POST',

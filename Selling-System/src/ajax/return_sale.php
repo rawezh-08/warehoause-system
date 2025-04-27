@@ -11,7 +11,6 @@ try {
     // Get sale ID and return quantities
     $sale_id = $_POST['sale_id'];
     $return_quantities = $_POST['return_quantities'];
-    $return_reasons = $_POST['return_reasons']; // New field for return reasons
     $notes = $_POST['notes'];
     
     // Start transaction
@@ -58,16 +57,6 @@ try {
             $itemStmt->execute([$item_id]);
             $item = $itemStmt->fetch(PDO::FETCH_ASSOC);
             
-            // Validate return quantity
-            if ($quantity > $item['quantity']) {
-                throw new Exception("بڕی گەڕاوە ناتوانێت لە بڕی کڕدراو زیاتر بێت بۆ کاڵای: " . $item['product_name']);
-            }
-            
-            // Validate return reason
-            if (!isset($return_reasons[$item_id]) || empty($return_reasons[$item_id])) {
-                throw new Exception("تکایە هۆکاری گەڕانەوە دیاری بکە بۆ کاڵای: " . $item['product_name']);
-            }
-            
             $returnAmount = $item['unit_price'] * $quantity;
             $totalReturnAmount += $returnAmount;
             
@@ -76,8 +65,7 @@ try {
                 'product_name' => $item['product_name'],
                 'quantity' => $quantity,
                 'unit_price' => $item['unit_price'],
-                'total_price' => $returnAmount,
-                'reason' => $return_reasons[$item_id]
+                'total_price' => $returnAmount
             ];
             
             // Add to remaining items
@@ -113,10 +101,10 @@ try {
     
     // Record the return
     $returnQuery = "INSERT INTO product_returns 
-                   (receipt_id, receipt_type, return_date, total_amount, reason, notes, created_at) 
-                   VALUES (?, 'selling', NOW(), ?, ?, ?, NOW())";
+                   (receipt_id, receipt_type, return_date, total_amount, notes, created_at) 
+                   VALUES (?, 'selling', NOW(), ?, ?, NOW())";
     $returnStmt = $conn->prepare($returnQuery);
-    $returnStmt->execute([$sale_id, $totalReturnAmount, $return_reasons[array_key_first($return_reasons)], $notes]);
+    $returnStmt->execute([$sale_id, $totalReturnAmount, $notes]);
     $return_id = $conn->lastInsertId();
     
     // Record return items
@@ -131,8 +119,8 @@ try {
             $item = $itemStmt->fetch(PDO::FETCH_ASSOC);
             
             $returnItemQuery = "INSERT INTO return_items 
-                              (return_id, product_id, quantity, unit_price, total_price, unit_type, original_unit_type, original_quantity, reason) 
-                              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                              (return_id, product_id, quantity, unit_price, total_price, unit_type, original_unit_type, original_quantity) 
+                              VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             $returnItemStmt = $conn->prepare($returnItemQuery);
             $returnItemStmt->execute([
                 $return_id,
@@ -142,8 +130,7 @@ try {
                 $item['unit_price'] * $quantity,
                 $item['unit_type'],
                 $item['unit_type'],
-                $item['quantity'],
-                $return_reasons[$item_id]
+                $item['quantity']
             ]);
         }
     }

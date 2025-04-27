@@ -6,7 +6,7 @@ session_start();
 // Check if user is already logged in
 if (isset($_SESSION['admin_id'])) {
     // Correctly redirect to dashboard using relative path
-    header("Location: Selling-System/src/views/admin/dashboard.php");
+    header("Location: Selling-System/src/Views/admin/dashboard.php");
     exit();
 }
 
@@ -56,10 +56,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 // Determine if we're in the main directory or a subdirectory
                 if (basename(dirname($currentPath)) === 'process' && basename(dirname(dirname($currentPath))) === 'src') {
                     // If we're in src/process/, use relative path
-                    header("Location: ../views/admin/dashboard.php");
+                    header("Location: ../Views/admin/dashboard.php");
                 } else {
                     // Otherwise use the standard path from project root
-                    header("Location: Selling-System/src/views/admin/dashboard.php");
+                    header("Location: Selling-System/src/Views/admin/dashboard.php");
                 }
                 exit();
             } else {
