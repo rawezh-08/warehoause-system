@@ -286,14 +286,8 @@ foreach ($suppliers as $supplier) {
                                                         <td>
                                                             <div class="action-buttons">
                                                                 <a href="supplierProfile.php?id=<?php echo $supplier['id']; ?>" class="btn btn-sm btn-outline-primary rounded-circle">
-                                                                    <i class="fas fa-eye"></i>
+                                                                    <i class="fas fa-user"></i>
                                                                 </a>
-                                                                <button type="button" class="btn btn-sm btn-outline-warning rounded-circle edit-supplier-btn" data-id="<?php echo $supplier['id']; ?>">
-                                                                    <i class="fas fa-edit"></i>
-                                                                </button>
-                                                                <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-supplier-btn" data-id="<?php echo $supplier['id']; ?>">
-                                                                    <i class="fas fa-trash-alt"></i>
-                                                                </button>
                                                             </div>
                                                         </td>
                                                     </tr>
