@@ -41,6 +41,10 @@ require_once '../../process/dashboard_logic.php';
             margin: 0 5px;
             border-radius: 20px;
         }
+        .kpi-card.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
     </style>
 </head>
 
@@ -95,9 +99,9 @@ require_once '../../process/dashboard_logic.php';
                     <div class="row g-3 mb-3">
                         <div class="col-12">
                             <div class="filter-buttons">
-                                <a href="?period=today" class="btn <?php echo (!isset($_GET['period']) || $_GET['period'] == 'today') ? 'btn-primary' : 'btn-outline-primary'; ?>">ئەمڕۆ</a>
-                                <a href="?period=month" class="btn <?php echo (isset($_GET['period']) && $_GET['period'] == 'month') ? 'btn-primary' : 'btn-outline-primary'; ?>">ئەم مانگە</a>
-                                <a href="?period=year" class="btn <?php echo (isset($_GET['period']) && $_GET['period'] == 'year') ? 'btn-primary' : 'btn-outline-primary'; ?>">ئەم ساڵ</a>
+                                <button data-period="today" class="btn <?php echo (!isset($_GET['period']) || $_GET['period'] == 'today') ? 'btn-primary' : 'btn-outline-primary'; ?>">ئەمڕۆ</button>
+                                <button data-period="month" class="btn <?php echo (isset($_GET['period']) && $_GET['period'] == 'month') ? 'btn-primary' : 'btn-outline-primary'; ?>">ئەم مانگە</button>
+                                <button data-period="year" class="btn <?php echo (isset($_GET['period']) && $_GET['period'] == 'year') ? 'btn-primary' : 'btn-outline-primary'; ?>">ئەم ساڵ</button>
                             </div>
                         </div>
                     </div>
@@ -449,6 +453,103 @@ require_once '../../process/dashboard_logic.php';
             window.salesPercentage = 0;
             window.purchasesPercentage = 0;
         }
+    </script>
+    <script>
+    $(document).ready(function() {
+        // Handle period filter button clicks
+        $('.filter-buttons button').on('click', function() {
+            const period = $(this).data('period');
+            
+            // Update button styles
+            $('.filter-buttons button').removeClass('btn-primary').addClass('btn-outline-primary');
+            $(this).removeClass('btn-outline-primary').addClass('btn-primary');
+            
+            // Show loading state
+            $('.kpi-card').addClass('loading');
+            
+            // Make AJAX request
+            $.ajax({
+                url: '../../process/dashboard_ajax.php',
+                method: 'POST',
+                data: { period: period },
+                success: function(response) {
+                    if (response.success) {
+                        // Update KPI cards with new data
+                        updateKPICards(response.data);
+                    } else {
+                        // Show error message
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: response.message || 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردنەوەدا',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                },
+                error: function() {
+                    // Show error message
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'هەڵەیەک ڕوویدا لە کاتی فلتەرکردنەوەدا',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                },
+                complete: function() {
+                    // Remove loading state
+                    $('.kpi-card').removeClass('loading');
+                }
+            });
+        });
+        
+        // Function to update KPI cards with new data
+        function updateKPICards(data) {
+            // Update cash sales
+            $('.kpi-card:nth-child(1) .kpi-value').text(formatNumber(data.cashSales) + ' د.ع');
+            updatePercentage($('.kpi-card:nth-child(1) .kpi-comparison'), data.cashSalesPercentage);
+            
+            // Update credit sales
+            $('.kpi-card:nth-child(2) .kpi-value').text(formatNumber(data.creditSales) + ' د.ع');
+            updatePercentage($('.kpi-card:nth-child(2) .kpi-comparison'), data.creditSalesPercentage);
+            
+            // Update cash purchases
+            $('.kpi-card:nth-child(3) .kpi-value').text(formatNumber(data.cashPurchases) + ' د.ع');
+            updatePercentage($('.kpi-card:nth-child(3) .kpi-comparison'), data.cashPurchasesPercentage);
+            
+            // Update credit purchases
+            $('.kpi-card:nth-child(4) .kpi-value').text(formatNumber(data.creditPurchases) + ' د.ع');
+            updatePercentage($('.kpi-card:nth-child(4) .kpi-comparison'), data.creditPurchasesPercentage);
+            
+            // Update customer debt
+            $('.kpi-card:nth-child(5) .kpi-value').text(formatNumber(data.totalCustomerDebt) + ' د.ع');
+            updatePercentage($('.kpi-card:nth-child(5) .kpi-comparison'), data.customerDebtPercentage);
+            
+            // Update supplier debt
+            $('.kpi-card:nth-child(6) .kpi-value').text(formatNumber(data.totalSupplierDebt) + ' د.ع');
+            updatePercentage($('.kpi-card:nth-child(6) .kpi-comparison'), data.supplierDebtPercentage);
+            
+            // Update expenses
+            $('.kpi-card:nth-child(7) .kpi-value').text(formatNumber(data.totalExpenses) + ' د.ع');
+            updatePercentage($('.kpi-card:nth-child(7) .kpi-comparison'), data.expensesPercentage);
+            
+            // Update profit
+            $('.kpi-card:nth-child(8) .kpi-value').text(formatNumber(data.totalProfit) + ' د.ع');
+            updatePercentage($('.kpi-card:nth-child(8) .kpi-comparison'), data.profitPercentage);
+        }
+        
+        // Helper function to update percentage display
+        function updatePercentage(element, percentage) {
+            const isPositive = percentage >= 0;
+            element.removeClass('positive negative')
+                .addClass(isPositive ? 'positive' : 'negative')
+                .html(`<i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i> ${Math.abs(percentage)}%`);
+        }
+        
+        // Helper function to format numbers
+        function formatNumber(number) {
+            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+    });
     </script>
 </body>
 
