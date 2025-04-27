@@ -23,7 +23,7 @@ if (!$supplier) {
 
 // Get all purchases for this supplier
 $purchasesQuery = "SELECT p.*, 
-               pi.quantity, pi.unit_price, pi.total_price,
+               pi.quantity, pi.unit_price, pi.total_price, pi.unit_type,
                pr.name as product_name, pr.code as product_code,
                SUM(pi.total_price) as total_amount,
                p.shipping_cost, p.other_cost, p.discount,
@@ -586,7 +586,24 @@ foreach ($purchases as $purchase) {
                                                         <td><?php echo date('Y/m/d', strtotime($purchase['date'])); ?></td>
                                                         <td><?php echo htmlspecialchars($purchase['product_name']); ?></td>
                                                         <td><?php echo htmlspecialchars($purchase['product_code']); ?></td>
-                                                        <td><?php echo number_format($purchase['quantity']); ?></td>
+                                                        <td>
+                                                            <?php echo number_format($purchase['quantity']); ?>
+                                                            <?php
+                                                                switch($purchase['unit_type']) {
+                                                                    case 'box':
+                                                                        echo ' <span class="badge bg-info">کارتۆن</span>';
+                                                                        break;
+                                                                    case 'piece':
+                                                                        echo ' <span class="badge bg-secondary">دانە</span>';
+                                                                        break;
+                                                                    case 'set':
+                                                                        echo ' <span class="badge bg-warning">سێت</span>';
+                                                                        break;
+                                                                    default:
+                                                                        echo ' <span class="badge bg-secondary">دانە</span>';
+                                                                }
+                                                            ?>
+                                                        </td>
                                                         <td><?php echo number_format($purchase['unit_price']); ?> دینار</td>
                                                         <td><?php echo number_format($purchase['total_amount']); ?> دینار</td>
                                                         <td><?php echo number_format($purchase['shipping_cost']); ?> دینار</td>
@@ -601,9 +618,12 @@ foreach ($purchases as $purchase) {
                                                         </td>
                                                         <td>
                                                             <div class="action-buttons">
-                                                                <a href="viewPurchase.php?id=<?php echo $purchase['id']; ?>" class="btn btn-sm btn-outline-primary rounded-circle" title="بینین">
+                                                                <button type="button" class="btn btn-sm btn-outline-primary rounded-circle view-purchase-details" 
+                                                                    data-id="<?php echo $purchase['id']; ?>"
+                                                                    data-invoice="<?php echo $purchase['invoice_number']; ?>"
+                                                                    title="بینین">
                                                                     <i class="fas fa-eye"></i>
-                                                                </a>
+                                                                </button>
                                                                 <?php
                                                                 // Check if purchase can be deleted (no returns or payments)
                                                                 $canDelete = true;
@@ -757,7 +777,24 @@ foreach ($purchases as $purchase) {
                                                         <td><?php echo date('Y/m/d', strtotime($purchase['date'])); ?></td>
                                                         <td><?php echo htmlspecialchars($purchase['product_name']); ?></td>
                                                         <td><?php echo htmlspecialchars($purchase['product_code']); ?></td>
-                                                        <td><?php echo number_format($purchase['quantity']); ?></td>
+                                                        <td>
+                                                            <?php echo number_format($purchase['quantity']); ?>
+                                                            <?php
+                                                                switch($purchase['unit_type']) {
+                                                                    case 'box':
+                                                                        echo ' <span class="badge bg-info">کارتۆن</span>';
+                                                                        break;
+                                                                    case 'piece':
+                                                                        echo ' <span class="badge bg-secondary">دانە</span>';
+                                                                        break;
+                                                                    case 'set':
+                                                                        echo ' <span class="badge bg-warning">سێت</span>';
+                                                                        break;
+                                                                    default:
+                                                                        echo ' <span class="badge bg-secondary">دانە</span>';
+                                                                }
+                                                            ?>
+                                                        </td>
                                                         <td><?php echo number_format($purchase['unit_price']); ?> دینار</td>
                                                         <td><?php echo number_format($purchase['total_amount']); ?> دینار</td>
                                                         <td><?php echo number_format($purchase['shipping_cost']); ?> دینار</td>
@@ -765,9 +802,12 @@ foreach ($purchases as $purchase) {
                                                         <td><?php echo number_format($purchase['discount']); ?> دینار</td>
                                                         <td>
                                                             <div class="action-buttons">
-                                                                <a href="viewPurchase.php?id=<?php echo $purchase['id']; ?>" class="btn btn-sm btn-outline-primary rounded-circle" title="بینین">
+                                                                <button type="button" class="btn btn-sm btn-outline-primary rounded-circle view-purchase-details" 
+                                                                    data-id="<?php echo $purchase['id']; ?>"
+                                                                    data-invoice="<?php echo $purchase['invoice_number']; ?>"
+                                                                    title="بینین">
                                                                     <i class="fas fa-eye"></i>
-                                                                </a>
+                                                                </button>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -1676,6 +1716,133 @@ foreach ($purchases as $purchase) {
                     table.find('tbody tr.no-records').remove();
                 }
             }
+
+            // Custom JS for purchase details modal
+            $(document).ready(function() {
+                // Function to handle viewing purchase details
+                $(document).on('click', '.view-purchase-details', function() {
+                    const purchaseId = $(this).data('id');
+                    const invoiceNumber = $(this).data('invoice');
+                    
+                    // Show loading
+                    Swal.fire({
+                        title: 'تکایە چاوەڕێ بە...',
+                        html: 'زانیاریەکانی پسووڵە دەهێنرێن',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    // Fetch purchase details via AJAX
+                    $.ajax({
+                        url: '../../ajax/get_purchase_items.php',
+                        type: 'POST',
+                        data: {
+                            purchase_id: purchaseId
+                        },
+                        success: function(response) {
+                            try {
+                                const data = JSON.parse(response);
+                                
+                                if (data.success) {
+                                    // Format items for display
+                                    let itemsHtml = `
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-sm">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>#</th>
+                                                        <th>ناوی کاڵا</th>
+                                                        <th>بڕ</th>
+                                                        <th>نرخی یەکە</th>
+                                                        <th>کۆی نرخ</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                    `;
+                                    
+                                    let counter = 1;
+                                    data.items.forEach(item => {
+                                        let unitTypeBadge = '';
+                                        switch(item.unit_type) {
+                                            case 'box':
+                                                unitTypeBadge = '<span class="badge bg-info ms-1">کارتۆن</span>';
+                                                break;
+                                            case 'piece':
+                                                unitTypeBadge = '<span class="badge bg-secondary ms-1">دانە</span>';
+                                                break;
+                                            case 'set':
+                                                unitTypeBadge = '<span class="badge bg-warning ms-1">سێت</span>';
+                                                break;
+                                            default:
+                                                unitTypeBadge = '<span class="badge bg-secondary ms-1">دانە</span>';
+                                        }
+                                        
+                                        itemsHtml += `
+                                            <tr>
+                                                <td>${counter++}</td>
+                                                <td>${item.product_name}</td>
+                                                <td>${item.quantity} ${unitTypeBadge}</td>
+                                                <td>${Number(item.unit_price).toLocaleString()} دینار</td>
+                                                <td>${Number(item.total_price).toLocaleString()} دینار</td>
+                                            </tr>
+                                        `;
+                                    });
+                                    
+                                    itemsHtml += `
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="table-light">
+                                                <td colspan="4" class="text-start fw-bold">کۆی گشتی</td>
+                                                <td class="fw-bold">${data.total_amount.toLocaleString()} دینار</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            `;
+                                    
+                                    // Display the modal with purchase items
+                                    Swal.fire({
+                                        title: `پسووڵەی ژمارە ${invoiceNumber}`,
+                                        html: itemsHtml,
+                                        width: '800px',
+                                        confirmButtonText: 'داخستن',
+                                        customClass: {
+                                            container: 'swal-rtl',
+                                            title: 'text-right',
+                                            htmlContainer: 'text-right'
+                                        }
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'هەڵە',
+                                        text: data.message || 'هەڵەیەک ڕوویدا',
+                                        confirmButtonText: 'باشە'
+                                    });
+                                }
+                            } catch (error) {
+                                console.error('Error parsing JSON:', error);
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'هەڵە',
+                                    text: 'هەڵەیەک ڕوویدا لە جێبەجێکردنی داواکاریەکە',
+                                    confirmButtonText: 'باشە'
+                                });
+                            }
+                        },
+                        error: function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'هەڵە',
+                                text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    });
+                });
+            });
         });
     </script>
 </body>
