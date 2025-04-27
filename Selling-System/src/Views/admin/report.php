@@ -751,7 +751,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         <!-- Total Sales -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
-                            <div class="report-card " data-bs-toggle="dropdown">
+                            <div class="report-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div class="stat-icon bg-success-light">
@@ -767,7 +767,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             </ul>
                                         </div>
                                     </div>
-                                    <h6 class="stat-title">کۆی فرۆشتن</h6>
+                                    <h6 class="stat-title">کۆی فرۆشتنەکان</h6>
                                     <h3 class="stat-value"><?php echo number_format($totalSales); ?> د.ع</h3>
                                     <div class="d-flex justify-content-between align-items-center mt-3">
                                         <div class="text-success">
