@@ -63,9 +63,26 @@ try {
             $itemStmt->execute([$item_id]);
             $item = $itemStmt->fetch(PDO::FETCH_ASSOC);
             
-            // Check if return quantity is greater than original quantity
-            if ($quantity > $item['quantity']) {
-                throw new Exception("بڕی گەڕانەوەی کاڵای {$item['product_name']} ناتوانێت لە {$item['quantity']} زیاتر بێت");
+            // Get previously returned quantity
+            $prevReturnQuery = "SELECT COALESCE(SUM(ri.quantity), 0) as returned_quantity 
+                              FROM return_items ri 
+                              JOIN product_returns pr ON ri.return_id = pr.id 
+                              WHERE pr.receipt_id = ? AND ri.product_id = ?";
+            $prevReturnStmt = $conn->prepare($prevReturnQuery);
+            $prevReturnStmt->execute([$sale_id, $item['product_id']]);
+            $prevReturned = $prevReturnStmt->fetch(PDO::FETCH_ASSOC)['returned_quantity'];
+            
+            // Calculate remaining quantity
+            $remainingQuantity = $item['quantity'] - $prevReturned;
+            
+            // Check if there's any quantity left to return
+            if ($remainingQuantity <= 0) {
+                throw new Exception("کاڵای {$item['product_name']} پێشتر بە تەواوی گەڕاوەتەوە");
+            }
+            
+            // Check if return quantity is greater than remaining quantity
+            if ($quantity > $remainingQuantity) {
+                throw new Exception("بڕی گەڕانەوەی کاڵای {$item['product_name']} ناتوانێت لە {$remainingQuantity} زیاتر بێت");
             }
             
             $returnAmount = $item['unit_price'] * $quantity;
@@ -75,7 +92,10 @@ try {
             $returnedItems[] = [
                 'product_name' => $item['product_name'],
                 'original_quantity' => $item['quantity'],
+                'previously_returned' => $prevReturned,
                 'returned_quantity' => $quantity,
+                'total_returned_quantity' => $prevReturned + $quantity,
+                'remaining_quantity' => $remainingQuantity - $quantity,
                 'unit_price' => $item['unit_price'],
                 'total_price' => $returnAmount
             ];
@@ -83,7 +103,7 @@ try {
             // Add to remaining items
             $remainingItems[] = [
                 'product_name' => $item['product_name'],
-                'quantity' => $item['quantity'] - $quantity,
+                'quantity' => $remainingQuantity - $quantity,
                 'unit_price' => $item['unit_price'],
                 'total_price' => $item['total_price'] - $returnAmount
             ];

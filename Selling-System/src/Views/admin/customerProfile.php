@@ -2159,14 +2159,17 @@ foreach ($debtTransactions as $debtTransaction) {
                                         // Returned items
                                         summaryHtml += '<div class="mb-2"><strong>کاڵاکانی گەڕاوە:</strong></div>';
                                         summaryHtml += '<div class="table-responsive"><table class="table table-sm table-bordered">';
-                                        summaryHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی کڕین</th><th>بڕی گەڕانەوە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
+                                        summaryHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی کڕین</th><th>بڕی پێشوو گەڕاوە</th><th>بڕی گەڕانەوە</th><th>کۆی گەڕاوەکان</th><th>بڕی ماوە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
                                         summaryHtml += '<tbody>';
                                         
                                         response.summary.returned_items.forEach(item => {
                                             summaryHtml += `<tr>
                                                 <td>${item.product_name}</td>
                                                 <td>${item.original_quantity}</td>
+                                                <td>${item.previously_returned}</td>
                                                 <td>${item.returned_quantity}</td>
+                                                <td>${item.total_returned_quantity}</td>
+                                                <td>${item.remaining_quantity}</td>
                                                 <td>${item.unit_price.toLocaleString()} دینار</td>
                                                 <td>${item.total_price.toLocaleString()} دینار</td>
                                             </tr>`;
@@ -2177,7 +2180,7 @@ foreach ($debtTransactions as $debtTransaction) {
                                         // Remaining items
                                         summaryHtml += '<div class="mb-2"><strong>کاڵاکانی ماوە:</strong></div>';
                                         summaryHtml += '<div class="table-responsive"><table class="table table-sm table-bordered">';
-                                        summaryHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕ</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
+                                        summaryHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی ماوە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
                                         summaryHtml += '<tbody>';
                                         
                                         response.summary.remaining_items.forEach(item => {
