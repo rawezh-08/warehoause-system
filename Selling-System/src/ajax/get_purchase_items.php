@@ -1,8 +1,6 @@
 <?php
 // Include necessary files
 require_once '../config/database.php';
-require_once '../include/db_connection.php';
-session_start();
 
 // Create database connection
 $db = new Database();
@@ -16,53 +14,54 @@ $response = [
     'total_amount' => 0
 ];
 
-// Check if the user is logged in
-if (!isset($_SESSION['user_id'])) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'User not logged in'
-    ]);
-    exit;
-}
-
-// Get the purchase ID from the POST data
+// Check if purchase ID is provided
 if (!isset($_POST['purchase_id']) || empty($_POST['purchase_id'])) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'Purchase ID is required'
-    ]);
+    $response['message'] = 'ناسنامەی پسووڵە دیاری نەکراوە';
+    echo json_encode($response);
     exit;
 }
 
-$purchase_id = $_POST['purchase_id'];
+$purchaseId = intval($_POST['purchase_id']);
 
 try {
-    // Get all purchase items for the given purchase ID
-    $query = "SELECT pi.*, p.name as product_name, 
-                    COALESCE((SELECT SUM(pr.quantity) 
-                    FROM product_returns pr 
-                    WHERE pr.receipt_id = :purchase_id 
-                    AND pr.receipt_type = 'buying' 
-                    AND pr.item_id = pi.id), 0) as returned_quantity
-              FROM purchase_items pi
-              JOIN products p ON pi.product_id = p.id
-              WHERE pi.purchase_id = :purchase_id";
-    
-    $stmt = $conn->prepare($query);
-    $stmt->bindParam(':purchase_id', $purchase_id);
-    $stmt->execute();
-    
-    $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Return successful response with items data
-    echo json_encode([
-        'success' => true,
-        'items' => $items
-    ]);
-    
+    // Get purchase header information
+    $purchaseQuery = "SELECT * FROM purchases WHERE id = :purchase_id";
+    $purchaseStmt = $conn->prepare($purchaseQuery);
+    $purchaseStmt->bindParam(':purchase_id', $purchaseId);
+    $purchaseStmt->execute();
+    $purchase = $purchaseStmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$purchase) {
+        $response['message'] = 'پسووڵەی داواکراو نەدۆزرایەوە';
+        echo json_encode($response);
+        exit;
+    }
+
+    // Get purchase items
+    $itemsQuery = "SELECT pi.*, p.name as product_name, p.code as product_code 
+                   FROM purchase_items pi 
+                   JOIN products p ON pi.product_id = p.id 
+                   WHERE pi.purchase_id = :purchase_id";
+    $itemsStmt = $conn->prepare($itemsQuery);
+    $itemsStmt->bindParam(':purchase_id', $purchaseId);
+    $itemsStmt->execute();
+    $items = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Calculate total amount
+    $totalAmount = 0;
+    foreach ($items as $item) {
+        $totalAmount += $item['total_price'];
+    }
+
+    // Prepare successful response
+    $response['success'] = true;
+    $response['items'] = $items;
+    $response['total_amount'] = $totalAmount;
+    $response['purchase'] = $purchase;
+
 } catch (PDOException $e) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database error: ' . $e->getMessage()
-    ]);
-} 
+    $response['message'] = 'هەڵەیەک ڕوویدا: ' . $e->getMessage();
+}
+
+// Return response as JSON
+echo json_encode($response); 
