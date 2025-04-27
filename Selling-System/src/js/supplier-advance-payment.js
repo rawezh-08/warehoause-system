@@ -143,52 +143,83 @@ function useSupplierAdvancePayment(purchaseData, callback) {
 
 // Initialize the supplier advance payment functionality
 $(document).ready(function() {
-    // Save advance payment button click
+    // Handle advance payment form submission
     $('#saveSupplierAdvancePaymentBtn').on('click', function() {
         const form = $('#supplierAdvancePaymentForm');
-        const formData = form.serialize();
         
-        saveSupplierAdvancePayment(formData, function(result) {
-            if (result.success) {
-                // Show success message
-                Swal.fire({
-                    icon: 'success',
-                    title: 'سەرکەوتوو',
-                    text: result.message,
-                    confirmButtonText: 'باشە'
-                }).then((swalResult) => {
-                    // Show print option
-                    if (swalResult.isConfirmed && result.transaction_id) {
-                        Swal.fire({
-                            icon: 'question',
-                            title: 'چاپکردنی پسووڵە',
-                            text: 'دەتەویت پسووڵەی پارەی پێشەکی چاپ بکەیت؟',
-                            showCancelButton: true,
-                            confirmButtonText: 'بەڵێ، چاپی بکە',
-                            cancelButtonText: 'نەخێر'
-                        }).then((printResult) => {
-                            if (printResult.isConfirmed) {
-                                // Open receipt in new tab for printing
-                                window.open('../../views/receipt/supplier_advance_receipt.php?transaction_id=' + result.transaction_id + '&print=true', '_blank');
-                            }
-                            
-                            // Refresh the page
-                            location.reload();
-                        });
-                    } else {
-                        // Refresh the page
-                        location.reload();
-                    }
-                });
+        // Basic validation
+        if (!form[0].checkValidity()) {
+            form.addClass('was-validated');
+            return;
+        }
+
+        // Get form data
+        const formData = {
+            supplier_id: form.find('input[name="supplier_id"]').val(),
+            amount: form.find('input[name="amount"]').val(),
+            advance_date: form.find('input[name="advance_date"]').val(),
+            notes: form.find('textarea[name="notes"]').val(),
+            payment_method: form.find('select[name="payment_method"]').val(),
+            transaction_type: form.find('input[name="transaction_type"]').val()
+        };
+
+        // Show loading
+        Swal.fire({
+            title: 'تکایە چاوەڕێ بکە...',
+            text: 'پارەی پێشەکی تۆمار دەکرێت',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Submit via AJAX
+        $.ajax({
+            url: '../../ajax/save_supplier_advance.php',
+            method: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'سەرکەوتوو',
+                        text: 'پارەی پێشەکی بە سەرکەوتوویی تۆمارکرا',
+                        confirmButtonText: 'باشە'
+                    }).then(() => {
+                        // Reset form
+                        form[0].reset();
+                        form.removeClass('was-validated');
+                        
+                        // Refresh the page to update all data
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: response.message || 'هەڵەیەک ڕوویدا لە کاتی تۆمارکردنی پارەی پێشەکی',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error details:', {xhr, status, error});
+                let errorMessage = 'هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە سێرڤەر';
                 
-                // Reset form
-                form[0].reset();
-            } else {
-                // Show error message
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response && response.message) {
+                        errorMessage = response.message;
+                    }
+                } catch (e) {
+                    console.error('Error parsing response:', e);
+                }
+                
                 Swal.fire({
                     icon: 'error',
                     title: 'هەڵە',
-                    text: result.message,
+                    text: errorMessage,
                     confirmButtonText: 'باشە'
                 });
             }

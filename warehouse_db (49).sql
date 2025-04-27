@@ -2070,7 +2070,7 @@ CREATE TABLE `supplier_debt_transactions` (
   `id` int(11) NOT NULL,
   `supplier_id` int(11) NOT NULL,
   `amount` decimal(10,0) NOT NULL DEFAULT 0 COMMENT 'Positive: debt to supplier increased, Negative: debt to supplier decreased',
-  `transaction_type` enum('purchase','payment','return','supplier_payment','manual_adjustment','supplier_return') NOT NULL,
+  `transaction_type` enum('purchase','payment','return','supplier_payment','manual_adjustment','supplier_return','supplier_advance','advance_used') NOT NULL,
   `reference_id` int(11) DEFAULT NULL COMMENT 'ID from purchases or manual entry',
   `notes` text DEFAULT NULL,
   `created_by` int(11) DEFAULT NULL,

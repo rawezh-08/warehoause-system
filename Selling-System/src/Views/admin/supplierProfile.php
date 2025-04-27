@@ -1071,48 +1071,55 @@ foreach ($purchases as $purchase) {
                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                             <h5 class="card-title mb-0">پێدانی پارەی پێشەکی</h5>
                                         </div>
-                                        <form id="supplierAdvancePaymentForm">
-                                            <input type="hidden" name="supplier_id" value="<?php echo $supplier['id']; ?>">
-                                            <input type="hidden" name="transaction_type" value="supplier_advance">
+                                        <?php if ($supplier['debt_on_myself'] > 0): ?>
+                                            <div class="alert alert-warning">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                ناتوانرێت پارەی پێشەکی بدەیت چونکە قەرزمان لەسەرە بە بڕی <?php echo number_format($supplier['debt_on_myself']); ?> دینار
+                                            </div>
+                                        <?php else: ?>
+                                            <form id="supplierAdvancePaymentForm">
+                                                <input type="hidden" name="supplier_id" value="<?php echo $supplier['id']; ?>">
+                                                <input type="hidden" name="transaction_type" value="supplier_advance">
 
-                                            <div class="mb-3">
-                                                <label for="advanceAmount" class="form-label">بڕی پارەی پێشەکی</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="advanceAmount"
-                                                        name="amount" min="1" required>
-                                                    <span class="input-group-text">دینار</span>
+                                                <div class="mb-3">
+                                                    <label for="advanceAmount" class="form-label">بڕی پارەی پێشەکی</label>
+                                                    <div class="input-group">
+                                                        <input type="number" class="form-control" id="advanceAmount"
+                                                            name="amount" min="1" required>
+                                                        <span class="input-group-text">دینار</span>
+                                                    </div>
                                                 </div>
-                                            </div>
 
-                                            <div class="mb-3">
-                                                <label for="advanceDate" class="form-label">بەرواری پێدان</label>
-                                                <input type="date" class="form-control" id="advanceDate" name="advance_date"
-                                                    value="<?php echo date('Y-m-d'); ?>" required>
-                                            </div>
+                                                <div class="mb-3">
+                                                    <label for="advanceDate" class="form-label">بەرواری پێدان</label>
+                                                    <input type="date" class="form-control" id="advanceDate" name="advance_date"
+                                                        value="<?php echo date('Y-m-d'); ?>" required>
+                                                </div>
 
-                                            <div class="mb-3">
-                                                <label for="advanceNotes" class="form-label">تێبینی</label>
-                                                <textarea class="form-control" id="advanceNotes" name="notes"
-                                                    rows="3"></textarea>
-                                            </div>
+                                                <div class="mb-3">
+                                                    <label for="advanceNotes" class="form-label">تێبینی</label>
+                                                    <textarea class="form-control" id="advanceNotes" name="notes"
+                                                        rows="3"></textarea>
+                                                </div>
 
-                                            <div class="mb-3">
-                                                <label for="advancePaymentMethod" class="form-label">شێوازی پارەدان</label>
-                                                <select class="form-select" id="advancePaymentMethod" name="payment_method">
-                                                    <option value="cash">نەقد</option>
-                                                    <option value="transfer">FIB یان FastPay</option>
-                                                </select>
-                                            </div>
+                                                <div class="mb-3">
+                                                    <label for="advancePaymentMethod" class="form-label">شێوازی پارەدان</label>
+                                                    <select class="form-select" id="advancePaymentMethod" name="payment_method">
+                                                        <option value="cash">نەقد</option>
+                                                        <option value="transfer">FIB یان FastPay</option>
+                                                    </select>
+                                                </div>
 
-                                            <div class="text-end">
-                                                <button type="reset" class="btn btn-outline-secondary me-2">
-                                                    <i class="fas fa-undo me-2"></i> ڕیسێت
-                                                </button>
-                                                <button type="button" id="saveSupplierAdvancePaymentBtn" class="btn btn-primary">
-                                                    <i class="fas fa-save me-2"></i> تۆمارکردن
-                                                </button>
-                                            </div>
-                                        </form>
+                                                <div class="text-end">
+                                                    <button type="reset" class="btn btn-outline-secondary me-2">
+                                                        <i class="fas fa-undo me-2"></i> ڕیسێت
+                                                    </button>
+                                                    <button type="button" id="saveSupplierAdvancePaymentBtn" class="btn btn-primary">
+                                                        <i class="fas fa-save me-2"></i> تۆمارکردن
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
