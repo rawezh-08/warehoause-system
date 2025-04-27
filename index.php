@@ -20,6 +20,14 @@ require_once 'Selling-System/src/process/login_handler.php';
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
         }
+        .btn-primary, .text-primary, .input-group-text .fa-user, .input-group-text .fa-lock {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: #fff !important;
+}
+.text-primary {
+    color: var(--primary-color) !important;
+}
     </style>
 </head>
 <body>
@@ -37,14 +45,14 @@ require_once 'Selling-System/src/process/login_handler.php';
         <form method="POST" action="">
           <div class="mb-3 position-relative">
             <label for="username" class="form-label">ناوی بەکارهێنەر</label>
-            <div class="input-group">
+            <div class="input-group flex-row-reverse">
               <span class="input-group-text bg-light"><i class="fas fa-user text-primary"></i></span>
               <input type="text" class="form-control" id="username" name="username" required>
             </div>
           </div>
           <div class="mb-4 position-relative">
             <label for="password" class="form-label">وشەی نهێنی</label>
-            <div class="input-group">
+            <div class="input-group flex-row-reverse">
               <span class="input-group-text bg-light"><i class="fas fa-lock text-primary"></i></span>
               <input type="password" class="form-control" id="password" name="password" required>
             </div>
