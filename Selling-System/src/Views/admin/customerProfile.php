@@ -2130,6 +2130,12 @@ foreach ($debtTransactions as $debtTransaction) {
                                             ${response.summary.original_total.toLocaleString()} دینار
                                         </div>`;
                                         
+                                        // Return count
+                                        summaryHtml += `<div class="mb-2">
+                                            <strong>ژمارەی گەڕانەوەکان:</strong> 
+                                            ${response.summary.return_count}
+                                        </div>`;
+                                        
                                         // Returned amount
                                         summaryHtml += `<div class="mb-2">
                                             <strong>کۆی گشتی گەڕاوە:</strong> 

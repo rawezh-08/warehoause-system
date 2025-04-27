@@ -42,6 +42,12 @@ try {
         throw new Exception('ناتوانرێت ئەم پسووڵە بگەڕێتەوە چونکە پارەدانەوەی لەسەر تۆمار کراوە');
     }
     
+    // Get previous returns count
+    $returnCountQuery = "SELECT COUNT(*) as count FROM product_returns WHERE receipt_id = ? AND receipt_type = 'selling'";
+    $returnCountStmt = $conn->prepare($returnCountQuery);
+    $returnCountStmt->execute([$sale_id]);
+    $returnCount = $returnCountStmt->fetch(PDO::FETCH_ASSOC)['count'];
+    
     // Calculate total return amount and items
     $totalReturnAmount = 0;
     $returnedItems = [];
@@ -56,6 +62,11 @@ try {
             $itemStmt = $conn->prepare($itemQuery);
             $itemStmt->execute([$item_id]);
             $item = $itemStmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Check if return quantity is greater than original quantity
+            if ($quantity > $item['quantity']) {
+                throw new Exception("بڕی گەڕانەوەی کاڵای {$item['product_name']} ناتوانێت لە {$item['quantity']} زیاتر بێت");
+            }
             
             $returnAmount = $item['unit_price'] * $quantity;
             $totalReturnAmount += $returnAmount;
@@ -151,7 +162,8 @@ try {
         'remaining_amount' => $remainingAmount,
         'returned_items' => $returnedItems,
         'remaining_items' => $remainingItems,
-        'new_debt' => $newDebt
+        'new_debt' => $newDebt,
+        'return_count' => $returnCount + 1 // Add 1 for current return
     ];
     
     echo json_encode([
