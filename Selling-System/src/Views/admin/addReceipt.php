@@ -137,6 +137,9 @@ require_once '../../config/database.php';
                                         <button type="button" class="btn btn-danger btn-sm remove-row">
                                             <i class="fas fa-times"></i>
                                         </button>
+                                        <button type="button" class="btn btn-info btn-sm show-inventory-info" title="زانیاری کۆگا">
+                                            <i class="fas fa-boxes"></i>
+                                        </button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -290,6 +293,9 @@ require_once '../../config/database.php';
                             <td>
                                 <button type="button" class="btn btn-danger btn-sm remove-row">
                                     <i class="fas fa-times"></i>
+                                </button>
+                                <button type="button" class="btn btn-info btn-sm show-inventory-info" title="زانیاری کۆگا">
+                                    <i class="fas fa-boxes"></i>
                                 </button>
                             </td>
                         </tr>
@@ -519,6 +525,9 @@ require_once '../../config/database.php';
                                 <button type="button" class="btn btn-danger btn-sm remove-row">
                                     <i class="fas fa-times"></i>
                                 </button>
+                                <button type="button" class="btn btn-info btn-sm show-inventory-info" title="زانیاری کۆگا">
+                                    <i class="fas fa-boxes"></i>
+                                </button>
                             </td>
                         </tr>
                     </tbody>
@@ -684,12 +693,156 @@ require_once '../../config/database.php';
         </div>
     </div>
 
+    <!-- Inventory Info Modal -->
+    <div class="modal fade" id="inventoryInfoModal" tabindex="-1" role="dialog" aria-labelledby="inventoryInfoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="inventoryInfoModalLabel">زانیاری بەردەستی کاڵا</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3 product-name-display fw-bold"></div>
+                    <div class="inventory-cards">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title"><i class="fas fa-box"></i> دانە</h5>
+                                        <h3 class="piece-count">0</h3>
+                                        <p class="card-text text-muted piece-info">دانە بەردەستە</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title"><i class="fas fa-boxes"></i> کارتۆن</h5>
+                                        <h3 class="box-count">0</h3>
+                                        <p class="card-text text-muted box-info">کارتۆن بەردەستە</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title"><i class="fas fa-pallet"></i> سێت</h5>
+                                        <h3 class="set-count">0</h3>
+                                        <p class="card-text text-muted set-info">سێت بەردەستە</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">زانیاری زیاتر:</h5>
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span>دانە لە کارتۆنێکدا:</span>
+                                            <span class="pieces-per-box fw-bold">0</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span>کارتۆن لە سێتێکدا:</span>
+                                            <span class="boxes-per-set fw-bold">0</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span>کۆی گشتی دانەکان:</span>
+                                            <span class="total-pieces fw-bold">0</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     
+    <!-- Inventory Info Script -->
+    <script>
+        $(document).ready(function() {
+            // Handle show inventory info button click
+            $(document).on('click', '.show-inventory-info', function() {
+                const $row = $(this).closest('tr');
+                const productId = $row.find('.product-select').val();
+                const productName = $row.find('.product-select').text();
+                
+                if (!productId) {
+                    Swal.fire({
+                        title: 'تکایە کاڵا هەڵبژێرە',
+                        text: 'هیچ کاڵایەک دیاری نەکراوە',
+                        icon: 'warning',
+                        confirmButtonText: 'باشە'
+                    });
+                    return;
+                }
+                
+                // Show loading in modal
+                $('#inventoryInfoModal').modal('show');
+                $('.product-name-display').text('چاوەڕێ بکە...');
+                $('.piece-count, .box-count, .set-count, .pieces-per-box, .boxes-per-set, .total-pieces').text('...');
+                
+                // Get inventory info via AJAX
+                $.ajax({
+                    url: '../../api/get_product_inventory.php',
+                    type: 'GET',
+                    data: { product_id: productId },
+                    success: function(response) {
+                        if (response.success) {
+                            const data = response.data;
+                            
+                            // Update product name
+                            $('.product-name-display').text(data.name);
+                            
+                            // Update inventory counts
+                            $('.piece-count').text(data.piece_quantity || 0);
+                            $('.box-count').text(data.box_quantity || 0);
+                            $('.set-count').text(data.set_quantity || 0);
+                            
+                            // Update additional info
+                            $('.pieces-per-box').text(data.pieces_per_box || 0);
+                            $('.boxes-per-set').text(data.boxes_per_set || 0);
+                            
+                            // Calculate and display total pieces
+                            const totalPieces = 
+                                (data.piece_quantity || 0) + 
+                                (data.box_quantity || 0) * (data.pieces_per_box || 0) + 
+                                (data.set_quantity || 0) * (data.boxes_per_set || 0) * (data.pieces_per_box || 0);
+                            
+                            $('.total-pieces').text(totalPieces);
+                            
+                            // Update info text
+                            $('.piece-info').text(data.piece_quantity == 1 ? 'دانە بەردەستە' : 'دانە بەردەستە');
+                            $('.box-info').text(data.box_quantity == 1 ? 'کارتۆن بەردەستە' : 'کارتۆن بەردەستە');
+                            $('.set-info').text(data.set_quantity == 1 ? 'سێت بەردەستە' : 'سێت بەردەستە');
+                            
+                        } else {
+                            // Show error message in modal
+                            $('.product-name-display').text('هەڵە ڕوویدا');
+                            $('.piece-count, .box-count, .set-count, .pieces-per-box, .boxes-per-set, .total-pieces').text('0');
+                        }
+                    },
+                    error: function() {
+                        // Show error message in modal
+                        $('.product-name-display').text('هەڵە ڕوویدا لە پەیوەندی بە سێرڤەرەوە');
+                        $('.piece-count, .box-count, .set-count, .pieces-per-box, .boxes-per-set, .total-pieces').text('0');
+                    }
+                });
+            });
+        });
+    </script>
+
     <!-- Test Script -->
     <script>
         $(document).ready(function() {
