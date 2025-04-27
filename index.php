@@ -199,84 +199,36 @@ require_once 'Selling-System/src/process/login_handler.php';
                 font-size: 2rem;
             }
         }
-
-        @media (max-width: 768px) {
-            .login-wrapper {
-                flex-direction: column;
-                max-width: 95vw;
-                min-width: unset;
-            }
-            .login-image, .login-form {
-                padding: 20px;
-                max-width: 100%;
-            }
-            .login-form {
-                padding: 20px 10px;
-            }
-            .login-header h2 {
-                font-size: 1.5rem;
-            }
-            .form-control {
-                font-size: 0.95rem;
-                height: 40px;
-                padding: 10px 10px 10px 40px;
-            }
-            .input-icon {
-                font-size: 16px;
-                top: 32px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .login-wrapper {
-                border-radius: 10px;
-                box-shadow: none;
-                padding: 0;
-            }
-            .login-form, .login-image {
-                padding: 10px 5px;
-            }
-            .login-header h2 {
-                font-size: 1.1rem;
-            }
-            .form-control {
-                font-size: 0.9rem;
-                height: 36px;
-            }
-        }
     </style>
 </head>
 <body>
     <div class="login-wrapper">
-     
-        
         <div class="login-form">
             <div class="login-header">
                 <h2>چوونەژوورەوە</h2>
                 <p>تکایە زانیاریەکان بنووسە</p>
             </div>
-            
             <?php if (!empty($error)): ?>
                 <div class="alert alert-danger"><?php echo $error; ?></div>
             <?php endif; ?>
-            
             <form method="POST" action="">
                 <div class="form-group">
                     <label for="username" class="form-label">ناوی بەکارهێنەر</label>
                     <i class="fas fa-user input-icon"></i>
                     <input type="text" class="form-control" id="username" name="username" required>
                 </div>
-                
                 <div class="form-group">
                     <label for="password" class="form-label">وشەی نهێنی</label>
                     <i class="fas fa-lock input-icon"></i>
                     <input type="password" class="form-control" id="password" name="password" required>
                 </div>
-                
                 <button type="submit" class="btn btn-login">چوونەژوورەوە</button>
             </form>
         </div>
-        
+        <div class="login-image">
+            <h1>بەخێربێیت بۆ سیستەمی<br>کۆگا</h1>
+            <p>بەڕێوەبردنی کۆگا بە شێوەیەکی ئاسان و کارا</p>
+        </div>
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
