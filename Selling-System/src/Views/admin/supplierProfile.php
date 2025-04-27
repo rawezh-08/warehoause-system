@@ -26,6 +26,7 @@ $purchasesQuery = "SELECT p.*,
                pi.quantity, pi.unit_price, pi.total_price,
                pr.name as product_name, pr.code as product_code,
                SUM(pi.total_price) as total_amount,
+               p.shipping_cost, p.other_cost, p.discount,
                (SELECT SUM(total_price) FROM purchase_items WHERE purchase_id = p.id) as invoice_number
                FROM purchases p 
                JOIN purchase_items pi ON p.id = pi.purchase_id 
@@ -568,6 +569,9 @@ foreach ($purchases as $purchase) {
                                                     <th>بڕ</th>
                                                     <th>نرخی یەکە</th>
                                                     <th>کۆی نرخ</th>
+                                                    <th>کرێی گواستنەوە</th>
+                                                    <th>خەرجی تر</th>
+                                                    <th>داشکاندن</th>
                                                     <th>جۆری پارەدان</th>
                                                     <th>کردارەکان</th>
                                                 </tr>
@@ -585,6 +589,9 @@ foreach ($purchases as $purchase) {
                                                         <td><?php echo number_format($purchase['quantity']); ?></td>
                                                         <td><?php echo number_format($purchase['unit_price']); ?> دینار</td>
                                                         <td><?php echo number_format($purchase['total_amount']); ?> دینار</td>
+                                                        <td><?php echo number_format($purchase['shipping_cost']); ?> دینار</td>
+                                                        <td><?php echo number_format($purchase['other_cost']); ?> دینار</td>
+                                                        <td><?php echo number_format($purchase['discount']); ?> دینار</td>
                                                         <td>
                                                             <?php if ($purchase['payment_type'] == 'cash'): ?>
                                                                 <span class="badge bg-success">نەقد</span>
@@ -642,7 +649,7 @@ foreach ($purchases as $purchase) {
                                                     <?php endforeach; ?>
                                                 <?php else: ?>
                                                     <tr>
-                                                        <td colspan="10" class="text-center">هیچ کڕینێک نەدۆزرایەوە</td>
+                                                        <td colspan="13" class="text-center">هیچ کڕینێک نەدۆزرایەوە</td>
                                                     </tr>
                                                 <?php endif; ?>
                                             </tbody>
@@ -734,6 +741,9 @@ foreach ($purchases as $purchase) {
                                                     <th>بڕ</th>
                                                     <th>نرخی یەکە</th>
                                                     <th>کۆی نرخ</th>
+                                                    <th>کرێی گواستنەوە</th>
+                                                    <th>خەرجی تر</th>
+                                                    <th>داشکاندن</th>
                                                     <th>کردارەکان</th>
                                                 </tr>
                                             </thead>
@@ -750,6 +760,9 @@ foreach ($purchases as $purchase) {
                                                         <td><?php echo number_format($purchase['quantity']); ?></td>
                                                         <td><?php echo number_format($purchase['unit_price']); ?> دینار</td>
                                                         <td><?php echo number_format($purchase['total_amount']); ?> دینار</td>
+                                                        <td><?php echo number_format($purchase['shipping_cost']); ?> دینار</td>
+                                                        <td><?php echo number_format($purchase['other_cost']); ?> دینار</td>
+                                                        <td><?php echo number_format($purchase['discount']); ?> دینار</td>
                                                         <td>
                                                             <div class="action-buttons">
                                                                 <a href="viewPurchase.php?id=<?php echo $purchase['id']; ?>" class="btn btn-sm btn-outline-primary rounded-circle" title="بینین">
@@ -761,7 +774,7 @@ foreach ($purchases as $purchase) {
                                                     <?php endforeach; ?>
                                                 <?php else: ?>
                                                     <tr>
-                                                        <td colspan="9" class="text-center">هیچ کڕینی قەرز نەدۆزرایەوە</td>
+                                                        <td colspan="12" class="text-center">هیچ کڕینی قەرز نەدۆزرایەوە</td>
                                                     </tr>
                                                 <?php endif; ?>
                                             </tbody>
