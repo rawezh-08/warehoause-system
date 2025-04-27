@@ -203,11 +203,7 @@ require_once 'Selling-System/src/process/login_handler.php';
 </head>
 <body>
     <div class="login-wrapper">
-        <div class="login-image">
-            <img src="Selling-System/src/assets/img/warehouse-icon.png" alt="Warehouse System">
-            <h1>سیستەمی بەڕێوەبردنی کۆگا</h1>
-            <!-- <p>بەڕێوەبردنی کۆگا بە شێوازێکی سەردەمیانە و کارامە</p> -->
-        </div>
+     
         
         <div class="login-form">
             <div class="login-header">
@@ -234,6 +230,11 @@ require_once 'Selling-System/src/process/login_handler.php';
                 
                 <button type="submit" class="btn btn-login">چوونەژوورەوە</button>
             </form>
+        </div>
+        <div class="login-image">
+            <img src="Selling-System/src/assets/img/logo-image.png" alt="Warehouse System">
+            <h1>سیستەمی بەڕێوەبردنی کۆگا</h1>
+            <!-- <p>بەڕێوەبردنی کۆگا بە شێوازێکی سەردەمیانە و کارامە</p> -->
         </div>
     </div>
     
