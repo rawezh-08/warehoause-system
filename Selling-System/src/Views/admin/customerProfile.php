@@ -523,9 +523,11 @@ foreach ($debtTransactions as $debtTransaction) {
                             aria-labelledby="sales-tab">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="card-title mb-0">مێژووی کڕینەکان</h5>
-                                <button class="btn btn-sm btn-outline-primary refresh-btn">
-                                    <i class="fas fa-sync-alt"></i>
-                                </button>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-primary refresh-btn me-2">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="table-container">
@@ -2230,6 +2232,130 @@ foreach ($debtTransactions as $debtTransaction) {
                             icon: 'error',
                             confirmButtonText: 'باشە'
                         });
+                    }
+                });
+            });
+
+            // Refresh button handler
+            $('.refresh-btn').on('click', function() {
+                const $icon = $(this).find('i');
+                $icon.addClass('fa-spin');
+                
+                // Get customer ID from the URL
+                const customerId = <?php echo $customerId; ?>;
+                
+                // Reload sales data
+                $.ajax({
+                    url: '../../ajax/get_customer_sales.php',
+                    type: 'GET',
+                    data: { customer_id: customerId },
+                    success: function(response) {
+                        const data = JSON.parse(response);
+                        if (data.success) {
+                            // Update the table with new data
+                            let tableHtml = '';
+                            if (data.sales.length > 0) {
+                                let counter = 1;
+                                const processedInvoices = new Set();
+                                
+                                data.sales.forEach(sale => {
+                                    if (!processedInvoices.has(sale.invoice_number)) {
+                                        processedInvoices.add(sale.invoice_number);
+                                        tableHtml += `
+                                            <tr>
+                                                <td>${counter++}</td>
+                                                <td>${sale.invoice_number}</td>
+                                                <td>${sale.date}</td>
+                                                <td>${sale.product_name}</td>
+                                                <td>${sale.product_code}</td>
+                                                <td>${sale.quantity}</td>
+                                                <td>${sale.unit_type === 'piece' ? 'دانە' : (sale.unit_type === 'box' ? 'کارتۆن' : 'سێت')}</td>
+                                                <td>${sale.unit_price.toLocaleString()} دینار</td>
+                                                <td>${sale.total_price.toLocaleString()} دینار</td>
+                                                <td>
+                                                    ${sale.payment_type === 'cash' ? 
+                                                        '<span class="badge bg-success">نەقد</span>' : 
+                                                        '<span class="badge bg-warning">قەرز</span>'}
+                                                </td>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <a href="../../Views/receipt/print_receipt.php?sale_id=${sale.id}"
+                                                            class="btn btn-sm btn-outline-success rounded-circle"
+                                                            title="چاپکردن">
+                                                            <i class="fas fa-print"></i>
+                                                        </a>
+                                                        <button type="button" 
+                                                            class="btn btn-sm btn-outline-info rounded-circle show-invoice-items"
+                                                            data-invoice="${sale.invoice_number}"
+                                                            title="بینینی هەموو کاڵاکان">
+                                                            <i class="fas fa-list"></i>
+                                                        </button>
+                                                        ${sale.can_return ? `
+                                                            <button type="button" 
+                                                                class="btn btn-sm btn-outline-warning rounded-circle return-sale"
+                                                                data-id="${sale.id}"
+                                                                data-invoice="${sale.invoice_number}"
+                                                                title="گەڕانەوەی کاڵا">
+                                                                <i class="fas fa-undo"></i>
+                                                            </button>
+                                                        ` : ''}
+                                                        ${sale.can_delete ? `
+                                                            <button type="button" 
+                                                                class="btn btn-sm btn-outline-danger rounded-circle delete-sale"
+                                                                data-id="${sale.id}"
+                                                                data-invoice="${sale.invoice_number}"
+                                                                title="سڕینەوە">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        ` : ''}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }
+                                });
+                            } else {
+                                tableHtml = `
+                                    <tr>
+                                        <td colspan="11" class="text-center">هیچ کڕینێک نەدۆزرایەوە</td>
+                                    </tr>
+                                `;
+                            }
+                            
+                            $('#salesHistoryTable tbody').html(tableHtml);
+                            
+                            // Update pagination
+                            updatePagination('sales');
+                            
+                            // Show success message
+                            Swal.fire({
+                                title: 'سەرکەوتوو بوو!',
+                                text: 'زانیارییەکان نوێکرانەوە',
+                                icon: 'success',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: data.message || 'هەڵەیەک ڕوویدا لە نوێکردنەوەی زانیارییەکان',
+                                icon: 'error',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    },
+                    complete: function() {
+                        $icon.removeClass('fa-spin');
                     }
                 });
             });

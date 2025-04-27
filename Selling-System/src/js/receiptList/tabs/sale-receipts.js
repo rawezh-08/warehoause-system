@@ -48,15 +48,87 @@ $(document).ready(function() {
         editSale(saleId);
     });
     
+    // Handle View button click
+    $(document).on('click', '.view-btn', function(e) {
+        e.preventDefault(); // Prevent default navigation
+        const saleId = $(this).data('id');
+        
+        // Show loading
+        Swal.fire({
+            title: 'تکایە چاوەڕێ بکە...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Fetch sale items
+        $.ajax({
+            url: '../../controllers/receipts/get_sale_items.php',
+            type: 'POST',
+            data: { sale_id: saleId },
+            success: function(response) {
+                Swal.close();
+                
+                try {
+                    const data = JSON.parse(response);
+                    if (data.status === 'success') {
+                        // Clear previous items
+                        $('#saleItemsTableBody').empty();
+                        
+                        // Add items to table
+                        data.items.forEach((item, index) => {
+                            const unitType = {
+                                'piece': 'دانە',
+                                'box': 'کارتۆن',
+                                'set': 'سێت'
+                            }[item.unit_type] || item.unit_type;
+                            
+                            $('#saleItemsTableBody').append(`
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${item.product_name}</td>
+                                    <td>${unitType}</td>
+                                    <td>${item.quantity}</td>
+                                    <td>${Number(item.unit_price).toLocaleString()} د.ع</td>
+                                    <td>${Number(item.total_price).toLocaleString()} د.ع</td>
+                                </tr>
+                            `);
+                        });
+                        
+                        // Show modal
+                        $('#viewSaleItemsModal').modal('show');
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'هەڵە',
+                            text: data.message || 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان'
+                        });
+                    }
+                } catch (e) {
+                    console.error(e);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان'
+                    });
+                }
+            },
+            error: function() {
+                Swal.close();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی کردن بە سێرڤەرەوە'
+                });
+            }
+        });
+    });
+    
     // Handle Print button click
     $(document).on('click', '#employeeHistoryTable .print-btn', function() {
         const saleId = $(this).data('id');
         printSaleReceipt(saleId);
-    });
-    
-    // Handle date filter changes
-    $('#employeePaymentStartDate, #employeePaymentEndDate, #employeePaymentName').on('change', function() {
-        loadSalesData();
     });
     
     // Handle sale receipt return
@@ -283,11 +355,17 @@ function updateSalesTable(salesData) {
                 <td>${sale.notes || ''}</td>
                 <td>
                     <div class="action-buttons">
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" data-id="${sale.id}">
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle edit-btn" title="دەستکاری" data-id="${sale.id}">
                             <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" title="بینین" data-id="${sale.id}">
+                            <i class="fas fa-eye"></i>
                         </button>
                         <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle print-btn" title="پرینت" data-id="${sale.id}">
                             <i class="fas fa-print"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-warning rounded-circle return-btn" title="گەڕاندنەوە" data-id="${sale.id}">
+                            <i class="fas fa-undo"></i>
                         </button>
                     </div>
                 </td>
@@ -685,6 +763,11 @@ function showNotification(type, message) {
  */
 function initializeEventHandlers() {
     // Action buttons
+    $(document).on('click', '.btn-view-sale', function() {
+        const saleId = $(this).data('id');
+        viewSale(saleId);
+    });
+    
     $(document).on('click', '.btn-edit-sale', function() {
         const saleId = $(this).data('id');
         editSale(saleId);
@@ -693,6 +776,11 @@ function initializeEventHandlers() {
     $(document).on('click', '.btn-print-sale', function() {
         const saleId = $(this).data('id');
         printSaleReceipt(saleId);
+    });
+    
+    $(document).on('click', '.btn-return-sale', function() {
+        const saleId = $(this).data('id');
+        returnSaleItems(saleId);
     });
     
     // Save edited sale

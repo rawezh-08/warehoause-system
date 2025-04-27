@@ -327,9 +327,19 @@ try {
                                                                         <i class="fas fa-edit"></i>
                                                                     </button>
                                                                         <button type="button"
+                                                                            class="btn btn-sm btn-outline-info rounded-circle view-btn"
+                                                                            data-id="<?php echo $sale['id']; ?>">
+                                                                        <i class="fas fa-eye"></i>
+                                                                    </button>
+                                                                        <button type="button"
                                                                             class="btn btn-sm btn-outline-secondary rounded-circle print-btn"
                                                                             data-id="<?php echo $sale['id']; ?>">
                                                                         <i class="fas fa-print"></i>
+                                                                    </button>
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-warning rounded-circle return-btn"
+                                                                            data-id="<?php echo $sale['id']; ?>">
+                                                                        <i class="fas fa-undo"></i>
                                                                     </button>
                                                                 </div>
                                                             </td>
@@ -551,6 +561,16 @@ try {
                                                                             class="btn btn-sm btn-outline-primary rounded-circle edit-btn"
                                                                             data-id="<?php echo $purchase['id']; ?>">
                                                                         <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-info rounded-circle view-btn"
+                                                                            data-id="<?php echo $purchase['id']; ?>">
+                                                                        <i class="fas fa-eye"></i>
+                                                                    </button>
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-warning rounded-circle return-btn"
+                                                                            data-id="<?php echo $purchase['id']; ?>">
+                                                                        <i class="fas fa-undo"></i>
                                                                     </button>
                                                                 </div>
                                                             </td>
