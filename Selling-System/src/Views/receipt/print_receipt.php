@@ -225,7 +225,9 @@ $translations = [
         'set' => 'سێت',
         'returned' => 'گەڕێنراوەتەوە',
         'draft_notice' => 'ئەم پسوڵە تەنیا بۆ نیشاندان و عەرز کردنە',
-        'and' => 'و'
+        'and' => 'و',
+        'shipping_cost' => 'کرێی گواستنەوە',
+        'other_costs' => 'خەرجی تر'
     ],
     'ar' => [
         'receipt_title' => 'فاتورة المبيعات',
@@ -260,7 +262,9 @@ $translations = [
         'set' => 'طقم',
         'returned' => 'مرتجع',
         'draft_notice' => 'هذه الفاتورة للعرض فقط',
-        'and' => 'و'
+        'and' => 'و',
+        'shipping_cost' => 'تكلفة الشحن',
+        'other_costs' => 'تكاليف أخرى'
     ]
 ];
 
@@ -825,6 +829,18 @@ $dir = $lang === 'ar' ? 'rtl' : 'rtl';
                     <td class="summary-label"><?php echo $t['total_amount']; ?>:</td>
                     <td class="summary-value"><?php echo number_format($total_amount, 0) . ' د.ع'; ?></td>
                 </tr>
+                <?php if ($shipping_cost > 0): ?>
+                <tr>
+                    <td class="summary-label"><?php echo $t['shipping_cost']; ?>:</td>
+                    <td class="summary-value"><?php echo number_format($shipping_cost, 0) . ' د.ع'; ?></td>
+                </tr>
+                <?php endif; ?>
+                <?php if ($other_costs > 0): ?>
+                <tr>
+                    <td class="summary-label"><?php echo $t['other_costs']; ?>:</td>
+                    <td class="summary-value"><?php echo number_format($other_costs, 0) . ' د.ع'; ?></td>
+                </tr>
+                <?php endif; ?>
                 <?php if ($discount > 0): ?>
                 <tr>
                     <td class="summary-label"><?php echo $t['discount']; ?>:</td>
