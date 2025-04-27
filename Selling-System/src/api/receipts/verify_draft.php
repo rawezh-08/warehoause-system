@@ -21,21 +21,10 @@ try {
     $stmt->execute([$receipt_id]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    if ($result['count'] == 0) {
-        throw new Exception('ڕەشنووسەکە نەدۆزرایەوە');
-    }
-    
-    // Delete draft receipt
-    $stmt = $conn->prepare("
-        DELETE FROM sales 
-        WHERE id = ? AND is_draft = 1
-    ");
-    $stmt->execute([$receipt_id]);
-    
     // Return result
     echo json_encode([
         'success' => true,
-        'message' => 'ڕەشنووسەکە بە سەرکەوتوویی سڕایەوە',
+        'exists' => $result['count'] > 0,
         'receipt_id' => $receipt_id
     ]);
     
