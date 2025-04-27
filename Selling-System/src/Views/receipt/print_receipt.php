@@ -673,8 +673,8 @@ $dir = $lang === 'ar' ? 'rtl' : 'rtl';
                 <div class="company-info">
                     <h1><?php echo $t['company_name']; ?></h1>
                     <p><?php echo $t['address']; ?></p>
-                    <p>0771 225 5656</p>
-                    <p>0750 147 8786</p>
+                    <p>5656 225 0771</p>
+                    <p>8786 147 0750</p>
                 </div>
             </div>
             <div class="invoice-details">
