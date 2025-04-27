@@ -254,7 +254,7 @@ require_once 'Selling-System/src/process/login_handler.php';
 </head>
 <body>
     <div class="login-wrapper" style="justify-content: center;">
-        <div class="login-form" style="flex:unset; min-width:350px; max-width:400px; width:100%;">
+        <div class="login-form col-12 col-sm-10 col-md-6 col-lg-5 mx-auto" style="flex:unset; min-width:350px; max-width:400px; width:100%;">
             <div class="login-header">
                 <h2>چوونەژوورەوە</h2>
                 <p>تکایە زانیاریەکان بنووسە</p>
