@@ -1856,9 +1856,423 @@ foreach ($purchases as $purchase) {
             // Handle edit purchase button
             $(document).on('click', '.edit-purchase', function() {
                 const purchaseId = $(this).data('id');
+                loadPurchaseForEditing(purchaseId);
+            });
+            
+            // Handle purchase edit save button
+            $('#savePurchaseEdit').on('click', function() {
+                savePurchaseChanges();
+            });
+            
+            // Function to load purchase data for editing
+            function loadPurchaseForEditing(purchaseId) {
+                if (!purchaseId) return;
                 
-                // Navigate to the edit purchase page
-                window.location.href = `editPurchase.php?id=${purchaseId}`;
+                // Show loading
+                Swal.fire({
+                    title: 'تکایە چاوەڕێ بکە...',
+                    text: 'زانیارییەکان وەردەگیرێن',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Fetch purchase details
+                $.ajax({
+                    url: '../../api/receipts/get_purchase.php',
+                    type: 'POST',
+                    data: { id: purchaseId },
+                    success: function(response) {
+                        Swal.close();
+                        
+                        if (response.success) {
+                            populatePurchaseEditForm(response.data);
+                            $('#editPurchaseModal').modal('show');
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'هەڵە',
+                                text: response.message || 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیارییەکان',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.close();
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'هەڵە',
+                            text: 'هەڵەیەک ڕوویدا لە پەیوەندی کردن بە سێرڤەرەوە',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                });
+            }
+            
+            // Populate edit form with purchase data
+            function populatePurchaseEditForm(purchaseData) {
+                $('#editPurchaseId').val(purchaseData.id);
+                $('#editPurchaseInvoiceNumber').val(purchaseData.invoice_number);
+                $('#editPurchaseSupplier').val(purchaseData.supplier_id);
+                $('#editPurchaseDate').val(formatDateForInput(purchaseData.date));
+                $('#editPurchasePaymentType').val(purchaseData.payment_type);
+                $('#editPurchaseShippingCost').val(purchaseData.shipping_cost || 0);
+                $('#editPurchaseOtherCost').val(purchaseData.other_cost || 0);
+                $('#editPurchaseDiscount').val(purchaseData.discount || 0);
+                $('#editPurchaseNotes').val(purchaseData.notes || '');
+                
+                // Disable payment type field if purchase has returns or payments
+                if (purchaseData.has_returns || purchaseData.has_payments) {
+                    $('#editPurchasePaymentType').prop('disabled', true);
+                    
+                    // Add a note about why the field is disabled
+                    if (purchaseData.has_returns && purchaseData.has_payments) {
+                        $('<small class="text-danger d-block mt-1">ناتوانرێت جۆری پارەدان بگۆڕدرێت چونکە پسووڵەکە گەڕاندنەوەی کاڵا و پارەدانی لەسەر تۆمارکراوە</small>').insertAfter('#editPurchasePaymentType');
+                    } else if (purchaseData.has_returns) {
+                        $('<small class="text-danger d-block mt-1">ناتوانرێت جۆری پارەدان بگۆڕدرێت چونکە پسووڵەکە گەڕاندنەوەی کاڵای لەسەر تۆمارکراوە</small>').insertAfter('#editPurchasePaymentType');
+                    } else if (purchaseData.has_payments) {
+                        $('<small class="text-danger d-block mt-1">ناتوانرێت جۆری پارەدان بگۆڕدرێت چونکە پسووڵەکە پارەدانی لەسەر تۆمارکراوە</small>').insertAfter('#editPurchasePaymentType');
+                    }
+                } else {
+                    $('#editPurchasePaymentType').prop('disabled', false);
+                    // Remove any existing note
+                    $('#editPurchasePaymentType').next('small.text-danger').remove();
+                }
+            }
+            
+            // Save purchase changes
+            function savePurchaseChanges() {
+                // Validate form
+                if (!validatePurchaseEditForm()) {
+                    return;
+                }
+                
+                // Get form data
+                const purchaseData = {
+                    id: $('#editPurchaseId').val(),
+                    invoice_number: $('#editPurchaseInvoiceNumber').val(),
+                    supplier_id: $('#editPurchaseSupplier').val(),
+                    date: $('#editPurchaseDate').val(),
+                    payment_type: $('#editPurchasePaymentType').val(),
+                    shipping_cost: $('#editPurchaseShippingCost').val() || 0,
+                    other_cost: $('#editPurchaseOtherCost').val() || 0,
+                    discount: $('#editPurchaseDiscount').val() || 0,
+                    notes: $('#editPurchaseNotes').val()
+                };
+                
+                // Show confirmation dialog
+                Swal.fire({
+                    title: 'دڵنیای؟',
+                    text: 'ئایا دڵنیای لە تازەکردنەوەی ئەم پسووڵەیە؟',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'بەڵێ، تازەی بکەوە',
+                    cancelButtonText: 'نەخێر، پەشیمان بوومەوە',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        updatePurchase(purchaseData);
+                    }
+                });
+            }
+            
+            // Validate purchase edit form
+            function validatePurchaseEditForm() {
+                // Required fields
+                if (!$('#editPurchaseInvoiceNumber').val()) {
+                    showError('تکایە ژمارەی پسووڵە بنووسە');
+                    return false;
+                }
+                if (!$('#editPurchaseSupplier').val()) {
+                    showError('تکایە دابینکەر هەڵبژێرە');
+                    return false;
+                }
+                if (!$('#editPurchaseDate').val()) {
+                    showError('تکایە بەروار هەڵبژێرە');
+                    return false;
+                }
+                
+                // Numeric fields should be non-negative
+                if ($('#editPurchaseShippingCost').val() < 0) {
+                    showError('کرێی گواستنەوە ناتوانێت کەمتر بێت لە سفر');
+                    return false;
+                }
+                if ($('#editPurchaseOtherCost').val() < 0) {
+                    showError('خەرجی تر ناتوانێت کەمتر بێت لە سفر');
+                    return false;
+                }
+                if ($('#editPurchaseDiscount').val() < 0) {
+                    showError('داشکاندن ناتوانێت کەمتر بێت لە سفر');
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            // Update purchase in database
+            function updatePurchase(purchaseData) {
+                // Show loading
+                Swal.fire({
+                    title: 'تکایە چاوەڕێ بکە...',
+                    text: 'پسووڵەکە نوێ دەکرێتەوە',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Send update request
+                $.ajax({
+                    url: '../../api/receipts/update_purchase.php',
+                    type: 'POST',
+                    data: purchaseData,
+                    success: function(response) {
+                        Swal.close();
+                        
+                        if (response.success) {
+                            // Close modal
+                            $('#editPurchaseModal').modal('hide');
+                            
+                            // Show success message
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'سەرکەوتوو',
+                                text: 'پسووڵەکە بە سەرکەوتوویی نوێ کرایەوە',
+                                confirmButtonText: 'باشە'
+                            }).then(() => {
+                                // Reload the page to show updated data
+                                location.reload();
+                            });
+                        } else {
+                            showError(response.message || 'هەڵەیەک ڕوویدا لە نوێکردنەوەی پسووڵەکە');
+                        }
+                    },
+                    error: function() {
+                        Swal.close();
+                        showError('هەڵەیەک ڕوویدا لە پەیوەندی کردن بە سێرڤەرەوە');
+                    }
+                });
+            }
+            
+            // Helper function to show error messages
+            function showError(message) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: message,
+                    confirmButtonText: 'باشە'
+                });
+            }
+            
+            // Helper function to format date for input field
+            function formatDateForInput(dateString) {
+                const date = new Date(dateString);
+                return date.toISOString().split('T')[0];
+            }
+        });
+    </script>
+
+    <!-- Edit Purchase Modal -->
+    <div class="modal fade" id="editPurchaseModal" tabindex="-1" role="dialog" aria-labelledby="editPurchaseModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editPurchaseModalLabel">دەستکاری پسووڵەی کڕین</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="داخستن"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editPurchaseForm">
+                        <input type="hidden" id="editPurchaseId">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="editPurchaseInvoiceNumber" class="form-label">ژمارەی پسووڵە</label>
+                                <input type="text" class="form-control" id="editPurchaseInvoiceNumber" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editPurchaseSupplier" class="form-label">دابینکەر</label>
+                                <select class="form-select" id="editPurchaseSupplier" required>
+                                    <option value="">دابینکەر هەڵبژێرە</option>
+                                    <?php
+                                    $stmt = $conn->query("SELECT id, name FROM suppliers ORDER BY name");
+                                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                                        echo '<option value="' . $row['id'] . '">' . htmlspecialchars($row['name']) . '</option>';
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editPurchaseDate" class="form-label">بەروار</label>
+                                <input type="date" class="form-control" id="editPurchaseDate" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editPurchasePaymentType" class="form-label">جۆری پارەدان</label>
+                                <select class="form-select" id="editPurchasePaymentType" required>
+                                    <option value="cash">نەقد</option>
+                                    <option value="credit">قەرز</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editPurchaseShippingCost" class="form-label">کرێی گواستنەوە</label>
+                                <input type="number" class="form-control" id="editPurchaseShippingCost" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editPurchaseOtherCost" class="form-label">خەرجی تر</label>
+                                <input type="number" class="form-control" id="editPurchaseOtherCost" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editPurchaseDiscount" class="form-label">داشکاندن</label>
+                                <input type="number" class="form-control" id="editPurchaseDiscount" required>
+                            </div>
+                            <div class="col-12">
+                                <label for="editPurchaseNotes" class="form-label">تێبینی</label>
+                                <textarea class="form-control" id="editPurchaseNotes" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" id="savePurchaseEdit">پاشەکەوتکردن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle with Popper -->
+    
+    
+    <!-- Custom JS for purchase details modal -->
+    <script>
+        $(document).ready(function() {
+            // Handle edit purchase button
+            $(document).on('click', '.edit-purchase', function() {
+                const purchaseId = $(this).data('id');
+                loadPurchaseForEditing(purchaseId);
+            });
+            
+            // Function to handle viewing purchase details
+            $(document).on('click', '.view-purchase-details', function() {
+                const purchaseId = $(this).data('id');
+                const invoiceNumber = $(this).data('invoice');
+                
+                // Show loading
+                Swal.fire({
+                    title: 'تکایە چاوەڕێ بە...',
+                    html: 'زانیاریەکانی پسووڵە دەهێنرێن',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Fetch purchase details via AJAX
+                $.ajax({
+                    url: '../../ajax/get_purchase_items.php',
+                    type: 'POST',
+                    data: {
+                        purchase_id: purchaseId
+                    },
+                    success: function(response) {
+                        try {
+                            const data = JSON.parse(response);
+                            
+                            if (data.success) {
+                                // Format items for display
+                                let itemsHtml = `
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-sm">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>ناوی کاڵا</th>
+                                                    <th>بڕ</th>
+                                                    <th>نرخی یەکە</th>
+                                                    <th>کۆی نرخ</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                `;
+                                
+                                let counter = 1;
+                                data.items.forEach(item => {
+                                    let unitTypeBadge = '';
+                                    switch(item.unit_type) {
+                                        case 'box':
+                                            unitTypeBadge = '<span class="badge bg-info ms-1">کارتۆن</span>';
+                                            break;
+                                        case 'piece':
+                                            unitTypeBadge = '<span class="badge bg-secondary ms-1">دانە</span>';
+                                            break;
+                                        case 'set':
+                                            unitTypeBadge = '<span class="badge bg-warning ms-1">سێت</span>';
+                                            break;
+                                        default:
+                                            unitTypeBadge = '<span class="badge bg-secondary ms-1">دانە</span>';
+                                    }
+                                    
+                                    itemsHtml += `
+                                        <tr>
+                                            <td>${counter++}</td>
+                                            <td>${item.product_name}</td>
+                                            <td>${item.quantity} ${unitTypeBadge}</td>
+                                            <td>${Number(item.unit_price).toLocaleString()} دینار</td>
+                                            <td>${Number(item.total_price).toLocaleString()} دینار</td>
+                                        </tr>
+                                    `;
+                                });
+                                
+                                itemsHtml += `
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="table-light">
+                                            <td colspan="4" class="text-start fw-bold">کۆی گشتی</td>
+                                            <td class="fw-bold">${data.total_amount.toLocaleString()} دینار</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        `;
+                                
+                                // Display the modal with purchase items
+                                Swal.fire({
+                                    title: `پسووڵەی ژمارە ${invoiceNumber}`,
+                                    html: itemsHtml,
+                                    width: '800px',
+                                    confirmButtonText: 'داخستن',
+                                    customClass: {
+                                        container: 'swal-rtl',
+                                        title: 'text-right',
+                                        htmlContainer: 'text-right'
+                                    }
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'هەڵە',
+                                    text: data.message || 'هەڵەیەک ڕوویدا',
+                                    confirmButtonText: 'باشە'
+                                });
+                            }
+                        } catch (error) {
+                            console.error('Error parsing JSON:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'هەڵە',
+                                text: 'هەڵەیەک ڕوویدا لە جێبەجێکردنی داواکاریەکە',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'هەڵە',
+                            text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                });
             });
         });
     </script>
