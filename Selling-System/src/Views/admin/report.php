@@ -1041,7 +1041,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="row mb-4">
                         <div class="col-md-8">
                             <div class="chart-container">
-                                <h5 class="card-title mb-4">شیکاری قازانج و زەرەر بەپێی مانگ</h5>
+                                <h5 class="card-title mb-4"> قازانج و زەرەر بەپێی مانگ</h5>
                                 <div id="monthlyProfitChart" style="height: 350px;"></div>
                             </div>
                         </div>
