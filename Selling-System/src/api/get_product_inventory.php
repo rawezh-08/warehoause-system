@@ -46,22 +46,12 @@ try {
     
     // Calculate actual inventory based on purchase_items, sale_items, and wasting_items
     $stmt = $conn->prepare("
-        SELECT 
-            COALESCE(SUM(CASE 
-                WHEN unit_type = 'piece' THEN quantity 
-                ELSE 0 
-            END), 0) as piece_qty,
-            COALESCE(SUM(CASE 
-                WHEN unit_type = 'box' THEN quantity 
-                ELSE 0 
-            END), 0) as box_qty,
-            COALESCE(SUM(CASE 
-                WHEN unit_type = 'set' THEN quantity 
-                ELSE 0 
-            END), 0) as set_qty
-        FROM (
+        WITH inventory_movements AS (
             -- Purchases (increase inventory)
-            SELECT pi.unit_type, pi.quantity
+            SELECT 
+                pi.unit_type,
+                pi.quantity,
+                'purchase' as movement_type
             FROM purchase_items pi
             JOIN purchases p ON pi.purchase_id = p.id
             WHERE pi.product_id = ? AND p.status = 'completed'
@@ -69,7 +59,10 @@ try {
             UNION ALL
             
             -- Sales (decrease inventory)
-            SELECT si.unit_type, -1 * (si.quantity - COALESCE(si.returned_quantity, 0)) as quantity
+            SELECT 
+                si.unit_type,
+                -1 * (si.quantity - COALESCE(si.returned_quantity, 0)) as quantity,
+                'sale' as movement_type
             FROM sale_items si
             JOIN sales s ON si.sale_id = s.id
             WHERE si.product_id = ? AND s.status = 'completed'
@@ -77,7 +70,10 @@ try {
             UNION ALL
             
             -- Wastage (decrease inventory)
-            SELECT wi.unit_type, -1 * wi.quantity as quantity
+            SELECT 
+                wi.unit_type,
+                -1 * wi.quantity as quantity,
+                'wastage' as movement_type
             FROM wasting_items wi
             JOIN wastings w ON wi.wasting_id = w.id
             WHERE wi.product_id = ?
@@ -85,12 +81,21 @@ try {
             UNION ALL
             
             -- Returns (increase inventory)
-            SELECT ri.unit_type, ri.quantity
+            SELECT 
+                ri.unit_type,
+                ri.quantity,
+                'return' as movement_type
             FROM return_items ri
             JOIN product_returns pr ON ri.return_id = pr.id
             WHERE ri.product_id = ? AND pr.status = 'completed'
-        ) AS inventory_movements
+        )
+        SELECT 
+            COALESCE(SUM(CASE WHEN unit_type = 'piece' THEN quantity ELSE 0 END), 0) as piece_qty,
+            COALESCE(SUM(CASE WHEN unit_type = 'box' THEN quantity ELSE 0 END), 0) as box_qty,
+            COALESCE(SUM(CASE WHEN unit_type = 'set' THEN quantity ELSE 0 END), 0) as set_qty
+        FROM inventory_movements
     ");
+    
     $stmt->execute([$product_id, $product_id, $product_id, $product_id]);
     $inventory_result = $stmt->fetch(PDO::FETCH_ASSOC);
     
@@ -99,6 +104,11 @@ try {
         $inventory['box_quantity'] = max(0, intval($inventory_result['box_qty'] ?? 0));
         $inventory['set_quantity'] = max(0, intval($inventory_result['set_qty'] ?? 0));
     }
+    
+    // Debug information
+    error_log("Product ID: " . $product_id);
+    error_log("Inventory Result: " . print_r($inventory_result, true));
+    error_log("Final Inventory: " . print_r($inventory, true));
     
     // Respond with product and inventory info
     echo json_encode([
