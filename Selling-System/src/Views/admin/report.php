@@ -681,6 +681,9 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
             transition: all 0.3s ease;
             border: none;
             overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         .report-card:hover {
@@ -690,6 +693,9 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         .report-card .card-body {
             padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Statistics Cards */
@@ -702,6 +708,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
             justify-content: center;
             font-size: 1.5rem;
             margin-bottom: 1rem;
+            flex-shrink: 0;
         }
 
         .stat-value {
@@ -709,11 +716,13 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
             font-weight: 600;
             margin: 0.5rem 0;
             color: #2c3e50;
+            line-height: 1.2;
         }
 
         .stat-change {
             font-size: 0.9rem;
             font-weight: 500;
+            margin-top: auto;
         }
 
         .stat-change.positive {
@@ -736,6 +745,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
             font-weight: 600;
             padding: 1rem;
             border-bottom: 2px solid #e9ecef;
+            white-space: nowrap;
         }
 
         .report-table td {
@@ -755,6 +765,19 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
             padding: 1.5rem;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             margin-bottom: 1.5rem;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-container .card-title {
+            margin-bottom: 1rem;
+            flex-shrink: 0;
+        }
+
+        .chart-container > div {
+            flex: 1;
+            min-height: 300px;
         }
 
         /* Loading States */
@@ -787,9 +810,29 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
         /* Responsive Design */
+        @media (max-width: 1200px) {
+            .stat-value {
+                font-size: 1.6rem;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .stat-value {
+                font-size: 1.4rem;
+            }
+
+            .report-card .card-body {
+                padding: 1.25rem;
+            }
+
+            .chart-container {
+                padding: 1.25rem;
+            }
+        }
+
         @media (max-width: 768px) {
             .stat-value {
-                font-size: 1.5rem;
+                font-size: 1.2rem;
             }
 
             .report-card .card-body {
@@ -798,6 +841,12 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             .chart-container {
                 padding: 1rem;
+            }
+
+            .stat-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
             }
         }
 
@@ -847,6 +896,43 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
             .no-print {
                 display: none !important;
             }
+        }
+
+        /* Row and Column Adjustments */
+        .row {
+            margin-right: -10px;
+            margin-left: -10px;
+        }
+
+        .col-xl-3, .col-md-4, .col-sm-6 {
+            padding-right: 10px;
+            padding-left: 10px;
+        }
+
+        /* Card Title Styles */
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+
+        /* Table Container */
+        .table-container {
+            flex: 1;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+
+        /* Button Styles */
+        .btn-outline-primary {
+            border-width: 1px;
+            font-weight: 500;
+        }
+
+        .btn-outline-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
