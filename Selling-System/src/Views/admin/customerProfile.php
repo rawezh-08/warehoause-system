@@ -633,32 +633,31 @@ foreach ($debtTransactions as $debtTransaction) {
                                                                     <i class="fas fa-list"></i>
                                                                 </button>
                                                                 <?php
-                                                                // Check if sale can be deleted (no returns or payments)
-                                                                $canDelete = true;
+                                                                // Check if sale can be returned (no payments made)
+                                                                $canReturn = true;
                                                                 
                                                                 // Check for debt transactions
                                                                 foreach ($debtTransactions as $transaction) {
                                                                     if ($transaction['reference_id'] == $sale['id'] && 
                                                                         ($transaction['transaction_type'] == 'collection' || 
                                                                          $transaction['transaction_type'] == 'payment')) {
-                                                                        $canDelete = false;
+                                                                        $canReturn = false;
                                                                         break;
                                                                     }
                                                                 }
                                                                 
-                                                                // Check for product returns
-                                                                $returnQuery = "SELECT COUNT(*) as count FROM product_returns WHERE receipt_id = :sale_id AND receipt_type = 'selling'";
-                                                                $returnStmt = $conn->prepare($returnQuery);
-                                                                $returnStmt->bindParam(':sale_id', $sale['id']);
-                                                                $returnStmt->execute();
-                                                                $returnCount = $returnStmt->fetch(PDO::FETCH_ASSOC)['count'];
-                                                                
-                                                                if ($returnCount > 0) {
-                                                                    $canDelete = false;
-                                                                }
-                                                                
-                                                                if ($canDelete):
+                                                                if ($canReturn):
                                                                 ?>
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-warning rounded-circle return-sale"
+                                                                    data-id="<?php echo $sale['id']; ?>"
+                                                                    data-invoice="<?php echo $sale['invoice_number']; ?>"
+                                                                    title="گەڕانەوەی کاڵا">
+                                                                    <i class="fas fa-undo"></i>
+                                                                </button>
+                                                                <?php endif; ?>
+                                                                
+                                                                <?php if ($canDelete): ?>
                                                                 <button type="button" 
                                                                     class="btn btn-sm btn-outline-danger rounded-circle delete-sale"
                                                                     data-id="<?php echo $sale['id']; ?>"
@@ -2040,6 +2039,106 @@ foreach ($debtTransactions as $debtTransaction) {
                                     confirmButtonText: 'باشە'
                                 });
                             }
+                        });
+                    }
+                });
+            });
+
+            // Return sale button handler
+            $(document).on('click', '.return-sale', function() {
+                const saleId = $(this).data('id');
+                const invoiceNumber = $(this).data('invoice');
+                
+                // Get sale items
+                $.ajax({
+                    url: '../../ajax/get_sale_items.php',
+                    type: 'POST',
+                    data: {
+                        sale_id: saleId
+                    },
+                    success: function(response) {
+                        const data = JSON.parse(response);
+                        if (data.success) {
+                            // Create return form
+                            let itemsHtml = '<form id="returnSaleForm">';
+                            itemsHtml += '<input type="hidden" name="sale_id" value="' + saleId + '">';
+                            itemsHtml += '<div class="table-responsive"><table class="table table-bordered">';
+                            itemsHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی کڕین</th><th>بڕی گەڕانەوە</th></tr></thead>';
+                            itemsHtml += '<tbody>';
+                            
+                            data.items.forEach(item => {
+                                itemsHtml += `<tr>
+                                    <td>${item.product_name}</td>
+                                    <td>${item.quantity}</td>
+                                    <td>
+                                        <input type="number" class="form-control return-quantity" 
+                                            name="return_quantities[${item.id}]" 
+                                            min="0" max="${item.quantity}" value="0">
+                                    </td>
+                                </tr>`;
+                            });
+                            
+                            itemsHtml += '</tbody></table></div>';
+                            itemsHtml += '<div class="mb-3">';
+                            itemsHtml += '<label for="returnNotes" class="form-label">تێبینی</label>';
+                            itemsHtml += '<textarea class="form-control" id="returnNotes" name="notes" rows="3"></textarea>';
+                            itemsHtml += '</div>';
+                            itemsHtml += '</form>';
+                            
+                            Swal.fire({
+                                title: `گەڕانەوەی کاڵا - پسووڵە ${invoiceNumber}`,
+                                html: itemsHtml,
+                                showCancelButton: true,
+                                confirmButtonText: 'گەڕانەوە',
+                                cancelButtonText: 'هەڵوەشاندنەوە',
+                                showLoaderOnConfirm: true,
+                                preConfirm: () => {
+                                    const formData = new FormData(document.getElementById('returnSaleForm'));
+                                    return $.ajax({
+                                        url: '../../ajax/return_sale.php',
+                                        type: 'POST',
+                                        data: formData,
+                                        processData: false,
+                                        contentType: false
+                                    });
+                                }
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    const response = JSON.parse(result.value);
+                                    if (response.success) {
+                                        Swal.fire({
+                                            title: 'سەرکەوتوو بوو!',
+                                            text: response.message,
+                                            icon: 'success',
+                                            confirmButtonText: 'باشە'
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            title: 'هەڵە!',
+                                            text: response.message,
+                                            icon: 'error',
+                                            confirmButtonText: 'باشە'
+                                        });
+                                    }
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: data.message,
+                                icon: 'error',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
                         });
                     }
                 });
