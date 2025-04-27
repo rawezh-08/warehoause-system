@@ -15,8 +15,8 @@ try {
 
     // Get purchase details
     $query = "SELECT p.*, s.name as supplier_name
-              FROM purchases p
-              LEFT JOIN suppliers s ON p.supplier_id = s.id
+        FROM purchases p
+        LEFT JOIN suppliers s ON p.supplier_id = s.id
               WHERE p.id = :id";
     
     $stmt = $conn->prepare($query);

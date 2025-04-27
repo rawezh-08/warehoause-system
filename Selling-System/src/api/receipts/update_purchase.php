@@ -23,34 +23,34 @@ try {
     if (empty($invoiceNumber) || empty($supplierId) || empty($date) || empty($paymentType)) {
         throw new Exception('تکایە هەموو خانە پێویستەکان پڕ بکەوە');
     }
-    
+
     // Create database connection
     $db = new Database();
     $conn = $db->getConnection();
-    
+
     // Start transaction
     $conn->beginTransaction();
-    
+
     // Check if purchase exists
     $checkQuery = "SELECT id, payment_type FROM purchases WHERE id = :id";
     $stmt = $conn->prepare($checkQuery);
     $stmt->bindParam(':id', $purchaseId);
     $stmt->execute();
     $existingPurchase = $stmt->fetch(PDO::FETCH_ASSOC);
-    
+
     if (!$existingPurchase) {
         throw new Exception('پسووڵەی کڕین نەدۆزرایەوە');
     }
-    
+
     // Check if payment type can be changed
     if ($existingPurchase['payment_type'] !== $paymentType) {
-        // Check if purchase has any returns
+    // Check if purchase has any returns
         $returnsQuery = "SELECT COUNT(*) as count FROM product_returns WHERE receipt_id = :purchase_id AND receipt_type = 'buying'";
         $stmt = $conn->prepare($returnsQuery);
         $stmt->bindParam(':purchase_id', $purchaseId);
         $stmt->execute();
         $hasReturns = ($stmt->fetch(PDO::FETCH_ASSOC)['count'] > 0);
-        
+
         // Check if purchase has any payments
         $paymentsQuery = "SELECT COUNT(*) as count FROM supplier_debt_transactions 
                         WHERE reference_id = :purchase_id AND transaction_type = 'payment'";
@@ -58,12 +58,12 @@ try {
         $stmt->bindParam(':purchase_id', $purchaseId);
         $stmt->execute();
         $hasPayments = ($stmt->fetch(PDO::FETCH_ASSOC)['count'] > 0);
-        
+
         if ($hasReturns || $hasPayments) {
             throw new Exception('ناتوانرێت جۆری پارەدان بگۆڕدرێت چونکە پسووڵەکە گەڕاندنەوەی کاڵا یان پارەدانی لەسەر تۆمارکراوە');
         }
     }
-    
+
     // Update purchase
     $updateQuery = "UPDATE purchases SET 
                     invoice_number = :invoice_number,
@@ -76,7 +76,7 @@ try {
                     notes = :notes,
                     updated_at = NOW()
                     WHERE id = :id";
-    
+
     $stmt = $conn->prepare($updateQuery);
     $stmt->bindParam(':id', $purchaseId);
     $stmt->bindParam(':invoice_number', $invoiceNumber);
@@ -100,7 +100,7 @@ try {
         
         // Calculate final amount after adjustments
         $finalAmount = $totalAmount + $shippingCost + $otherCost - $discount;
-        
+
         // Adjust supplier debt based on payment type change
         if ($existingPurchase['payment_type'] === 'credit' && $paymentType === 'cash') {
             // Changed from credit to cash - reduce debt
@@ -122,22 +122,22 @@ try {
             $stmt->execute();
         }
     }
-    
+
     // Commit transaction
     $conn->commit();
-    
+
     // Return success response
     echo json_encode([
         'success' => true,
         'message' => 'پسووڵەی کڕین بە سەرکەوتوویی نوێ کرایەوە'
     ]);
-    
+
 } catch (Exception $e) {
     // Rollback transaction if an error occurred
     if (isset($conn) && $conn->inTransaction()) {
         $conn->rollBack();
     }
-    
+
     // Return error response
     echo json_encode([
         'success' => false,
