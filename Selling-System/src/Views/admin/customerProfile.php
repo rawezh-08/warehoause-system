@@ -523,11 +523,9 @@ foreach ($debtTransactions as $debtTransaction) {
                             aria-labelledby="sales-tab">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="card-title mb-0">مێژووی کڕینەکان</h5>
-                                <div>
-                                    <button class="btn btn-sm btn-outline-primary refresh-btn me-2">
-                                        <i class="fas fa-sync-alt"></i>
-                                    </button>
-                                </div>
+                                <button class="btn btn-sm btn-outline-primary refresh-btn">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
                             </div>
 
                             <div class="table-container">
@@ -628,6 +626,12 @@ foreach ($debtTransactions as $debtTransaction) {
                                                                     title="چاپکردن">
                                                                     <i class="fas fa-print"></i>
                                                                 </a>
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-primary rounded-circle edit-btn"
+                                                                    data-id="<?php echo $sale['id']; ?>"
+                                                                    title="دەستکاری پسووڵە">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </button>
                                                                 <button type="button" 
                                                                     class="btn btn-sm btn-outline-info rounded-circle show-invoice-items"
                                                                     data-invoice="<?php echo $sale['invoice_number']; ?>"
@@ -1357,6 +1361,73 @@ foreach ($debtTransactions as $debtTransaction) {
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
                     <button type="button" class="btn btn-primary" id="savePaymentBtn">تۆمارکردن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Sale Modal -->
+    <div class="modal fade" id="editSaleModal" tabindex="-1" role="dialog" aria-labelledby="editSaleModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editSaleModalLabel">دەستکاری پسووڵەی فرۆشتن</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="داخستن"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editSaleForm">
+                        <input type="hidden" id="editSaleId">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="editSaleInvoiceNumber" class="form-label">ژمارەی پسووڵە</label>
+                                <input type="text" class="form-control" id="editSaleInvoiceNumber" required readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editSaleCustomer" class="form-label">کڕیار</label>
+                                <select class="form-select" id="editSaleCustomer" required>
+                                    <option value="">کڕیار هەڵبژێرە</option>
+                                    <?php
+                                    $stmt = $conn->query("SELECT id, name FROM customers ORDER BY name");
+                                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                                        echo '<option value="' . $row['id'] . '">' . htmlspecialchars($row['name']) . '</option>';
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editSaleDate" class="form-label">بەروار</label>
+                                <input type="date" class="form-control" id="editSaleDate" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editSalePaymentType" class="form-label">جۆری پارەدان</label>
+                                <select class="form-select" id="editSalePaymentType" required>
+                                    <option value="cash">نەقد</option>
+                                    <option value="credit">قەرز</option>
+                                    <option value="check">چەک</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editSaleShippingCost" class="form-label">کرێی گواستنەوە</label>
+                                <input type="number" class="form-control" id="editSaleShippingCost" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editSaleOtherCosts" class="form-label">خەرجی تر</label>
+                                <input type="number" class="form-control" id="editSaleOtherCosts" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editSaleDiscount" class="form-label">داشکاندن</label>
+                                <input type="number" class="form-control" id="editSaleDiscount" required>
+                            </div>
+                            <div class="col-12">
+                                <label for="editSaleNotes" class="form-label">تێبینی</label>
+                                <textarea class="form-control" id="editSaleNotes" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" id="saveSaleEdit">پاشەکەوتکردن</button>
                 </div>
             </div>
         </div>
@@ -2236,130 +2307,212 @@ foreach ($debtTransactions as $debtTransaction) {
                 });
             });
 
-            // Refresh button handler
-            $('.refresh-btn').on('click', function() {
-                const $icon = $(this).find('i');
-                $icon.addClass('fa-spin');
-                
-                // Get customer ID from the URL
-                const customerId = <?php echo $customerId; ?>;
-                
-                // Reload sales data
-                $.ajax({
-                    url: '../../ajax/get_customer_sales.php',
-                    type: 'GET',
-                    data: { customer_id: customerId },
-                    success: function(response) {
-                        const data = JSON.parse(response);
-                        if (data.success) {
-                            // Update the table with new data
-                            let tableHtml = '';
-                            if (data.sales.length > 0) {
-                                let counter = 1;
-                                const processedInvoices = new Set();
-                                
-                                data.sales.forEach(sale => {
-                                    if (!processedInvoices.has(sale.invoice_number)) {
-                                        processedInvoices.add(sale.invoice_number);
-                                        tableHtml += `
-                                            <tr>
-                                                <td>${counter++}</td>
-                                                <td>${sale.invoice_number}</td>
-                                                <td>${sale.date}</td>
-                                                <td>${sale.product_name}</td>
-                                                <td>${sale.product_code}</td>
-                                                <td>${sale.quantity}</td>
-                                                <td>${sale.unit_type === 'piece' ? 'دانە' : (sale.unit_type === 'box' ? 'کارتۆن' : 'سێت')}</td>
-                                                <td>${sale.unit_price.toLocaleString()} دینار</td>
-                                                <td>${sale.total_price.toLocaleString()} دینار</td>
-                                                <td>
-                                                    ${sale.payment_type === 'cash' ? 
-                                                        '<span class="badge bg-success">نەقد</span>' : 
-                                                        '<span class="badge bg-warning">قەرز</span>'}
-                                                </td>
-                                                <td>
-                                                    <div class="action-buttons">
-                                                        <a href="../../Views/receipt/print_receipt.php?sale_id=${sale.id}"
-                                                            class="btn btn-sm btn-outline-success rounded-circle"
-                                                            title="چاپکردن">
-                                                            <i class="fas fa-print"></i>
-                                                        </a>
-                                                        <button type="button" 
-                                                            class="btn btn-sm btn-outline-info rounded-circle show-invoice-items"
-                                                            data-invoice="${sale.invoice_number}"
-                                                            title="بینینی هەموو کاڵاکان">
-                                                            <i class="fas fa-list"></i>
-                                                        </button>
-                                                        ${sale.can_return ? `
-                                                            <button type="button" 
-                                                                class="btn btn-sm btn-outline-warning rounded-circle return-sale"
-                                                                data-id="${sale.id}"
-                                                                data-invoice="${sale.invoice_number}"
-                                                                title="گەڕانەوەی کاڵا">
-                                                                <i class="fas fa-undo"></i>
-                                                            </button>
-                                                        ` : ''}
-                                                        ${sale.can_delete ? `
-                                                            <button type="button" 
-                                                                class="btn btn-sm btn-outline-danger rounded-circle delete-sale"
-                                                                data-id="${sale.id}"
-                                                                data-invoice="${sale.invoice_number}"
-                                                                title="سڕینەوە">
-                                                                <i class="fas fa-trash"></i>
-                                                            </button>
-                                                        ` : ''}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        `;
-                                    }
-                                });
-                            } else {
-                                tableHtml = `
-                                    <tr>
-                                        <td colspan="11" class="text-center">هیچ کڕینێک نەدۆزرایەوە</td>
-                                    </tr>
-                                `;
-                            }
-                            
-                            $('#salesHistoryTable tbody').html(tableHtml);
-                            
-                            // Update pagination
-                            updatePagination('sales');
-                            
-                            // Show success message
-                            Swal.fire({
-                                title: 'سەرکەوتوو بوو!',
-                                text: 'زانیارییەکان نوێکرانەوە',
-                                icon: 'success',
-                                toast: true,
-                                position: 'top-end',
-                                showConfirmButton: false,
-                                timer: 3000
-                            });
-                        } else {
-                            Swal.fire({
-                                title: 'هەڵە!',
-                                text: data.message || 'هەڵەیەک ڕوویدا لە نوێکردنەوەی زانیارییەکان',
-                                icon: 'error',
-                                confirmButtonText: 'باشە'
-                            });
-                        }
-                    },
-                    error: function() {
-                        Swal.fire({
-                            title: 'هەڵە!',
-                            text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
-                            icon: 'error',
-                            confirmButtonText: 'باشە'
-                        });
-                    },
-                    complete: function() {
-                        $icon.removeClass('fa-spin');
-                    }
-                });
+            // Handle edit button click
+            $(document).on('click', '.edit-btn', function() {
+                const saleId = $(this).data('id');
+                loadSaleForEditing(saleId);
+            });
+
+            // Handle save button click
+            $('#saveSaleEdit').on('click', function() {
+                saveSaleChanges();
             });
         });
+
+        // Load sale data for editing
+        function loadSaleForEditing(saleId) {
+            if (!saleId) return;
+
+            // Show loading
+            Swal.fire({
+                title: 'تکایە چاوەڕێ بکە...',
+                text: 'زانیارییەکان وەردەگیرێن',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Fetch sale details
+            $.ajax({
+                url: '../../api/receipts/get_sale.php',
+                type: 'POST',
+                data: { id: saleId },
+                success: function(response) {
+                    Swal.close();
+
+                    if (response.success) {
+                        populateSaleEditForm(response.data);
+                        $('#editSaleModal').modal('show');
+                    } else {
+                        showError(response.message || 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیارییەکان');
+                    }
+                },
+                error: function() {
+                    Swal.close();
+                    showError('هەڵەیەک ڕوویدا لە پەیوەندی کردن بە سێرڤەرەوە');
+                }
+            });
+        }
+
+        // Populate edit form with sale data
+        function populateSaleEditForm(saleData) {
+            $('#editSaleId').val(saleData.id);
+            $('#editSaleInvoiceNumber').val(saleData.invoice_number);
+            $('#editSaleCustomer').val(saleData.customer_id);
+            $('#editSaleDate').val(formatDateForInput(saleData.date));
+            $('#editSalePaymentType').val(saleData.payment_type);
+            $('#editSaleShippingCost').val(saleData.shipping_cost || 0);
+            $('#editSaleOtherCosts').val(saleData.other_costs || 0);
+            $('#editSaleDiscount').val(saleData.discount || 0);
+            $('#editSaleNotes').val(saleData.notes || '');
+            
+            // Disable payment type field if sale has returns or payments
+            if (saleData.has_returns || saleData.has_payments) {
+                $('#editSalePaymentType').prop('disabled', true);
+                
+                // Add a note about why the field is disabled
+                if (saleData.has_returns && saleData.has_payments) {
+                    $('<small class="text-danger d-block mt-1">ناتوانرێت جۆری پارەدان بگۆڕدرێت چونکە پسووڵەکە گەڕاندنەوەی کاڵا و پارەدانی لەسەر تۆمارکراوە</small>').insertAfter('#editSalePaymentType');
+                } else if (saleData.has_returns) {
+                    $('<small class="text-danger d-block mt-1">ناتوانرێت جۆری پارەدان بگۆڕدرێت چونکە پسووڵەکە گەڕاندنەوەی کاڵای لەسەر تۆمارکراوە</small>').insertAfter('#editSalePaymentType');
+                } else if (saleData.has_payments) {
+                    $('<small class="text-danger d-block mt-1">ناتوانرێت جۆری پارەدان بگۆڕدرێت چونکە پسووڵەکە پارەدانی لەسەر تۆمارکراوە</small>').insertAfter('#editSalePaymentType');
+                }
+            } else {
+                $('#editSalePaymentType').prop('disabled', false);
+                // Remove any existing note
+                $('#editSalePaymentType').next('small.text-danger').remove();
+            }
+        }
+
+        // Save sale changes
+        function saveSaleChanges() {
+            // Validate form
+            if (!validateSaleEditForm()) {
+                return;
+            }
+
+            // Get form data
+            const saleData = {
+                id: $('#editSaleId').val(),
+                invoice_number: $('#editSaleInvoiceNumber').val(),
+                customer_id: $('#editSaleCustomer').val(),
+                date: $('#editSaleDate').val(),
+                payment_type: $('#editSalePaymentType').val(),
+                shipping_cost: $('#editSaleShippingCost').val() || 0,
+                other_costs: $('#editSaleOtherCosts').val() || 0,
+                discount: $('#editSaleDiscount').val() || 0,
+                notes: $('#editSaleNotes').val()
+            };
+
+            // Show confirmation dialog
+            Swal.fire({
+                title: 'دڵنیای؟',
+                text: 'ئایا دڵنیای لە تازەکردنەوەی ئەم پسووڵەیە؟',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'بەڵێ، تازەی بکەوە',
+                cancelButtonText: 'نەخێر، پەشیمان بوومەوە',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    updateSale(saleData);
+                }
+            });
+        }
+
+        // Validate sale edit form
+        function validateSaleEditForm() {
+            // Required fields
+            if (!$('#editSaleInvoiceNumber').val()) {
+                showError('تکایە ژمارەی پسووڵە بنووسە');
+                return false;
+            }
+            if (!$('#editSaleCustomer').val()) {
+                showError('تکایە کڕیار هەڵبژێرە');
+                return false;
+            }
+            if (!$('#editSaleDate').val()) {
+                showError('تکایە بەروار هەڵبژێرە');
+                return false;
+            }
+
+            // Numeric fields should be non-negative
+            if ($('#editSaleShippingCost').val() < 0) {
+                showError('کرێی گواستنەوە ناتوانێت کەمتر بێت لە سفر');
+                return false;
+            }
+            if ($('#editSaleOtherCosts').val() < 0) {
+                showError('خەرجی تر ناتوانێت کەمتر بێت لە سفر');
+                return false;
+            }
+            if ($('#editSaleDiscount').val() < 0) {
+                showError('داشکاندن ناتوانێت کەمتر بێت لە سفر');
+                return false;
+            }
+
+            return true;
+        }
+
+        // Update sale in database
+        function updateSale(saleData) {
+            // Show loading
+            Swal.fire({
+                title: 'تکایە چاوەڕێ بکە...',
+                text: 'گۆڕانکارییەکان پاشەکەوت دەکرێن',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Send update request
+            $.ajax({
+                url: '../../api/receipts/update_sale.php',
+                type: 'POST',
+                data: saleData,
+                success: function(response) {
+                    Swal.close();
+
+                    if (response.success) {
+                        // Show success message
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'سەرکەوتوو بوو!',
+                            text: response.message,
+                            confirmButtonText: 'باشە'
+                        }).then(() => {
+                            // Close modal and reload page
+                            $('#editSaleModal').modal('hide');
+                            location.reload();
+                        });
+                    } else {
+                        showError(response.message || 'هەڵەیەک ڕوویدا لە پاشەکەوتکردنی گۆڕانکارییەکان');
+                    }
+                },
+                error: function() {
+                    Swal.close();
+                    showError('هەڵەیەک ڕوویدا لە پەیوەندی کردن بە سێرڤەرەوە');
+                }
+            });
+        }
+
+        // Helper function to format date for input
+        function formatDateForInput(dateString) {
+            const date = new Date(dateString);
+            return date.toISOString().split('T')[0];
+        }
+
+        // Helper function to show error messages
+        function showError(message) {
+            Swal.fire({
+                icon: 'error',
+                title: 'هەڵە!',
+                text: message,
+                confirmButtonText: 'باشە'
+            });
+        }
     </script>
 </body>
 
