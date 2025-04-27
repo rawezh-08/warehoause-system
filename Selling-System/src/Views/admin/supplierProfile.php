@@ -983,7 +983,6 @@ $tabs = [
                                                         <th>بڕی پارە</th>
                                                         <th>تێبینی</th>
                                                         <th>شێوازی پارەدان</th>
-                                                        <th>کردارەکان</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -1025,21 +1024,11 @@ $tabs = [
                                                                     }
                                                                     ?>
                                                                 </td>
-                                                                <td>
-                                                                    <div class="action-buttons">
-                                                                        <a href="../../views/receipt/supplier_payment_receipt.php?transaction_id=<?php echo $payment['id']; ?>"
-                                                                           class="btn btn-sm btn-outline-info rounded-circle print-receipt-btn"
-                                                                           target="_blank"
-                                                                           title="چاپکردن">
-                                                                            <i class="fas fa-print"></i>
-                                                                        </a>
-                                                                    </div>
-                                                                </td>
                                                             </tr>
                                                         <?php endforeach; ?>
                                                     <?php else: ?>
                                                         <tr>
-                                                            <td colspan="6" class="text-center">هیچ پارەدانێک نەدۆزرایەوە</td>
+                                                            <td colspan="5" class="text-center">هیچ پارەدانێک نەدۆزرایەوە</td>
                                                         </tr>
                                                     <?php endif; ?>
                                                 </tbody>
@@ -1165,7 +1154,6 @@ $tabs = [
                                                 <th>بڕی پارە</th>
                                                 <th>تێبینی</th>
                                                 <th>شێوازی پارەدان</th>
-                                                <th>کردارەکان</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -1209,21 +1197,11 @@ $tabs = [
                                                             }
                                                             ?>
                                                         </td>
-                                                        <td>
-                                                            <div class="action-buttons">
-                                                                <a href="../../views/receipt/supplier_advance_receipt.php?transaction_id=<?php echo $transaction['id']; ?>"
-                                                                   class="btn btn-sm btn-outline-info rounded-circle print-receipt-btn"
-                                                                   target="_blank"
-                                                                   title="چاپکردن">
-                                                                    <i class="fas fa-print"></i>
-                                                                </a>
-                                                            </div>
-                                                        </td>
                                                     </tr>
                                                 <?php endforeach; ?>
                                             <?php else: ?>
                                                 <tr>
-                                                    <td colspan="6" class="text-center">هیچ پارەی پێشەکی تۆمار نەکراوە
+                                                    <td colspan="5" class="text-center">هیچ پارەی پێشەکی تۆمار نەکراوە
                                                     </td>
                                                 </tr>
                                             <?php endif; ?>
