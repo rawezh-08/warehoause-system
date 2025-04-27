@@ -44,11 +44,21 @@ try {
         'set_quantity' => 0
     ];
     
-    // Calculate actual inventory based on sale and purchase history
+    // Calculate actual inventory based on purchase_items, sale_items, and wasting_items
     $stmt = $conn->prepare("
-        SELECT SUM(CASE WHEN unit_type = 'piece' THEN quantity ELSE 0 END) as piece_qty,
-               SUM(CASE WHEN unit_type = 'box' THEN quantity ELSE 0 END) as box_qty,
-               SUM(CASE WHEN unit_type = 'set' THEN quantity ELSE 0 END) as set_qty
+        SELECT 
+            COALESCE(SUM(CASE 
+                WHEN unit_type = 'piece' THEN quantity 
+                ELSE 0 
+            END), 0) as piece_qty,
+            COALESCE(SUM(CASE 
+                WHEN unit_type = 'box' THEN quantity 
+                ELSE 0 
+            END), 0) as box_qty,
+            COALESCE(SUM(CASE 
+                WHEN unit_type = 'set' THEN quantity 
+                ELSE 0 
+            END), 0) as set_qty
         FROM (
             -- Purchases (increase inventory)
             SELECT pi.unit_type, pi.quantity
@@ -71,15 +81,23 @@ try {
             FROM wasting_items wi
             JOIN wastings w ON wi.wasting_id = w.id
             WHERE wi.product_id = ?
+            
+            UNION ALL
+            
+            -- Returns (increase inventory)
+            SELECT ri.unit_type, ri.quantity
+            FROM return_items ri
+            JOIN product_returns pr ON ri.return_id = pr.id
+            WHERE ri.product_id = ? AND pr.status = 'completed'
         ) AS inventory_movements
     ");
-    $stmt->execute([$product_id, $product_id, $product_id]);
+    $stmt->execute([$product_id, $product_id, $product_id, $product_id]);
     $inventory_result = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($inventory_result) {
-        $inventory['piece_quantity'] = intval($inventory_result['piece_qty'] ?? 0);
-        $inventory['box_quantity'] = intval($inventory_result['box_qty'] ?? 0);
-        $inventory['set_quantity'] = intval($inventory_result['set_qty'] ?? 0);
+        $inventory['piece_quantity'] = max(0, intval($inventory_result['piece_qty'] ?? 0));
+        $inventory['box_quantity'] = max(0, intval($inventory_result['box_qty'] ?? 0));
+        $inventory['set_quantity'] = max(0, intval($inventory_result['set_qty'] ?? 0));
     }
     
     // Respond with product and inventory info
