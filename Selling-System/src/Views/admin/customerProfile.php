@@ -2356,25 +2356,7 @@ foreach ($debtTransactions as $debtTransaction) {
                             // Create return form
                             let itemsHtml = '<form id="returnSaleForm">';
                             itemsHtml += '<input type="hidden" name="sale_id" value="' + saleId + '">';
-                            itemsHtml += '<input type="hidden" name="receipt_type" value="selling">'; // Simplified
-                            
-                            // Add validation before form submission
-                            const validateForm = () => {
-                                const formData = new FormData(document.getElementById('returnSaleForm'));
-                                let hasItems = false;
-                                for (let [key, value] of formData.entries()) {
-                                    if (key.startsWith('return_quantities[') && parseFloat(value) > 0) {
-                                        hasItems = true;
-                                        break;
-                                    }
-                                }
-                                if (!hasItems) {
-                                    Swal.showValidationMessage('تکایە بڕی گەڕانەوە دیاری بکە');
-                                    return false;
-                                }
-                                return true;
-                            };
-                            
+                            itemsHtml += '<input type="hidden" name="receipt_type" value="selling">';
                             itemsHtml += '<div class="table-responsive"><table class="table table-bordered">';
                             itemsHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی کڕین</th><th>بڕی گەڕانەوە</th></tr></thead>';
                             itemsHtml += '<tbody>';
@@ -2419,15 +2401,7 @@ foreach ($debtTransactions as $debtTransaction) {
                                 cancelButtonText: 'هەڵوەشاندنەوە',
                                 showLoaderOnConfirm: true,
                                 preConfirm: () => {
-                                    if (!validateForm()) {
-                                        return false;
-                                    }
                                     const formData = new FormData(document.getElementById('returnSaleForm'));
-                                    // Debug log
-                                    console.log('Form data before submission:');
-                                    for (let pair of formData.entries()) {
-                                        console.log(pair[0] + ': ' + pair[1]);
-                                    }
                                     return $.ajax({
                                         url: '../../ajax/return_sale.php',
                                         type: 'POST',
@@ -2435,11 +2409,6 @@ foreach ($debtTransactions as $debtTransaction) {
                                         processData: false,
                                         contentType: false,
                                         dataType: 'json'
-                                    }).catch(function(jqXHR, textStatus, errorThrown) {
-                                        console.error('AJAX Error:', textStatus);
-                                        console.error('Status:', jqXHR.status);
-                                        console.error('Response:', jqXHR.responseText);
-                                        throw new Error(jqXHR.responseText || 'هەڵەیەک ڕوویدا');
                                     });
                                 }
                             }).then((result) => {

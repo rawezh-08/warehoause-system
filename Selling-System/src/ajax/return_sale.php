@@ -2,82 +2,33 @@
 require_once '../config/database.php';
 require_once '../includes/auth.php';
 
-// Enable error reporting
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-// Set up error logging
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/return_sale_errors.log');
-
-// Log the start of the script
-error_log("Starting return_sale.php script");
-
 header('Content-Type: application/json');
 
 try {
-    // Log POST data
-    error_log("POST data received: " . print_r($_POST, true));
-
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         throw new Exception('Invalid request method');
     }
 
     // Validate required fields
     if (empty($_POST['sale_id']) || empty($_POST['receipt_type'])) {
-        error_log("Missing required fields. POST data: " . print_r($_POST, true));
         throw new Exception('Missing required fields');
     }
 
     $sale_id = intval($_POST['sale_id']);
-    $receipt_type = trim(strval($_POST['receipt_type']));
-    
-    error_log("Validating receipt_type: '{$receipt_type}'");
-    
-    // Strict validation for receipt_type
-    if ($receipt_type !== 'selling' && $receipt_type !== 'buying') {
-        error_log("Invalid receipt type. Expected 'selling' or 'buying', got: '{$receipt_type}'");
-        throw new Exception('Invalid receipt type. Got: ' . $receipt_type);
-    }
-
+    $receipt_type = $_POST['receipt_type'];
     $reason = $_POST['reason'] ?? 'other';
     $notes = $_POST['notes'] ?? '';
     $return_quantities = $_POST['return_quantities'] ?? [];
 
-    error_log("Validating return quantities");
     if (empty($return_quantities)) {
-        error_log("No return quantities provided");
         throw new Exception('No items selected for return');
     }
-
-    // Validate that at least one quantity is greater than 0
-    $hasValidQuantity = false;
-    foreach ($return_quantities as $quantity) {
-        if (floatval($quantity) > 0) {
-            $hasValidQuantity = true;
-            break;
-        }
-    }
-
-    if (!$hasValidQuantity) {
-        error_log("No valid quantities found in return_quantities");
-        throw new Exception('Please specify at least one item to return');
-    }
-
-    error_log("Return quantities validation passed");
 
     $database = new Database();
     $conn = $database->getConnection();
     
-    if (!$conn) {
-        error_log("Failed to establish database connection");
-        throw new Exception('Database connection failed');
-    }
-
     // Start transaction
     $conn->beginTransaction();
-    error_log("Transaction started");
 
     // Create return record
     $stmt = $conn->prepare("
@@ -350,22 +301,14 @@ try {
     echo json_encode($response);
 
 } catch (Exception $e) {
-    if (isset($conn) && $conn->inTransaction()) {
+    if ($conn) {
         $conn->rollBack();
-        error_log("Transaction rolled back due to error");
     }
 
     error_log("Error in return_sale.php: " . $e->getMessage());
-    error_log("Stack trace: " . $e->getTraceAsString());
     
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage(),
-        'debug_info' => [
-            'error_message' => $e->getMessage(),
-            'error_code' => $e->getCode(),
-            'error_file' => $e->getFile(),
-            'error_line' => $e->getLine()
-        ]
+        'message' => $e->getMessage()
     ]);
 } 

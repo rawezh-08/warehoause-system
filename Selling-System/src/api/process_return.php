@@ -66,7 +66,7 @@ try {
     $total_return_amount = 0;
 
     // Get receipt details
-    if ($data['receipt_type'] === 'selling') {
+    if ($data['receipt_type'] === 'sale') {
         $stmt = $conn->prepare("
             SELECT id, customer_id, payment_type 
             FROM sales 
@@ -104,7 +104,7 @@ try {
         $reason = $item['reason'] ?? 'other';
 
         // Get original receipt item details
-        if ($data['receipt_type'] === 'selling') {
+        if ($data['receipt_type'] === 'sale') {
             $stmt = $conn->prepare("
                 SELECT quantity, returned_quantity, unit_price, unit_type
                 FROM sale_items 
@@ -204,7 +204,7 @@ try {
         ]);
 
         // Update returned quantity in original receipt items
-        if ($data['receipt_type'] === 'selling') {
+        if ($data['receipt_type'] === 'sale') {
             $stmt = $conn->prepare("
                 UPDATE sale_items 
                 SET returned_quantity = COALESCE(returned_quantity, 0) + :quantity 
@@ -225,7 +225,7 @@ try {
         ]);
 
         // Update product quantity
-        if ($data['receipt_type'] === 'selling') {
+        if ($data['receipt_type'] === 'sale') {
             // For sales returns, add back to inventory
         $stmt = $conn->prepare("
             UPDATE products 
@@ -248,7 +248,7 @@ try {
     }
 
     // Update receipt total and remaining amounts
-    if ($data['receipt_type'] === 'selling') {
+    if ($data['receipt_type'] === 'sale') {
         // Get current sales data
         $stmt = $conn->prepare("
             SELECT s.*, 
