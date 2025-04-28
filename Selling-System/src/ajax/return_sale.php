@@ -1,10 +1,18 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 require_once '../config/database.php';
 require_once '../includes/auth.php';
 
 header('Content-Type: application/json');
 
 try {
+    // Log the raw input
+    error_log("Raw POST data: " . file_get_contents('php://input'));
+    error_log("POST data: " . print_r($_POST, true));
+
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         throw new Exception('Invalid request method');
     }
@@ -18,11 +26,15 @@ try {
     $receipt_type = 'selling';
     $reason = $_POST['reason'] ?? 'other';
     $notes = $_POST['notes'] ?? '';
-    $return_quantities = json_decode($_POST['return_quantities'], true) ?? [];
+    
+    // Debug the return quantities data
+    error_log("Return quantities before decode: " . $_POST['return_quantities']);
+    $return_quantities = json_decode($_POST['return_quantities'], true);
+    error_log("Return quantities after decode: " . print_r($return_quantities, true));
 
-    // Add debugging
-    error_log("Debug - POST data: " . print_r($_POST, true));
-    error_log("Debug - Return quantities: " . print_r($return_quantities, true));
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        throw new Exception('Invalid return quantities format: ' . json_last_error_msg());
+    }
 
     if (empty($return_quantities)) {
         throw new Exception('No items selected for return');
@@ -31,6 +43,10 @@ try {
     $database = new Database();
     $conn = $database->getConnection();
     
+    if (!$conn) {
+        throw new Exception('Database connection failed');
+    }
+
     // Start transaction
     $conn->beginTransaction();
 
@@ -67,7 +83,7 @@ try {
         if (floatval($quantity) <= 0) continue;
 
         // Add debugging for each item
-        error_log("Debug - Processing item ID: " . $item_id . " with quantity: " . $quantity);
+        error_log("Processing item ID: " . $item_id . " with quantity: " . $quantity);
 
         // Get original sale item details
         $stmt = $conn->prepare("
@@ -80,8 +96,8 @@ try {
         $item = $stmt->fetch(PDO::FETCH_ASSOC);
 
         // Add debugging
-        error_log("Debug - Item ID: " . $item_id . ", Sale ID: " . $sale_id);
-        error_log("Debug - Query result: " . print_r($item, true));
+        error_log("Item ID: " . $item_id . ", Sale ID: " . $sale_id);
+        error_log("Query result: " . print_r($item, true));
 
         if (!$item) {
             // Add more detailed error information
@@ -93,8 +109,8 @@ try {
             $stmt->execute([$sale_id]);
             $saleExists = $stmt->fetch(PDO::FETCH_ASSOC)['count'] > 0;
             
-            error_log("Debug - Item exists: " . ($itemExists ? 'Yes' : 'No'));
-            error_log("Debug - Sale exists: " . ($saleExists ? 'Yes' : 'No'));
+            error_log("Item exists: " . ($itemExists ? 'Yes' : 'No'));
+            error_log("Sale exists: " . ($saleExists ? 'Yes' : 'No'));
             
             throw new Exception('Invalid item ID: ' . $item_id . ' for sale: ' . $sale_id . 
                               ' (Item exists: ' . ($itemExists ? 'Yes' : 'No') . 
@@ -326,14 +342,20 @@ try {
     echo json_encode($response);
 
 } catch (Exception $e) {
-    if ($conn) {
+    if (isset($conn)) {
         $conn->rollBack();
     }
-
+    
     error_log("Error in return_sale.php: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
     
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage()
+        'message' => $e->getMessage(),
+        'debug_info' => [
+            'error_message' => $e->getMessage(),
+            'error_file' => $e->getFile(),
+            'error_line' => $e->getLine()
+        ]
     ]);
 } 
