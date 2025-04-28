@@ -635,7 +635,9 @@ foreach ($debtTransactions as $debtTransaction) {
                                                         </td>
                                                         <td>
                                                             <div class="action-buttons">
-                                                                <a href="../../Views/receipt/print_receipt.php?sale_id=<?php echo $sale['id']; ?>"
+                                                                <a href="<?php echo (isset($sale['is_delivery']) && $sale['is_delivery'] == 1) ? 
+                                                                    '../../Views/receipt/delivery_receipt.php?sale_id=' . $sale['id'] : 
+                                                                    '../../Views/receipt/print_receipt.php?sale_id=' . $sale['id']; ?>"
                                                                     class="btn btn-sm btn-outline-success rounded-circle"
                                                                     title="چاپکردن">
                                                                     <i class="fas fa-print"></i>
