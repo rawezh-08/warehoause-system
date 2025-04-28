@@ -1942,26 +1942,23 @@ foreach ($debtTransactions as $debtTransaction) {
                             Swal.fire({
                                 title: 'هەڵە!',
                                 text: 'هەڵەیەک ڕوویدا لە کاتی چاپکردن: ' + error.message,
-                                        text: data.message,
-                                        icon: 'error',
-                                        confirmButtonText: 'باشە',
-                                        showConfirmButton: true,
-                                        allowOutsideClick: false,
-                                        allowEscapeKey: false
-                                    });
-                                }
-                            },
-                            error: function() {
-                                Swal.fire({
-                                    title: 'هەڵە!',
-                                    text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
-                                    icon: 'error',
-                                    confirmButtonText: 'باشە'
-                                });
-                            }
-                        });
-                    }
-                });
+                                icon: 'error',
+                                confirmButtonText: 'باشە',
+                                showConfirmButton: true,
+                                allowOutsideClick: false,
+                                allowEscapeKey: false
+                            });
+                        }
+                    });
+                } else {
+                    console.error('Failed to open print window');
+                    Swal.fire({
+                        title: 'ئاگاداری',
+                        text: 'تکایە ڕێگە بدە بە کردنەوەی پەنجەرەی نوێ بۆ چاپکردن',
+                        icon: 'warning',
+                        confirmButtonText: 'باشە'
+                    });
+                }
             });
 
             // Return sale button handler
