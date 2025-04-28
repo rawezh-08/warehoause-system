@@ -468,9 +468,13 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.success) {
                     const data = response.data;
+                    console.log('Receipt details data:', data);
+                    console.log('Items data:', data.items);
+                    
                     let itemsHtml = '';
                     
                     data.items.forEach((item, index) => {
+                        console.log('Processing item:', item);
                         const maxReturn = item.quantity - (item.returned_quantity || 0);
                         if (maxReturn > 0) {
                             itemsHtml += `
@@ -686,11 +690,17 @@ $(document).ready(function() {
 
                             // Return the data as FormData
                             const formData = new FormData();
-                            formData.append('receipt_id', receiptId);
+                            formData.append('sale_id', receiptId);
                             formData.append('receipt_type', receiptType);
                             formData.append('reason', reason);
                             formData.append('notes', $('#returnNotes').val());
-                            formData.append('items', JSON.stringify(returnItems));
+                            
+                            // Convert return items to the correct format
+                            const returnQuantities = {};
+                            returnItems.forEach(item => {
+                                returnQuantities[item.item_id] = item.quantity;
+                            });
+                            formData.append('return_quantities', JSON.stringify(returnQuantities));
 
                             return formData;
                         }
