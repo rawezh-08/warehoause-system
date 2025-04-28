@@ -711,7 +711,17 @@ foreach ($debtTransactions as $debtTransaction) {
                                                                     $canDelete = false;
                                                                 }
                                                                 
-                                                                if ($canDelete): ?>
+                                                                if ($canReturn): ?>
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-warning rounded-circle return-sale"
+                                                                    data-id="<?php echo $sale['id']; ?>"
+                                                                    data-invoice="<?php echo $sale['invoice_number']; ?>"
+                                                                    title="گەڕاندنەوەی کاڵا">
+                                                                    <i class="fas fa-undo"></i>
+                                                                </button>
+                                                                <?php endif; ?>
+                                                                
+                                                                <?php if ($canDelete): ?>
                                                                 <button type="button" 
                                                                     class="btn btn-sm btn-outline-danger rounded-circle delete-sale"
                                                                     data-id="<?php echo $sale['id']; ?>"
