@@ -684,11 +684,19 @@ foreach ($debtTransactions as $debtTransaction) {
                                                                     title="بینینی هەموو کاڵاکان">
                                                                     <i class="fas fa-list"></i>
                                                                 </button>
+                                                                <!-- Add Return Button -->
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-warning rounded-circle return-products-btn"
+                                                                    data-id="<?php echo $sale['id']; ?>"
+                                                                    data-invoice="<?php echo $sale['invoice_number']; ?>"
+                                                                    title="گەڕاندنەوەی کاڵا">
+                                                                    <i class="fas fa-undo"></i>
+                                                                </button>
                                                                 <?php
                                                                 // Check if sale can be returned (no payments made)
                                                                 $canReturn = true;
                                                                 $canDelete = true;
-
+                                                                
                                                                 // Check for debt transactions
                                                                 foreach ($debtTransactions as $transaction) {
                                                                     if ($transaction['reference_id'] == $sale['id'] && 
@@ -699,35 +707,26 @@ foreach ($debtTransactions as $debtTransaction) {
                                                                         break;
                                                                     }
                                                                 }
-
+                                                                
                                                                 // Check for product returns
                                                                 $returnQuery = "SELECT COUNT(*) as count FROM product_returns WHERE receipt_id = :sale_id AND receipt_type = 'selling'";
                                                                 $returnStmt = $conn->prepare($returnQuery);
                                                                 $returnStmt->bindParam(':sale_id', $sale['id']);
                                                                 $returnStmt->execute();
                                                                 $returnCount = $returnStmt->fetch(PDO::FETCH_ASSOC)['count'];
-
+                                                                
                                                                 if ($returnCount > 0) {
                                                                     $canDelete = false;
                                                                 }
-                                                                ?>
-                                                                <?php if ($canReturn): ?>
-                                                                    <button type="button" 
-                                                                        class="btn btn-sm btn-outline-warning rounded-circle return-sale"
-                                                                        data-id="<?php echo $sale['id']; ?>"
-                                                                        data-invoice="<?php echo $sale['invoice_number']; ?>"
-                                                                        title="گەڕاندنەوەی کاڵا">
-                                                                        <i class="fas fa-undo"></i>
-                                                                    </button>
-                                                                <?php endif; ?>
-                                                                <?php if ($canDelete): ?>
-                                                                    <button type="button" 
-                                                                        class="btn btn-sm btn-outline-danger rounded-circle delete-sale"
-                                                                        data-id="<?php echo $sale['id']; ?>"
-                                                                        data-invoice="<?php echo $sale['invoice_number']; ?>"
-                                                                        title="سڕینەوە">
-                                                                        <i class="fas fa-trash"></i>
-                                                                    </button>
+                                                                
+                                                                if ($canDelete): ?>
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-danger rounded-circle delete-sale"
+                                                                    data-id="<?php echo $sale['id']; ?>"
+                                                                    data-invoice="<?php echo $sale['invoice_number']; ?>"
+                                                                    title="سڕینەوە">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
                                                                 <?php endif; ?>
                                                             </div>
                                                         </td>
@@ -2842,6 +2841,251 @@ foreach ($debtTransactions as $debtTransaction) {
                     });
                 }
             }
+
+            // Return products button click handler
+            $(document).on('click', '.return-products-btn', function() {
+                const saleId = $(this).data('id');
+                const invoiceNumber = $(this).data('invoice');
+                
+                $('#return_sale_id').val(saleId);
+                $('#return_invoice_number').val(invoiceNumber);
+                $('#return_invoice_display').text(invoiceNumber);
+                
+                // Clear previous items
+                $('#returnItemsTable tbody').empty();
+                
+                // Fetch sale items
+                $.ajax({
+                    url: '../../ajax/sales/get_sale_items.php',
+                    type: 'GET',
+                    data: { sale_id: saleId },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            let items = response.data;
+                            let totalPrice = 0;
+                            
+                            $.each(items, function(index, item) {
+                                // Calculate remaining quantity (total - already returned)
+                                const remainingQuantity = item.quantity - item.returned_quantity;
+                                
+                                if (remainingQuantity > 0) {
+                                    // Format unit type
+                                    let unitTypeDisplay = '';
+                                    switch(item.unit_type) {
+                                        case 'piece': unitTypeDisplay = 'دانە'; break;
+                                        case 'box': unitTypeDisplay = 'کارتۆن'; break;
+                                        case 'set': unitTypeDisplay = 'سێت'; break;
+                                    }
+                                    
+                                    let row = `
+                                        <tr>
+                                            <td>${item.product_name}
+                                                <input type="hidden" name="product_ids[]" value="${item.product_id}">
+                                                <input type="hidden" name="sale_item_ids[]" value="${item.id}">
+                                            </td>
+                                            <td>${item.product_code}</td>
+                                            <td>${remainingQuantity}</td>
+                                            <td>
+                                                ${unitTypeDisplay}
+                                                <input type="hidden" name="unit_types[]" value="${item.unit_type}">
+                                            </td>
+                                            <td>
+                                                ${Number(item.unit_price).toLocaleString()}
+                                                <input type="hidden" name="unit_prices[]" value="${item.unit_price}">
+                                            </td>
+                                            <td>
+                                                <input type="number" class="form-control return-quantity" 
+                                                    name="return_quantities[]" min="1" max="${remainingQuantity}" 
+                                                    value="0" data-price="${item.unit_price}" required>
+                                            </td>
+                                            <td class="item-total-price">0 دینار</td>
+                                        </tr>
+                                    `;
+                                    
+                                    $('#returnItemsTable tbody').append(row);
+                                }
+                            });
+                            
+                            // Show modal if there are items to return
+                            if ($('#returnItemsTable tbody tr').length > 0) {
+                                $('#returnProductModal').modal('show');
+                            } else {
+                                // Show message if all items have been returned
+                                Swal.fire({
+                                    icon: 'info',
+                                    title: 'تەواو گەڕێنراوەتەوە',
+                                    text: 'هەموو کاڵاکانی ئەم پسووڵەیە گەڕێنراونەتەوە',
+                                    confirmButtonText: 'باشە'
+                                });
+                            }
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'هەڵە',
+                                text: response.message,
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'هەڵە',
+                            text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە سێرڤەرەوە',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                });
+            });
+            
+            // Update totals when return quantity changes
+            $(document).on('input', '.return-quantity', function() {
+                updateReturnTotals();
+            });
+            
+            // Function to update total prices
+            function updateReturnTotals() {
+                let totalReturnPrice = 0;
+                
+                $('#returnItemsTable tbody tr').each(function() {
+                    const quantity = parseInt($(this).find('.return-quantity').val()) || 0;
+                    const unitPrice = parseFloat($(this).find('.return-quantity').data('price'));
+                    const itemTotal = quantity * unitPrice;
+                    
+                    $(this).find('.item-total-price').text(itemTotal.toLocaleString() + ' دینار');
+                    totalReturnPrice += itemTotal;
+                });
+                
+                $('#return_total_price').text(totalReturnPrice.toLocaleString());
+            }
+            
+            // Save Return Button
+            $('#saveReturnBtn').on('click', function() {
+                // Check if at least one item is selected for return
+                let hasReturnItems = false;
+                $('.return-quantity').each(function() {
+                    if (parseInt($(this).val()) > 0) {
+                        hasReturnItems = true;
+                        return false; // break the loop
+                    }
+                });
+                
+                if (!hasReturnItems) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'ئاگاداری',
+                        text: 'تکایە لانی کەم یەک کاڵا دیاری بکە بۆ گەڕاندنەوە',
+                        confirmButtonText: 'باشە'
+                    });
+                    return;
+                }
+                
+                // Get form data
+                const formData = new FormData(document.getElementById('returnProductForm'));
+                
+                // Send AJAX request
+                $.ajax({
+                    url: '../../ajax/sales/save_product_return.php',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'سەرکەوتوو',
+                                text: 'گەڕاندنەوەی کاڵا بە سەرکەوتوویی ئەنجام درا',
+                                confirmButtonText: 'باشە'
+                            }).then(() => {
+                                // Close modal and reload page
+                                $('#returnProductModal').modal('hide');
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'هەڵە',
+                                text: response.message,
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'هەڵە',
+                            text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە سێرڤەرەوە',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                });
+            });
+            
+            // Show invoice items
+            $(document).on('click', '.show-invoice-items', function() {
+                const invoiceNumber = $(this).data('invoice');
+                
+                // Clear previous items
+                $('#invoiceItemsTable').empty();
+                
+                // Fetch invoice items
+                $.ajax({
+                    url: '../../ajax/sales/get_invoice_items.php',
+                    type: 'GET',
+                    data: { invoice_number: invoiceNumber },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            let items = response.data;
+                            
+                            $.each(items, function(index, item) {
+                                // Format unit type
+                                let unitTypeDisplay = '';
+                                switch(item.unit_type) {
+                                    case 'piece': unitTypeDisplay = 'دانە'; break;
+                                    case 'box': unitTypeDisplay = 'کارتۆن'; break;
+                                    case 'set': unitTypeDisplay = 'سێت'; break;
+                                }
+                                
+                                let row = `
+                                    <tr>
+                                        <td>${index + 1}</td>
+                                        <td>${item.product_name}</td>
+                                        <td>${item.product_code}</td>
+                                        <td>${item.quantity}</td>
+                                        <td>${unitTypeDisplay}</td>
+                                        <td>${Number(item.unit_price).toLocaleString()} دینار</td>
+                                        <td>${Number(item.total_price).toLocaleString()} دینار</td>
+                                    </tr>
+                                `;
+                                
+                                $('#invoiceItemsTable').append(row);
+                            });
+                            
+                            // Show modal
+                            $('#invoiceItemsModal').modal('show');
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'هەڵە',
+                                text: response.message,
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'هەڵە',
+                            text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە سێرڤەرەوە',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                });
+            });
         });
 
         // Load sale data for editing
@@ -3455,6 +3699,118 @@ foreach ($debtTransactions as $debtTransaction) {
         });
     });
     </script>
+
+    <!-- Add the Product Return Modal -->
+    <div class="modal fade" id="returnProductModal" tabindex="-1" aria-labelledby="returnProductModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="returnProductModalLabel">گەڕاندنەوەی کاڵا</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="returnProductForm">
+                        <input type="hidden" id="return_sale_id" name="sale_id">
+                        <input type="hidden" id="return_invoice_number" name="invoice_number">
+                        
+                        <div class="mb-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">ژمارەی پسووڵە:</label>
+                                    <p class="form-control-static" id="return_invoice_display"></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="return_date" class="form-label">بەرواری گەڕانەوە</label>
+                                    <input type="date" class="form-control" id="return_date" name="return_date" value="<?php echo date('Y-m-d'); ?>" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="return_reason" class="form-label">هۆکاری گەڕانەوە</label>
+                            <select class="form-select" id="return_reason" name="reason" required>
+                                <option value="damaged">کاڵا زیانی پێگەیشتووە</option>
+                                <option value="wrong_product">کاڵای هەڵە</option>
+                                <option value="customer_request">داواکاری کڕیار</option>
+                                <option value="other">هۆکاری تر</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="return_notes" class="form-label">تێبینی</label>
+                            <textarea class="form-control" id="return_notes" name="notes" rows="2"></textarea>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="returnItemsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ناوی کاڵا</th>
+                                        <th>کۆد</th>
+                                        <th>بڕی فرۆشراو</th>
+                                        <th>یەکە</th>
+                                        <th>نرخی تاک</th>
+                                        <th>بڕی گەڕاوە</th>
+                                        <th>نرخی گشتی</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="6" class="text-start"><strong>کۆی گشتی:</strong></td>
+                                        <td><strong id="return_total_price">0</strong> دینار</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" id="saveReturnBtn">
+                        <i class="fas fa-save me-1"></i> پاشەکەوتکردن
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Show Invoice Items Modal -->
+    <div class="modal fade" id="invoiceItemsModal" tabindex="-1" aria-labelledby="invoiceItemsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="invoiceItemsModalLabel">لیستی کاڵاکانی پسووڵە</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>ناوی کاڵا</th>
+                                    <th>کۆدی کاڵا</th>
+                                    <th>بڕ</th>
+                                    <th>یەکە</th>
+                                    <th>نرخی تاک</th>
+                                    <th>نرخی گشتی</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoiceItemsTable">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
