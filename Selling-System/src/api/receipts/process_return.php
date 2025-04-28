@@ -117,7 +117,7 @@ try {
         ]);
 
         // Update product quantity
-        if ($data['receipt_type'] === 'selling') {
+        if ($data['receipt_type'] === 'sale') {
             // For sales returns, add back to inventory
             $stmt = $conn->prepare("
                 UPDATE products 
@@ -139,7 +139,7 @@ try {
         ]);
 
         // Update returned quantity in original receipt items
-        if ($data['receipt_type'] === 'selling') {
+        if ($data['receipt_type'] === 'sale') {
             $stmt = $conn->prepare("
                 UPDATE sale_items 
                 SET returned_quantity = COALESCE(returned_quantity, 0) + :quantity 
@@ -176,7 +176,7 @@ try {
             )
         ");
 
-        $inventory_quantity = $data['receipt_type'] === 'selling' ? $quantity : -$quantity;
+        $inventory_quantity = $data['receipt_type'] === 'sale' ? $quantity : -$quantity;
         $notes = "گەڕاندنەوە: {$quantity} {$unit_type} (ئەسڵی: {$quantity} {$unit_type})";
 
         $stmt->execute([
@@ -188,7 +188,7 @@ try {
     }
 
     // If it's a sale return, update customer debt
-    if ($data['receipt_type'] === 'selling') {
+    if ($data['receipt_type'] === 'sale') {
         // Get sale information
         $stmt = $conn->prepare("
             SELECT customer_id, payment_type 

@@ -16,7 +16,7 @@ try {
         throw new Exception('هیچ کاڵایەک دیاری نەکراوە');
     }
 
-    if (!in_array($receipt_type, ['selling', 'buying'])) {
+    if (!in_array($receipt_type, ['sale', 'purchase'])) {
         throw new Exception('جۆری پسووڵە نادروستە');
     }
 
@@ -59,9 +59,9 @@ try {
         $stmt = $conn->prepare("
             INSERT INTO return_items (return_id, product_id, quantity, unit_type, unit_price)
             VALUES (?, ?, ?, ?, (
-                SELECT " . ($receipt_type === 'selling' ? 'unit_price' : 'unit_price') . "
-                FROM " . ($receipt_type === 'selling' ? 'sale_items' : 'purchase_items') . "
-                WHERE " . ($receipt_type === 'selling' ? 'sale_id' : 'purchase_id') . " = ?
+                SELECT " . ($receipt_type === 'sale' ? 'unit_price' : 'unit_price') . "
+                FROM " . ($receipt_type === 'sale' ? 'sale_items' : 'purchase_items') . "
+                WHERE " . ($receipt_type === 'sale' ? 'sale_id' : 'purchase_id') . " = ?
                 AND product_id = ?
                 LIMIT 1
             ))
@@ -69,7 +69,7 @@ try {
         $stmt->execute([$return_id, $item['product_id'], $item['quantity'], $item['unit_type'], $receipt_id, $item['product_id']]);
 
         // Update returned quantity in original receipt items
-        if ($receipt_type === 'selling') {
+        if ($receipt_type === 'sale') {
             $stmt = $conn->prepare("
                 UPDATE sale_items 
                 SET returned_quantity = IFNULL(returned_quantity, 0) + ?
@@ -85,7 +85,7 @@ try {
         $stmt->execute([$item['quantity'], $receipt_id, $item['product_id']]);
 
         // Also update the total_price based on the new returned quantity
-        if ($receipt_type === 'selling') {
+        if ($receipt_type === 'sale') {
             $stmt = $conn->prepare("
                 UPDATE sale_items 
                 SET total_price = (quantity - COALESCE(returned_quantity, 0)) * unit_price
@@ -101,7 +101,7 @@ try {
         $stmt->execute([$receipt_id, $item['product_id']]);
 
         // Update product quantity
-        if ($receipt_type === 'selling') {
+        if ($receipt_type === 'sale') {
             // For sales returns, subtract from inventory (items coming back)
             $stmt = $conn->prepare("
                 UPDATE products 
@@ -125,13 +125,13 @@ try {
         ");
         $stmt->execute([
             $item['product_id'],
-            $receipt_type === 'selling' ? -$pieces_count : $pieces_count,
+            $receipt_type === 'sale' ? -$pieces_count : $pieces_count,
             $return_id
         ]);
     }
 
     // Update debt/payment records if needed
-    if ($receipt_type === 'selling') {
+    if ($receipt_type === 'sale') {
         // Get sale details
         $stmt = $conn->prepare("
             SELECT customer_id, payment_type

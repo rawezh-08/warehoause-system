@@ -376,7 +376,7 @@ function showReturnForm(receiptId, receiptType, items) {
     }
 
     // Validate receiptType
-    if (!receiptType || (receiptType !== 'selling' && receiptType !== 'buying')) {
+    if (!receiptType || (receiptType !== 'sale' && receiptType !== 'purchase')) {
         console.error("Invalid receipt type:", receiptType);
         Swal.fire({
             icon: 'error',
@@ -441,14 +441,14 @@ function showReturnForm(receiptId, receiptType, items) {
         }
 
         // Check required properties
-        if (!item.product_name || !item.id) {
+        if (!item.product_name || !item.product_id) {
             console.warn("Missing required item properties:", item);
             itemsSkipped++;
             return;
         }
 
         // For debugging
-        console.log(`Processing item: ${item.product_name} (ID: ${item.id})`);
+        console.log(`Processing item: ${item.product_name} (ID: ${item.product_id})`);
         console.log(`  - Original quantity: ${item.quantity}`);
         console.log(`  - Returned quantity: ${item.returned_quantity || 0}`);
         
@@ -467,7 +467,7 @@ function showReturnForm(receiptId, receiptType, items) {
                                (item.unit_type === 'box' ? 'کارتۆن' : 'سێت');
             
             formHtml += `
-                <tr data-item-id="${item.id}">
+                <tr data-item-id="${item.id}" data-product-id="${item.product_id}">
                     <td>${item.product_name}</td>
                     <td>${unitTypeText}</td>
                     <td>${quantity}</td>
@@ -518,6 +518,21 @@ function showReturnForm(receiptId, receiptType, items) {
         return;
     }
 
+    // Add validation function to window scope
+    window.validateReturnQuantity = function(input) {
+        const value = parseFloat(input.value) || 0;
+        const maxReturn = parseFloat(input.dataset.maxReturn) || 0;
+        
+        if (value > maxReturn) {
+            Swal.fire({
+                icon: 'error',
+                title: 'هەڵە',
+                text: `بڕی گەڕاندنەوە نابێت لە ${maxReturn} زیاتر بێت`
+            });
+            input.value = maxReturn;
+        }
+    };
+
     Swal.fire({
         title: 'گەڕاندنەوەی کاڵا',
         html: formHtml,
@@ -553,7 +568,7 @@ function showReturnForm(receiptId, receiptType, items) {
                     }
                     
                     returnData.items.push({
-                        id: row.data('item-id'),
+                        product_id: row.data('product-id'),
                         quantity: qty,
                         unit_type: $(this).data('unit-type'),
                         unit_price: $(this).data('unit-price'),
