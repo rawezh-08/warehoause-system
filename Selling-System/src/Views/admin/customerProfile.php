@@ -1619,6 +1619,14 @@ foreach ($debtTransactions as $debtTransaction) {
     <script src="../../js/include-components.js"></script>
     <!-- Page Specific Script -->
     <script>
+        // --- Start: Helper Functions ---
+        function formatNumber(number) {
+          // Simple number formatting with commas for thousands separators
+          // Adjust locale ('en-US') if needed for different formatting
+          return Number(number).toLocaleString('en-US'); 
+        }
+        // --- End: Helper Functions ---
+
         $(document).ready(function () {
             // Initialize pagination for tables
             initBasicTablePagination('sales');
