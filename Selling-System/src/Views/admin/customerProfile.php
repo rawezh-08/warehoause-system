@@ -33,8 +33,28 @@ $salesQuery = "SELECT s.*,
                WHERE s.customer_id = :customer_id 
                GROUP BY s.id, si.id, p.id
                ORDER BY s.date DESC";
+
+// Add filters for product name and payment type
+if (isset($_GET['product_name']) && !empty($_GET['product_name'])) {
+    $salesQuery .= " AND p.name LIKE :product_name";
+}
+
+if (isset($_GET['payment_type']) && !empty($_GET['payment_type'])) {
+    $salesQuery .= " AND s.payment_type = :payment_type";
+}
+
 $salesStmt = $conn->prepare($salesQuery);
 $salesStmt->bindParam(':customer_id', $customerId);
+
+if (isset($_GET['product_name']) && !empty($_GET['product_name'])) {
+    $productName = '%' . $_GET['product_name'] . '%';
+    $salesStmt->bindParam(':product_name', $productName);
+}
+
+if (isset($_GET['payment_type']) && !empty($_GET['payment_type'])) {
+    $salesStmt->bindParam(':payment_type', $_GET['payment_type']);
+}
+
 $salesStmt->execute();
 $sales = $salesStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -484,6 +504,28 @@ foreach ($debtTransactions as $debtTransaction) {
                                 </form>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Add filters to the table -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" id="productNameFilter" placeholder="گەڕان بە ناوی کاڵا...">
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="paymentTypeFilter">
+                            <option value="">هەموو جۆرەکانی پارەدان</option>
+                            <option value="cash">نەقد</option>
+                            <option value="credit">قەرز</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="unitTypeFilter">
+                            <option value="">هەموو یەکەکان</option>
+                            <option value="box">قوتو</option>
+                            <option value="piece">دانە</option>
+                            <option value="kg">کیلۆ</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -2994,6 +3036,44 @@ foreach ($debtTransactions as $debtTransaction) {
                 confirmButtonText: 'باشە'
             });
         }
+    </script>
+
+    <!-- Add JavaScript for filtering -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const productNameFilter = document.getElementById('productNameFilter');
+        const paymentTypeFilter = document.getElementById('paymentTypeFilter');
+        const unitTypeFilter = document.getElementById('unitTypeFilter');
+        const table = document.querySelector('.table');
+        const rows = table.getElementsByTagName('tr');
+
+        function filterTable() {
+            const productNameValue = productNameFilter.value.toLowerCase();
+            const paymentTypeValue = paymentTypeFilter.value;
+            const unitTypeValue = unitTypeFilter.value;
+
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const productName = row.cells[1].textContent.toLowerCase();
+                const paymentType = row.cells[4].textContent;
+                const unitType = row.cells[3].textContent;
+
+                const productNameMatch = productName.includes(productNameValue);
+                const paymentTypeMatch = !paymentTypeValue || paymentType === paymentTypeValue;
+                const unitTypeMatch = !unitTypeValue || unitType === unitTypeValue;
+
+                if (productNameMatch && paymentTypeMatch && unitTypeMatch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        }
+
+        productNameFilter.addEventListener('input', filterTable);
+        paymentTypeFilter.addEventListener('change', filterTable);
+        unitTypeFilter.addEventListener('change', filterTable);
+    });
     </script>
 </body>
 

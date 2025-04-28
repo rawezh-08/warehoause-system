@@ -6,14 +6,12 @@
 <div class="sidebar">
     <div class="sidebar-wrapper">
         <!-- Sidebar Header -->
-        <div class="sidebar-header" onclick="window.location.href='../../views/admin/dashboard.php'">
+        <div class="sidebar-header" onclick="window.location.href='../../Views/admin/dashboard.php'">
             <a href="dashboard.php" class="">
                 <div class="dash-cont">
                     <img src="../../assets/icons/dashboard.svg" alt="" class="dash-icon">
                 </div>
                 <span>بەشی سەرەکی</span>
-            </a>
-        </div>
 
         <!-- Sidebar Menu -->
         <ul class="sidebar-menu">
