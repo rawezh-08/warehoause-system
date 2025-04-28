@@ -20,6 +20,10 @@ try {
     $notes = $_POST['notes'] ?? '';
     $return_quantities = $_POST['return_quantities'] ?? [];
 
+    // Add debugging
+    error_log("Debug - POST data: " . print_r($_POST, true));
+    error_log("Debug - Return quantities: " . print_r($return_quantities, true));
+
     if (empty($return_quantities)) {
         throw new Exception('No items selected for return');
     }
@@ -62,6 +66,9 @@ try {
     foreach ($return_quantities as $item_id => $quantity) {
         if (floatval($quantity) <= 0) continue;
 
+        // Add debugging for each item
+        error_log("Debug - Processing item ID: " . $item_id . " with quantity: " . $quantity);
+
         // Get original sale item details
         $stmt = $conn->prepare("
             SELECT si.*, p.name as product_name, p.pieces_per_box, p.boxes_per_set
@@ -77,7 +84,21 @@ try {
         error_log("Debug - Query result: " . print_r($item, true));
 
         if (!$item) {
-            throw new Exception('Invalid item ID: ' . $item_id . ' for sale: ' . $sale_id);
+            // Add more detailed error information
+            $stmt = $conn->prepare("SELECT COUNT(*) as count FROM sale_items WHERE id = ?");
+            $stmt->execute([$item_id]);
+            $itemExists = $stmt->fetch(PDO::FETCH_ASSOC)['count'] > 0;
+            
+            $stmt = $conn->prepare("SELECT COUNT(*) as count FROM sale_items WHERE sale_id = ?");
+            $stmt->execute([$sale_id]);
+            $saleExists = $stmt->fetch(PDO::FETCH_ASSOC)['count'] > 0;
+            
+            error_log("Debug - Item exists: " . ($itemExists ? 'Yes' : 'No'));
+            error_log("Debug - Sale exists: " . ($saleExists ? 'Yes' : 'No'));
+            
+            throw new Exception('Invalid item ID: ' . $item_id . ' for sale: ' . $sale_id . 
+                              ' (Item exists: ' . ($itemExists ? 'Yes' : 'No') . 
+                              ', Sale exists: ' . ($saleExists ? 'Yes' : 'No') . ')');
         }
 
         // Calculate actual pieces count based on unit type

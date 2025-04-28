@@ -658,14 +658,20 @@ $(document).ready(function() {
                             $('.return-quantity').each(function() {
                                 const quantity = parseInt($(this).val());
                                 if (quantity > 0) {
-                                    returnItems.push({
+                                    const itemData = {
                                         item_id: $(this).data('item-id'),
                                         quantity: quantity,
                                         unit_price: $(this).data('unit-price'),
                                         unit_type: $(this).data('unit-type')
-                                    });
+                                    };
+                                    console.log('Return item data:', itemData);
+                                    returnItems.push(itemData);
                                 }
                             });
+
+                            console.log('All return items:', returnItems);
+                            console.log('Receipt ID:', receiptId);
+                            console.log('Receipt Type:', receiptType);
 
                             const reason = $('#returnReason').val();
                             if (!reason) {
