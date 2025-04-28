@@ -3580,10 +3580,32 @@ foreach ($debtTransactions as $debtTransaction) {
                 
                 // Add return quantities for each item
                 returnData.items.forEach((item, index) => {
-                    formData.append(`return_quantities[${item.sale_item_id || item.id}]`, item.quantity);
+                    console.log('Processing return item:', item);
+                    // Try to find the correct ID - could be id, product_id, or sale_item_id
+                    let itemId = null;
+                    if (item.id !== undefined) {
+                        itemId = item.id;
+                    } else if (item.product_id !== undefined) {
+                        itemId = item.product_id;
+                    } else if (item.sale_item_id !== undefined) {
+                        itemId = item.sale_item_id;
+                    }
+                    
+                    console.log('Using item ID:', itemId, 'for quantity:', item.quantity);
+                    
+                    if (itemId !== null) {
+                        formData.append(`return_quantities[${itemId}]`, item.quantity);
+                    } else {
+                        console.error('No valid ID found for item:', item);
+                    }
                 });
                 
                 // Submit the return data
+                console.log('Form data to be sent:');
+                for (let pair of formData.entries()) {
+                    console.log(pair[0] + ': ' + pair[1]);
+                }
+                
                 $.ajax({
                     url: '../../ajax/return_sale.php',
                     type: 'POST',
@@ -3595,7 +3617,22 @@ foreach ($debtTransactions as $debtTransaction) {
                         
                         try {
                             console.log('Return response:', response);
-                            const data = typeof response === 'string' ? JSON.parse(response) : response;
+                            // First try to parse if it's a string
+                            let data = response;
+                            if (typeof response === 'string') {
+                                try {
+                                    data = JSON.parse(response);
+                                } catch (parseError) {
+                                    console.error('Failed to parse response as JSON:', parseError);
+                                    // Check if the response contains an SQL error
+                                    if (response.includes('SQLSTATE')) {
+                                        data = { 
+                                            status: 'error', 
+                                            message: response.split('\n')[0] // Get first line of error
+                                        };
+                                    }
+                                }
+                            }
                             
                             if (data.status === 'success') {
                                 Swal.fire({
@@ -3608,14 +3645,20 @@ foreach ($debtTransactions as $debtTransaction) {
                                     window.location.reload();
                                 });
                             } else {
+                                let errorMsg = data.message || 'هەڵەیەک ڕوویدا لە کاتی گەڕاندنەوەی کاڵا';
+                                // Check for SQL error patterns
+                                if (typeof errorMsg === 'string' && errorMsg.includes('SQLSTATE')) {
+                                    errorMsg = errorMsg.split('\n')[0]; // Get first line of SQL error
+                                }
+                                
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'هەڵە',
-                                    text: data.message || 'هەڵەیەک ڕوویدا لە کاتی گەڕاندنەوەی کاڵا'
+                                    text: errorMsg
                                 });
                             }
                         } catch (e) {
-                            console.error('Error parsing response:', e, response);
+                            console.error('Error handling response:', e, response);
                             Swal.fire({
                                 icon: 'error',
                                 title: 'هەڵە',
