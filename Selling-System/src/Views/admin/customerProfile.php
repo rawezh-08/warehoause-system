@@ -2295,19 +2295,6 @@ foreach ($debtTransactions as $debtTransaction) {
                 const saleId = $(this).data('id');
                 const invoiceNumber = $(this).data('invoice');
                 
-                console.log('Return button clicked for sale ID:', saleId, 'Invoice:', invoiceNumber);
-                
-                // Show loading indicator right away
-                Swal.fire({
-                    title: 'چاوەڕوان بە...',
-                    html: 'هێنانەوەی زانیاری پسووڵە...',
-                    allowOutsideClick: false,
-                    showConfirmButton: false,
-                    willOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-                
                 // Get sale items
                 $.ajax({
                     url: '../../ajax/get_sale_items.php',
@@ -2316,12 +2303,8 @@ foreach ($debtTransactions as $debtTransaction) {
                         sale_id: saleId
                     },
                     dataType: 'json',
-                    beforeSend: function() {
-                        console.log('Sending AJAX request to get sale items...');
-                    },
                     success: function(data) {
-                        console.log('Response received:', data);
-                        if (data.success && data.items && data.items.length > 0) {
+                        if (data.success) {
                             // Create return form
                             let itemsHtml = '<form id="returnSaleForm">';
                             itemsHtml += '<input type="hidden" name="sale_id" value="' + saleId + '">';
@@ -2330,14 +2313,13 @@ foreach ($debtTransactions as $debtTransaction) {
                             itemsHtml += '<tbody>';
                             
                             data.items.forEach(item => {
-                                const maxReturn = item.quantity - (item.returned_quantity || 0);
                                 itemsHtml += `<tr>
                                     <td>${item.product_name}</td>
-                                    <td>${item.quantity} ${item.unit_type === 'piece' ? 'دانە' : (item.unit_type === 'box' ? 'کارتۆن' : 'سێت')}</td>
+                                    <td>${item.quantity}</td>
                                     <td>
                                         <input type="number" class="form-control return-quantity" 
                                             name="return_quantities[${item.id}]" 
-                                            min="0" max="${maxReturn}" value="0">
+                                            min="0" max="${item.quantity}" value="0">
                                     </td>
                                 </tr>`;
                             });
@@ -2356,34 +2338,7 @@ foreach ($debtTransactions as $debtTransaction) {
                                 confirmButtonText: 'گەڕانەوە',
                                 cancelButtonText: 'هەڵوەشاندنەوە',
                                 showLoaderOnConfirm: true,
-                                didOpen: () => {
-                                    // Initialize any form elements if needed
-                                    $('.return-quantity').on('input', function() {
-                                        const val = parseInt($(this).val());
-                                        const max = parseInt($(this).attr('max'));
-                                        if (val > max) {
-                                            $(this).val(max);
-                                        }
-                                        if (val < 0) {
-                                            $(this).val(0);
-                                        }
-                                    });
-                                },
                                 preConfirm: () => {
-                                    // Validate that at least one product has a quantity > 0
-                                    let hasQuantity = false;
-                                    $('.return-quantity').each(function() {
-                                        if (parseInt($(this).val()) > 0) {
-                                            hasQuantity = true;
-                                            return false; // break the loop
-                                        }
-                                    });
-                                    
-                                    if (!hasQuantity) {
-                                        Swal.showValidationMessage('تکایە بڕی گەڕانەوە بۆ هەر کاڵایەک دیاری بکە');
-                                        return false;
-                                    }
-                                    
                                     const formData = new FormData(document.getElementById('returnSaleForm'));
                                     return $.ajax({
                                         url: '../../ajax/return_sale.php',
@@ -2392,15 +2347,12 @@ foreach ($debtTransactions as $debtTransaction) {
                                         processData: false,
                                         contentType: false,
                                         dataType: 'json'
-                                    }).catch(error => {
-                                        Swal.showValidationMessage(`هەڵە: ${error.responseText || error}`);
                                     });
                                 }
                             }).then((result) => {
                                 if (result.isConfirmed) {
                                     const response = result.value;
-                                    if (response && response.success) {
-                                        // Success handling remains the same...
+                                    if (response.success) {
                                         // Create summary HTML
                                         let summaryHtml = '<div class="return-summary mt-3">';
                                         summaryHtml += '<h5 class="mb-3">کورتەی گەڕانەوە</h5>';
@@ -2504,73 +2456,16 @@ foreach ($debtTransactions as $debtTransaction) {
                         }
                     },
                     error: function(xhr, status, error) {
-                        console.error('Ajax error details:', {
-                            status: status,
-                            error: error,
-                            responseText: xhr.responseText,
-                            statusCode: xhr.status,
-                            readyState: xhr.readyState
-                        });
-                        
-                        // Try to parse the response if possible
-                        let errorMessage = 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر';
-                        try {
-                            const errorResponse = JSON.parse(xhr.responseText);
-                            errorMessage = errorResponse.message || errorMessage;
-                        } catch (e) {
-                            // If parsing fails, use the responseText directly if it's not empty
-                            if (xhr.responseText && xhr.responseText.trim() !== '') {
-                                errorMessage = xhr.responseText;
-                            }
-                        }
-                        
-                        // Close the loading dialog and show the error
+                        console.error('Ajax error:', error);
                         Swal.fire({
                             title: 'هەڵە!',
-                            text: errorMessage,
+                            text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
                             icon: 'error',
-                            confirmButtonText: 'باشە',
-                            didClose: () => {
-                                // Try again with a simpler approach as fallback
-                                trySimpleReturnDialog(saleId, invoiceNumber);
-                            }
+                            confirmButtonText: 'باشە'
                         });
                     }
                 });
             });
-
-            // Fallback function for product returns when the main method fails
-            function trySimpleReturnDialog(saleId, invoiceNumber) {
-                Swal.fire({
-                    title: `گەڕانەوەی کاڵا - پسووڵە ${invoiceNumber}`,
-                    html: `
-                        <p>تکایە شێوازی سادەی گەڕاندنەوە بەکار بێنە</p>
-                        <form id="simpleReturnForm">
-                            <input type="hidden" name="sale_id" value="${saleId}">
-                            <div class="alert alert-info">
-                                بۆ گەڕاندنەوەی کاڵا، تکایە پەیوەندی بکە بە بەڕێوبەر یان سیستەمی کۆگا
-                            </div>
-                            <div class="mb-3">
-                                <label for="returnReason" class="form-label">هۆکاری گەڕاندنەوە</label>
-                                <textarea class="form-control" id="returnReason" name="notes" rows="3"></textarea>
-                            </div>
-                        </form>
-                    `,
-                    showCancelButton: true,
-                    confirmButtonText: 'ناردن',
-                    cancelButtonText: 'هەڵوەشاندنەوە',
-                    showLoaderOnConfirm: true,
-                    allowOutsideClick: () => !Swal.isLoading()
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        Swal.fire({
-                            icon: 'info',
-                            title: 'داواکاریەکەت نێردرا',
-                            text: 'تکایە پەیوەندی بکە بە بەڕێوبەر بۆ گەڕاندنەوەی کاڵاکە'
-                        });
-                    }
-                });
-            }
 
             // Handle edit button click
             $(document).on('click', '.edit-btn', function() {
