@@ -803,30 +803,20 @@ $dir = $lang === 'ar' ? 'rtl' : 'rtl';
                             <?php echo $total_pieces . ' ' . $t['pieces']; ?>
                         </td>
                         <td>
-                            <?php 
-                            $unit_count = count($product['units']);
-                            if ($unit_count === 1) {
-                                // تەنها یەک یەکە هەیە
-                                echo number_format($product['units'][0]['unit_price'], 0) . ' د.ع';
-                            } else {
-                                // دەتوانرێت دانە و کارتۆن هەبێت، یان سێتیش
-                                $unit_types = array_column($product['units'], 'unit_type');
-                                if (in_array('piece', $unit_types) && $unit_count === 2 && in_array('box', $unit_types)) {
-                                    // تەنها دانە و کارتۆن هەیە، تەنها نرخی دانە نیشان بدە
-                                    foreach ($product['units'] as $unit) {
-                                        if ($unit['unit_type'] === 'piece') {
-                                            echo number_format($unit['unit_price'], 0) . ' د.ع';
-                                            break;
-                                        }
-                                    }
-                                } else {
-                                    // هەموو نرخی یەکەکان نیشان بدە
-                                    $price_texts = [];
-                                    foreach ($product['units'] as $unit) {
-                                        $price_texts[] = number_format($unit['unit_price'], 0) . ' د.ع';
-                                    }
-                                    echo implode(' / ', $price_texts);
+                            <?php
+                            // If there is a 'piece' unit, show only its price
+                            $piece_unit = null;
+                            foreach ($product['units'] as $unit) {
+                                if ($unit['unit_type'] === 'piece') {
+                                    $piece_unit = $unit;
+                                    break;
                                 }
+                            }
+                            if ($piece_unit) {
+                                echo number_format($piece_unit['unit_price'], 0) . ' د.ع';
+                            } else {
+                                // Otherwise, show the first unit's price
+                                echo number_format($product['units'][0]['unit_price'], 0) . ' د.ع';
                             }
                             ?>
                         </td>
