@@ -67,12 +67,8 @@ try {
         $stmt->execute([$item_id, $purchase_id]);
         $item = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Add debugging
-        error_log("Debug - Item ID: " . $item_id . ", Purchase ID: " . $purchase_id);
-        error_log("Debug - Query result: " . print_r($item, true));
-
         if (!$item) {
-            throw new Exception('Invalid item ID: ' . $item_id . ' for purchase: ' . $purchase_id);
+            throw new Exception('Invalid item ID');
         }
 
         // Calculate actual pieces count based on unit type

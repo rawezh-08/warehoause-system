@@ -468,21 +468,9 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.success) {
                     const data = response.data;
-                    console.log('Receipt details data:', data);
-                    console.log('Items data:', data.items);
-                    
                     let itemsHtml = '';
                     
                     data.items.forEach((item, index) => {
-                        console.log('Processing item:', item);
-                        console.log('Item ID:', item.id);
-                        console.log('Item data attributes:', {
-                            id: item.id,
-                            unit_price: item.unit_price,
-                            unit_type: item.unit_type,
-                            product_name: item.product_name
-                        });
-                        
                         const maxReturn = item.quantity - (item.returned_quantity || 0);
                         if (maxReturn > 0) {
                             itemsHtml += `
@@ -498,7 +486,7 @@ $(document).ready(function() {
                                     <td style="min-width: 150px;">
                                         <input type="number" class="form-control return-quantity" 
                                                min="0" max="${maxReturn}" value="0"
-                                               data-item-id="${item.id}"
+                                               data-product-id="${item.product_id}"
                                                data-unit-price="${item.unit_price}"
                                                data-unit-type="${item.unit_type}"
                                                data-product-name="${item.product_name}"
@@ -670,20 +658,14 @@ $(document).ready(function() {
                             $('.return-quantity').each(function() {
                                 const quantity = parseInt($(this).val());
                                 if (quantity > 0) {
-                                    const itemData = {
-                                        id: $(this).data('item-id'),
+                                    returnItems.push({
+                                        product_id: $(this).data('product-id'),
                                         quantity: quantity,
                                         unit_price: $(this).data('unit-price'),
                                         unit_type: $(this).data('unit-type')
-                                    };
-                                    console.log('Return item data:', itemData);
-                                    returnItems.push(itemData);
+                                    });
                                 }
                             });
-
-                            console.log('All return items:', returnItems);
-                            console.log('Receipt ID:', receiptId);
-                            console.log('Receipt Type:', receiptType);
 
                             const reason = $('#returnReason').val();
                             if (!reason) {
@@ -698,21 +680,11 @@ $(document).ready(function() {
 
                             // Return the data as FormData
                             const formData = new FormData();
-                            formData.append('sale_id', receiptId);
+                            formData.append('receipt_id', receiptId);
                             formData.append('receipt_type', receiptType);
                             formData.append('reason', reason);
                             formData.append('notes', $('#returnNotes').val());
-                            
-                            // Convert return items to the correct format
-                            const returnQuantities = {};
-                            returnItems.forEach(item => {
-                                if (item.id) {
-                                    returnQuantities[item.id] = item.quantity;
-                                }
-                            });
-                            
-                            console.log('Return quantities:', returnQuantities);
-                            formData.append('return_quantities', JSON.stringify(returnQuantities));
+                            formData.append('items', JSON.stringify(returnItems));
 
                             return formData;
                         }
@@ -794,16 +766,6 @@ $(document).ready(function() {
                             }
                         `)
                         .appendTo('head');
-
-                    // Add debugging for form submission
-                    $('.return-quantity').on('change', function() {
-                        console.log('Return quantity changed:', {
-                            itemId: $(this).data('item-id'),
-                            quantity: $(this).val(),
-                            unitPrice: $(this).data('unit-price'),
-                            unitType: $(this).data('unit-type')
-                        });
-                    });
                 }
             },
             error: function(xhr, status, error) {
