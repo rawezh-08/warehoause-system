@@ -2295,6 +2295,16 @@ foreach ($debtTransactions as $debtTransaction) {
                 const saleId = $(this).data('id');
                 const invoiceNumber = $(this).data('invoice');
                 
+                // Show loading
+                Swal.fire({
+                    title: 'تکایە چاوەڕێ بکە...',
+                    text: 'زانیارییەکان وەردەگیرێن',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
                 // Get sale items
                 $.ajax({
                     url: '../../ajax/get_sale_items.php',
@@ -2303,8 +2313,21 @@ foreach ($debtTransactions as $debtTransaction) {
                         sale_id: saleId
                     },
                     dataType: 'json',
-                    success: function(data) {
-                        if (data.success) {
+                    success: function(response) {
+                        Swal.close();
+                        
+                        if (response.success) {
+                            // Check if sale has payments
+                            if (response.has_payments) {
+                                Swal.fire({
+                                    title: 'هەڵە!',
+                                    text: 'ناتوانرێت ئەم پسووڵە بگەڕێتەوە چونکە پارەدانەوەی لەسەر تۆمار کراوە',
+                                    icon: 'error',
+                                    confirmButtonText: 'باشە'
+                                });
+                                return;
+                            }
+                            
                             // Create return form
                             let itemsHtml = '<form id="returnSaleForm">';
                             itemsHtml += '<input type="hidden" name="sale_id" value="' + saleId + '">';
@@ -2313,19 +2336,21 @@ foreach ($debtTransactions as $debtTransaction) {
                             itemsHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی کڕین</th><th>بڕی گەڕانەوە</th></tr></thead>';
                             itemsHtml += '<tbody>';
                             
-                            data.items.forEach(item => {
+                            response.items.forEach(item => {
                                 // Calculate max returnable amount (total quantity - already returned quantity)
                                 const maxReturnable = item.quantity - (item.returned_quantity || 0);
                                 
-                                itemsHtml += `<tr>
-                                    <td>${item.product_name}</td>
-                                    <td>${item.quantity} (${item.returned_quantity || 0} گەڕاوە پێشتر)</td>
-                                    <td>
-                                        <input type="number" class="form-control return-quantity" 
-                                            name="return_quantities[${item.id}]" 
-                                            min="0" max="${maxReturnable}" value="0">
-                                    </td>
-                                </tr>`;
+                                if (maxReturnable > 0) {
+                                    itemsHtml += `<tr>
+                                        <td>${item.product_name}</td>
+                                        <td>${item.quantity} (${item.returned_quantity || 0} گەڕاوە پێشتر)</td>
+                                        <td>
+                                            <input type="number" class="form-control return-quantity" 
+                                                name="return_quantities[${item.id}]" 
+                                                min="0" max="${maxReturnable}" value="0">
+                                        </td>
+                                    </tr>`;
+                                }
                             });
                             
                             itemsHtml += '</tbody></table></div>';
@@ -2387,34 +2412,16 @@ foreach ($debtTransactions as $debtTransaction) {
                                             ${response.summary.returned_amount.toLocaleString()} دینار
                                         </div>`;
                                         
-                                        // Remaining amount
-                                        summaryHtml += `<div class="mb-2">
-                                            <strong>کۆی گشتی ماوە:</strong> 
-                                            ${response.summary.remaining_amount.toLocaleString()} دینار
-                                        </div>`;
-                                        
-                                        // New debt
-                                        if (response.summary.new_debt !== undefined) {
-                                            summaryHtml += `<div class="mb-2">
-                                                <strong>قەرزی نوێ:</strong> 
-                                                ${response.summary.new_debt.toLocaleString()} دینار
-                                            </div>`;
-                                        }
-                                        
-                                        // Returned items
+                                        // Remaining items
                                         summaryHtml += '<div class="mb-2"><strong>کاڵاکانی گەڕاوە:</strong></div>';
                                         summaryHtml += '<div class="table-responsive"><table class="table table-sm table-bordered">';
-                                        summaryHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی کڕین</th><th>بڕی پێشوو گەڕاوە</th><th>بڕی گەڕانەوە</th><th>کۆی گەڕاوەکان</th><th>بڕی ماوە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
+                                        summaryHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی گەڕانەوە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
                                         summaryHtml += '<tbody>';
                                         
                                         response.summary.returned_items.forEach(item => {
                                             summaryHtml += `<tr>
                                                 <td>${item.product_name}</td>
-                                                <td>${item.original_quantity}</td>
-                                                <td>${item.previously_returned}</td>
                                                 <td>${item.returned_quantity}</td>
-                                                <td>${item.total_returned_quantity}</td>
-                                                <td>${item.remaining_quantity}</td>
                                                 <td>${item.unit_price.toLocaleString()} دینار</td>
                                                 <td>${item.total_price.toLocaleString()} دینار</td>
                                             </tr>`;
