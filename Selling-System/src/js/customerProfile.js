@@ -457,4 +457,208 @@ function formatDate(dateString) {
         month: '2-digit',
         day: '2-digit'
     });
-} 
+}
+
+// Return sale button handler
+$(document).on('click', '.return-sale', function() {
+    const saleId = $(this).data('id');
+    const invoiceNumber = $(this).data('invoice');
+    
+    // Get sale items
+    $.ajax({
+        url: '../../ajax/get_sale_items.php',
+        type: 'POST',
+        data: {
+            sale_id: saleId
+        },
+        dataType: 'json',
+        success: function(data) {
+            if (data.success) {
+                // Create return form
+                let itemsHtml = '<form id="returnSaleForm">';
+                itemsHtml += '<input type="hidden" name="sale_id" value="' + saleId + '">';
+                
+                // Add introduction text explaining return limits
+                itemsHtml += '<div class="alert alert-info mb-3">';
+                itemsHtml += '<i class="fas fa-info-circle me-2"></i> ';
+                itemsHtml += 'تکایە ئاگاداربە کە ناتوانیت لە بڕی ئەسڵی کەمتر بڕێک بگەڕێنیتەوە. ';
+                itemsHtml += 'هەروەها ناتوانیت کاڵایەک دووبارە بگەڕێنیتەوە کە پێشتر گەڕێنراوەتەوە.';
+                itemsHtml += '</div>';
+                
+                itemsHtml += '<div class="table-responsive"><table class="table table-bordered">';
+                itemsHtml += '<thead><tr>';
+                itemsHtml += '<th>ناوی کاڵا</th>';
+                itemsHtml += '<th>بڕی فرۆشتن</th>';
+                itemsHtml += '<th>گەڕاوە پێشتر</th>';
+                itemsHtml += '<th>بەردەست بۆ گەڕاندنەوە</th>';
+                itemsHtml += '<th>بڕی گەڕاندنەوە</th>';
+                itemsHtml += '</tr></thead>';
+                itemsHtml += '<tbody>';
+                
+                data.items.forEach(item => {
+                    // Calculate max returnable amount (total quantity - already returned quantity)
+                    const originalQty = parseFloat(item.quantity);
+                    const returnedQty = parseFloat(item.returned_quantity || 0);
+                    const maxReturnable = originalQty - returnedQty;
+                    
+                    // Skip if nothing left to return
+                    if (maxReturnable <= 0) {
+                        itemsHtml += `<tr class="table-secondary">
+                            <td>${item.product_name}</td>
+                            <td>${originalQty} ${item.unit_type}</td>
+                            <td>${returnedQty} ${item.unit_type}</td>
+                            <td>0 ${item.unit_type}</td>
+                            <td><span class="badge bg-secondary">هەمووی گەڕاوەتەوە</span></td>
+                        </tr>`;
+                    } else {
+                        itemsHtml += `<tr>
+                            <td>${item.product_name}</td>
+                            <td>${originalQty} ${item.unit_type}</td>
+                            <td>${returnedQty} ${item.unit_type}</td>
+                            <td><strong class="text-success">${maxReturnable} ${item.unit_type}</strong></td>
+                            <td>
+                                <div class="input-group">
+                                    <input type="number" class="form-control return-quantity" 
+                                        name="return_quantities[${item.id}]" 
+                                        min="0" max="${maxReturnable}" value="0"
+                                        step="0.001">
+                                    <span class="input-group-text">${item.unit_type}</span>
+                                </div>
+                            </td>
+                        </tr>`;
+                    }
+                });
+                
+                itemsHtml += '</tbody></table></div>';
+                itemsHtml += '<div class="mb-3">';
+                itemsHtml += '<label for="returnReason" class="form-label">هۆکاری گەڕانەوە</label>';
+                itemsHtml += '<select class="form-select" name="reason" id="returnReason">';
+                itemsHtml += '<option value="damaged">شکاو/خراپ</option>';
+                itemsHtml += '<option value="wrong_product">کاڵای هەڵە</option>';
+                itemsHtml += '<option value="other">هۆکاری تر</option>';
+                itemsHtml += '</select>';
+                itemsHtml += '</div>';
+                itemsHtml += '<div class="mb-3">';
+                itemsHtml += '<label for="returnNotes" class="form-label">تێبینی</label>';
+                itemsHtml += '<textarea class="form-control" id="returnNotes" name="notes" rows="3"></textarea>';
+                itemsHtml += '</div>';
+                itemsHtml += '</form>';
+                
+                Swal.fire({
+                    title: `گەڕاندنەوەی کاڵا - پسووڵە ${invoiceNumber}`,
+                    html: itemsHtml,
+                    width: '800px',
+                    showCancelButton: true,
+                    confirmButtonText: 'گەڕاندنەوە',
+                    cancelButtonText: 'هەڵوەشاندنەوە',
+                    showLoaderOnConfirm: true,
+                    preConfirm: () => {
+                        // Validate that at least one item has been selected for return
+                        let hasReturns = false;
+                        document.querySelectorAll('.return-quantity').forEach(input => {
+                            if (parseFloat(input.value) > 0) {
+                                hasReturns = true;
+                            }
+                        });
+                        
+                        if (!hasReturns) {
+                            Swal.showValidationMessage('تکایە لانی کەم یەک کاڵا هەڵبژێرە بۆ گەڕاندنەوە');
+                            return false;
+                        }
+                        
+                        const formData = new FormData(document.getElementById('returnSaleForm'));
+                        // Add receipt_type parameter to indicate this is a sale (selling) return
+                        formData.append('receipt_type', 'selling');
+                        
+                        return $.ajax({
+                            url: '../../ajax/return_sale.php',
+                            type: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            dataType: 'json'
+                        });
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const response = result.value;
+                        if (response.success) {
+                            // Create summary HTML
+                            let summaryHtml = '<div class="return-summary mt-3">';
+                            summaryHtml += '<h5 class="mb-3">کورتەی گەڕانەوە</h5>';
+                            
+                            // Original total
+                            summaryHtml += `<div class="mb-2">
+                                <strong>کۆی گشتی پسووڵە:</strong> 
+                                ${response.summary.original_total.toLocaleString()} دینار
+                            </div>`;
+                            
+                            // Return count
+                            summaryHtml += `<div class="mb-2">
+                                <strong>ژمارەی گەڕانەوەکان:</strong> 
+                                ${response.summary.return_count}
+                            </div>`;
+                            
+                            // Returned amount
+                            summaryHtml += `<div class="mb-2">
+                                <strong>کۆی گشتی گەڕاوە:</strong> 
+                                ${response.summary.returned_amount.toLocaleString()} دینار
+                            </div>`;
+                            
+                            // Remaining items
+                            summaryHtml += '<div class="mb-2"><strong>کاڵاکانی گەڕاوە:</strong></div>';
+                            summaryHtml += '<div class="table-responsive"><table class="table table-sm table-bordered">';
+                            summaryHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی گەڕانەوە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
+                            summaryHtml += '<tbody>';
+                            
+                            response.summary.returned_items.forEach(item => {
+                                summaryHtml += `<tr>
+                                    <td>${item.product_name}</td>
+                                    <td>${item.returned_quantity}</td>
+                                    <td>${item.unit_price.toLocaleString()} دینار</td>
+                                    <td>${item.total_price.toLocaleString()} دینار</td>
+                                </tr>`;
+                            });
+                            
+                            summaryHtml += '</tbody></table></div>';
+                            summaryHtml += '</div>';
+                            
+                            // Show success message with summary
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'سەرکەوتوو',
+                                html: summaryHtml,
+                                confirmButtonText: 'باشە'
+                            }).then(() => {
+                                // Reload the page to show updated data
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'هەڵە',
+                                text: response.message || 'هەڵەیەک ڕوویدا لە گەڕاندنەوەی کاڵاکان',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    }
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: data.message || 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیاری کاڵاکان',
+                    confirmButtonText: 'باشە'
+                });
+            }
+        },
+        error: function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'هەڵە',
+                text: 'هەڵەیەک ڕوویدا لە پەیوەندی کردن بە سێرڤەرەوە',
+                confirmButtonText: 'باشە'
+            });
+        }
+    });
+}); 
