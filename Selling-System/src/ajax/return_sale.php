@@ -15,7 +15,7 @@ try {
     }
 
     $sale_id = intval($_POST['sale_id']);
-    $receipt_type = $_POST['receipt_type'];
+    $receipt_type = 'selling';
     $reason = $_POST['reason'] ?? 'other';
     $notes = $_POST['notes'] ?? '';
     $return_quantities = $_POST['return_quantities'] ?? [];
