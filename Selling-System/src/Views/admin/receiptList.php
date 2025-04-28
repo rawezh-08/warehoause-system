@@ -1,49 +1,26 @@
 <?php
 require_once '../../config/database.php';
 require_once '../../includes/auth.php';
-
-// Start session if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once '../../controllers/receipts/WastingReceiptsController.php';
 
 // Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header('Location: ../../auth/login.php');
-    exit();
+if (!isLoggedIn()) {
+    header("Location: ../auth/login.php");
+    exit;
 }
 
-// Get database connection
+// Create database connection
 $database = new Database();
 $conn = $database->getConnection();
 
-// Get all sales with their items and return status
-$stmt = $conn->prepare("
-    SELECT 
-        s.id as sale_id,
-        s.invoice_number,
-        s.sale_date,
-        s.total_amount,
-        s.paid_amount,
-        s.remaining_amount,
-        c.name as customer_name,
-        c.phone as customer_phone,
-        GROUP_CONCAT(
-            CONCAT(
-                p.name, ' (', si.quantity, ' ', si.unit_type, ')',
-                ' - گەڕاوە: ', COALESCE(si.returned_quantity, 0)
-            ) SEPARATOR ' | '
-        ) as items_details
-    FROM sales s
-    LEFT JOIN customers c ON s.customer_id = c.id
-    LEFT JOIN sale_items si ON s.id = si.sale_id
-    LEFT JOIN products p ON si.product_id = p.id
-    GROUP BY s.id
-    ORDER BY s.sale_date DESC
-");
+// Initialize wastings controller
+$wastingController = new WastingReceiptsController($conn);
 
-$stmt->execute();
-$sales = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Get wasting data
+$wastings = $wastingController->getWastingData();
+
+// Page title
+$title = "لیستی پسووڵەکان";
 ?>
 
 <!DOCTYPE html>
@@ -51,108 +28,35 @@ $sales = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لیستی پسووڵەکان</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <title><?php echo $title; ?> - سیستەمی فرۆشتن</title>
+    
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Datatables -->
+    <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" rel="stylesheet">
+    
+    <!-- SweetAlert2 -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <link href="../../assets/css/style.css" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
-        }
-        .navbar {
-            background-color: #2c3e50;
-        }
-        .navbar-brand {
-            color: #ecf0f1 !important;
-            font-weight: bold;
-        }
-        .nav-link {
-            color: #ecf0f1 !important;
-        }
-        .nav-link:hover {
-            color: #3498db !important;
-        }
         .card {
-            border: none;
             border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        .card-header {
-            background-color: #2c3e50;
-            color: #ecf0f1;
-            border-radius: 10px 10px 0 0 !important;
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 123, 255, 0.1);
         }
-        .table {
-            margin-bottom: 0;
+        .tab-content {
+            padding: 20px 0;
         }
-        .table th {
-            background-color: #f8f9fa;
-            border-top: none;
-        }
-        .btn-primary {
-            background-color: #3498db;
-            border-color: #3498db;
-        }
-        .btn-primary:hover {
-            background-color: #2980b9;
-            border-color: #2980b9;
-        }
-        .btn-danger {
-            background-color: #e74c3c;
-            border-color: #e74c3c;
-        }
-        .btn-danger:hover {
-            background-color: #c0392b;
-            border-color: #c0392b;
-        }
-        .btn-success {
-            background-color: #2ecc71;
-            border-color: #2ecc71;
-        }
-        .btn-success:hover {
-            background-color: #27ae60;
-            border-color: #27ae60;
-        }
-        .badge {
-            padding: 8px 12px;
-            border-radius: 20px;
-        }
-        .badge-success {
-            background-color: #2ecc71;
-        }
-        .badge-warning {
-            background-color: #f1c40f;
-        }
-        .badge-danger {
-            background-color: #e74c3c;
-        }
-        .badge-info {
-            background-color: #3498db;
-        }
-        .search-box {
-            position: relative;
-        }
-        .search-box input {
-            padding-right: 40px;
-            border-radius: 20px;
-        }
-        .search-box i {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #7f8c8d;
-        }
-        .table-responsive {
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        .table th, .table td {
-            vertical-align: middle;
-        }
-        .action-buttons {
-            white-space: nowrap;
+        .nav-tabs .nav-link {
+            font-weight: 600;
         }
         .action-buttons .btn {
             margin: 0 2px;
@@ -160,305 +64,383 @@ $sales = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
-        <div class="container">
-            <a class="navbar-brand" href="#">سیستەمی کۆگا</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="../admin/dashboard.php">داشبۆرد</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="../admin/products.php">کاڵاکان</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="../admin/sales.php">فرۆشتن</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="../admin/purchases.php">کڕین</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="../admin/customers.php">کڕیارەکان</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="../admin/suppliers.php">دابینکارەکان</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="../admin/inventory.php">کۆگا</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="../admin/reports.php">ڕاپۆرتەکان</a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="../../auth/logout.php">چوونەدەرەوە</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">لیستی پسووڵەکان</h5>
-                <div class="search-box">
-                    <input type="text" class="form-control" id="searchInput" placeholder="گەڕان...">
-                    <i class='bx bx-search'></i>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover" id="salesTable">
-                        <thead>
-                            <tr>
-                                <th>ژمارەی پسووڵە</th>
-                                <th>بەروار</th>
-                                <th>کڕیار</th>
-                                <th>کاڵاکان</th>
-                                <th>کۆی گشتی</th>
-                                <th>پارەی دراو</th>
-                                <th>بڕی ماوە</th>
-                                <th>کردارەکان</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($sales as $sale): ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($sale['invoice_number']); ?></td>
-                                <td><?php echo date('Y-m-d', strtotime($sale['sale_date'])); ?></td>
-                                <td>
-                                    <?php echo htmlspecialchars($sale['customer_name']); ?><br>
-                                    <small class="text-muted"><?php echo htmlspecialchars($sale['customer_phone']); ?></small>
-                                </td>
-                                <td><?php echo htmlspecialchars($sale['items_details']); ?></td>
-                                <td><?php echo number_format($sale['total_amount'], 2); ?> دینار</td>
-                                <td><?php echo number_format($sale['paid_amount'], 2); ?> دینار</td>
-                                <td><?php echo number_format($sale['remaining_amount'], 2); ?> دینار</td>
-                                <td class="action-buttons">
-                                    <button class="btn btn-sm btn-info view-sale" data-id="<?php echo $sale['sale_id']; ?>">
-                                        <i class='bx bx-show'></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-warning return-sale" 
-                                            data-id="<?php echo $sale['sale_id']; ?>"
-                                            data-invoice="<?php echo $sale['invoice_number']; ?>">
-                                        <i class='bx bx-undo'></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+    <!-- Header -->
+    <?php include_once '../../components/header.php'; ?>
+    
+    <!-- Main Content -->
+    <div class="container-fluid my-4">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-receipt me-2"></i> <?php echo $title; ?>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Nav tabs -->
+                        <ul class="nav nav-tabs" id="receiptsTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="sales-tab" data-bs-toggle="tab" data-bs-target="#sales" 
+                                        type="button" role="tab" aria-controls="sales" aria-selected="true">
+                                    <i class="fas fa-shopping-cart me-1"></i> فرۆشتنەکان
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="purchases-tab" data-bs-toggle="tab" data-bs-target="#purchases" 
+                                        type="button" role="tab" aria-controls="purchases" aria-selected="false">
+                                    <i class="fas fa-truck me-1"></i> کڕینەکان
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="wastings-tab" data-bs-toggle="tab" data-bs-target="#wastings" 
+                                        type="button" role="tab" aria-controls="wastings" aria-selected="false">
+                                    <i class="fas fa-trash-alt me-1"></i> کاڵا بەفیڕۆچووەکان
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <!-- Tab content -->
+                        <div class="tab-content" id="receiptsTabsContent">
+                            <!-- Sales Tab -->
+                            <div class="tab-pane fade show active" id="sales" role="tabpanel" aria-labelledby="sales-tab">
+                                <div class="table-responsive">
+                                    <table id="salesTable" class="table table-striped table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>ژ.پسووڵە</th>
+                                                <th>بەروار</th>
+                                                <th>کڕیار</th>
+                                                <th>شێوازی پارەدان</th>
+                                                <th>کۆی گشتی</th>
+                                                <th>کردارەکان</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Sales data will be loaded using AJAX -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- Purchases Tab -->
+                            <div class="tab-pane fade" id="purchases" role="tabpanel" aria-labelledby="purchases-tab">
+                                <div class="table-responsive">
+                                    <table id="purchasesTable" class="table table-striped table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>ژ.پسووڵە</th>
+                                                <th>بەروار</th>
+                                                <th>دابینکەر</th>
+                                                <th>شێوازی پارەدان</th>
+                                                <th>کۆی گشتی</th>
+                                                <th>کردارەکان</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Purchases data will be loaded using AJAX -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- Wastings Tab -->
+                            <div class="tab-pane fade" id="wastings" role="tabpanel" aria-labelledby="wastings-tab">
+                                <div class="mb-3 text-end">
+                                    <a href="../transactions/wasting.php" class="btn btn-primary">
+                                        <i class="fas fa-plus-circle me-1"></i> زیادکردنی کاڵای بەفیڕۆچوو
+                                    </a>
+                                </div>
+                                <div class="table-responsive">
+                                    <table id="wastingsTable" class="table table-striped table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>بەروار</th>
+                                                <th>کاڵاکان</th>
+                                                <th>تێبینی</th>
+                                                <th>کۆی گشتی</th>
+                                                <th>کردارەکان</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($wastings as $wasting): ?>
+                                            <tr>
+                                                <td><?php echo $wasting['id']; ?></td>
+                                                <td><?php echo date('Y-m-d', strtotime($wasting['date'])); ?></td>
+                                                <td><?php echo $wasting['products_list']; ?></td>
+                                                <td><?php echo $wasting['notes']; ?></td>
+                                                <td><?php echo number_format($wasting['total_amount']); ?> دینار</td>
+                                                <td class="action-buttons">
+                                                    <button class="btn btn-sm btn-info view-wasting" 
+                                                            data-id="<?php echo $wasting['id']; ?>" title="نیشاندان">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-danger delete-wasting" 
+                                                            data-id="<?php echo $wasting['id']; ?>" title="سڕینەوە">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Footer -->
+    <?php include_once '../../components/footer.php'; ?>
+    
+    <!-- View Wasting Modal -->
+    <div class="modal fade" id="viewWastingModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-info-circle me-2"></i>وردەکاری کاڵای بەفیڕۆچوو
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="wastingDetails">
+                    <!-- Wasting details will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary print-wasting-receipt">
+                        <i class="fas fa-print me-1"></i> چاپکردن
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.4.1/js/responsive.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <script>
         $(document).ready(function() {
-            // Search functionality
-            $("#searchInput").on("keyup", function() {
-                var value = $(this).val().toLowerCase();
-                $("#salesTable tbody tr").filter(function() {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-                });
+            // Initialize DataTables
+            $('#salesTable').DataTable({
+                responsive: true,
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/ku.json',
+                },
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '../../ajax/get_sales_list.php',
+                    type: 'POST'
+                },
+                columns: [
+                    { data: 'invoice_number' },
+                    { data: 'date' },
+                    { data: 'customer_name' },
+                    { data: 'payment_type' },
+                    { data: 'total_amount' },
+                    { data: 'actions', orderable: false, searchable: false }
+                ]
             });
-
-            // View sale details
-            $(document).on('click', '.view-sale', function() {
-                const saleId = $(this).data('id');
-                // Implement view sale details functionality
-                Swal.fire({
-                    title: 'زانیارییەکانی پسووڵە',
-                    text: 'ئەم بەشە لە ژێر پەرەپێدانە',
-                    icon: 'info',
-                    confirmButtonText: 'باشە'
-                });
+            
+            $('#purchasesTable').DataTable({
+                responsive: true,
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/ku.json',
+                },
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '../../ajax/get_purchases_list.php',
+                    type: 'POST'
+                },
+                columns: [
+                    { data: 'invoice_number' },
+                    { data: 'date' },
+                    { data: 'supplier_name' },
+                    { data: 'payment_type' },
+                    { data: 'total_amount' },
+                    { data: 'actions', orderable: false, searchable: false }
+                ]
             });
-
-            // Return sale button handler
-            $(document).on('click', '.return-sale', function() {
-                const saleId = $(this).data('id');
-                const invoiceNumber = $(this).data('invoice');
+            
+            $('#wastingsTable').DataTable({
+                responsive: true,
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/ku.json',
+                }
+            });
+            
+            // View Wasting Details
+            $(document).on('click', '.view-wasting', function() {
+                const wastingId = $(this).data('id');
                 
-                // Show loading
-                Swal.fire({
-                    title: 'تکایە چاوەڕێ بکە...',
-                    text: 'زانیارییەکان وەردەگیرێن',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-                
-                // Get sale items
                 $.ajax({
-                    url: '../../ajax/get_sale_items.php',
+                    url: '../../ajax/get_wasting_details.php',
                     type: 'POST',
-                    data: {
-                        sale_id: saleId
-                    },
+                    data: { wasting_id: wastingId },
                     dataType: 'json',
                     success: function(response) {
-                        Swal.close();
-                        
-                        if (response.success) {
-                            // Check if sale has payments
-                            if (response.has_payments) {
-                                Swal.fire({
-                                    title: 'هەڵە!',
-                                    text: 'ناتوانرێت ئەم پسووڵە بگەڕێتەوە چونکە پارەدانەوەی لەسەر تۆمار کراوە',
-                                    icon: 'error',
-                                    confirmButtonText: 'باشە'
-                                });
-                                return;
-                            }
+                        if (response.status === 'success') {
+                            const wasting = response.wasting;
                             
-                            // Create return form
-                            let itemsHtml = '<form id="returnSaleForm">';
-                            itemsHtml += '<input type="hidden" name="sale_id" value="' + saleId + '">';
-                            itemsHtml += '<input type="hidden" name="receipt_type" value="selling">';
-                            itemsHtml += '<div class="table-responsive"><table class="table table-bordered">';
-                            itemsHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی کڕین</th><th>بڕی گەڕانەوە</th></tr></thead>';
-                            itemsHtml += '<tbody>';
-                            
-                            response.items.forEach(item => {
-                                // Calculate max returnable amount (total quantity - already returned quantity)
-                                const maxReturnable = item.quantity - (item.returned_quantity || 0);
+                            // Build details HTML
+                            let detailsHtml = `
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <p><strong>ژمارەی تۆمار:</strong> ${wasting.id}</p>
+                                        <p><strong>بەروار:</strong> ${wasting.date}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>کۆی گشتی:</strong> ${wasting.total_amount.toLocaleString()} دینار</p>
+                                        <p><strong>تێبینی:</strong> ${wasting.notes || 'هیچ'}</p>
+                                    </div>
+                                </div>
                                 
-                                if (maxReturnable > 0) {
-                                    itemsHtml += `<tr>
+                                <h5 class="mt-4 mb-3">کاڵاکان</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>ناوی کاڵا</th>
+                                                <th>بڕ</th>
+                                                <th>نرخی تاک</th>
+                                                <th>نرخی گشتی</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>`;
+                            
+                            wasting.items.forEach((item, index) => {
+                                let unitType = '';
+                                switch(item.unit_type) {
+                                    case 'piece': unitType = 'دانە'; break;
+                                    case 'box': unitType = 'کارتۆن'; break;
+                                    case 'set': unitType = 'سێت'; break;
+                                    default: unitType = 'دانە';
+                                }
+                                
+                                detailsHtml += `
+                                    <tr>
+                                        <td>${index + 1}</td>
                                         <td>${item.product_name}</td>
-                                        <td>${item.quantity} (${item.returned_quantity || 0} گەڕاوە پێشتر)</td>
-                                        <td>
-                                            <input type="number" class="form-control return-quantity" 
-                                                name="return_quantities[${item.id}]" 
-                                                min="0" max="${maxReturnable}" value="0">
-                                        </td>
+                                        <td>${item.quantity} ${unitType}</td>
+                                        <td>${item.unit_price.toLocaleString()} دینار</td>
+                                        <td>${item.total_price.toLocaleString()} دینار</td>
                                     </tr>`;
-                                }
                             });
                             
-                            itemsHtml += '</tbody></table></div>';
-                            itemsHtml += '<div class="mb-3">';
-                            itemsHtml += '<label for="returnReason" class="form-label">هۆکاری گەڕانەوە</label>';
-                            itemsHtml += '<select class="form-select" name="reason" id="returnReason">';
-                            itemsHtml += '<option value="damaged">شکاو/خراپ</option>';
-                            itemsHtml += '<option value="wrong_product">کاڵای هەڵە</option>';
-                            itemsHtml += '<option value="other">هۆکاری تر</option>';
-                            itemsHtml += '</select>';
-                            itemsHtml += '</div>';
-                            itemsHtml += '<div class="mb-3">';
-                            itemsHtml += '<label for="returnNotes" class="form-label">تێبینی</label>';
-                            itemsHtml += '<textarea class="form-control" id="returnNotes" name="notes" rows="3"></textarea>';
-                            itemsHtml += '</div>';
-                            itemsHtml += '</form>';
+                            detailsHtml += `
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <th colspan="4" class="text-end">کۆی گشتی:</th>
+                                                <th>${wasting.total_amount.toLocaleString()} دینار</th>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>`;
                             
-                            Swal.fire({
-                                title: `گەڕاندنەوەی کاڵا - پسووڵە ${invoiceNumber}`,
-                                html: itemsHtml,
-                                showCancelButton: true,
-                                confirmButtonText: 'گەڕاندنەوە',
-                                cancelButtonText: 'هەڵوەشاندنەوە',
-                                showLoaderOnConfirm: true,
-                                preConfirm: () => {
-                                    const formData = new FormData(document.getElementById('returnSaleForm'));
-                                    return $.ajax({
-                                        url: '../../ajax/return_sale.php',
-                                        type: 'POST',
-                                        data: formData,
-                                        processData: false,
-                                        contentType: false,
-                                        dataType: 'json'
-                                    });
-                                }
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    const response = result.value;
-                                    if (response.success) {
-                                        // Create summary HTML
-                                        let summaryHtml = '<div class="return-summary mt-3">';
-                                        summaryHtml += '<h5 class="mb-3">کورتەی گەڕانەوە</h5>';
-                                        
-                                        // Original total
-                                        summaryHtml += `<div class="mb-2">
-                                            <strong>کۆی گشتی پسووڵە:</strong> 
-                                            ${response.summary.original_total.toLocaleString()} دینار
-                                        </div>`;
-                                        
-                                        // Return count
-                                        summaryHtml += `<div class="mb-2">
-                                            <strong>ژمارەی گەڕانەوەکان:</strong> 
-                                            ${response.summary.return_count}
-                                        </div>`;
-                                        
-                                        // Returned amount
-                                        summaryHtml += `<div class="mb-2">
-                                            <strong>کۆی گشتی گەڕاوە:</strong> 
-                                            ${response.summary.returned_amount.toLocaleString()} دینار
-                                        </div>`;
-                                        
-                                        // Remaining items
-                                        summaryHtml += '<div class="mb-2"><strong>کاڵاکانی گەڕاوە:</strong></div>';
-                                        summaryHtml += '<div class="table-responsive"><table class="table table-sm table-bordered">';
-                                        summaryHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی گەڕانەوە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
-                                        summaryHtml += '<tbody>';
-                                        
-                                        response.summary.returned_items.forEach(item => {
-                                            summaryHtml += `<tr>
-                                                <td>${item.product_name}</td>
-                                                <td>${item.returned_quantity}</td>
-                                                <td>${item.unit_price.toLocaleString()} دینار</td>
-                                                <td>${item.total_price.toLocaleString()} دینار</td>
-                                            </tr>`;
-                                        });
-                                        
-                                        summaryHtml += '</tbody></table></div>';
-                                        summaryHtml += '</div>';
-                                        
-                                        Swal.fire({
-                                            title: 'سەرکەوتوو بوو!',
-                                            html: response.message + summaryHtml,
-                                            icon: 'success',
-                                            confirmButtonText: 'باشە'
-                                        }).then(() => {
-                                            location.reload();
-                                        });
-                                    } else {
-                                        Swal.fire({
-                                            title: 'هەڵە!',
-                                            text: response.message,
-                                            icon: 'error',
-                                            confirmButtonText: 'باشە'
-                                        });
-                                    }
-                                }
-                            });
+                            // Set wasting details to modal
+                            $('#wastingDetails').html(detailsHtml);
+                            $('#viewWastingModal').modal('show');
+                            
+                            // Store wasting ID for printing
+                            $('.print-wasting-receipt').data('id', wastingId);
                         } else {
                             Swal.fire({
                                 title: 'هەڵە!',
-                                text: response.message || 'هەڵەیەک ڕوویدا لە وەرگرتنی کاڵاکان',
+                                text: response.message,
                                 icon: 'error',
                                 confirmButtonText: 'باشە'
                             });
                         }
                     },
                     error: function(xhr, status, error) {
-                        Swal.close();
-                        console.error('Ajax error:', error);
                         Swal.fire({
                             title: 'هەڵە!',
-                            text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
+                            text: 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیارییەکان',
                             icon: 'error',
                             confirmButtonText: 'باشە'
+                        });
+                    }
+                });
+            });
+            
+            // Print Wasting Receipt
+            $(document).on('click', '.print-wasting-receipt', function() {
+                const wastingId = $(this).data('id');
+                const printWindow = window.open(`../receipt/wasting_receipt.php?id=${wastingId}`, '_blank');
+                
+                if (printWindow) {
+                    printWindow.addEventListener('load', function() {
+                        printWindow.print();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'ئاگاداری',
+                        text: 'تکایە ڕێگە بدە بە کردنەوەی پەنجەرەی نوێ بۆ چاپکردن',
+                        icon: 'warning',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            });
+            
+            // Delete Wasting
+            $(document).on('click', '.delete-wasting', function() {
+                const wastingId = $(this).data('id');
+                
+                Swal.fire({
+                    title: 'ئایا دڵنیایت؟',
+                    text: 'ئەم کردارە ناگەڕێتەوە!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'بەڵێ، بیسڕەوە!',
+                    cancelButtonText: 'نەخێر، هەڵوەشاندنەوە'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '../../ajax/delete_wasting.php',
+                            type: 'POST',
+                            data: { wasting_id: wastingId },
+                            dataType: 'json',
+                            success: function(response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        title: 'سڕایەوە!',
+                                        text: response.message,
+                                        icon: 'success',
+                                        confirmButtonText: 'باشە'
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        title: 'هەڵە!',
+                                        text: response.message,
+                                        icon: 'error',
+                                        confirmButtonText: 'باشە'
+                                    });
+                                }
+                            },
+                            error: function(xhr, status, error) {
+                                Swal.fire({
+                                    title: 'هەڵە!',
+                                    text: 'هەڵەیەک ڕوویدا لە سڕینەوەدا',
+                                    icon: 'error',
+                                    confirmButtonText: 'باشە'
+                                });
+                            }
                         });
                     }
                 });
@@ -466,4 +448,4 @@ $sales = $stmt->fetchAll(PDO::FETCH_ASSOC);
         });
     </script>
 </body>
-</html> 
+</html>

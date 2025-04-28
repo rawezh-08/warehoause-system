@@ -23,4 +23,9 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 
 
 // Update last activity time
 $_SESSION['last_activity'] = time();
+
+// Function to check if user is logged in
+function isLoggedIn() {
+    return isset($_SESSION['admin_id']) && !empty($_SESSION['admin_id']);
+}
 ?> 
