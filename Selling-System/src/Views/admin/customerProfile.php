@@ -1773,26 +1773,16 @@ foreach ($debtTransactions as $debtTransaction) {
                                 title: 'سەرکەوتوو بوو!',
                                 text: data.message,
                                 icon: 'success',
-                                confirmButtonText: 'باشە',
-                                showConfirmButton: true,
-                                allowOutsideClick: false,
-                                allowEscapeKey: false,
-                                timer: 2000,
-                                timerProgressBar: true
+                                confirmButtonText: 'باشە'
                             }).then(() => {
-                                setTimeout(() => {
-                                    location.reload();
-                                }, 500);
+                                location.reload();
                             });
                         } else {
                             Swal.fire({
                                 title: 'هەڵە!',
                                 text: data.message,
                                 icon: 'error',
-                                confirmButtonText: 'باشە',
-                                showConfirmButton: true,
-                                allowOutsideClick: false,
-                                allowEscapeKey: false
+                                confirmButtonText: 'باشە'
                             });
                         }
                     },
@@ -1864,26 +1854,16 @@ foreach ($debtTransactions as $debtTransaction) {
                                 title: 'سەرکەوتوو بوو!',
                                 text: 'گەڕانەوەی قەرز بەسەرکەوتوویی تۆمارکرا',
                                 icon: 'success',
-                                confirmButtonText: 'باشە',
-                                showConfirmButton: true,
-                                allowOutsideClick: false,
-                                allowEscapeKey: false,
-                                timer: 2000,
-                                timerProgressBar: true
+                                confirmButtonText: 'باشە'
                             }).then(() => {
-                                setTimeout(() => {
-                                    location.reload();
-                                }, 500);
+                                location.reload();
                             });
                         } else {
                             Swal.fire({
                                 title: 'هەڵە!',
                                 text: data.message || 'هەڵەیەک ڕوویدا لە تۆمارکردنی گەڕانەوەی قەرز',
                                 icon: 'error',
-                                confirmButtonText: 'باشە',
-                                showConfirmButton: true,
-                                allowOutsideClick: false,
-                                allowEscapeKey: false
+                                confirmButtonText: 'باشە'
                             });
                         }
                     },
@@ -1923,35 +1903,13 @@ foreach ($debtTransactions as $debtTransaction) {
             $(document).on('click', '.print-receipt-btn', function(e) {
                 e.preventDefault(); // Prevent default action
                 const transactionId = $(this).data('id');
-                console.log('Print button clicked for transaction ID:', transactionId);
-                
-                const printUrl = `../../Views/receipt/customer_history_receipt.php?transaction_id=${transactionId}`;
-                console.log('Opening print URL:', printUrl);
-                
-                const printWindow = window.open(printUrl, '_blank');
+                const printWindow = window.open(`../../Views/receipt/customer_history_receipt.php?transaction_id=${transactionId}`, '_blank');
                 
                 if (printWindow) {
-                    console.log('Print window opened successfully');
                     printWindow.addEventListener('load', function() {
-                        console.log('Print window loaded, attempting to print');
-                        try {
-                            printWindow.print();
-                            console.log('Print command executed');
-                        } catch (error) {
-                            console.error('Error during print:', error);
-                            Swal.fire({
-                                title: 'هەڵە!',
-                                text: 'هەڵەیەک ڕوویدا لە کاتی چاپکردن: ' + error.message,
-                                icon: 'error',
-                                confirmButtonText: 'باشە',
-                                showConfirmButton: true,
-                                allowOutsideClick: false,
-                                allowEscapeKey: false
-                            });
-                        }
+                        printWindow.print();
                     });
                 } else {
-                    console.error('Failed to open print window');
                     Swal.fire({
                         title: 'ئاگاداری',
                         text: 'تکایە ڕێگە بدە بە کردنەوەی پەنجەرەی نوێ بۆ چاپکردن',
@@ -1959,6 +1917,377 @@ foreach ($debtTransactions as $debtTransaction) {
                         confirmButtonText: 'باشە'
                     });
                 }
+            });
+
+            // Handle show invoice items button click
+            $(document).on('click', '.show-invoice-items', function() {
+                const invoiceNumber = $(this).data('invoice');
+                const invoiceItems = <?php echo json_encode($sales); ?>;
+                const items = invoiceItems.filter(item => item.invoice_number === invoiceNumber);
+                
+                let itemsHtml = '<div class="table-responsive"><table class="table table-bordered">';
+                itemsHtml += '<thead><tr><th>ناوی کاڵا</th><th>کۆدی کاڵا</th><th>بڕ</th><th>یەکە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
+                itemsHtml += '<tbody>';
+                
+                items.forEach(item => {
+                    itemsHtml += `<tr>
+                        <td>${item.product_name}</td>
+                        <td>${item.product_code}</td>
+                        <td>${item.quantity}</td>
+                        <td>${item.unit_type === 'piece' ? 'دانە' : (item.unit_type === 'box' ? 'کارتۆن' : 'سێت')}</td>
+                        <td>${item.unit_price.toLocaleString()} دینار</td>
+                        <td>${item.total_price.toLocaleString()} دینار</td>
+                    </tr>`;
+                });
+                
+                itemsHtml += '</tbody></table></div>';
+                
+                Swal.fire({
+                    title: `کاڵاکانی پسووڵە ${invoiceNumber}`,
+                    html: itemsHtml,
+                    width: '80%',
+                    showCloseButton: true,
+                    showConfirmButton: false,
+                    customClass: {
+                        popup: 'swal2-popup-custom'
+                    }
+                });
+            });
+
+            // Add custom CSS for the popup
+            const style = document.createElement('style');
+            style.textContent = `
+                .swal2-popup-custom {
+                    max-width: 90%;
+                    width: 80%;
+                }
+                .swal2-popup-custom .table {
+                    margin-bottom: 0;
+                }
+                .swal2-popup-custom .table th,
+                .swal2-popup-custom .table td {
+                    padding: 0.5rem;
+                    text-align: center;
+                }
+                .swal2-popup-custom .table thead th {
+                    background-color: #f8f9fa;
+                    border-bottom: 2px solid #dee2e6;
+                }
+            `;
+            document.head.appendChild(style);
+
+            // Helper functions
+            function filterTableByDate(tableId) {
+                const startDate = $(`#${tableId}StartDate`).val();
+                const endDate = $(`#${tableId}EndDate`).val();
+                const typeFilter = tableId === 'debt' ? $(`#debtType`).val() : '';
+
+                $(`#${tableId}HistoryTable tbody tr`).each(function () {
+                    let show = true;
+
+                    // Date filtering
+                    if (startDate || endDate) {
+                        const rowDate = new Date($(this).find('td:nth-child(2)').text().split('/').join('-'));
+
+                        if (startDate && new Date(startDate) > rowDate) {
+                            show = false;
+                        }
+
+                        if (endDate && new Date(endDate) < rowDate) {
+                            show = false;
+                        }
+                    }
+
+                    // Type filtering for debt transactions
+                    if (tableId === 'debt' && typeFilter) {
+                        const rowText = $(this).find('td:nth-child(4)').text().trim();
+                        let matchesType = false;
+
+                        switch (typeFilter) {
+                            case 'sale':
+                                matchesType = rowText.includes('فرۆشتن');
+                                break;
+                            case 'purchase':
+                                matchesType = rowText.includes('کڕین');
+                                break;
+                            case 'payment':
+                                matchesType = rowText.includes('پارەدان');
+                                break;
+                            case 'collection':
+                                matchesType = rowText.includes('وەرگرتنی پارە');
+                                break;
+                        }
+
+                        if (!matchesType) {
+                            show = false;
+                        }
+                    }
+
+                    $(this).toggle(show);
+                });
+
+                updatePagination(tableId);
+            }
+
+            function resetTableFilter(tableId) {
+                $(`#${tableId}HistoryTable tbody tr`).show();
+                updatePagination(tableId);
+            }
+
+            // Auto filter functionality
+            $('.auto-filter').on('change', function () {
+                filterSalesTable();
+            });
+
+            function filterSalesTable() {
+                const productId = $('#productFilter').val();
+                const unitType = $('#unitFilter').val();
+                const startDate = $('#startDate').val();
+                const endDate = $('#endDate').val();
+
+                $('#salesHistoryTable tbody tr').each(function () {
+                    let show = true;
+                    const row = $(this);
+
+                    // Product filter
+                    if (productId) {
+                        const productCell = row.find('td:nth-child(4)'); // Product name column
+                        if (productCell.data('product-id') != productId) {
+                            show = false;
+                        }
+                    }
+
+                    // Unit type filter
+                    if (unitType) {
+                        const unitCell = row.find('td:nth-child(7)'); // Unit type column
+                        const unitText = unitCell.text().trim();
+                        let matches = false;
+
+                        switch (unitType) {
+                            case 'piece':
+                                matches = unitText === 'دانە';
+                                break;
+                            case 'box':
+                                matches = unitText === 'کارتۆن';
+                                break;
+                            case 'set':
+                                matches = unitText === 'سێت';
+                                break;
+                        }
+
+                        if (!matches) {
+                            show = false;
+                        }
+                    }
+
+                    // Date range filter
+                    if (startDate || endDate) {
+                        const dateCell = row.find('td:nth-child(3)'); // Date column
+                        const rowDate = new Date(dateCell.text().split('/').reverse().join('-'));
+
+                        if (startDate && new Date(startDate) > rowDate) {
+                            show = false;
+                        }
+
+                        if (endDate && new Date(endDate) < rowDate) {
+                            show = false;
+                        }
+                    }
+
+                    row.toggle(show);
+                });
+
+                // Update pagination after filtering
+                updatePagination('sales');
+            }
+
+            // Reset filters button handler
+            $('#resetFilters').on('click', function () {
+                // Reset all filter values
+                $('#productFilter').val('');
+                $('#unitFilter').val('');
+                $('#startDate').val('');
+                $('#endDate').val('');
+
+                // Show all rows
+                $('#salesHistoryTable tbody tr').show();
+
+                // Reset pagination
+                updatePagination('sales');
+
+                // Add animation to the reset button
+                const $icon = $(this).find('i');
+                $icon.addClass('fa-spin');
+                setTimeout(() => {
+                    $icon.removeClass('fa-spin');
+                }, 500);
+            });
+
+            // Add error handling
+            $(document).ajaxError(function(event, jqxhr, settings, thrownError) {
+                console.error('Ajax Error:', thrownError);
+                console.error('Status:', jqxhr.status);
+                console.error('Response:', jqxhr.responseText);
+            });
+
+            // Add global error handling
+            window.onerror = function(msg, url, lineNo, columnNo, error) {
+                console.error('Error: ' + msg + '\nURL: ' + url + '\nLine: ' + lineNo + '\nColumn: ' + columnNo + '\nError object: ' + JSON.stringify(error));
+                return false;
+            };
+
+            // Save advance payment button handler
+            $('#saveAdvancePaymentBtn').on('click', function () {
+                const advanceAmount = parseInt($('#advanceAmount').val());
+                const customerDebt = <?php echo $customer['debit_on_business']; ?>;
+
+                // Check if customer has debt
+                if (customerDebt > 0) {
+                    Swal.fire({
+                        title: 'ناتوانیت پارەی پێشەکی زیاد بکەیت!',
+                        text: 'ئەم کڕیارە قەرزی هەیە لەسەر. پێویستە سەرەتا قەرزەکەی بدات پێش ئەوەی پارەی پێشەکی وەربگیرێت.',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                    return;
+                }
+
+                // Validate form
+                if (!advanceAmount || advanceAmount <= 0) {
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'تکایە بڕی پارەی پێشەکی بەدروستی داخل بکە',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                    return;
+                }
+
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('customer_id', <?php echo $customer['id']; ?>);
+                formData.append('transaction_type', 'advance_payment');
+                formData.append('amount', advanceAmount);
+
+                // Create JSON notes to store additional information
+                const notesObj = {
+                    payment_method: $('#advancePaymentMethod').val(),
+                    notes: $('#advanceNotes').val(),
+                    advance_date: $('#advanceDate').val()
+                };
+
+                formData.append('notes', JSON.stringify(notesObj));
+
+                // Send AJAX request
+                $.ajax({
+                    url: '../../ajax/save_debt_transaction.php',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        const data = JSON.parse(response);
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'سەرکەوتوو بوو!',
+                                text: 'پارەی پێشەکی بەسەرکەوتوویی تۆمارکرا',
+                                icon: 'success',
+                                confirmButtonText: 'باشە'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: data.message || 'هەڵەیەک ڕوویدا لە تۆمارکردنی پارەی پێشەکی',
+                                icon: 'error',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    },
+                    error: function () {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                });
+            });
+
+            // Print advance payment receipt handler
+            $(document).on('click', '.print-receipt-btn', function(e) {
+                e.preventDefault(); // Prevent default action
+                const transactionId = $(this).data('id');
+                const printWindow = window.open(`../../Views/receipt/customer_advance_receipt.php?transaction_id=${transactionId}`, '_blank');
+                
+                if (printWindow) {
+                    printWindow.addEventListener('load', function() {
+                        printWindow.print();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'ئاگاداری',
+                        text: 'تکایە ڕێگە بدە بە کردنەوەی پەنجەرەی نوێ بۆ چاپکردن',
+                        icon: 'warning',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            });
+
+            // Delete sale button handler
+            $(document).on('click', '.delete-sale', function() {
+                const saleId = $(this).data('id');
+                const invoiceNumber = $(this).data('invoice');
+                
+                Swal.fire({
+                    title: 'دڵنیای لە سڕینەوە؟',
+                    text: `ئایا دڵنیای لە سڕینەوەی پسووڵە ${invoiceNumber}؟`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'بەڵێ، بسڕەوە',
+                    cancelButtonText: 'نەخێر',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '../../ajax/delete_sale.php',
+                            type: 'POST',
+                            data: {
+                                sale_id: saleId
+                            },
+                            success: function(response) {
+                                const data = JSON.parse(response);
+                                if (data.success) {
+                                    Swal.fire({
+                                        title: 'سەرکەوتوو بوو!',
+                                        text: data.message,
+                                        icon: 'success',
+                                        confirmButtonText: 'باشە'
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        title: 'هەڵە!',
+                                        text: data.message,
+                                        icon: 'error',
+                                        confirmButtonText: 'باشە'
+                                    });
+                                }
+                            },
+                            error: function() {
+                                Swal.fire({
+                                    title: 'هەڵە!',
+                                    text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
+                                    icon: 'error',
+                                    confirmButtonText: 'باشە'
+                                });
+                            }
+                        });
+                    }
+                });
             });
 
             // Return sale button handler
@@ -2103,26 +2432,16 @@ foreach ($debtTransactions as $debtTransaction) {
                                             title: 'سەرکەوتوو بوو!',
                                             html: response.message + summaryHtml,
                                             icon: 'success',
-                                            confirmButtonText: 'باشە',
-                                            showConfirmButton: true,
-                                            allowOutsideClick: false,
-                                            allowEscapeKey: false,
-                                            timer: 2000,
-                                            timerProgressBar: true
+                                            confirmButtonText: 'باشە'
                                         }).then(() => {
-                                            setTimeout(() => {
-                                                location.reload();
-                                            }, 500);
+                                            location.reload();
                                         });
                                     } else {
                                         Swal.fire({
                                             title: 'هەڵە!',
                                             text: response.message,
                                             icon: 'error',
-                                            confirmButtonText: 'باشە',
-                                            showConfirmButton: true,
-                                            allowOutsideClick: false,
-                                            allowEscapeKey: false
+                                            confirmButtonText: 'باشە'
                                         });
                                     }
                                 }
@@ -2641,12 +2960,7 @@ foreach ($debtTransactions as $debtTransaction) {
                             icon: 'success',
                             title: 'سەرکەوتوو بوو!',
                             text: response.message,
-                            confirmButtonText: 'باشە',
-                            showConfirmButton: true,
-                            allowOutsideClick: false,
-                            allowEscapeKey: false,
-                            timer: 2000,
-                            timerProgressBar: true
+                            confirmButtonText: 'باشە'
                         }).then(() => {
                             // Close modal and reload page
                             $('#editSaleModal').modal('hide');

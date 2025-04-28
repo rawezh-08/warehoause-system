@@ -673,8 +673,16 @@ $tabs = [
                                                                     $canDelete = false;
                                                                 }
                                                                 
-                                                                if ($canDelete):
+                                                                // Add return button
                                                                 ?>
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-warning rounded-circle return-purchase"
+                                                                    data-id="<?php echo $purchase['id']; ?>"
+                                                                    data-invoice="<?php echo $purchase['invoice_number']; ?>"
+                                                                    title="گەڕاندنەوەی کاڵا">
+                                                                    <i class="fas fa-undo"></i>
+                                                                </button>
+                                                                <?php if ($canDelete): ?>
                                                                 <button type="button" 
                                                                     class="btn btn-sm btn-outline-danger rounded-circle delete-purchase"
                                                                     data-id="<?php echo $purchase['id']; ?>"
@@ -2076,6 +2084,162 @@ $tabs = [
                 const date = new Date(dateString);
                 return date.toISOString().split('T')[0];
             }
+
+            // Return purchase button handler
+            $(document).on('click', '.return-purchase', function() {
+                const purchaseId = $(this).data('id');
+                const invoiceNumber = $(this).data('invoice');
+                
+                // Get purchase items
+                $.ajax({
+                    url: '../../ajax/get_purchase_items.php',
+                    type: 'POST',
+                    data: {
+                        purchase_id: purchaseId
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.success) {
+                            // Create return form
+                            let itemsHtml = '<form id="returnPurchaseForm">';
+                            itemsHtml += '<input type="hidden" name="purchase_id" value="' + purchaseId + '">';
+                            itemsHtml += '<div class="table-responsive"><table class="table table-bordered">';
+                            itemsHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی کڕین</th><th>بڕی گەڕاندنەوە</th></tr></thead>';
+                            itemsHtml += '<tbody>';
+                            
+                            data.items.forEach(item => {
+                                // Calculate max returnable amount (total quantity - already returned quantity)
+                                const maxReturnable = item.quantity - (item.returned_quantity || 0);
+                                
+                                itemsHtml += `<tr>
+                                    <td>${item.product_name}</td>
+                                    <td>${item.quantity} (${item.returned_quantity || 0} گەڕاوە پێشتر)</td>
+                                    <td>
+                                        <input type="number" class="form-control return-quantity" 
+                                            name="return_quantities[${item.id}]" 
+                                            min="0" max="${maxReturnable}" value="0">
+                                    </td>
+                                </tr>`;
+                            });
+                            
+                            itemsHtml += '</tbody></table></div>';
+                            itemsHtml += '<div class="mb-3">';
+                            itemsHtml += '<label for="returnReason" class="form-label">هۆکاری گەڕانەوە</label>';
+                            itemsHtml += '<select class="form-select" name="reason" id="returnReason">';
+                            itemsHtml += '<option value="damaged">شکاو/خراپ</option>';
+                            itemsHtml += '<option value="wrong_product">کاڵای هەڵە</option>';
+                            itemsHtml += '<option value="other">هۆکاری تر</option>';
+                            itemsHtml += '</select>';
+                            itemsHtml += '</div>';
+                            itemsHtml += '<div class="mb-3">';
+                            itemsHtml += '<label for="returnNotes" class="form-label">تێبینی</label>';
+                            itemsHtml += '<textarea class="form-control" id="returnNotes" name="notes" rows="3"></textarea>';
+                            itemsHtml += '</div>';
+                            itemsHtml += '</form>';
+                            
+                            Swal.fire({
+                                title: `گەڕاندنەوەی کاڵا - پسووڵە ${invoiceNumber}`,
+                                html: itemsHtml,
+                                showCancelButton: true,
+                                confirmButtonText: 'گەڕاندنەوە',
+                                cancelButtonText: 'هەڵوەشاندنەوە',
+                                showLoaderOnConfirm: true,
+                                preConfirm: () => {
+                                    const formData = new FormData(document.getElementById('returnPurchaseForm'));
+                                    // Add receipt_type parameter to indicate this is a purchase (buying) return
+                                    formData.append('receipt_type', 'buying');
+                                    
+                                    return $.ajax({
+                                        url: '../../ajax/return_purchase.php',
+                                        type: 'POST',
+                                        data: formData,
+                                        processData: false,
+                                        contentType: false,
+                                        dataType: 'json'
+                                    });
+                                }
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    const response = result.value;
+                                    if (response.success) {
+                                        // Create summary HTML
+                                        let summaryHtml = '<div class="return-summary mt-3">';
+                                        summaryHtml += '<h5 class="mb-3">کورتەی گەڕانەوە</h5>';
+                                        
+                                        // Original total
+                                        summaryHtml += `<div class="mb-2">
+                                            <strong>کۆی گشتی پسووڵە:</strong> 
+                                            ${response.summary.original_total.toLocaleString()} دینار
+                                        </div>`;
+                                        
+                                        // Return count
+                                        summaryHtml += `<div class="mb-2">
+                                            <strong>ژمارەی گەڕانەوەکان:</strong> 
+                                            ${response.summary.return_count}
+                                        </div>`;
+                                        
+                                        // Returned amount
+                                        summaryHtml += `<div class="mb-2">
+                                            <strong>کۆی گشتی گەڕاوە:</strong> 
+                                            ${response.summary.returned_amount.toLocaleString()} دینار
+                                        </div>`;
+                                        
+                                        // Remaining items
+                                        summaryHtml += '<div class="mb-2"><strong>کاڵاکانی گەڕاوە:</strong></div>';
+                                        summaryHtml += '<div class="table-responsive"><table class="table table-sm table-bordered">';
+                                        summaryHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی گەڕانەوە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
+                                        summaryHtml += '<tbody>';
+                                        
+                                        response.summary.returned_items.forEach(item => {
+                                            summaryHtml += `<tr>
+                                                <td>${item.product_name}</td>
+                                                <td>${item.returned_quantity}</td>
+                                                <td>${item.unit_price.toLocaleString()} دینار</td>
+                                                <td>${item.total_price.toLocaleString()} دینار</td>
+                                            </tr>`;
+                                        });
+                                        
+                                        summaryHtml += '</tbody></table></div>';
+                                        summaryHtml += '</div>';
+                                        
+                                        Swal.fire({
+                                            title: 'سەرکەوتوو بوو!',
+                                            html: response.message + summaryHtml,
+                                            icon: 'success',
+                                            confirmButtonText: 'باشە'
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            title: 'هەڵە!',
+                                            text: response.message,
+                                            icon: 'error',
+                                            confirmButtonText: 'باشە'
+                                        });
+                                    }
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: data.message || 'هەڵەیەک ڕوویدا لە وەرگرتنی کاڵاکان',
+                                icon: 'error',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Ajax error:', error);
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                });
+            });
         });
     </script>
 
