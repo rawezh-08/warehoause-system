@@ -720,16 +720,6 @@ foreach ($debtTransactions as $debtTransaction) {
                                                                     <i class="fas fa-trash"></i>
                                                                 </button>
                                                                 <?php endif; ?>
-                                                                
-                                                                <?php if ($canReturn): ?>
-                                                                <button type="button" 
-                                                                    class="btn btn-sm btn-outline-warning rounded-circle return-sale"
-                                                                    data-id="<?php echo $sale['id']; ?>"
-                                                                    data-invoice="<?php echo $sale['invoice_number']; ?>"
-                                                                    title="گەڕاندنەوەی کاڵا">
-                                                                    <i class="fas fa-undo"></i>
-                                                                </button>
-                                                                <?php endif; ?>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -1617,7 +1607,6 @@ foreach ($debtTransactions as $debtTransaction) {
     <!-- Custom Scripts -->
     <script src="../../js/include-components.js"></script>
     <!-- Page Specific Script -->
-    <script src="../../js/customerProfile.js"></script>
     <script>
         $(document).ready(function () {
             // Initialize pagination for tables
@@ -1651,227 +1640,139 @@ foreach ($debtTransactions as $debtTransaction) {
                 showAllRows(tableId);  // Show all rows initially
                 updatePagination(tableId);
 
-                // Add event listeners for pagination buttons
-                $(`#${tableId}PrevPageBtn`).on('click', function() {
-                    if (!$(this).prop('disabled')) {
-                        currentPage[tableId]--;
-                        updatePagination(tableId);
+                // Pagination button handlers
+                $(`#${tableId}PrevPageBtn`).off('click').on('click', function () {
+                    const currentPage = parseInt($(`#${tableId}PaginationNumbers .active`).text());
+                    if (currentPage > 1) {
+                        goToPage(tableId, currentPage - 1);
                     }
                 });
 
-                $(`#${tableId}NextPageBtn`).on('click', function() {
-                    if (!$(this).prop('disabled')) {
-                        currentPage[tableId]++;
-                        updatePagination(tableId);
+                $(`#${tableId}NextPageBtn`).off('click').on('click', function () {
+                    const currentPage = parseInt($(`#${tableId}PaginationNumbers .active`).text());
+                    const totalPages = Math.ceil($(`#${tableId}TotalRecords`).text() / $(`#${tableId}RecordsPerPage`).val());
+                    if (currentPage < totalPages) {
+                        goToPage(tableId, currentPage + 1);
                     }
+                });
+
+                // Add click handlers for pagination numbers using event delegation
+                $(`#${tableId}PaginationNumbers`).off('click').on('click', 'button', function () {
+                    const page = parseInt($(this).data('page'));
+                    goToPage(tableId, page);
                 });
             }
 
-            // Return sale button handler
-            $(document).on('click', '.return-sale', function() {
-                const saleId = $(this).data('id');
-                const invoiceNumber = $(this).data('invoice');
-                
-                // Get sale items
-                $.ajax({
-                    url: '../../ajax/get_sale_items.php',
-                    type: 'POST',
-                    data: {
-                        sale_id: saleId
-                    },
-                    dataType: 'json',
-                    success: function(data) {
-                        if (data.success) {
-                            // Create return form
-                            let itemsHtml = '<form id="returnSaleForm">';
-                            itemsHtml += '<input type="hidden" name="sale_id" value="' + saleId + '">';
-                            
-                            // Add introduction text explaining return limits
-                            itemsHtml += '<div class="alert alert-info mb-3">';
-                            itemsHtml += '<i class="fas fa-info-circle me-2"></i> ';
-                            itemsHtml += 'تکایە ئاگاداربە کە ناتوانیت لە بڕی ئەسڵی کەمتر بڕێک بگەڕێنیتەوە. ';
-                            itemsHtml += 'هەروەها ناتوانیت کاڵایەک دووبارە بگەڕێنیتەوە کە پێشتر گەڕێنراوەتەوە.';
-                            itemsHtml += '</div>';
-                            
-                            itemsHtml += '<div class="table-responsive"><table class="table table-bordered">';
-                            itemsHtml += '<thead><tr>';
-                            itemsHtml += '<th>ناوی کاڵا</th>';
-                            itemsHtml += '<th>بڕی فرۆشتن</th>';
-                            itemsHtml += '<th>گەڕاوە پێشتر</th>';
-                            itemsHtml += '<th>بەردەست بۆ گەڕاندنەوە</th>';
-                            itemsHtml += '<th>بڕی گەڕاندنەوە</th>';
-                            itemsHtml += '</tr></thead>';
-                            itemsHtml += '<tbody>';
-                            
-                            data.items.forEach(item => {
-                                // Calculate max returnable amount (total quantity - already returned quantity)
-                                const originalQty = parseFloat(item.quantity);
-                                const returnedQty = parseFloat(item.returned_quantity || 0);
-                                const maxReturnable = originalQty - returnedQty;
-                                
-                                // Skip if nothing left to return
-                                if (maxReturnable <= 0) {
-                                    itemsHtml += `<tr class="table-secondary">
-                                        <td>${item.product_name}</td>
-                                        <td>${originalQty} ${item.unit_type}</td>
-                                        <td>${returnedQty} ${item.unit_type}</td>
-                                        <td>0 ${item.unit_type}</td>
-                                        <td><span class="badge bg-secondary">هەمووی گەڕاوەتەوە</span></td>
-                                    </tr>`;
-                                } else {
-                                    itemsHtml += `<tr>
-                                        <td>${item.product_name}</td>
-                                        <td>${originalQty} ${item.unit_type}</td>
-                                        <td>${returnedQty} ${item.unit_type}</td>
-                                        <td><strong class="text-success">${maxReturnable} ${item.unit_type}</strong></td>
-                                        <td>
-                                            <div class="input-group">
-                                                <input type="number" class="form-control return-quantity" 
-                                                    name="return_quantities[${item.id}]" 
-                                                    min="0" max="${maxReturnable}" value="0"
-                                                    step="0.001">
-                                                <span class="input-group-text">${item.unit_type}</span>
-                                            </div>
-                                        </td>
-                                    </tr>`;
-                                }
-                            });
-                            
-                            itemsHtml += '</tbody></table></div>';
-                            itemsHtml += '<div class="mb-3">';
-                            itemsHtml += '<label for="returnReason" class="form-label">هۆکاری گەڕانەوە</label>';
-                            itemsHtml += '<select class="form-select" name="reason" id="returnReason">';
-                            itemsHtml += '<option value="damaged">شکاو/خراپ</option>';
-                            itemsHtml += '<option value="wrong_product">کاڵای هەڵە</option>';
-                            itemsHtml += '<option value="other">هۆکاری تر</option>';
-                            itemsHtml += '</select>';
-                            itemsHtml += '</div>';
-                            itemsHtml += '<div class="mb-3">';
-                            itemsHtml += '<label for="returnNotes" class="form-label">تێبینی</label>';
-                            itemsHtml += '<textarea class="form-control" id="returnNotes" name="notes" rows="3"></textarea>';
-                            itemsHtml += '</div>';
-                            itemsHtml += '</form>';
-                            
-                            Swal.fire({
-                                title: `گەڕاندنەوەی کاڵا - پسووڵە ${invoiceNumber}`,
-                                html: itemsHtml,
-                                width: '800px',
-                                showCancelButton: true,
-                                confirmButtonText: 'گەڕاندنەوە',
-                                cancelButtonText: 'هەڵوەشاندنەوە',
-                                showLoaderOnConfirm: true,
-                                preConfirm: () => {
-                                    // Validate that at least one item has been selected for return
-                                    let hasReturns = false;
-                                    document.querySelectorAll('.return-quantity').forEach(input => {
-                                        if (parseFloat(input.value) > 0) {
-                                            hasReturns = true;
-                                        }
-                                    });
-                                    
-                                    if (!hasReturns) {
-                                        Swal.showValidationMessage('تکایە لانی کەم یەک کاڵا هەڵبژێرە بۆ گەڕاندنەوە');
-                                        return false;
-                                    }
-                                    
-                                    const formData = new FormData(document.getElementById('returnSaleForm'));
-                                    // Add receipt_type parameter to indicate this is a sale (selling) return
-                                    formData.append('receipt_type', 'selling');
-                                    
-                                    return $.ajax({
-                                        url: '../../ajax/return_sale.php',
-                                        type: 'POST',
-                                        data: formData,
-                                        processData: false,
-                                        contentType: false,
-                                        dataType: 'json'
-                                    });
-                                }
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    const response = result.value;
-                                    if (response.success) {
-                                        // Create summary HTML
-                                        let summaryHtml = '<div class="return-summary mt-3">';
-                                        summaryHtml += '<h5 class="mb-3">کورتەی گەڕانەوە</h5>';
-                                        
-                                        // Original total
-                                        summaryHtml += `<div class="mb-2">
-                                            <strong>کۆی گشتی پسووڵە:</strong> 
-                                            ${response.summary.original_total.toLocaleString()} دینار
-                                        </div>`;
-                                        
-                                        // Return count
-                                        summaryHtml += `<div class="mb-2">
-                                            <strong>ژمارەی گەڕانەوەکان:</strong> 
-                                            ${response.summary.return_count}
-                                        </div>`;
-                                        
-                                        // Returned amount
-                                        summaryHtml += `<div class="mb-2">
-                                            <strong>کۆی گشتی گەڕاوە:</strong> 
-                                            ${response.summary.returned_amount.toLocaleString()} دینار
-                                        </div>`;
-                                        
-                                        // Remaining items
-                                        summaryHtml += '<div class="mb-2"><strong>کاڵاکانی گەڕاوە:</strong></div>';
-                                        summaryHtml += '<div class="table-responsive"><table class="table table-sm table-bordered">';
-                                        summaryHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی گەڕانەوە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
-                                        summaryHtml += '<tbody>';
-                                        
-                                        response.summary.returned_items.forEach(item => {
-                                            summaryHtml += `<tr>
-                                                <td>${item.product_name}</td>
-                                                <td>${item.returned_quantity}</td>
-                                                <td>${item.unit_price.toLocaleString()} دینار</td>
-                                                <td>${item.total_price.toLocaleString()} دینار</td>
-                                            </tr>`;
-                                        });
-                                        
-                                        summaryHtml += '</tbody></table></div>';
-                                        summaryHtml += '</div>';
-                                        
-                                        // Show success message with summary
-                                        Swal.fire({
-                                            icon: 'success',
-                                            title: 'سەرکەوتوو',
-                                            html: summaryHtml,
-                                            confirmButtonText: 'باشە'
-                                        }).then(() => {
-                                            // Reload the page to show updated data
-                                            location.reload();
-                                        });
-                                    } else {
-                                        Swal.fire({
-                                            icon: 'error',
-                                            title: 'هەڵە',
-                                            text: response.message || 'هەڵەیەک ڕوویدا لە گەڕاندنەوەی کاڵاکان',
-                                            confirmButtonText: 'باشە'
-                                        });
-                                    }
-                                }
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'هەڵە',
-                                text: data.message || 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیاری کاڵاکان',
-                                confirmButtonText: 'باشە'
-                            });
-                        }
-                    },
-                    error: function() {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'هەڵە',
-                            text: 'هەڵەیەک ڕوویدا لە پەیوەندی کردن بە سێرڤەرەوە',
-                            confirmButtonText: 'باشە'
-                        });
-                    }
-                });
-            });
+            function updatePagination(tableId) {
+                const recordsPerPage = parseInt($(`#${tableId}RecordsPerPage`).val());
+                const tableSelector = tableId === 'debtHistory' ? `#${tableId}ReturnTable` : `#${tableId}HistoryTable`;
+                const allRows = $(`${tableSelector} tbody tr`);
+                const totalRows = allRows.length;
+                const totalPages = Math.ceil(totalRows / recordsPerPage);
 
-            // ... existing code ...
+                // Generate pagination numbers
+                let paginationHtml = '';
+                for (let i = 1; i <= totalPages; i++) {
+                    paginationHtml += `<button class="btn btn-sm ${i === 1 ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2 ${i === 1 ? 'active' : ''}" data-page="${i}">${i}</button>`;
+                }
+                $(`#${tableId}PaginationNumbers`).html(paginationHtml);
+
+                // Show first page
+                goToPage(tableId, 1);
+            }
+
+            function goToPage(tableId, page) {
+                const recordsPerPage = parseInt($(`#${tableId}RecordsPerPage`).val());
+                const tableSelector = tableId === 'debtHistory' ? `#${tableId}ReturnTable` : `#${tableId}HistoryTable`;
+                const allRows = $(`${tableSelector} tbody tr`);
+
+                // First show all rows to ensure we can access them all
+                allRows.show();
+
+                // Calculate start and end indices
+                const startIndex = (page - 1) * recordsPerPage;
+                const endIndex = startIndex + recordsPerPage;
+
+                // Hide all rows first
+                allRows.hide();
+
+                // Show only the rows for current page
+                allRows.slice(startIndex, endIndex).show();
+
+                // Debug information
+                console.log('Page Change Debug for ' + tableId + ':');
+                console.log('Going to page:', page);
+                console.log('Total rows:', allRows.length);
+                console.log('Start Index:', startIndex);
+                console.log('End Index:', endIndex);
+                console.log('Rows shown:', allRows.slice(startIndex, endIndex).length);
+
+                // Update debug div
+                $(`#debug-${tableId}`).html(`
+                    <strong>Debug Info for ${tableId}:</strong><br>
+                    Table: ${tableSelector}<br>
+                    Records Per Page: ${recordsPerPage}<br>
+                    Total Rows: ${allRows.length}<br>
+                    Total Pages: ${Math.ceil(allRows.length / recordsPerPage)}<br>
+                    Current Page: ${page}<br>
+                    Showing rows ${startIndex + 1} to ${Math.min(endIndex, allRows.length)}<br>
+                    Rows shown on this page: ${allRows.slice(startIndex, endIndex).length}
+                `);
+
+                // Update pagination UI
+                $(`#${tableId}PaginationNumbers button`).removeClass('btn-primary active').addClass('btn-outline-primary');
+                $(`#${tableId}PaginationNumbers button[data-page="${page}"]`).removeClass('btn-outline-primary').addClass('btn-primary active');
+
+                // Update pagination info
+                const startRecord = allRows.length > 0 ? startIndex + 1 : 0;
+                const endRecord = Math.min(endIndex, allRows.length);
+                $(`#${tableId}StartRecord`).text(startRecord);
+                $(`#${tableId}EndRecord`).text(endRecord);
+                $(`#${tableId}TotalRecords`).text(allRows.length);
+
+                // Update prev/next buttons
+                const totalPages = Math.ceil(allRows.length / recordsPerPage);
+                $(`#${tableId}PrevPageBtn`).prop('disabled', page === 1);
+                $(`#${tableId}NextPageBtn`).prop('disabled', page === totalPages);
+            }
+
+            // Add tab change handler to reinitialize pagination
+            $('#customerTabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                const targetTab = $(e.target).attr('id');
+                let tableId;
+                
+                switch(targetTab) {
+                    case 'sales-tab':
+                        tableId = 'sales';
+                        showAllRows(tableId);
+                        updatePagination(tableId);
+                        break;
+                    case 'debt-tab':
+                        tableId = 'debt';
+                        showAllRows(tableId);
+                        updatePagination(tableId);
+                        break;
+                    case 'debt-history-tab':
+                        tableId = 'debtHistory';
+                        showAllRows(tableId);
+                        updatePagination(tableId);
+                        break;
+                    case 'draft-receipts-tab':
+                        // Re-initialize advanced pagination for draft receipts
+                        initAdvancedTablePagination({
+                            tableId: 'draftHistoryTable',
+                            recordsPerPageId: 'draftRecordsPerPage',
+                            paginationNumbersId: 'draftPaginationNumbers',
+                            prevBtnId: 'draftPrevPageBtn',
+                            nextBtnId: 'draftNextPageBtn',
+                            startRecordId: 'draftStartRecord',
+                            endRecordId: 'draftEndRecord',
+                            totalRecordsId: 'draftTotalRecords',
+                            searchInputId: 'draftTableSearch'
+                        });
+                        break;
+                }
+            });
 
             // Save payment button handler
             $('#savePaymentBtn').on('click', function () {
