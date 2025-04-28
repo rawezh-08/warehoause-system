@@ -129,13 +129,32 @@ foreach ($debtTransactions as $debtTransaction) {
 
         /* Adjust pagination display for many pages */
         .pagination-numbers {
+            display: flex;
             flex-wrap: wrap;
+            gap: 5px;
             max-width: 300px;
             overflow: hidden;
         }
 
         .pagination-numbers .btn {
-            margin-bottom: 5px;
+            min-width: 35px;
+            height: 35px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pagination-info {
+            font-size: 0.875rem;
+            color: #6c757d;
         }
 
         /* RTL Toast Container Styles */
@@ -343,6 +362,17 @@ foreach ($debtTransactions as $debtTransaction) {
 
         .table td {
             vertical-align: middle;
+        }
+
+        /* Responsive Pagination */
+        @media (max-width: 768px) {
+            .pagination-numbers {
+                max-width: 200px;
+            }
+
+            .pagination-info {
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
@@ -3310,6 +3340,120 @@ foreach ($debtTransactions as $debtTransaction) {
             // Reset button state
             saveButton.disabled = false;
             saveButton.innerHTML = originalText;
+        });
+    });
+    </script>
+
+    <!-- Pagination Functions -->
+    <script>
+    // ... existing JavaScript code ...
+
+    // Pagination Functions
+    function updatePagination(tableId, totalRecords, currentPage, recordsPerPage) {
+        const totalPages = Math.ceil(totalRecords / recordsPerPage);
+        const paginationContainer = document.getElementById(`${tableId}PaginationNumbers`);
+        const prevButton = document.getElementById(`${tableId}PrevPageBtn`);
+        const nextButton = document.getElementById(`${tableId}NextPageBtn`);
+        const startRecord = document.getElementById(`${tableId}StartRecord`);
+        const endRecord = document.getElementById(`${tableId}EndRecord`);
+        const totalRecordsSpan = document.getElementById(`${tableId}TotalRecords`);
+
+        // Update record info
+        startRecord.textContent = totalRecords === 0 ? 0 : (currentPage - 1) * recordsPerPage + 1;
+        endRecord.textContent = Math.min(currentPage * recordsPerPage, totalRecords);
+        totalRecordsSpan.textContent = totalRecords;
+
+        // Update pagination buttons
+        prevButton.disabled = currentPage === 1;
+        nextButton.disabled = currentPage === totalPages;
+
+        // Clear existing pagination numbers
+        paginationContainer.innerHTML = '';
+
+        // Calculate which page numbers to show
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+        
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
+        }
+
+        // Add first page button if needed
+        if (startPage > 1) {
+            const firstPageBtn = document.createElement('button');
+            firstPageBtn.className = 'btn btn-sm btn-outline-primary rounded-circle';
+            firstPageBtn.textContent = '1';
+            firstPageBtn.onclick = () => updateTable(tableId, 1);
+            paginationContainer.appendChild(firstPageBtn);
+
+            if (startPage > 2) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'mx-2';
+                ellipsis.textContent = '...';
+                paginationContainer.appendChild(ellipsis);
+            }
+        }
+
+        // Add page numbers
+        for (let i = startPage; i <= endPage; i++) {
+            const pageBtn = document.createElement('button');
+            pageBtn.className = `btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} rounded-circle`;
+            pageBtn.textContent = i;
+            pageBtn.onclick = () => updateTable(tableId, i);
+            paginationContainer.appendChild(pageBtn);
+        }
+
+        // Add last page button if needed
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'mx-2';
+                ellipsis.textContent = '...';
+                paginationContainer.appendChild(ellipsis);
+            }
+
+            const lastPageBtn = document.createElement('button');
+            lastPageBtn.className = 'btn btn-sm btn-outline-primary rounded-circle';
+            lastPageBtn.textContent = totalPages;
+            lastPageBtn.onclick = () => updateTable(tableId, totalPages);
+            paginationContainer.appendChild(lastPageBtn);
+        }
+    }
+
+    function updateTable(tableId, page) {
+        const recordsPerPage = parseInt(document.getElementById(`${tableId}RecordsPerPage`).value);
+        const searchTerm = document.getElementById(`${tableId}TableSearch`).value;
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        const paymentType = document.getElementById('paymentTypeFilter').value;
+
+        // Update the table based on the tableId
+        switch(tableId) {
+            case 'sales':
+                loadSalesData(page, recordsPerPage, searchTerm, startDate, endDate, paymentType);
+                break;
+            case 'debt':
+                loadDebtData(page, recordsPerPage, searchTerm, startDate, endDate);
+                break;
+            case 'debtHistory':
+                loadDebtHistoryData(page, recordsPerPage, searchTerm, startDate, endDate);
+                break;
+            // Add other cases as needed
+        }
+    }
+
+    // Initialize pagination for all tables
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize each table's pagination
+        ['sales', 'debt', 'debtHistory'].forEach(tableId => {
+            const totalRecords = parseInt(document.getElementById(`${tableId}TotalRecords`).textContent);
+            const recordsPerPage = parseInt(document.getElementById(`${tableId}RecordsPerPage`).value);
+            updatePagination(tableId, totalRecords, 1, recordsPerPage);
+
+            // Add event listener for records per page change
+            document.getElementById(`${tableId}RecordsPerPage`).addEventListener('change', function() {
+                updateTable(tableId, 1);
+            });
         });
     });
     </script>
