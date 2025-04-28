@@ -3546,7 +3546,8 @@ foreach ($debtTransactions as $debtTransaction) {
                 data: { sale_id: saleId },
                 success: function(response) {
                     try {
-                        const data = JSON.parse(response);
+                        // Check if response is already a JSON object
+                        const data = typeof response === 'object' ? response : JSON.parse(response);
                         if (data.success) {
                             populateReturnItems(data.items);
                         } else {
@@ -3559,6 +3560,7 @@ foreach ($debtTransactions as $debtTransaction) {
                         }
                     } catch (e) {
                         console.error('Error parsing response:', e);
+                        console.log('Response received:', response);
                         Swal.fire({
                             title: 'هەڵە!',
                             text: 'هەڵەیەک ڕوویدا لە وەرگرتنی کاڵاکان',
