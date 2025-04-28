@@ -398,23 +398,18 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    // Close modal first
-                    closeModal('editEmployeePaymentModal');
-                    
-                    // Show success message
                     Swal.fire({
                         title: 'سەرکەوتوو بوو!',
-                        text: 'پارەدان بە کارمەند بە سەرکەوتوویی نوێ کرایەوە',
+                        text: response.message || 'زانیاری پارەدان بە سەرکەوتوویی نوێ کرایەوە',
                         icon: 'success',
-                        confirmButtonText: 'باشە',
-                        timer: 3000,
-                        timerProgressBar: true
-                    });
-                    
-                    // Wait a bit then refresh table (without success message)
-                    setTimeout(function() {
+                        confirmButtonText: 'باشە'
+                    }).then(() => {
+                        // Close modal
+                        closeModal('editEmployeePaymentModal');
+                        
+                        // Refresh table
                         applyEmployeePaymentFilter();
-                    }, 500);
+                    });
                 } else {
                     Swal.fire({
                         title: 'هەڵە!',
@@ -478,23 +473,18 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    // Close modal first
-                    closeModal('editWithdrawalModal');
-                    
-                    // Show success message
                     Swal.fire({
                         title: 'سەرکەوتوو بوو!',
-                        text: 'دەرکردنی پارە بە سەرکەوتوویی نوێ کرایەوە',
+                        text: response.message || 'زانیاری دەرکردنی پارە بە سەرکەوتوویی نوێ کرایەوە',
                         icon: 'success',
-                        confirmButtonText: 'باشە',
-                        timer: 3000,
-                        timerProgressBar: true
-                    });
-                    
-                    // Wait a bit then refresh table (without success message)
-                    setTimeout(function() {
+                        confirmButtonText: 'باشە'
+                    }).then(() => {
+                        // Close modal
+                        closeModal('editWithdrawalModal');
+                        
+                        // Refresh table
                         applyWithdrawalFilter();
-                    }, 500);
+                    });
                 } else {
                     Swal.fire({
                         title: 'هەڵە!',
@@ -546,10 +536,10 @@ $(document).ready(function() {
                                 text: 'پارەدانەکە بە سەرکەوتوویی سڕایەوە.',
                                 icon: 'success',
                                 confirmButtonText: 'باشە'
+                            }).then(() => {
+                                // Refresh the employee payments table
+                                applyEmployeePaymentFilter();
                             });
-                            
-                            // Refresh the employee payments table
-                            applyEmployeePaymentFilter();
                         } else {
                             Swal.fire({
                                 title: 'هەڵە!',
@@ -603,10 +593,10 @@ $(document).ready(function() {
                                 text: 'دەرکردنی پارە بە سەرکەوتوویی سڕایەوە.',
                                 icon: 'success',
                                 confirmButtonText: 'باشە'
+                            }).then(() => {
+                                // Refresh the withdrawals table
+                                applyWithdrawalFilter();
                             });
-                            
-                            // Refresh the withdrawals table
-                            applyWithdrawalFilter();
                         } else {
                             Swal.fire({
                                 title: 'هەڵە!',
