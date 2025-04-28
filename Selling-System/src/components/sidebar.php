@@ -11,7 +11,7 @@
                 <div class="dash-cont">
                     <img src="../../assets/icons/dashboard.svg" alt="" class="dash-icon">
                 </div>
-                <span>پەیوەندییەکان</span>
+                <span>ەیوەندییەکان</span>
             </a>
         </div>
 
