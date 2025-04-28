@@ -45,6 +45,13 @@ $(document).ready(function() {
         const purchaseId = $(this).data('purchase-id');
         openPurchaseDetails(purchaseId);
     });
+    
+    // Event handler for return sale button
+    $(document).on('click', '.return-sale', function() {
+        const saleId = $(this).data('id');
+        const invoiceNumber = $(this).data('invoice');
+        returnSaleItems(saleId, invoiceNumber);
+    });
 });
 
 // Function to load customer data
@@ -456,5 +463,181 @@ function formatDate(dateString) {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit'
+    });
+}
+
+// Function to handle returning sale items
+function returnSaleItems(saleId, invoiceNumber) {
+    // Show loading
+    Swal.fire({
+        title: 'تکایە چاوەڕێ بکە...',
+        text: 'زانیارییەکان وەردەگیرێن',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // Get sale items
+    $.ajax({
+        url: '../../ajax/get_sale_items.php',
+        type: 'POST',
+        data: {
+            sale_id: saleId
+        },
+        dataType: 'json',
+        success: function(response) {
+            Swal.close();
+            
+            if (response.success) {
+                // Check if sale has returns
+                if (response.has_returns) {
+                    Swal.fire({
+                        title: 'ئاگاداری!',
+                        text: 'ئەم پسووڵە پێشتر گەڕێنراوەتەوە',
+                        icon: 'warning',
+                        confirmButtonText: 'باشە'
+                    });
+                    return;
+                }
+                
+                // Check if sale has payments
+                if (response.has_payments) {
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'ناتوانرێت ئەم پسووڵە بگەڕێتەوە چونکە پارەدانەوەی لەسەر تۆمار کراوە',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                    return;
+                }
+                
+                // Create return form
+                let itemsHtml = '<form id="returnSaleForm">';
+                itemsHtml += '<input type="hidden" name="sale_id" value="' + saleId + '">';
+                itemsHtml += '<input type="hidden" name="receipt_type" value="selling">';
+                
+                // Add introduction text explaining return limits
+                itemsHtml += '<div class="alert alert-info mb-3">';
+                itemsHtml += '<i class="fas fa-info-circle me-2"></i> ';
+                itemsHtml += 'تکایە ئاگاداربە کە دەتوانیت ئەو بڕەی گەڕێنیتەوە کە پێشتر نەگەڕێنراوەتەوە. ';
+                itemsHtml += '</div>';
+                
+                itemsHtml += '<div class="form-group mb-3">';
+                itemsHtml += '<label for="returnReason">هۆکاری گەڕاندنەوە:</label>';
+                itemsHtml += '<select class="form-select" id="returnReason" name="reason">';
+                itemsHtml += '<option value="damage">زیانلێکەوتوو</option>';
+                itemsHtml += '<option value="wrong-product">کاڵای هەڵە</option>';
+                itemsHtml += '<option value="expired">بەسەرچوو</option>';
+                itemsHtml += '<option value="other" selected>هۆکاری تر</option>';
+                itemsHtml += '</select>';
+                itemsHtml += '</div>';
+                
+                itemsHtml += '<div class="form-group mb-3">';
+                itemsHtml += '<label for="returnNotes">تێبینی:</label>';
+                itemsHtml += '<textarea class="form-control" id="returnNotes" name="notes" rows="2"></textarea>';
+                itemsHtml += '</div>';
+                
+                itemsHtml += '<div class="table-responsive"><table class="table table-bordered">';
+                itemsHtml += '<thead><tr>';
+                itemsHtml += '<th>ناوی کاڵا</th>';
+                itemsHtml += '<th>بڕی کڕین</th>';
+                itemsHtml += '<th>گەڕاوە پێشتر</th>';
+                itemsHtml += '<th>بەردەست بۆ گەڕاندنەوە</th>';
+                itemsHtml += '<th>بڕی گەڕاندنەوە</th>';
+                itemsHtml += '</tr></thead>';
+                itemsHtml += '<tbody>';
+                
+                response.items.forEach(function(item) {
+                    const remainingQuantity = parseFloat(item.quantity) - parseFloat(item.returned_quantity || 0);
+                    const displayUnit = item.unit_type === 'piece' ? 'دانە' : 
+                                        (item.unit_type === 'box' ? 'کارتۆن' : 'سێت');
+                    
+                    if (remainingQuantity > 0) {
+                        itemsHtml += '<tr>';
+                        itemsHtml += '<td>' + item.product_name + '</td>';
+                        itemsHtml += '<td>' + item.quantity + ' ' + displayUnit + '</td>';
+                        itemsHtml += '<td>' + (item.returned_quantity || 0) + ' ' + displayUnit + '</td>';
+                        itemsHtml += '<td>' + remainingQuantity + ' ' + displayUnit + '</td>';
+                        itemsHtml += '<td><input type="number" class="form-control return-quantity" name="return_quantities[' + 
+                            item.id + ']" min="0" max="' + remainingQuantity + '" step="0.01" value="0"></td>';
+                        itemsHtml += '</tr>';
+                    }
+                });
+                
+                itemsHtml += '</tbody></table></div>';
+                itemsHtml += '</form>';
+                
+                Swal.fire({
+                    title: `گەڕاندنەوەی کاڵا - پسووڵە ${invoiceNumber}`,
+                    html: itemsHtml,
+                    width: '800px',
+                    showCancelButton: true,
+                    confirmButtonText: 'گەڕاندنەوە',
+                    cancelButtonText: 'هەڵوەشاندنەوە',
+                    showLoaderOnConfirm: true,
+                    preConfirm: () => {
+                        // Validate that at least one item has been selected for return
+                        let hasReturns = false;
+                        document.querySelectorAll('.return-quantity').forEach(input => {
+                            if (parseFloat(input.value) > 0) {
+                                hasReturns = true;
+                            }
+                        });
+                        
+                        if (!hasReturns) {
+                            Swal.showValidationMessage('تکایە لانی کەم یەک کاڵا هەڵبژێرە بۆ گەڕاندنەوە');
+                            return false;
+                        }
+                        
+                        const formData = new FormData(document.getElementById('returnSaleForm'));
+                        
+                        return fetch('../../ajax/return_sale.php', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (!data.success) {
+                                throw new Error(data.message || 'هەڵەیەک ڕوویدا لە کاتی گەڕاندنەوەی کاڵاکان');
+                            }
+                            return data;
+                        })
+                        .catch(error => {
+                            Swal.showValidationMessage(`هەڵە: ${error.message}`);
+                        });
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            title: 'سەرکەوتوو!',
+                            text: 'کاڵاکان بە سەرکەوتوویی گەڕێنرانەوە',
+                            icon: 'success',
+                            confirmButtonText: 'باشە'
+                        }).then(() => {
+                            // Reload the page to show updated data
+                            location.reload();
+                        });
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: 'هەڵە!',
+                    text: response.message || 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان',
+                    icon: 'error',
+                    confirmButtonText: 'باشە'
+                });
+            }
+        },
+        error: function(xhr, status, error) {
+            Swal.close();
+            Swal.fire({
+                title: 'هەڵە!',
+                text: 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان',
+                icon: 'error',
+                confirmButtonText: 'باشە'
+            });
+        }
     });
 } 

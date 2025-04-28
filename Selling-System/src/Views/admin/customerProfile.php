@@ -720,6 +720,16 @@ foreach ($debtTransactions as $debtTransaction) {
                                                                     <i class="fas fa-trash"></i>
                                                                 </button>
                                                                 <?php endif; ?>
+                                                                
+                                                                <?php if ($canReturn): ?>
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-warning rounded-circle return-sale"
+                                                                    data-id="<?php echo $sale['id']; ?>"
+                                                                    data-invoice="<?php echo $sale['invoice_number']; ?>"
+                                                                    title="گەڕاندنەوەی کاڵا">
+                                                                    <i class="fas fa-undo"></i>
+                                                                </button>
+                                                                <?php endif; ?>
                                                             </div>
                                                         </td>
                                                     </tr>
