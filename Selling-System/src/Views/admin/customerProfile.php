@@ -2308,23 +2308,35 @@ foreach ($debtTransactions as $debtTransaction) {
                             // Create return form
                             let itemsHtml = '<form id="returnSaleForm">';
                             itemsHtml += '<input type="hidden" name="sale_id" value="' + saleId + '">';
+                            itemsHtml += '<input type="hidden" name="receipt_type" value="selling">';
                             itemsHtml += '<div class="table-responsive"><table class="table table-bordered">';
                             itemsHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی کڕین</th><th>بڕی گەڕانەوە</th></tr></thead>';
                             itemsHtml += '<tbody>';
                             
                             data.items.forEach(item => {
+                                // Calculate max returnable amount (total quantity - already returned quantity)
+                                const maxReturnable = item.quantity - (item.returned_quantity || 0);
+                                
                                 itemsHtml += `<tr>
                                     <td>${item.product_name}</td>
-                                    <td>${item.quantity}</td>
+                                    <td>${item.quantity} (${item.returned_quantity || 0} گەڕاوە پێشتر)</td>
                                     <td>
                                         <input type="number" class="form-control return-quantity" 
                                             name="return_quantities[${item.id}]" 
-                                            min="0" max="${item.quantity}" value="0">
+                                            min="0" max="${maxReturnable}" value="0">
                                     </td>
                                 </tr>`;
                             });
                             
                             itemsHtml += '</tbody></table></div>';
+                            itemsHtml += '<div class="mb-3">';
+                            itemsHtml += '<label for="returnReason" class="form-label">هۆکاری گەڕانەوە</label>';
+                            itemsHtml += '<select class="form-select" name="reason" id="returnReason">';
+                            itemsHtml += '<option value="damaged">شکاو/خراپ</option>';
+                            itemsHtml += '<option value="wrong_product">کاڵای هەڵە</option>';
+                            itemsHtml += '<option value="other">هۆکاری تر</option>';
+                            itemsHtml += '</select>';
+                            itemsHtml += '</div>';
                             itemsHtml += '<div class="mb-3">';
                             itemsHtml += '<label for="returnNotes" class="form-label">تێبینی</label>';
                             itemsHtml += '<textarea class="form-control" id="returnNotes" name="notes" rows="3"></textarea>';
@@ -2332,10 +2344,10 @@ foreach ($debtTransactions as $debtTransaction) {
                             itemsHtml += '</form>';
                             
                             Swal.fire({
-                                title: `گەڕانەوەی کاڵا - پسووڵە ${invoiceNumber}`,
+                                title: `گەڕاندنەوەی کاڵا - پسووڵە ${invoiceNumber}`,
                                 html: itemsHtml,
                                 showCancelButton: true,
-                                confirmButtonText: 'گەڕانەوە',
+                                confirmButtonText: 'گەڕاندنەوە',
                                 cancelButtonText: 'هەڵوەشاندنەوە',
                                 showLoaderOnConfirm: true,
                                 preConfirm: () => {
