@@ -164,7 +164,7 @@ try {
         $debtTransactionQuery = "INSERT INTO debt_transactions (
             customer_id, amount, transaction_type, reference_id, notes, created_at
         ) VALUES (
-            :customer_id, :amount, 'collection', :reference_id, :notes, :created_at
+            :customer_id, :amount, 'collection', :reference_id, :notes, NOW()
         )";
         
         $debtStmt = $conn->prepare($debtTransactionQuery);
@@ -172,7 +172,6 @@ try {
         $debtStmt->bindParam(':amount', $totalReturnAmount, PDO::PARAM_STR);
         $debtStmt->bindParam(':reference_id', $returnId);
         $debtStmt->bindParam(':notes', $transactionNotes);
-        $debtStmt->bindParam(':created_at', $returnDate);
         $debtStmt->execute();
         
         // Update customer's debt
