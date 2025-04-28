@@ -711,6 +711,16 @@ foreach ($debtTransactions as $debtTransaction) {
                                                                     $canDelete = false;
                                                                 }
                                                                 
+                                                                // Add return product button
+                                                                ?>
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-warning rounded-circle return-product-btn"
+                                                                    data-id="<?php echo $sale['id']; ?>"
+                                                                    data-invoice="<?php echo $sale['invoice_number']; ?>"
+                                                                    title="گەڕاندنەوەی کاڵا">
+                                                                    <i class="fas fa-undo"></i>
+                                                                </button>
+                                                                <?php 
                                                                 if ($canDelete): ?>
                                                                 <button type="button" 
                                                                     class="btn btn-sm btn-outline-danger rounded-circle delete-sale"
@@ -3442,6 +3452,285 @@ foreach ($debtTransactions as $debtTransaction) {
             // Add event listener for records per page change
             document.getElementById(`${tableId}RecordsPerPage`).addEventListener('change', function() {
                 updateTable(tableId, 1);
+            });
+        });
+    });
+    </script>
+
+    <!-- Return Product Modal -->
+    <div class="modal fade" id="returnProductModal" tabindex="-1" aria-labelledby="returnProductModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="returnProductModalLabel">گەڕاندنەوەی کاڵا</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="داخستن"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="returnProductForm">
+                        <input type="hidden" id="returnSaleId" name="sale_id">
+                        <input type="hidden" name="receipt_type" value="selling">
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="returnReason" class="form-label">هۆکاری گەڕاندنەوە</label>
+                                <select class="form-select" id="returnReason" name="reason" required>
+                                    <option value="damaged">تێکچوو/خراپ</option>
+                                    <option value="wrong_product">کاڵای هەڵە</option>
+                                    <option value="customer_request">داواکاری کڕیار</option>
+                                    <option value="other">هۆکاری تر</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="returnNotes" class="form-label">تێبینی</label>
+                                <textarea class="form-control" id="returnNotes" name="notes" rows="1"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ناوی کاڵا</th>
+                                        <th>بڕی کڕدراو</th>
+                                        <th>یەکە</th>
+                                        <th>بڕی پێشتر گەڕاوە</th>
+                                        <th>نرخی تاک</th>
+                                        <th>بڕی گەڕاندنەوە</th>
+                                        <th>نرخی گشتی گەڕاندنەوە</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="returnItemsContainer">
+                                    <!-- Items will be populated via AJAX -->
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="6" class="text-end fw-bold">کۆی گشتی:</td>
+                                        <td id="totalReturnAmount" class="fw-bold">0 دینار</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-warning" id="submitReturnBtn">
+                        <i class="fas fa-save me-1"></i> تۆمارکردن
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add JavaScript for handling returns -->
+    <script>
+    $(document).ready(function() {
+        // ... existing code ...
+
+        // Return product button click event
+        $(document).on('click', '.return-product-btn', function() {
+            const saleId = $(this).data('id');
+            const invoiceNumber = $(this).data('invoice');
+            
+            $('#returnSaleId').val(saleId);
+            $('#returnProductModalLabel').text('گەڕاندنەوەی کاڵا - ' + invoiceNumber);
+            
+            // Clear previous items
+            $('#returnItemsContainer').empty();
+            $('#totalReturnAmount').text('0 دینار');
+            
+            // Load sale items
+            $.ajax({
+                url: '../../ajax/get_sale_items.php',
+                type: 'POST',
+                data: { sale_id: saleId },
+                success: function(response) {
+                    try {
+                        const data = JSON.parse(response);
+                        if (data.success) {
+                            populateReturnItems(data.items);
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: data.message || 'هەڵەیەک ڕوویدا لە وەرگرتنی کاڵاکان',
+                                icon: 'error',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    } catch (e) {
+                        console.error('Error parsing response:', e);
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە وەرگرتنی کاڵاکان',
+                            icon: 'error',
+                            confirmButtonText: 'باشە'
+                        });
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            });
+            
+            // Show modal
+            $('#returnProductModal').modal('show');
+        });
+        
+        // Populate return items table
+        function populateReturnItems(items) {
+            let html = '';
+            
+            items.forEach(function(item) {
+                const maxReturn = item.quantity - (item.returned_quantity || 0);
+                const unitTypeText = getUnitTypeText(item.unit_type);
+                
+                if (maxReturn > 0) {
+                    html += `
+                        <tr>
+                            <td>${item.product_name}</td>
+                            <td>${item.quantity}</td>
+                            <td>${unitTypeText}</td>
+                            <td>${item.returned_quantity || 0}</td>
+                            <td>${formatNumber(item.unit_price)} دینار</td>
+                            <td>
+                                <input type="number" class="form-control return-quantity" 
+                                    name="return_quantities[${item.id}]" 
+                                    min="0" max="${maxReturn}" step="0.01" value="0"
+                                    data-unit-price="${item.unit_price}">
+                            </td>
+                            <td class="item-return-total">0 دینار</td>
+                        </tr>
+                    `;
+                }
+            });
+            
+            if (html === '') {
+                html = '<tr><td colspan="7" class="text-center">هیچ کاڵایەک نییە بۆ گەڕاندنەوە یان هەموو کاڵاکان پێشتر گەڕاونەتەوە</td></tr>';
+            }
+            
+            $('#returnItemsContainer').html(html);
+            
+            // Add event listeners for quantity inputs
+            $('.return-quantity').on('input', updateReturnTotals);
+        }
+        
+        // Update return totals when quantities change
+        function updateReturnTotals() {
+            let totalAmount = 0;
+            
+            $('.return-quantity').each(function() {
+                const quantity = parseFloat($(this).val()) || 0;
+                const unitPrice = parseFloat($(this).data('unit-price')) || 0;
+                const rowTotal = quantity * unitPrice;
+                
+                $(this).closest('tr').find('.item-return-total').text(formatNumber(rowTotal) + ' دینار');
+                totalAmount += rowTotal;
+            });
+            
+            $('#totalReturnAmount').text(formatNumber(totalAmount) + ' دینار');
+        }
+        
+        // Helper function to format numbers
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+        
+        // Helper function to get unit type text
+        function getUnitTypeText(unitType) {
+            switch (unitType) {
+                case 'piece': return 'دانە';
+                case 'box': return 'کارتۆن';
+                case 'set': return 'سێت';
+                default: return unitType;
+            }
+        }
+        
+        // Submit return form
+        $('#submitReturnBtn').on('click', function() {
+            // Check if any items are selected for return
+            let hasReturnItems = false;
+            $('.return-quantity').each(function() {
+                if (parseFloat($(this).val()) > 0) {
+                    hasReturnItems = true;
+                    return false; // Break the loop
+                }
+            });
+            
+            if (!hasReturnItems) {
+                Swal.fire({
+                    title: 'ئاگاداری!',
+                    text: 'تکایە بڕی گەڕاندنەوە دیاری بکە بۆ لانیکەم یەک کاڵا',
+                    icon: 'warning',
+                    confirmButtonText: 'باشە'
+                });
+                return;
+            }
+            
+            // Submit form
+            const formData = new FormData($('#returnProductForm')[0]);
+            
+            Swal.fire({
+                title: 'ئایا دڵنیایت؟',
+                text: 'گەڕاندنەوەی ئەم کاڵایانە کاریگەری دەبێت لەسەر کۆگا و قەرزی کڕیار',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'بەڵێ، تۆماری بکە',
+                cancelButtonText: 'نەخێر، پەشیمان بوومەوە'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '../../ajax/return_sale.php',
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            try {
+                                const data = JSON.parse(response);
+                                if (data.success) {
+                                    Swal.fire({
+                                        title: 'سەرکەوتوو بوو!',
+                                        text: data.message || 'گەڕاندنەوەی کاڵا بە سەرکەوتوویی تۆمار کرا',
+                                        icon: 'success',
+                                        confirmButtonText: 'باشە'
+                                    }).then(() => {
+                                        // Close modal and reload page
+                                        $('#returnProductModal').modal('hide');
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        title: 'هەڵە!',
+                                        text: data.message || 'هەڵەیەک ڕوویدا لە تۆمارکردنی گەڕاندنەوەی کاڵا',
+                                        icon: 'error',
+                                        confirmButtonText: 'باشە'
+                                    });
+                                }
+                            } catch (e) {
+                                console.error('Error parsing response:', e);
+                                Swal.fire({
+                                    title: 'هەڵە!',
+                                    text: 'هەڵەیەک ڕوویدا لە تۆمارکردنی گەڕاندنەوەی کاڵا',
+                                    icon: 'error',
+                                    confirmButtonText: 'باشە'
+                                });
+                            }
+                        },
+                        error: function() {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
+                                icon: 'error',
+                                confirmButtonText: 'باشە'
+                            });
+                        }
+                    });
+                }
             });
         });
     });
