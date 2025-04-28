@@ -475,6 +475,14 @@ $(document).ready(function() {
                     
                     data.items.forEach((item, index) => {
                         console.log('Processing item:', item);
+                        console.log('Item ID:', item.id);
+                        console.log('Item data attributes:', {
+                            id: item.id,
+                            unit_price: item.unit_price,
+                            unit_type: item.unit_type,
+                            product_name: item.product_name
+                        });
+                        
                         const maxReturn = item.quantity - (item.returned_quantity || 0);
                         if (maxReturn > 0) {
                             itemsHtml += `
@@ -698,8 +706,12 @@ $(document).ready(function() {
                             // Convert return items to the correct format
                             const returnQuantities = {};
                             returnItems.forEach(item => {
-                                returnQuantities[item.item_id] = item.quantity;
+                                if (item.item_id) {
+                                    returnQuantities[item.item_id] = item.quantity;
+                                }
                             });
+                            
+                            console.log('Return quantities:', returnQuantities);
                             formData.append('return_quantities', JSON.stringify(returnQuantities));
 
                             return formData;
@@ -782,6 +794,16 @@ $(document).ready(function() {
                             }
                         `)
                         .appendTo('head');
+
+                    // Add debugging for form submission
+                    $('.return-quantity').on('change', function() {
+                        console.log('Return quantity changed:', {
+                            itemId: $(this).data('item-id'),
+                            quantity: $(this).val(),
+                            unitPrice: $(this).data('unit-price'),
+                            unitType: $(this).data('unit-type')
+                        });
+                    });
                 }
             },
             error: function(xhr, status, error) {
