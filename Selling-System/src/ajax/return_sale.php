@@ -27,14 +27,16 @@ try {
     $reason = $_POST['reason'] ?? 'other';
     $notes = $_POST['notes'] ?? '';
     
-    // Debug the return quantities data
-    error_log("Return quantities before decode: " . $_POST['return_quantities']);
-    $return_quantities = json_decode($_POST['return_quantities'], true);
-    error_log("Return quantities after decode: " . print_r($return_quantities, true));
-
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        throw new Exception('Invalid return quantities format: ' . json_last_error_msg());
+    // Handle return quantities - it's already an array from FormData
+    $return_quantities = $_POST['return_quantities'];
+    if (is_string($return_quantities)) {
+        $return_quantities = json_decode($return_quantities, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new Exception('Invalid return quantities format: ' . json_last_error_msg());
+        }
     }
+    
+    error_log("Return quantities: " . print_r($return_quantities, true));
 
     if (empty($return_quantities)) {
         throw new Exception('No items selected for return');
