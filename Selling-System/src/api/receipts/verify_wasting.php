@@ -13,7 +13,6 @@ error_log("Starting verify_wasting.php script");
 
 require_once '../../config/database.php';
 require_once '../../includes/auth.php';
-require_once '../../controllers/receipts/WastingReceiptsController.php';
 
 // Set headers for JSON response
 header('Content-Type: application/json');
