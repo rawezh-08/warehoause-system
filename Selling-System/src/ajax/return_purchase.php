@@ -4,12 +4,12 @@ header('Content-Type: application/json');
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        throw new Exception('Invalid request method');
+        throw new Exception('داواکارییەکە دروست نییە');
     }
 
     // Validate required fields
     if (empty($_POST['purchase_id']) || empty($_POST['receipt_type'])) {
-        throw new Exception('Missing required fields');
+        throw new Exception('زانیاری پێویست کەمە');
     }
 
     $purchase_id = intval($_POST['purchase_id']);
@@ -19,7 +19,20 @@ try {
     $return_quantities = $_POST['return_quantities'] ?? [];
 
     if (empty($return_quantities)) {
-        throw new Exception('No items selected for return');
+        throw new Exception('هیچ کاڵایەک هەڵنەبژێردراوە بۆ گەڕاندنەوە');
+    }
+
+    // Verify that at least one item has a quantity greater than zero
+    $hasPositiveQuantity = false;
+    foreach ($return_quantities as $itemId => $quantity) {
+        if (floatval($quantity) > 0) {
+            $hasPositiveQuantity = true;
+            break;
+        }
+    }
+
+    if (!$hasPositiveQuantity) {
+        throw new Exception('تکایە لانی کەم بڕی یەک کاڵا دیاری بکە بۆ گەڕاندنەوە');
     }
 
     // Start transaction
@@ -68,7 +81,18 @@ try {
         $item = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$item) {
-            throw new Exception('Invalid item ID');
+            throw new Exception('کاڵایەکی نادروست دیاری کراوە');
+        }
+
+        // Check if return quantity is valid (not exceeding original purchase minus already returned)
+        $originalQuantity = floatval($item['quantity']);
+        $alreadyReturned = floatval($item['returned_quantity'] ?? 0);
+        $maxReturnable = $originalQuantity - $alreadyReturned;
+        
+        if (floatval($quantity) > $maxReturnable) {
+            throw new Exception('بڕی داواکراو بۆ گەڕاندنەوە زیاترە لە بڕی بەردەست. بۆ ' . 
+                htmlspecialchars($item['product_name']) . 
+                '، تەنها ' . $maxReturnable . ' ' . $item['unit_type'] . ' بەردەستە بۆ گەڕاندنەوە');
         }
 
         // Calculate actual pieces count based on unit type
@@ -160,11 +184,16 @@ try {
             )
         ");
 
+        $inventoryNote = "گەڕاندنەوە بۆ دابینکەر: {$quantity} {$item['unit_type']} لە {$item['product_name']}";
+        if (!empty($notes)) {
+            $inventoryNote .= " - " . $notes;
+        }
+
         $stmt->execute([
             ':product_id' => $item['product_id'],
             ':quantity' => -$pieces_count, // Negative because items are going out
             ':reference_id' => $return_id,
-            ':notes' => "گەڕاندنەوە: {$quantity} {$item['unit_type']} (ئەسڵی: {$quantity} {$item['unit_type']})"
+            ':notes' => $inventoryNote
         ]);
 
         // Add to returned items array for response
@@ -257,11 +286,16 @@ try {
                     )
                 ");
 
+                $transactionNote = "گەڕاندنەوەی کاڵا بە بڕی " . number_format($total_return_amount) . " دینار";
+                if (!empty($notes)) {
+                    $transactionNote .= " - " . $notes;
+                }
+
                 $stmt->execute([
                     ':supplier_id' => $purchase['supplier_id'],
-                    ':amount' => -$debtAdjustment,
+                    ':amount' => $debtAdjustment,
                     ':return_id' => $return_id,
-                    ':notes' => "گەڕاندنەوەی کاڵا - " . $notes
+                    ':notes' => $transactionNote
                 ]);
             }
         }

@@ -2103,23 +2103,56 @@ $tabs = [
                             // Create return form
                             let itemsHtml = '<form id="returnPurchaseForm">';
                             itemsHtml += '<input type="hidden" name="purchase_id" value="' + purchaseId + '">';
+                            
+                            // Add introduction text explaining return limits
+                            itemsHtml += '<div class="alert alert-info mb-3">';
+                            itemsHtml += '<i class="fas fa-info-circle me-2"></i> ';
+                            itemsHtml += 'تکایە ئاگاداربە کە ناتوانیت لە بڕی ئەسڵی کەمتر بڕێک بگەڕێنیتەوە. ';
+                            itemsHtml += 'هەروەها ناتوانیت کاڵایەک دووبارە بگەڕێنیتەوە کە پێشتر گەڕێنراوەتەوە.';
+                            itemsHtml += '</div>';
+                            
                             itemsHtml += '<div class="table-responsive"><table class="table table-bordered">';
-                            itemsHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی کڕین</th><th>بڕی گەڕاندنەوە</th></tr></thead>';
+                            itemsHtml += '<thead><tr>';
+                            itemsHtml += '<th>ناوی کاڵا</th>';
+                            itemsHtml += '<th>بڕی کڕین</th>';
+                            itemsHtml += '<th>گەڕاوە پێشتر</th>';
+                            itemsHtml += '<th>بەردەست بۆ گەڕاندنەوە</th>';
+                            itemsHtml += '<th>بڕی گەڕاندنەوە</th>';
+                            itemsHtml += '</tr></thead>';
                             itemsHtml += '<tbody>';
                             
                             data.items.forEach(item => {
                                 // Calculate max returnable amount (total quantity - already returned quantity)
-                                const maxReturnable = item.quantity - (item.returned_quantity || 0);
+                                const originalQty = parseFloat(item.quantity);
+                                const returnedQty = parseFloat(item.returned_quantity || 0);
+                                const maxReturnable = originalQty - returnedQty;
                                 
-                                itemsHtml += `<tr>
-                                    <td>${item.product_name}</td>
-                                    <td>${item.quantity} (${item.returned_quantity || 0} گەڕاوە پێشتر)</td>
-                                    <td>
-                                        <input type="number" class="form-control return-quantity" 
-                                            name="return_quantities[${item.id}]" 
-                                            min="0" max="${maxReturnable}" value="0">
-                                    </td>
-                                </tr>`;
+                                // Skip if nothing left to return
+                                if (maxReturnable <= 0) {
+                                    itemsHtml += `<tr class="table-secondary">
+                                        <td>${item.product_name}</td>
+                                        <td>${originalQty} ${item.unit_type}</td>
+                                        <td>${returnedQty} ${item.unit_type}</td>
+                                        <td>0 ${item.unit_type}</td>
+                                        <td><span class="badge bg-secondary">هەمووی گەڕاوەتەوە</span></td>
+                                    </tr>`;
+                                } else {
+                                    itemsHtml += `<tr>
+                                        <td>${item.product_name}</td>
+                                        <td>${originalQty} ${item.unit_type}</td>
+                                        <td>${returnedQty} ${item.unit_type}</td>
+                                        <td><strong class="text-success">${maxReturnable} ${item.unit_type}</strong></td>
+                                        <td>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control return-quantity" 
+                                                    name="return_quantities[${item.id}]" 
+                                                    min="0" max="${maxReturnable}" value="0"
+                                                    step="0.001">
+                                                <span class="input-group-text">${item.unit_type}</span>
+                                            </div>
+                                        </td>
+                                    </tr>`;
+                                }
                             });
                             
                             itemsHtml += '</tbody></table></div>';
@@ -2140,11 +2173,25 @@ $tabs = [
                             Swal.fire({
                                 title: `گەڕاندنەوەی کاڵا - پسووڵە ${invoiceNumber}`,
                                 html: itemsHtml,
+                                width: '800px',
                                 showCancelButton: true,
                                 confirmButtonText: 'گەڕاندنەوە',
                                 cancelButtonText: 'هەڵوەشاندنەوە',
                                 showLoaderOnConfirm: true,
                                 preConfirm: () => {
+                                    // Validate that at least one item has been selected for return
+                                    let hasReturns = false;
+                                    document.querySelectorAll('.return-quantity').forEach(input => {
+                                        if (parseFloat(input.value) > 0) {
+                                            hasReturns = true;
+                                        }
+                                    });
+                                    
+                                    if (!hasReturns) {
+                                        Swal.showValidationMessage('تکایە لانی کەم یەک کاڵا هەڵبژێرە بۆ گەڕاندنەوە');
+                                        return false;
+                                    }
+                                    
                                     const formData = new FormData(document.getElementById('returnPurchaseForm'));
                                     // Add receipt_type parameter to indicate this is a purchase (buying) return
                                     formData.append('receipt_type', 'buying');
