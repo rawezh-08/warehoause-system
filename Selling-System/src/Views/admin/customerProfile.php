@@ -2356,7 +2356,7 @@ foreach ($debtTransactions as $debtTransaction) {
                             // Create return form
                             let itemsHtml = '<form id="returnSaleForm">';
                             itemsHtml += '<input type="hidden" name="sale_id" value="' + saleId + '">';
-                            itemsHtml += '<input type="hidden" name="receipt_type" value="selling">';
+                            itemsHtml += '<input type="hidden" name="receipt_type" value="selling" data-type="selling">';
                             itemsHtml += '<div class="table-responsive"><table class="table table-bordered">';
                             itemsHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی کڕین</th><th>بڕی گەڕانەوە</th></tr></thead>';
                             itemsHtml += '<tbody>';

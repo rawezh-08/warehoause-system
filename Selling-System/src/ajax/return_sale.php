@@ -16,6 +16,12 @@ try {
 
     $sale_id = intval($_POST['sale_id']);
     $receipt_type = $_POST['receipt_type'];
+    
+    // Validate receipt_type
+    if (!in_array($receipt_type, ['selling', 'buying'])) {
+        throw new Exception('Invalid receipt type');
+    }
+
     $reason = $_POST['reason'] ?? 'other';
     $notes = $_POST['notes'] ?? '';
     $return_quantities = $_POST['return_quantities'] ?? [];
