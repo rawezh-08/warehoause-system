@@ -74,7 +74,10 @@ try {
         }
         
         // Get original sale item data
-        $saleItemQuery = "SELECT * FROM sale_items WHERE id = :id";
+        $saleItemQuery = "SELECT si.*, p.pieces_per_box, p.boxes_per_set 
+                         FROM sale_items si
+                         JOIN products p ON si.product_id = p.id
+                         WHERE si.id = :id";
         $saleItemStmt = $conn->prepare($saleItemQuery);
         $saleItemStmt->bindParam(':id', $saleItemId);
         $saleItemStmt->execute();
@@ -94,6 +97,14 @@ try {
         // Calculate total price for this return item
         $totalPrice = $returnQuantity * $unitPrice;
         $totalReturnAmount += $totalPrice;
+        
+        // Calculate inventory quantity based on unit type
+        $inventoryQuantity = $returnQuantity;
+        if ($unitType == 'box' && $saleItem['pieces_per_box']) {
+            $inventoryQuantity = $returnQuantity * $saleItem['pieces_per_box'];
+        } elseif ($unitType == 'set' && $saleItem['boxes_per_set'] && $saleItem['pieces_per_box']) {
+            $inventoryQuantity = $returnQuantity * $saleItem['boxes_per_set'] * $saleItem['pieces_per_box'];
+        }
         
         // Insert return item
         $insertReturnItemQuery = "INSERT INTO return_items (
@@ -131,7 +142,7 @@ try {
                           SET quantity = quantity + :return_quantity 
                           WHERE product_id = :product_id";
         $inventoryStmt = $conn->prepare($inventoryQuery);
-        $inventoryStmt->bindParam(':return_quantity', $returnQuantity);
+        $inventoryStmt->bindParam(':return_quantity', $inventoryQuantity);
         $inventoryStmt->bindParam(':product_id', $productId);
         $inventoryStmt->execute();
         
@@ -140,7 +151,7 @@ try {
                               SET current_quantity = current_quantity + :return_quantity 
                               WHERE id = :product_id";
         $updateProductStmt = $conn->prepare($updateProductQuery);
-        $updateProductStmt->bindParam(':return_quantity', $returnQuantity);
+        $updateProductStmt->bindParam(':return_quantity', $inventoryQuantity);
         $updateProductStmt->bindParam(':product_id', $productId);
         $updateProductStmt->execute();
     }
