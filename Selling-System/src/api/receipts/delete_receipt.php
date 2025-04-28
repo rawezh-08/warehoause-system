@@ -71,7 +71,7 @@ try {
                 
                 // Check for payments if credit sale
                 if ($receipt['payment_type'] === 'credit') {
-                    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM debt_transactions WHERE reference_id = ? AND transaction_type = 'payment'");
+                    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM debt_transactions WHERE reference_id = ? AND transaction_type IN ('payment', 'return')");
                     $stmt->execute([$receipt_id]);
                     if ($stmt->fetch(PDO::FETCH_ASSOC)['count'] > 0) {
                         throw new Exception('ناتوانرێت ئەم پسووڵەیە بسڕدرێتەوە چونکە پارەدانی لەسەر تۆمارکراوە');
@@ -89,37 +89,26 @@ try {
                     $stmt->execute([$item['pieces_count'], $item['product_id']]);
                 }
                 
+                // If it's a credit sale, update customer debt
+                if ($receipt['payment_type'] === 'credit') {
+                    // Calculate total amount
+                    $totalAmount = $receipt['total_amount'];
+                    
+                    // Update customer debt
+                    $stmt = $conn->prepare("
+                        UPDATE customers 
+                        SET debit_on_business = GREATEST(0, debit_on_business - :amount)
+                        WHERE id = :customer_id
+                    ");
+                    $stmt->execute([
+                        ':amount' => $totalAmount,
+                        ':customer_id' => $receipt['customer_id']
+                    ]);
+                }
+                
                 // Delete related records
                 $stmt = $conn->prepare("DELETE FROM inventory WHERE reference_type = 'sale' AND reference_id IN (SELECT id FROM sale_items WHERE sale_id = ?)");
                 $stmt->execute([$receipt_id]);
-                
-                // Update customer debt if it was a credit sale
-                if ($receipt['payment_type'] === 'credit') {
-                    // Calculate total sale amount
-                    $stmt = $conn->prepare("
-                        SELECT SUM(si.total_price) as total_price,
-                               s.shipping_cost, s.other_costs, s.discount
-                        FROM sales s
-                        LEFT JOIN sale_items si ON s.id = si.sale_id
-                        WHERE s.id = ?
-                        GROUP BY s.id
-                    ");
-                    $stmt->execute([$receipt_id]);
-                    $totalData = $stmt->fetch(PDO::FETCH_ASSOC);
-                    
-                    $totalAmount = ($totalData['total_price'] ?? 0) + 
-                                  ($totalData['shipping_cost'] ?? 0) + 
-                                  ($totalData['other_costs'] ?? 0) - 
-                                  ($totalData['discount'] ?? 0);
-                    
-                    // Update customer's debt
-                    $stmt = $conn->prepare("
-                        UPDATE customers 
-                        SET debit_on_business = GREATEST(0, debit_on_business - ?)
-                        WHERE id = ?
-                    ");
-                    $stmt->execute([$totalAmount, $receipt['customer_id']]);
-                }
                 
                 $stmt = $conn->prepare("DELETE FROM debt_transactions WHERE reference_id = ? AND transaction_type = 'sale'");
                 $stmt->execute([$receipt_id]);
@@ -168,37 +157,26 @@ try {
                     $stmt->execute([$item['pieces_count'], $item['product_id']]);
                 }
                 
+                // If it's a credit purchase, update supplier debt
+                if ($receipt['payment_type'] === 'credit') {
+                    // Calculate total amount
+                    $totalAmount = $receipt['total_amount'];
+                    
+                    // Update supplier debt
+                    $stmt = $conn->prepare("
+                        UPDATE suppliers 
+                        SET debt_on_myself = GREATEST(0, debt_on_myself - :amount)
+                        WHERE id = :supplier_id
+                    ");
+                    $stmt->execute([
+                        ':amount' => $totalAmount,
+                        ':supplier_id' => $receipt['supplier_id']
+                    ]);
+                }
+                
                 // Delete related records
                 $stmt = $conn->prepare("DELETE FROM inventory WHERE reference_type = 'purchase' AND reference_id IN (SELECT id FROM purchase_items WHERE purchase_id = ?)");
                 $stmt->execute([$receipt_id]);
-                
-                // Update supplier debt if it was a credit purchase
-                if ($receipt['payment_type'] === 'credit') {
-                    // Calculate total purchase amount
-                    $stmt = $conn->prepare("
-                        SELECT SUM(pi.total_price) as total_price,
-                               p.shipping_cost, p.other_cost, p.discount
-                        FROM purchases p
-                        LEFT JOIN purchase_items pi ON p.id = pi.purchase_id
-                        WHERE p.id = ?
-                        GROUP BY p.id
-                    ");
-                    $stmt->execute([$receipt_id]);
-                    $totalData = $stmt->fetch(PDO::FETCH_ASSOC);
-                    
-                    $totalAmount = ($totalData['total_price'] ?? 0) + 
-                                  ($totalData['shipping_cost'] ?? 0) + 
-                                  ($totalData['other_cost'] ?? 0) - 
-                                  ($totalData['discount'] ?? 0);
-                    
-                    // Update supplier's debt
-                    $stmt = $conn->prepare("
-                        UPDATE suppliers 
-                        SET debt_on_myself = GREATEST(0, debt_on_myself - ?)
-                        WHERE id = ?
-                    ");
-                    $stmt->execute([$totalAmount, $receipt['supplier_id']]);
-                }
                 
                 $stmt = $conn->prepare("DELETE FROM supplier_debt_transactions WHERE reference_id = ? AND transaction_type = 'purchase'");
                 $stmt->execute([$receipt_id]);
