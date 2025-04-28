@@ -103,6 +103,18 @@ try {
             $pieces_count *= ($item['pieces_per_box'] * $item['boxes_per_set']);
         }
 
+        
+        // Check if the product's current stock is sufficient for the return
+        $stmt = $conn->prepare("SELECT current_quantity FROM products WHERE id = ?");
+        $stmt->execute([$item['product_id']]);
+        $currentStock = floatval($stmt->fetchColumn());
+        
+        if ($currentStock < $pieces_count) {
+            throw new Exception('بڕی داواکراو بۆ گەڕاندنەوە زیاترە لە بڕی بەردەست لە کۆگادا. بۆ ' . 
+                htmlspecialchars($item['product_name']) . 
+                '، تەنها ' . $currentStock . ' دانە بەردەستە لە کۆگادا');
+        }
+
         // Insert return item record
         $stmt = $conn->prepare("
             INSERT INTO return_items (
