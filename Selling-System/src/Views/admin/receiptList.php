@@ -2,9 +2,14 @@
 require_once '../../config/database.php';
 require_once '../../includes/auth.php';
 
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../../login.php');
+    header('Location: ../../auth/login.php');
     exit();
 }
 
@@ -165,33 +170,33 @@ $sales = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="dashboard.php">داشبۆرد</a>
+                        <a class="nav-link" href="../admin/dashboard.php">داشبۆرد</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="products.php">کاڵاکان</a>
+                        <a class="nav-link" href="../admin/products.php">کاڵاکان</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="sales.php">فرۆشتن</a>
+                        <a class="nav-link" href="../admin/sales.php">فرۆشتن</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="purchases.php">کڕین</a>
+                        <a class="nav-link" href="../admin/purchases.php">کڕین</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="customers.php">کڕیارەکان</a>
+                        <a class="nav-link" href="../admin/customers.php">کڕیارەکان</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="suppliers.php">دابینکارەکان</a>
+                        <a class="nav-link" href="../admin/suppliers.php">دابینکارەکان</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="inventory.php">کۆگا</a>
+                        <a class="nav-link" href="../admin/inventory.php">کۆگا</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="reports.php">ڕاپۆرتەکان</a>
+                        <a class="nav-link" href="../admin/reports.php">ڕاپۆرتەکان</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link" href="../../logout.php">چوونەدەرەوە</a>
+                        <a class="nav-link" href="../../auth/logout.php">چوونەدەرەوە</a>
                     </li>
                 </ul>
             </div>
