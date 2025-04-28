@@ -3269,11 +3269,22 @@ foreach ($debtTransactions as $debtTransaction) {
         const form = document.getElementById('editDebtReturnForm');
         const formData = new FormData(form);
 
+        // Show loading state
+        const saveButton = this;
+        const originalText = saveButton.innerHTML;
+        saveButton.disabled = true;
+        saveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> پاشەکەوتکردن...';
+
         fetch('../../api/customers/update_debt_return.php', {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 Swal.fire({
@@ -3284,11 +3295,7 @@ foreach ($debtTransactions as $debtTransaction) {
                     location.reload();
                 });
             } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'هەڵە',
-                    text: data.message || 'هەڵەیەک ڕوویدا لە کاتی دەستکاریکردن'
-                });
+                throw new Error(data.message || 'هەڵەیەک ڕوویدا لە کاتی دەستکاریکردن');
             }
         })
         .catch(error => {
@@ -3296,8 +3303,13 @@ foreach ($debtTransactions as $debtTransaction) {
             Swal.fire({
                 icon: 'error',
                 title: 'هەڵە',
-                text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی بە سێرڤەرەوە'
+                text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی بە سێرڤەرەوە. تکایە دووبارە هەوڵ بدەوە.'
             });
+        })
+        .finally(() => {
+            // Reset button state
+            saveButton.disabled = false;
+            saveButton.innerHTML = originalText;
         });
     });
     </script>
