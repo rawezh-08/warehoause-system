@@ -68,6 +68,7 @@ require_once '../../config/database.php';
                         <div class="col-md-4">
                             <label class="form-label">ژمارەی پسوڵە</label>
                             <input type="text" class="form-control receipt-number" placeholder="ژمارەی پسوڵە" readonly>
+                            <div class="invalid-feedback">ئەم ژمارەی پسووڵەیە پێشتر بەکارهاتووە</div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">کڕیار</label>
@@ -846,6 +847,81 @@ require_once '../../config/database.php';
     <!-- Test Script -->
     <script>
         $(document).ready(function() {
+            // Function to generate receipt number
+            function generateReceiptNumber() {
+                const date = new Date();
+                const year = date.getFullYear().toString().slice(-2);
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const day = date.getDate().toString().padStart(2, '0');
+                const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                return `INV-${year}${month}${day}-${random}`;
+            }
+
+            // Function to check if receipt number exists
+            function checkReceiptNumber(number) {
+                return $.ajax({
+                    url: '../../api/check_receipt_number.php',
+                    type: 'POST',
+                    data: { receipt_number: number },
+                    dataType: 'json'
+                });
+            }
+
+            // Function to set receipt number
+            async function setReceiptNumber() {
+                let receiptNumber = generateReceiptNumber();
+                let exists = true;
+                let attempts = 0;
+                const maxAttempts = 5;
+
+                while (exists && attempts < maxAttempts) {
+                    try {
+                        const response = await checkReceiptNumber(receiptNumber);
+                        exists = response.exists;
+                        if (exists) {
+                            receiptNumber = generateReceiptNumber();
+                            attempts++;
+                        }
+                    } catch (error) {
+                        console.error('Error checking receipt number:', error);
+                        break;
+                    }
+                }
+
+                if (attempts >= maxAttempts) {
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'نەتوانرا ژمارەی پسووڵەیەکی نوێ دروست بکرێت',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                    return;
+                }
+
+                $('.receipt-number').val(receiptNumber);
+            }
+
+            // Set receipt number when page loads
+            setReceiptNumber();
+
+            // Handle save button click
+            $('.save-btn').on('click', function(e) {
+                e.preventDefault();
+                
+                const receiptNumber = $('.receipt-number').val();
+                if (!receiptNumber) {
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'ژمارەی پسووڵە پێویستە',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                    return;
+                }
+
+                // Continue with saving the receipt...
+            });
+
             // Handle draft button click
             $('.draft-btn').on('click', function(e) {
                 e.preventDefault();
