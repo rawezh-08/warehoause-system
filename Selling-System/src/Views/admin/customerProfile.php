@@ -1592,9 +1592,9 @@ foreach ($debtTransactions as $debtTransaction) {
     <script>
         $(document).ready(function () {
             // Initialize pagination for tables
-            initTablePagination('sales');
-            initTablePagination('debt');
-            initTablePagination('debtHistory');
+            initBasicTablePagination('sales');
+            initBasicTablePagination('debt');
+            initBasicTablePagination('debtHistory');
 
             // Table search functionality
             $('#salesTableSearch, #debtTableSearch, #debtHistoryTableSearch').on('keyup', function () {
@@ -1618,7 +1618,7 @@ foreach ($debtTransactions as $debtTransaction) {
                 $(`${tableSelector} tbody tr`).show();
             }
 
-            function initTablePagination(tableId) {
+            function initBasicTablePagination(tableId) {
                 showAllRows(tableId);  // Show all rows initially
                 updatePagination(tableId);
 
@@ -1726,18 +1726,33 @@ foreach ($debtTransactions as $debtTransaction) {
                 switch(targetTab) {
                     case 'sales-tab':
                         tableId = 'sales';
+                        showAllRows(tableId);
+                        updatePagination(tableId);
                         break;
                     case 'debt-tab':
                         tableId = 'debt';
+                        showAllRows(tableId);
+                        updatePagination(tableId);
                         break;
                     case 'debt-history-tab':
                         tableId = 'debtHistory';
+                        showAllRows(tableId);
+                        updatePagination(tableId);
                         break;
-                }
-                
-                if (tableId) {
-                    showAllRows(tableId);
-                    updatePagination(tableId);
+                    case 'draft-receipts-tab':
+                        // Re-initialize advanced pagination for draft receipts
+                        initAdvancedTablePagination({
+                            tableId: 'draftHistoryTable',
+                            recordsPerPageId: 'draftRecordsPerPage',
+                            paginationNumbersId: 'draftPaginationNumbers',
+                            prevBtnId: 'draftPrevPageBtn',
+                            nextBtnId: 'draftNextPageBtn',
+                            startRecordId: 'draftStartRecord',
+                            endRecordId: 'draftEndRecord',
+                            totalRecordsId: 'draftTotalRecords',
+                            searchInputId: 'draftTableSearch'
+                        });
+                        break;
                 }
             });
 
@@ -2590,7 +2605,7 @@ foreach ($debtTransactions as $debtTransaction) {
             });
 
             // Initialize draft receipts table pagination
-            initTablePagination({
+            initAdvancedTablePagination({
                 tableId: 'draftHistoryTable',
                 recordsPerPageId: 'draftRecordsPerPage',
                 paginationNumbersId: 'draftPaginationNumbers',
@@ -2602,8 +2617,8 @@ foreach ($debtTransactions as $debtTransaction) {
                 searchInputId: 'draftTableSearch'
             });
 
-            // Make sure initTablePagination function properly handles the options
-            function initTablePagination(options) {
+            // Advanced table pagination function that handles options object
+            function initAdvancedTablePagination(options) {
                 if (typeof options !== 'object' || options === null) {
                     console.error('Invalid options for table pagination');
                     return;
