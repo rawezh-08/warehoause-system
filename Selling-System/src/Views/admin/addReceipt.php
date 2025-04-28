@@ -244,7 +244,7 @@ require_once '../../config/database.php';
             <div class="row mb-4">
                 <div class="col-md-4 col-sm-12">
                     <label class="form-label">ژمارەی پسوڵە</label>
-                    <input type="text" class="form-control receipt-number" placeholder="ژمارەی پسوڵە">
+                    <input type="text" class="form-control receipt-number" readonly placeholder="ژمارەی پسوڵە">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">فرۆشیار</label>
