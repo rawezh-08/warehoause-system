@@ -486,7 +486,7 @@ $(document).ready(function() {
                                     <td style="min-width: 150px;">
                                         <input type="number" class="form-control return-quantity" 
                                                min="0" max="${maxReturn}" value="0"
-                                               data-product-id="${item.product_id}"
+                                               data-item-id="${item.id}"
                                                data-unit-price="${item.unit_price}"
                                                data-unit-type="${item.unit_type}"
                                                data-product-name="${item.product_name}"
@@ -659,7 +659,7 @@ $(document).ready(function() {
                                 const quantity = parseInt($(this).val());
                                 if (quantity > 0) {
                                     returnItems.push({
-                                        product_id: $(this).data('product-id'),
+                                        item_id: $(this).data('item-id'),
                                         quantity: quantity,
                                         unit_price: $(this).data('unit-price'),
                                         unit_type: $(this).data('unit-type')
