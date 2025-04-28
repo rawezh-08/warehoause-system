@@ -398,18 +398,11 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    Swal.fire({
-                        title: 'سەرکەوتوو بوو!',
-                        text: response.message || 'زانیاری پارەدان بە سەرکەوتوویی نوێ کرایەوە',
-                        icon: 'success',
-                        confirmButtonText: 'باشە'
-                    }).then(() => {
-                        // Close modal
-                        closeModal('editEmployeePaymentModal');
+                    // Close modal first
+                    closeModal('editEmployeePaymentModal');
                         
-                        // Refresh table
-                        applyEmployeePaymentFilter();
-                    });
+                    // Refresh table with success message
+                    applyEmployeePaymentFilter(true);
                 } else {
                     Swal.fire({
                         title: 'هەڵە!',
@@ -473,18 +466,11 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    Swal.fire({
-                        title: 'سەرکەوتوو بوو!',
-                        text: response.message || 'زانیاری دەرکردنی پارە بە سەرکەوتوویی نوێ کرایەوە',
-                        icon: 'success',
-                        confirmButtonText: 'باشە'
-                    }).then(() => {
-                        // Close modal
-                        closeModal('editWithdrawalModal');
+                    // Close modal first
+                    closeModal('editWithdrawalModal');
                         
-                        // Refresh table
-                        applyWithdrawalFilter();
-                    });
+                    // Refresh table with success message
+                    applyWithdrawalFilter(true);
                 } else {
                     Swal.fire({
                         title: 'هەڵە!',
@@ -804,7 +790,7 @@ function updateWithdrawalsTable(data) {
 }
 
 // Apply filter for employee payments
-function applyEmployeePaymentFilter() {
+function applyEmployeePaymentFilter(showSuccessMessage = false) {
     const startDate = $('#employeePaymentStartDate').val();
     const endDate = $('#employeePaymentEndDate').val();
     const employeeName = $('#employeePaymentName').val();
@@ -832,6 +818,16 @@ function applyEmployeePaymentFilter() {
                 
                 // Display data with pagination
                 displayEmployeeData();
+                
+                // Show success message if requested
+                if (showSuccessMessage) {
+                    Swal.fire({
+                        title: 'سەرکەوتوو بوو!',
+                        text: 'پارەدان بە کارمەند بە سەرکەوتوویی نوێ کرایەوە',
+                        icon: 'success',
+                        confirmButtonText: 'باشە'
+                    });
+                }
             } else {
                 Swal.fire({
                     title: 'هەڵە!',
@@ -854,7 +850,7 @@ function applyEmployeePaymentFilter() {
 }
 
 // Apply filter for withdrawals
-function applyWithdrawalFilter() {
+function applyWithdrawalFilter(showSuccessMessage = false) {
     const startDate = $('#withdrawalStartDate').val();
     const endDate = $('#withdrawalEndDate').val();
     
@@ -880,6 +876,16 @@ function applyWithdrawalFilter() {
                 
                 // Display data with pagination
                 displayWithdrawalData();
+                
+                // Show success message if requested
+                if (showSuccessMessage) {
+                    Swal.fire({
+                        title: 'سەرکەوتوو بوو!',
+                        text: 'دەرکردنی پارە بە سەرکەوتوویی نوێ کرایەوە',
+                        icon: 'success',
+                        confirmButtonText: 'باشە'
+                    });
+                }
             } else {
                 Swal.fire({
                     title: 'هەڵە!',
