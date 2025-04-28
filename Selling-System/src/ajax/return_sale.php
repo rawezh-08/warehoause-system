@@ -2,23 +2,42 @@
 require_once '../config/database.php';
 require_once '../includes/auth.php';
 
+// Enable error reporting
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Set up error logging
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/return_sale_errors.log');
+
+// Log the start of the script
+error_log("Starting return_sale.php script");
+
 header('Content-Type: application/json');
 
 try {
+    // Log POST data
+    error_log("POST data received: " . print_r($_POST, true));
+
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         throw new Exception('Invalid request method');
     }
 
     // Validate required fields
     if (empty($_POST['sale_id']) || empty($_POST['receipt_type'])) {
+        error_log("Missing required fields. POST data: " . print_r($_POST, true));
         throw new Exception('Missing required fields');
     }
 
     $sale_id = intval($_POST['sale_id']);
-    $receipt_type = $_POST['receipt_type'];
+    $receipt_type = trim($_POST['receipt_type']); // Add trim to remove any whitespace
+    
+    error_log("Processing sale_id: {$sale_id}, receipt_type: {$receipt_type}");
     
     // Validate receipt_type
     if (!in_array($receipt_type, ['selling', 'buying'])) {
+        error_log("Invalid receipt type: {$receipt_type}");
         throw new Exception('Invalid receipt type');
     }
 
@@ -27,14 +46,23 @@ try {
     $return_quantities = $_POST['return_quantities'] ?? [];
 
     if (empty($return_quantities)) {
+        error_log("No items selected for return");
         throw new Exception('No items selected for return');
     }
+
+    error_log("Return quantities: " . print_r($return_quantities, true));
 
     $database = new Database();
     $conn = $database->getConnection();
     
+    if (!$conn) {
+        error_log("Failed to establish database connection");
+        throw new Exception('Database connection failed');
+    }
+
     // Start transaction
     $conn->beginTransaction();
+    error_log("Transaction started");
 
     // Create return record
     $stmt = $conn->prepare("
@@ -307,14 +335,22 @@ try {
     echo json_encode($response);
 
 } catch (Exception $e) {
-    if ($conn) {
+    if (isset($conn) && $conn->inTransaction()) {
         $conn->rollBack();
+        error_log("Transaction rolled back due to error");
     }
 
     error_log("Error in return_sale.php: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
     
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage()
+        'message' => $e->getMessage(),
+        'debug_info' => [
+            'error_message' => $e->getMessage(),
+            'error_code' => $e->getCode(),
+            'error_file' => $e->getFile(),
+            'error_line' => $e->getLine()
+        ]
     ]);
 } 

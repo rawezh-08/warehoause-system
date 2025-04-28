@@ -2402,6 +2402,10 @@ foreach ($debtTransactions as $debtTransaction) {
                                 showLoaderOnConfirm: true,
                                 preConfirm: () => {
                                     const formData = new FormData(document.getElementById('returnSaleForm'));
+                                    // Log form data for debugging
+                                    for (let pair of formData.entries()) {
+                                        console.log(pair[0] + ': ' + pair[1]);
+                                    }
                                     return $.ajax({
                                         url: '../../ajax/return_sale.php',
                                         type: 'POST',
@@ -2409,6 +2413,26 @@ foreach ($debtTransactions as $debtTransaction) {
                                         processData: false,
                                         contentType: false,
                                         dataType: 'json'
+                                    }).catch(function(jqXHR, textStatus, errorThrown) {
+                                        console.error('AJAX Error:', textStatus);
+                                        console.error('Status:', jqXHR.status);
+                                        console.error('Response:', jqXHR.responseText);
+                                        
+                                        // Try to parse the error response
+                                        let errorMessage = 'هەڵەیەک ڕوویدا';
+                                        try {
+                                            const response = JSON.parse(jqXHR.responseText);
+                                            if (response.message) {
+                                                errorMessage = response.message;
+                                            }
+                                            if (response.debug_info) {
+                                                console.error('Debug Info:', response.debug_info);
+                                            }
+                                        } catch (e) {
+                                            console.error('Error parsing response:', e);
+                                        }
+                                        
+                                        throw new Error(errorMessage);
                                     });
                                 }
                             }).then((result) => {
