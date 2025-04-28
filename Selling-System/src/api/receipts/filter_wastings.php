@@ -80,9 +80,7 @@ try {
     $totalRecords = $stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
 
     // Add pagination
-    $query .= " ORDER BY w.date DESC LIMIT ? OFFSET ?";
-    $params[] = $recordsPerPage;
-    $params[] = $offset;
+    $query .= " ORDER BY w.date DESC LIMIT " . intval($recordsPerPage) . " OFFSET " . intval($offset);
 
     // Execute main query
     $stmt = $conn->prepare($query);
