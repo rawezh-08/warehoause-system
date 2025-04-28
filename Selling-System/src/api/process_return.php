@@ -38,11 +38,42 @@ try {
 
     $conn->beginTransaction();
 
+    // Check receipt type
+    if ($data['receipt_type'] === 'selling') {
+        // Process sale return
+        $stmt = $conn->prepare("SELECT * FROM sales WHERE id = ?");
+        $stmt->execute([$data['receipt_id']]);
+        $receipt = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$receipt) {
+            throw new Exception('Sale receipt not found');
+        }
+        
+        // Get sale items
+        $stmt = $conn->prepare("SELECT * FROM sale_items WHERE sale_id = ?");
+        $stmt->execute([$data['receipt_id']]);
+        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        // Process purchase return
+        $stmt = $conn->prepare("SELECT * FROM purchases WHERE id = ?");
+        $stmt->execute([$data['receipt_id']]);
+        $receipt = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$receipt) {
+            throw new Exception('Purchase receipt not found');
+        }
+        
+        // Get purchase items
+        $stmt = $conn->prepare("SELECT * FROM purchase_items WHERE purchase_id = ?");
+        $stmt->execute([$data['receipt_id']]);
+        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     // Create return record
     $stmt = $conn->prepare("
         INSERT INTO product_returns (
-            receipt_id, 
-            receipt_type, 
+            receipt_id,
+            receipt_type,
             return_date,
             reason,
             notes
@@ -54,116 +85,47 @@ try {
             :notes
         )
     ");
-
+    
     $stmt->execute([
         ':receipt_id' => $data['receipt_id'],
         ':receipt_type' => $data['receipt_type'],
-        ':reason' => isset($data['items'][0]['reason']) ? $data['items'][0]['reason'] : 'other',
-        ':notes' => $data['notes'] ?? ''
+        ':reason' => $data['reason'],
+        ':notes' => $data['notes']
     ]);
-
+    
     $return_id = $conn->lastInsertId();
-    $total_return_amount = 0;
-
-    // Get receipt details
-    if ($data['receipt_type'] === 'sale') {
-        $stmt = $conn->prepare("
-            SELECT id, customer_id, payment_type 
-            FROM sales 
-            WHERE id = ?
-        ");
-        $stmt->execute([$data['receipt_id']]);
-        $receipt = $stmt->fetch(PDO::FETCH_ASSOC);
-        $customer_id = $receipt['customer_id'] ?? null;
-    } else {
-        $stmt = $conn->prepare("
-            SELECT id, supplier_id, payment_type 
-            FROM purchases 
-            WHERE id = ?
-        ");
-        $stmt->execute([$data['receipt_id']]);
-        $receipt = $stmt->fetch(PDO::FETCH_ASSOC);
-        $supplier_id = $receipt['supplier_id'] ?? null;
-    }
-
-    if (!$receipt) {
-        throw new Exception('پسووڵەی داواکراو نەدۆزرایەوە');
-        }
-
+    
     // Process each returned item
     foreach ($data['items'] as $item) {
         // Validate item data
-        if (empty($item['product_id']) || empty($item['quantity'])) {
-            throw new Exception('Missing product_id or quantity in item data');
+        if (!isset($item['id']) || !isset($item['quantity'])) {
+            continue;
         }
         
-        $product_id = $item['product_id'];
-        $quantity = floatval($item['quantity']);
-        $unit_type = $item['unit_type'] ?? 'piece';
-        $unit_price = floatval($item['unit_price'] ?? 0);
-        $reason = $item['reason'] ?? 'other';
-
-        // Get original receipt item details
-        if ($data['receipt_type'] === 'sale') {
+        // Get original item details
+        if ($data['receipt_type'] === 'selling') {
             $stmt = $conn->prepare("
-                SELECT quantity, returned_quantity, unit_price, unit_type
-                FROM sale_items 
-                WHERE sale_id = ? AND product_id = ?
+                SELECT si.*, p.name as product_name 
+                FROM sale_items si
+                JOIN products p ON si.product_id = p.id
+                WHERE si.id = ?
             ");
         } else {
             $stmt = $conn->prepare("
-                SELECT quantity, returned_quantity, unit_price, unit_type
-                FROM purchase_items 
-                WHERE purchase_id = ? AND product_id = ?
+                SELECT pi.*, p.name as product_name 
+                FROM purchase_items pi
+                JOIN products p ON pi.product_id = p.id
+                WHERE pi.id = ?
             ");
         }
-        $stmt->execute([$data['receipt_id'], $product_id]);
-        $originalItem = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$originalItem) {
-            throw new Exception('کاڵای داواکراو لە پسووڵەکەدا نییە');
+        
+        $stmt->execute([$item['id']]);
+        $original_item = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$original_item) {
+            continue;
         }
-
-        // Get product details for unit conversion
-        $stmt = $conn->prepare("
-            SELECT pieces_per_box, boxes_per_set
-            FROM products 
-            WHERE id = ?
-        ");
-        $stmt->execute([$product_id]);
-        $productDetails = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$productDetails) {
-            throw new Exception('کاڵای داواکراو نەدۆزرایەوە');
-        }
-
-        // Convert all quantities to pieces for comparison
-        $convertToPieces = function($quantity, $unitType) use ($productDetails) {
-            if ($unitType === 'piece') return $quantity;
-            if ($unitType === 'box' && $productDetails['pieces_per_box']) {
-                return $quantity * $productDetails['pieces_per_box'];
-            }
-            if ($unitType === 'set' && $productDetails['pieces_per_box'] && $productDetails['boxes_per_set']) {
-                return $quantity * $productDetails['pieces_per_box'] * $productDetails['boxes_per_set'];
-            }
-            return $quantity;
-        };
-
-        // Convert quantities to pieces
-        $originalPieces = $convertToPieces($originalItem['quantity'], $originalItem['unit_type']);
-        $returnedPieces = $convertToPieces($originalItem['returned_quantity'] ?? 0, $originalItem['unit_type']);
-        $newReturnPieces = $convertToPieces($quantity, $unit_type);
-
-        // Validate return quantity
-        $availableToReturn = $originalPieces - $returnedPieces;
-        if ($newReturnPieces > $availableToReturn) {
-            throw new Exception('بڕی گەڕاندنەوە زیاترە لە بڕی بەردەست');
-        }
-
-        // Calculate return amount using original unit price
-        $itemReturnAmount = $quantity * $originalItem['unit_price'];
-        $total_return_amount += $itemReturnAmount;
-
+        
         // Insert return item record
         $stmt = $conn->prepare("
             INSERT INTO return_items (
@@ -171,84 +133,64 @@ try {
                 product_id,
                 quantity,
                 unit_price,
-                unit_type,
-                original_unit_type,
-                original_quantity,
                 reason,
-                total_price
+                notes
             ) VALUES (
                 :return_id,
                 :product_id,
                 :quantity,
                 :unit_price,
-                :unit_type,
-                :original_unit_type,
-                :original_quantity,
                 :reason,
-                :total_price
+                :notes
             )
         ");
-
-        $total_price = $quantity * $unit_price;
-
+        
         $stmt->execute([
             ':return_id' => $return_id,
-            ':product_id' => $product_id,
-            ':quantity' => $quantity,
-            ':unit_price' => $originalItem['unit_price'], // Use original unit price
-            ':unit_type' => $unit_type,
-            ':original_unit_type' => $originalItem['unit_type'],
-            ':original_quantity' => $quantity,
-            ':reason' => $reason,
-            ':total_price' => $itemReturnAmount
+            ':product_id' => $original_item['product_id'],
+            ':quantity' => $item['quantity'],
+            ':unit_price' => $original_item['unit_price'],
+            ':reason' => $data['reason'],
+            ':notes' => $data['notes']
         ]);
-
-        // Update returned quantity in original receipt items
-        if ($data['receipt_type'] === 'sale') {
+        
+        // Update inventory
+        $inventory_quantity = $data['receipt_type'] === 'selling' ? $item['quantity'] : -$item['quantity'];
+        
+        $stmt = $conn->prepare("
+            UPDATE products 
+            SET current_quantity = current_quantity + :quantity 
+            WHERE id = :product_id
+        ");
+        
+        $stmt->execute([
+            ':quantity' => $inventory_quantity,
+            ':product_id' => $original_item['product_id']
+        ]);
+        
+        // Update returned quantity in original receipt
+        if ($data['receipt_type'] === 'selling') {
             $stmt = $conn->prepare("
                 UPDATE sale_items 
                 SET returned_quantity = COALESCE(returned_quantity, 0) + :quantity 
-                WHERE sale_id = :receipt_id AND product_id = :product_id
+                WHERE id = :item_id
             ");
         } else {
             $stmt = $conn->prepare("
                 UPDATE purchase_items 
                 SET returned_quantity = COALESCE(returned_quantity, 0) + :quantity 
-                WHERE purchase_id = :receipt_id AND product_id = :product_id
+                WHERE id = :item_id
             ");
         }
-
+        
         $stmt->execute([
-            ':quantity' => $quantity,
-            ':receipt_id' => $data['receipt_id'],
-            ':product_id' => $product_id
-        ]);
-
-        // Update product quantity
-        if ($data['receipt_type'] === 'sale') {
-            // For sales returns, add back to inventory
-        $stmt = $conn->prepare("
-            UPDATE products 
-            SET current_quantity = current_quantity + :quantity
-            WHERE id = :product_id
-        ");
-        } else {
-            // For purchase returns, subtract from inventory
-        $stmt = $conn->prepare("
-                UPDATE products 
-                SET current_quantity = current_quantity - :quantity 
-                WHERE id = :product_id
-            ");
-        }
-
-        $stmt->execute([
-            ':quantity' => $quantity,
-            ':product_id' => $product_id
+            ':quantity' => $item['quantity'],
+            ':item_id' => $item['id']
         ]);
     }
 
     // Update receipt total and remaining amounts
-    if ($data['receipt_type'] === 'sale') {
+    if ($data['receipt_type'] === 'selling') {
         // Get current sales data
         $stmt = $conn->prepare("
             SELECT s.*, 
@@ -298,7 +240,7 @@ try {
             ]);
             
             // Update customer debt if credit sale
-            if ($receiptDetails['payment_type'] === 'credit' && $customer_id) {
+            if ($receiptDetails['payment_type'] === 'credit' && $receipt['customer_id']) {
                 // Calculate the difference in remaining amount (this is the actual debt change)
                 $oldRemainingAmount = floatval($receiptDetails['remaining_amount'] ?? 0);
                 $debtAdjustment = $oldRemainingAmount - $newRemainingAmount;
@@ -315,7 +257,7 @@ try {
                         
                     $stmt->execute([
                         ':adjustment' => $debtAdjustment,
-                        ':customer_id' => $customer_id
+                        ':customer_id' => $receipt['customer_id']
                     ]);
     
                     // Record debt transaction
@@ -338,14 +280,14 @@ try {
                     ");
                         
                     $stmt->execute([
-                        ':customer_id' => $customer_id,
+                        ':customer_id' => $receipt['customer_id'],
                         ':amount' => -$debtAdjustment, // Negative to reduce debt
                         ':return_id' => $return_id,
                         ':notes' => "گەڕاندنەوەی کاڵا - " . ($data['notes'] ?? '')
                     ]);
                     
                     // Log debug info
-                    error_log("Customer debt update - customer_id: $customer_id, old remaining: $oldRemainingAmount, new remaining: $newRemainingAmount, adjustment: $debtAdjustment");
+                    error_log("Customer debt update - customer_id: {$receipt['customer_id']}, old remaining: $oldRemainingAmount, new remaining: $newRemainingAmount, adjustment: $debtAdjustment");
                 }
             }
         }
@@ -399,7 +341,7 @@ try {
             ]);
             
             // Update supplier debt if credit purchase
-            if ($receiptDetails['payment_type'] === 'credit' && $supplier_id) {
+            if ($receiptDetails['payment_type'] === 'credit' && $receipt['supplier_id']) {
                 // Calculate the difference in remaining amount (this is the actual debt change)
                 $oldRemainingAmount = floatval($receiptDetails['remaining_amount'] ?? 0);
                 $debtAdjustment = $oldRemainingAmount - $newRemainingAmount;
@@ -416,7 +358,7 @@ try {
                     
                     $stmt->execute([
                         ':adjustment' => $debtAdjustment,
-                        ':supplier_id' => $supplier_id
+                        ':supplier_id' => $receipt['supplier_id']
                     ]);
                     
                     // Record debt transaction
@@ -439,14 +381,14 @@ try {
                     ");
                     
                     $stmt->execute([
-                        ':supplier_id' => $supplier_id,
+                        ':supplier_id' => $receipt['supplier_id'],
                         ':amount' => -$debtAdjustment, // Negative amount to reduce debt
                         ':return_id' => $return_id,
                         ':notes' => "گەڕاندنەوەی کاڵا - " . ($data['notes'] ?? '')
                     ]);
                     
                     // Log debug info
-                    error_log("Supplier debt update - supplier_id: $supplier_id, old remaining: $oldRemainingAmount, new remaining: $newRemainingAmount, adjustment: $debtAdjustment");
+                    error_log("Supplier debt update - supplier_id: {$receipt['supplier_id']}, old remaining: $oldRemainingAmount, new remaining: $newRemainingAmount, adjustment: $debtAdjustment");
                 }
             }
         }

@@ -3498,7 +3498,7 @@ foreach ($debtTransactions as $debtTransaction) {
 
                 // Fetch sale items
                 $.ajax({
-                    url: '../../api/receipts/get_sale_items.php',
+                    url: '../../ajax/get_sale_items.php',  // Fixed URL
                     type: 'POST',
                     data: { sale_id: saleId },
                     dataType: 'json',
@@ -3507,9 +3507,9 @@ foreach ($debtTransactions as $debtTransaction) {
                         
                         Swal.close();
                         
-                        if (response.status === 'success' && response.items) {
+                        if (response.success && response.items) {  // Fixed success check
                             // Show return form
-                            showReturnForm(saleId, 'sale', response.items);
+                            showReturnForm(saleId, 'selling', response.items);  // Fixed receipt_type
                         } else {
                             Swal.fire({
                                 icon: 'error',
@@ -3595,7 +3595,7 @@ foreach ($debtTransactions as $debtTransaction) {
                             console.log('Return response:', response);
                             const data = typeof response === 'string' ? JSON.parse(response) : response;
                             
-                            if (data.status === 'success') {
+                            if (data.success) {  // Fixed success check
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'سەرکەوتوو',

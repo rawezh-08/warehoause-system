@@ -376,7 +376,7 @@ function showReturnForm(receiptId, receiptType, items) {
     }
 
     // Validate receiptType
-    if (!receiptType || (receiptType !== 'sale' && receiptType !== 'purchase')) {
+    if (!receiptType || (receiptType !== 'selling' && receiptType !== 'buying')) {
         console.error("Invalid receipt type:", receiptType);
         Swal.fire({
             icon: 'error',
