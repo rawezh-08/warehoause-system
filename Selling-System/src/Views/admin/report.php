@@ -876,10 +876,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Second Row of Cards -->
-                    <div class="row mb-4">
+             
                         <!-- Suppliers -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
                             <div class="report-card">
