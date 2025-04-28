@@ -71,7 +71,7 @@ try {
                 
                 // Check for payments if credit sale
                 if ($receipt['payment_type'] === 'credit') {
-                    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM debt_transactions WHERE reference_id = ? AND transaction_type IN ('payment', 'return')");
+                    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM debt_transactions WHERE reference_id = ? AND transaction_type = 'payment'");
                     $stmt->execute([$receipt_id]);
                     if ($stmt->fetch(PDO::FETCH_ASSOC)['count'] > 0) {
                         throw new Exception('ناتوانرێت ئەم پسووڵەیە بسڕدرێتەوە چونکە پارەدانی لەسەر تۆمارکراوە');
@@ -87,23 +87,6 @@ try {
                 foreach ($items as $item) {
                     $stmt = $conn->prepare("UPDATE products SET current_quantity = current_quantity + ? WHERE id = ?");
                     $stmt->execute([$item['pieces_count'], $item['product_id']]);
-                }
-                
-                // If it's a credit sale, update customer debt
-                if ($receipt['payment_type'] === 'credit') {
-                    // Calculate total amount
-                    $totalAmount = $receipt['total_amount'];
-                    
-                    // Update customer debt
-                    $stmt = $conn->prepare("
-                        UPDATE customers 
-                        SET debit_on_business = GREATEST(0, debit_on_business - :amount)
-                        WHERE id = :customer_id
-                    ");
-                    $stmt->execute([
-                        ':amount' => $totalAmount,
-                        ':customer_id' => $receipt['customer_id']
-                    ]);
                 }
                 
                 // Delete related records
@@ -155,23 +138,6 @@ try {
                 foreach ($items as $item) {
                     $stmt = $conn->prepare("UPDATE products SET current_quantity = current_quantity - ? WHERE id = ?");
                     $stmt->execute([$item['pieces_count'], $item['product_id']]);
-                }
-                
-                // If it's a credit purchase, update supplier debt
-                if ($receipt['payment_type'] === 'credit') {
-                    // Calculate total amount
-                    $totalAmount = $receipt['total_amount'];
-                    
-                    // Update supplier debt
-                    $stmt = $conn->prepare("
-                        UPDATE suppliers 
-                        SET debt_on_myself = GREATEST(0, debt_on_myself - :amount)
-                        WHERE id = :supplier_id
-                    ");
-                    $stmt->execute([
-                        ':amount' => $totalAmount,
-                        ':supplier_id' => $receipt['supplier_id']
-                    ]);
                 }
                 
                 // Delete related records

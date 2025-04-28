@@ -59,6 +59,55 @@ try {
         throw new Exception('ناتوانرێت پسووڵەکە بسڕدرێتەوە چونکە گەڕاندنەوەی کاڵای لەسەر تۆمار کراوە');
     }
 
+    // Get customer ID and check if this is a credit transaction
+    $customerId = $sale['customer_id'];
+    $isCredit = ($sale['payment_type'] == 'credit');
+
+    // If this was a credit transaction, check and get the debt amount
+    if ($isCredit) {
+        $debtQuery = "SELECT * FROM debt_transactions 
+                     WHERE reference_id = :sale_id AND transaction_type = 'sale'";
+        $debtStmt = $conn->prepare($debtQuery);
+        $debtStmt->bindParam(':sale_id', $saleId);
+        $debtStmt->execute();
+        $debtTransaction = $debtStmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($debtTransaction) {
+            // Update customer's debt balance
+            $debtAmount = $debtTransaction['amount'];
+            $updateCustomerQuery = "UPDATE customers SET debit_on_business = debit_on_business - :amount 
+                                   WHERE id = :customer_id";
+            $updateCustomerStmt = $conn->prepare($updateCustomerQuery);
+            $updateCustomerStmt->bindParam(':amount', $debtAmount);
+            $updateCustomerStmt->bindParam(':customer_id', $customerId);
+            $updateCustomerStmt->execute();
+
+            // Delete the debt transaction record
+            $deleteDebtQuery = "DELETE FROM debt_transactions 
+                               WHERE reference_id = :sale_id AND transaction_type = 'sale'";
+            $deleteDebtStmt = $conn->prepare($deleteDebtQuery);
+            $deleteDebtStmt->bindParam(':sale_id', $saleId);
+            $deleteDebtStmt->execute();
+        }
+    }
+
+    // Get sale items to restore product quantities
+    $itemsQuery = "SELECT * FROM sale_items WHERE sale_id = :sale_id";
+    $itemsStmt = $conn->prepare($itemsQuery);
+    $itemsStmt->bindParam(':sale_id', $saleId);
+    $itemsStmt->execute();
+    $saleItems = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Restore product quantities
+    foreach ($saleItems as $item) {
+        $updateProductQuery = "UPDATE products SET current_quantity = current_quantity + :pieces_count 
+                              WHERE id = :product_id";
+        $updateProductStmt = $conn->prepare($updateProductQuery);
+        $updateProductStmt->bindParam(':pieces_count', $item['pieces_count']);
+        $updateProductStmt->bindParam(':product_id', $item['product_id']);
+        $updateProductStmt->execute();
+    }
+
     // Delete sale items first
     $deleteItemsQuery = "DELETE FROM sale_items WHERE sale_id = :sale_id";
     $deleteItemsStmt = $conn->prepare($deleteItemsQuery);
