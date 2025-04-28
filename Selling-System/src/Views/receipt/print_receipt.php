@@ -804,15 +804,29 @@ $dir = $lang === 'ar' ? 'rtl' : 'rtl';
                         </td>
                         <td>
                             <?php 
-                            // Show unit prices if multiple units with different prices
-                            if (count($product['units']) > 1) {
-                                $price_texts = [];
-                                foreach ($product['units'] as $unit) {
-                                    $price_texts[] = number_format($unit['unit_price'], 0) . ' د.ع';
-                                }
-                                echo implode(' / ', $price_texts);
-                            } else {
+                            $unit_count = count($product['units']);
+                            if ($unit_count === 1) {
+                                // تەنها یەک یەکە هەیە
                                 echo number_format($product['units'][0]['unit_price'], 0) . ' د.ع';
+                            } else {
+                                // دەتوانرێت دانە و کارتۆن هەبێت، یان سێتیش
+                                $unit_types = array_column($product['units'], 'unit_type');
+                                if (in_array('piece', $unit_types) && $unit_count === 2 && in_array('box', $unit_types)) {
+                                    // تەنها دانە و کارتۆن هەیە، تەنها نرخی دانە نیشان بدە
+                                    foreach ($product['units'] as $unit) {
+                                        if ($unit['unit_type'] === 'piece') {
+                                            echo number_format($unit['unit_price'], 0) . ' د.ع';
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    // هەموو نرخی یەکەکان نیشان بدە
+                                    $price_texts = [];
+                                    foreach ($product['units'] as $unit) {
+                                        $price_texts[] = number_format($unit['unit_price'], 0) . ' د.ع';
+                                    }
+                                    echo implode(' / ', $price_texts);
+                                }
                             }
                             ?>
                         </td>
