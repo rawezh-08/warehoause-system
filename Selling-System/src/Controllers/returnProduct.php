@@ -1,4 +1,14 @@
 <?php
+// Enable error reporting
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Set content type to JSON
+header('Content-Type: application/json');
+
+// Log the request
+error_log("Return product request received: " . print_r($_POST, true));
+
 require_once '../config/database.php';
 require_once '../includes/auth.php';
 
@@ -14,6 +24,9 @@ $productId = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
 $quantity = isset($_POST['quantity']) ? floatval($_POST['quantity']) : 0;
 $reason = isset($_POST['reason']) ? $_POST['reason'] : '';
 $notes = isset($_POST['notes']) ? $_POST['notes'] : '';
+
+// Log the processed data
+error_log("Processed data: saleId=$saleId, productId=$productId, quantity=$quantity, reason=$reason");
 
 // Validate input
 if ($saleId <= 0 || $productId <= 0 || $quantity <= 0) {
@@ -114,6 +127,7 @@ try {
     if (isset($conn)) {
         $conn->rollBack();
     }
+    error_log("Error in returnProduct.php: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
 ?> 

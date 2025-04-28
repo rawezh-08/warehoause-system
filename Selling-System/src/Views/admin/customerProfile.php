@@ -3534,7 +3534,7 @@ foreach ($debtTransactions as $debtTransaction) {
         const form = document.getElementById('returnProductForm');
         const formData = new FormData(form);
         
-        fetch('/warehouse-system/Selling-System/src/controllers/returnProduct.php', {
+        fetch('../../controllers/returnProduct.php', {
             method: 'POST',
             body: formData
         })
