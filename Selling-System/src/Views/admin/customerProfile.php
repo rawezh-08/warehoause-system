@@ -2935,7 +2935,9 @@ foreach ($debtTransactions as $debtTransaction) {
                     },
                     error: function (xhr, status, error) {
                         console.error("Error fetching sale items:", error);
-                        tableBody.html('<tr><td colspan="8" class="text-center text-danger">هەڵەیەک ڕوویدا لە کاتی هێنانی کاڵاکان.</td></tr>');
+                        console.error("Status:", status);
+                        console.error("Response Text:", xhr.responseText); // Log the raw response
+                        tableBody.html('<tr><td colspan="8" class="text-center text-danger">هەڵەیەک ڕوویدا لە کاتی هێنانی کاڵاکان. وردەکاری لە کۆنسوڵ ببینە.</td></tr>');
                     }
                 });
             }
@@ -3046,8 +3048,10 @@ foreach ($debtTransactions as $debtTransaction) {
                         }
                     },
                     error: function (xhr, status, error) {
-                        console.error("Error submitting return:", error, xhr.responseText);
-                        Swal.fire('هەڵەی سێرڤەر!', 'هەڵەیەکی چاوەڕواننەکراو ڕوویدا.', 'error');
+                        console.error("Error submitting return:", error);
+                        console.error("Status:", status);
+                        console.error("Response Text:", xhr.responseText); // Log the raw response
+                        Swal.fire('هەڵەی سێرڤەر!', 'هەڵەیەکی چاوەڕواننەکراو ڕوویدا. وردەکاری لە کۆنسوڵ ببینە.', 'error');
                     },
                     complete: function () {
                         submitButton.prop('disabled', false).html('<i class="fas fa-undo me-2"></i> پشتڕاستکردنەوەی گەڕاندنەوە');
