@@ -2507,7 +2507,7 @@ foreach ($debtTransactions as $debtTransaction) {
                         console.error('Ajax error:', error);
                         Swal.fire({
                             title: 'هەڵە!',
-                            text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
+                            text: 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان',
                             icon: 'error',
                             confirmButtonText: 'باشە'
                         });
