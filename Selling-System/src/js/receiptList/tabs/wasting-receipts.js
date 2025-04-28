@@ -176,6 +176,8 @@ $(document).ready(function() {
     $('#withdrawalStartDate, #withdrawalEndDate').on('change', function() {
         const startDate = $('#withdrawalStartDate').val();
         const endDate = $('#withdrawalEndDate').val();
+        const searchTerm = $('#withdrawalTableSearch').val();
+        const recordsPerPage = $('#withdrawalRecordsPerPage').val();
         
         if (startDate && endDate) {
             $.ajax({
@@ -183,11 +185,17 @@ $(document).ready(function() {
                 method: 'POST',
                 data: {
                     start_date: startDate,
-                    end_date: endDate
+                    end_date: endDate,
+                    search: searchTerm,
+                    records_per_page: recordsPerPage,
+                    page: 1
                 },
                 success: function(response) {
                     if (response.success) {
                         updateWastingTable(response.data);
+                        if (response.pagination) {
+                            updateWastingPagination(response.pagination);
+                        }
                     } else {
                         Swal.fire({
                             title: 'هەڵە!',
@@ -196,7 +204,8 @@ $(document).ready(function() {
                         });
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    console.error('Filter error:', xhr.responseText);
                     Swal.fire({
                         title: 'هەڵە!',
                         text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی بە سێرڤەرەوە',
