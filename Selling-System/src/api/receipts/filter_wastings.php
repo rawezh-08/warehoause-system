@@ -26,42 +26,44 @@ try {
     $conn = $database->getConnection();
     
     if (!$conn) {
-        error_log("Failed to establish database connection");
         throw new Exception('کێشە هەیە لە پەیوەندی بە داتابەیسەوە');
     }
-    
-    error_log("Database connection established successfully");
 
     // Get filter parameters with default values
-    $startDate = isset($_POST['start_date']) && !empty($_POST['start_date']) ? $_POST['start_date'] : null;
-    $endDate = isset($_POST['end_date']) && !empty($_POST['end_date']) ? $_POST['end_date'] : null;
-    $search = isset($_POST['search']) && !empty($_POST['search']) ? $_POST['search'] : null;
-    $recordsPerPage = isset($_POST['records_per_page']) ? intval($_POST['records_per_page']) : 10;
-    $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+    $startDate = !empty($_POST['start_date']) ? $_POST['start_date'] : null;
+    $endDate = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
+    $search = !empty($_POST['search']) ? $_POST['search'] : null;
+    $recordsPerPage = !empty($_POST['records_per_page']) ? intval($_POST['records_per_page']) : 10;
+    $page = !empty($_POST['page']) ? intval($_POST['page']) : 1;
 
-    // Log the processed parameters
-    error_log("Processed parameters: " . json_encode([
-        'start_date' => $startDate,
-        'end_date' => $endDate,
-        'search' => $search,
-        'records_per_page' => $recordsPerPage,
-        'page' => $page
-    ]));
+    // Validate dates if provided
+    if ($startDate && !strtotime($startDate)) {
+        throw new Exception('بەرواری دەستپێک نادروستە');
+    }
+    if ($endDate && !strtotime($endDate)) {
+        throw new Exception('بەرواری کۆتایی نادروستە');
+    }
 
     // Calculate offset
     $offset = ($page - 1) * $recordsPerPage;
 
     // Build the base query
-    $query = "SELECT w.*, 
-                     GROUP_CONCAT(
-                         CONCAT(p.name, ' (', wi.quantity, ' ', 
-                         CASE wi.unit_type 
-                             WHEN 'piece' THEN 'دانە'
-                             WHEN 'box' THEN 'کارتۆن'
-                             WHEN 'set' THEN 'سێت'
-                         END, ')')
-                     SEPARATOR ', ') as products_list,
-                     SUM(wi.total_price) as total_amount
+    $query = "SELECT 
+                w.*,
+                GROUP_CONCAT(
+                    CONCAT(
+                        p.name, ' (',
+                        wi.quantity, ' ',
+                        CASE wi.unit_type 
+                            WHEN 'piece' THEN 'دانە'
+                            WHEN 'box' THEN 'کارتۆن'
+                            WHEN 'set' THEN 'سێت'
+                        END,
+                        ')'
+                    )
+                    SEPARATOR ', '
+                ) as products_list,
+                COALESCE(SUM(wi.total_price), 0) as total_amount
               FROM wastings w
               LEFT JOIN wasting_items wi ON w.id = wi.wasting_id
               LEFT JOIN products p ON wi.product_id = p.id";
@@ -74,7 +76,6 @@ try {
         $whereConditions[] = "DATE(w.date) >= :start_date";
         $params[':start_date'] = $startDate;
     }
-
     if ($endDate) {
         $whereConditions[] = "DATE(w.date) <= :end_date";
         $params[':end_date'] = $endDate;
@@ -94,19 +95,19 @@ try {
     // Group by to avoid duplicates
     $query .= " GROUP BY w.id";
 
-    // Log the final query
-    error_log("Final query: " . $query);
-    error_log("Query parameters: " . json_encode($params));
-
     // Get total count for pagination
-    $countQuery = str_replace("w.*, GROUP_CONCAT(CONCAT(p.name, ' (', wi.quantity, ' ', CASE wi.unit_type WHEN 'piece' THEN 'دانە' WHEN 'box' THEN 'کارتۆن' WHEN 'set' THEN 'سێت' END, ')') SEPARATOR ', ') as products_list, SUM(wi.total_price) as total_amount", "COUNT(DISTINCT w.id) as total", $query);
+    $countQuery = str_replace(
+        "w.*, GROUP_CONCAT(CONCAT(p.name, ' (', wi.quantity, ' ', CASE wi.unit_type WHEN 'piece' THEN 'دانە' WHEN 'box' THEN 'کارتۆن' WHEN 'set' THEN 'سێت' END, ')') SEPARATOR ', ') as products_list, COALESCE(SUM(wi.total_price), 0) as total_amount",
+        "COUNT(DISTINCT w.id) as total",
+        $query
+    );
+
     $stmt = $conn->prepare($countQuery);
     foreach ($params as $key => $value) {
         $stmt->bindValue($key, $value);
     }
     $stmt->execute();
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    $totalRecords = isset($result['total']) ? intval($result['total']) : 0;
+    $totalRecords = $stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
 
     // Add pagination
     $query .= " ORDER BY w.date DESC LIMIT :limit OFFSET :offset";
@@ -126,14 +127,6 @@ try {
     $startRecord = $totalRecords > 0 ? $offset + 1 : 0;
     $endRecord = $totalRecords > 0 ? min($offset + $recordsPerPage, $totalRecords) : 0;
 
-    // Log the results
-    error_log("Query results: " . json_encode([
-        'total_records' => $totalRecords,
-        'total_pages' => $totalPages,
-        'current_page' => $page,
-        'records_found' => count($wastings)
-    ]));
-
     // Return the response
     echo json_encode([
         'success' => true,
@@ -150,15 +143,10 @@ try {
 } catch (Exception $e) {
     error_log("Error in filter_wastings.php: " . $e->getMessage());
     error_log("Stack trace: " . $e->getTraceAsString());
+    
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage(),
-        'debug_info' => [
-            'error_message' => $e->getMessage(),
-            'error_code' => $e->getCode(),
-            'error_file' => $e->getFile(),
-            'error_line' => $e->getLine()
-        ]
+        'message' => $e->getMessage()
     ]);
 } 
