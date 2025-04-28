@@ -11,7 +11,7 @@
                 <div class="dash-cont">
                     <img src="../../assets/icons/dashboard.svg" alt="" class="dash-icon">
                 </div>
-                <span>بەشی سەرەکی</span>
+                <span>بەشی</span>
             </a>
         </div>
 
