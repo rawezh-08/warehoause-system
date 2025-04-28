@@ -711,18 +711,7 @@ foreach ($debtTransactions as $debtTransaction) {
                                                                     $canDelete = false;
                                                                 }
                                                                 
-                                                                if ($canReturn):
-                                                                ?>
-                                                                <button type="button" 
-                                                                    class="btn btn-sm btn-outline-warning rounded-circle return-sale"
-                                                                    data-id="<?php echo $sale['id']; ?>"
-                                                                    data-invoice="<?php echo $sale['invoice_number']; ?>"
-                                                                    title="گەڕانەوەی کاڵا">
-                                                                    <i class="fas fa-undo"></i>
-                                                                </button>
-                                                                <?php endif; ?>
-                                                                
-                                                                <?php if ($canDelete): ?>
+                                                                if ($canDelete): ?>
                                                                 <button type="button" 
                                                                     class="btn btn-sm btn-outline-danger rounded-circle delete-sale"
                                                                     data-id="<?php echo $sale['id']; ?>"
@@ -2357,17 +2346,6 @@ foreach ($debtTransactions as $debtTransaction) {
                                 return;
                             }
                             
-                            // Check if there are any items to return
-                            if (!response.items || response.items.length === 0) {
-                                Swal.fire({
-                                    title: 'هەڵە!',
-                                    text: 'هیچ کاڵایەک نەدۆزرایەوە بۆ گەڕاندنەوە',
-                                    icon: 'error',
-                                    confirmButtonText: 'باشە'
-                                });
-                                return;
-                            }
-                            
                             // Create return form
                             let itemsHtml = '<form id="returnSaleForm">';
                             itemsHtml += '<input type="hidden" name="sale_id" value="' + saleId + '">';
@@ -2376,13 +2354,11 @@ foreach ($debtTransactions as $debtTransaction) {
                             itemsHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی کڕین</th><th>بڕی گەڕانەوە</th></tr></thead>';
                             itemsHtml += '<tbody>';
                             
-                            let hasReturnableItems = false;
                             response.items.forEach(item => {
                                 // Calculate max returnable amount (total quantity - already returned quantity)
                                 const maxReturnable = item.quantity - (item.returned_quantity || 0);
                                 
                                 if (maxReturnable > 0) {
-                                    hasReturnableItems = true;
                                     itemsHtml += `<tr>
                                         <td>${item.product_name}</td>
                                         <td>${item.quantity} (${item.returned_quantity || 0} گەڕاوە پێشتر)</td>
@@ -2396,17 +2372,6 @@ foreach ($debtTransactions as $debtTransaction) {
                             });
                             
                             itemsHtml += '</tbody></table></div>';
-                            
-                            if (!hasReturnableItems) {
-                                Swal.fire({
-                                    title: 'هەڵە!',
-                                    text: 'هیچ کاڵایەک نەدۆزرایەوە بۆ گەڕاندنەوە',
-                                    icon: 'error',
-                                    confirmButtonText: 'باشە'
-                                });
-                                return;
-                            }
-                            
                             itemsHtml += '<div class="mb-3">';
                             itemsHtml += '<label for="returnReason" class="form-label">هۆکاری گەڕانەوە</label>';
                             itemsHtml += '<select class="form-select" name="reason" id="returnReason">';
@@ -2521,17 +2486,17 @@ foreach ($debtTransactions as $debtTransaction) {
                         } else {
                             Swal.fire({
                                 title: 'هەڵە!',
-                                text: response.message || 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان',
+                                text: data.message,
                                 icon: 'error',
                                 confirmButtonText: 'باشە'
                             });
                         }
                     },
                     error: function(xhr, status, error) {
-                        Swal.close();
+                        console.error('Ajax error:', error);
                         Swal.fire({
                             title: 'هەڵە!',
-                            text: 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان',
+                            text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
                             icon: 'error',
                             confirmButtonText: 'باشە'
                         });
