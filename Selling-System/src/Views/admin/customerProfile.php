@@ -2340,7 +2340,7 @@ foreach ($debtTransactions as $debtTransaction) {
                     data: {
                         sale_id: saleId
                     },
-                    dataType: 'json',
+                    dataType: 'json', // Add this to handle JSON response automatically
                     success: function(response) {
                         Swal.close();
                         
@@ -3544,35 +3544,38 @@ foreach ($debtTransactions as $debtTransaction) {
                 url: '../../ajax/get_sale_items.php',
                 type: 'POST',
                 data: { sale_id: saleId },
-                success: function(response) {
-                    try {
-                        // Check if response is already a JSON object
-                        const data = typeof response === 'object' ? response : JSON.parse(response);
-                        if (data.success) {
-                            populateReturnItems(data.items);
-                        } else {
-                            Swal.fire({
-                                title: 'هەڵە!',
-                                text: data.message || 'هەڵەیەک ڕوویدا لە وەرگرتنی کاڵاکان',
-                                icon: 'error',
-                                confirmButtonText: 'باشە'
-                            });
-                        }
-                    } catch (e) {
-                        console.error('Error parsing response:', e);
-                        console.log('Response received:', response);
+                dataType: 'json', // Add this to handle JSON response automatically
+                success: function(data) {
+                    if (data.success) {
+                        populateReturnItems(data.items);
+                    } else {
                         Swal.fire({
                             title: 'هەڵە!',
-                            text: 'هەڵەیەک ڕوویدا لە وەرگرتنی کاڵاکان',
+                            text: data.message || 'هەڵەیەک ڕوویدا لە وەرگرتنی کاڵاکان',
                             icon: 'error',
                             confirmButtonText: 'باشە'
                         });
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                    // Try to parse the response if possible
+                    let errorMessage = 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر';
+                    try {
+                        if (xhr.responseText) {
+                            console.log('Server response:', xhr.responseText);
+                            const errorData = JSON.parse(xhr.responseText);
+                            if (errorData.message) {
+                                errorMessage = errorData.message;
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error parsing error response:', e);
+                    }
+                    
                     Swal.fire({
                         title: 'هەڵە!',
-                        text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
+                        text: errorMessage,
                         icon: 'error',
                         confirmButtonText: 'باشە'
                     });
@@ -3691,42 +3694,47 @@ foreach ($debtTransactions as $debtTransaction) {
                         data: formData,
                         processData: false,
                         contentType: false,
-                        success: function(response) {
-                            try {
-                                const data = JSON.parse(response);
-                                if (data.success) {
-                                    Swal.fire({
-                                        title: 'سەرکەوتوو بوو!',
-                                        text: data.message || 'گەڕاندنەوەی کاڵا بە سەرکەوتوویی تۆمار کرا',
-                                        icon: 'success',
-                                        confirmButtonText: 'باشە'
-                                    }).then(() => {
-                                        // Close modal and reload page
-                                        $('#returnProductModal').modal('hide');
-                                        location.reload();
-                                    });
-                                } else {
-                                    Swal.fire({
-                                        title: 'هەڵە!',
-                                        text: data.message || 'هەڵەیەک ڕوویدا لە تۆمارکردنی گەڕاندنەوەی کاڵا',
-                                        icon: 'error',
-                                        confirmButtonText: 'باشە'
-                                    });
-                                }
-                            } catch (e) {
-                                console.error('Error parsing response:', e);
+                        dataType: 'json', // Add this to handle JSON response automatically
+                        success: function(data) {
+                            if (data.success) {
+                                Swal.fire({
+                                    title: 'سەرکەوتوو بوو!',
+                                    text: data.message || 'گەڕاندنەوەی کاڵا بە سەرکەوتوویی تۆمار کرا',
+                                    icon: 'success',
+                                    confirmButtonText: 'باشە'
+                                }).then(() => {
+                                    // Close modal and reload page
+                                    $('#returnProductModal').modal('hide');
+                                    location.reload();
+                                });
+                            } else {
                                 Swal.fire({
                                     title: 'هەڵە!',
-                                    text: 'هەڵەیەک ڕوویدا لە تۆمارکردنی گەڕاندنەوەی کاڵا',
+                                    text: data.message || 'هەڵەیەک ڕوویدا لە تۆمارکردنی گەڕاندنەوەی کاڵا',
                                     icon: 'error',
                                     confirmButtonText: 'باشە'
                                 });
                             }
                         },
-                        error: function() {
+                        error: function(xhr, status, error) {
+                            console.error('AJAX Error:', status, error);
+                            // Try to parse the response if possible
+                            let errorMessage = 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر';
+                            try {
+                                if (xhr.responseText) {
+                                    console.log('Server response:', xhr.responseText);
+                                    const errorData = JSON.parse(xhr.responseText);
+                                    if (errorData.message) {
+                                        errorMessage = errorData.message;
+                                    }
+                                }
+                            } catch (e) {
+                                console.error('Error parsing error response:', e);
+                            }
+                            
                             Swal.fire({
                                 title: 'هەڵە!',
-                                text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
+                                text: errorMessage,
                                 icon: 'error',
                                 confirmButtonText: 'باشە'
                             });
