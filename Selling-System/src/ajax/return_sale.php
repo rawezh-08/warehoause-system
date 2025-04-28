@@ -31,26 +31,41 @@ try {
     }
 
     $sale_id = intval($_POST['sale_id']);
-    $receipt_type = trim($_POST['receipt_type']); // Add trim to remove any whitespace
+    $receipt_type = trim(strval($_POST['receipt_type']));
     
-    error_log("Processing sale_id: {$sale_id}, receipt_type: {$receipt_type}");
+    error_log("Validating receipt_type: '{$receipt_type}'");
     
-    // Validate receipt_type
-    if (!in_array($receipt_type, ['selling', 'buying'])) {
-        error_log("Invalid receipt type: {$receipt_type}");
-        throw new Exception('Invalid receipt type');
+    // Strict validation for receipt_type
+    if ($receipt_type !== 'selling' && $receipt_type !== 'buying') {
+        error_log("Invalid receipt type. Expected 'selling' or 'buying', got: '{$receipt_type}'");
+        throw new Exception('Invalid receipt type. Got: ' . $receipt_type);
     }
 
     $reason = $_POST['reason'] ?? 'other';
     $notes = $_POST['notes'] ?? '';
     $return_quantities = $_POST['return_quantities'] ?? [];
 
+    error_log("Validating return quantities");
     if (empty($return_quantities)) {
-        error_log("No items selected for return");
+        error_log("No return quantities provided");
         throw new Exception('No items selected for return');
     }
 
-    error_log("Return quantities: " . print_r($return_quantities, true));
+    // Validate that at least one quantity is greater than 0
+    $hasValidQuantity = false;
+    foreach ($return_quantities as $quantity) {
+        if (floatval($quantity) > 0) {
+            $hasValidQuantity = true;
+            break;
+        }
+    }
+
+    if (!$hasValidQuantity) {
+        error_log("No valid quantities found in return_quantities");
+        throw new Exception('Please specify at least one item to return');
+    }
+
+    error_log("Return quantities validation passed");
 
     $database = new Database();
     $conn = $database->getConnection();
