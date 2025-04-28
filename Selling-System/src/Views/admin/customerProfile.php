@@ -689,6 +689,12 @@ foreach ($debtTransactions as $debtTransaction) {
                                                                     title="بینینی هەموو کاڵاکان">
                                                                     <i class="fas fa-list"></i>
                                                                 </button>
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-warning rounded-circle return-items-btn"
+                                                                    data-id="<?php echo $sale['id']; ?>"
+                                                                    title="گەڕاندنەوەی کاڵا">
+                                                                    <i class="fas fa-undo"></i>
+                                                                </button>
                                                                 <?php
                                                                 // Check if sale can be returned (no payments made)
                                                                 $canReturn = true;
@@ -1790,6 +1796,22 @@ foreach ($debtTransactions as $debtTransaction) {
             initBasicTablePagination('sales');
             initBasicTablePagination('debt');
             initBasicTablePagination('debtHistory');
+            
+            // Initialize return items tab immediately
+            initReturnItemsTab();
+            
+            // Add this line to automatically check if we need to show the return items tab based on URL
+            checkForReturnItemsTab();
+
+            // Function to check URL for return items tab
+            function checkForReturnItemsTab() {
+                // Check if URL has return parameter
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('tab') && urlParams.get('tab') === 'return-items') {
+                    // Show return items tab
+                    $('#return-items-tab').tab('show');
+                }
+            }
 
             // Table search functionality
             $('#salesTableSearch, #debtTableSearch, #debtHistoryTableSearch').on('keyup', function () {
@@ -3017,6 +3039,22 @@ foreach ($debtTransactions as $debtTransaction) {
 
             // Function to initialize return items tab
             function initReturnItemsTab() {
+                // Handle return items button clicks
+                $(document).on('click', '.return-items-btn', function() {
+                    const saleId = $(this).data('id');
+                    
+                    // Show the return items tab
+                    $('#return-items-tab').tab('show');
+                    
+                    // Select the sale in the dropdown
+                    $('#saleSelect').val(saleId).trigger('change');
+                    
+                    // Trigger the load button click
+                    setTimeout(function() {
+                        $('#loadSaleItemsBtn').click();
+                    }, 100);
+                });
+            
                 // Load sale items when a sale is selected
                 $('#loadSaleItemsBtn').on('click', function() {
                     const saleId = $('#saleSelect').val();
@@ -3304,6 +3342,23 @@ foreach ($debtTransactions as $debtTransaction) {
                         break;
                 }
             });
+
+
+            // Function to show toast messages
+            function showToast(icon, message) {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: icon,
+                    title: message,
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    customClass: {
+                        container: 'toast-container-rtl'
+                    }
+                });
+            }
         });
 
         // Load sale data for editing
