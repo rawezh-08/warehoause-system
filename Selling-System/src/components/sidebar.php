@@ -58,8 +58,8 @@
                 </a>
                 <ul class="submenu collapse" id="salesSubmenu">
                     <li><a href="addReceipt.php">زیادکردنی پسوڵە</a></li>
-
- 
+                    <li><a href="receiptList.php">لیستی پسوڵەکان</a></li>
+                  
                 </ul>
             </li>
 
