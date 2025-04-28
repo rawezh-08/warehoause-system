@@ -3574,13 +3574,13 @@ foreach ($debtTransactions as $debtTransaction) {
                 // Prepare data for submission
                 const formData = new FormData();
                 formData.append('sale_id', returnData.receipt_id);
-                formData.append('receipt_type', returnData.receipt_type);
+                formData.append('receipt_type', 'selling');
                 formData.append('notes', returnData.notes || '');
                 formData.append('reason', returnData.reason || 'damaged');
                 
                 // Add return quantities for each item
                 returnData.items.forEach((item, index) => {
-                    formData.append(`return_quantities[${item.id}]`, item.quantity);
+                    formData.append(`return_quantities[${item.sale_item_id || item.id}]`, item.quantity);
                 });
                 
                 // Submit the return data
@@ -3625,12 +3625,28 @@ foreach ($debtTransactions as $debtTransaction) {
                     },
                     error: function(xhr, status, error) {
                         console.error('AJAX Error:', xhr, status, error);
+                        console.error('Response Text:', xhr.responseText);
                         Swal.close();
+                        
+                        let errorMessage = 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی کردن بە سێرڤەرەوە';
+                        try {
+                            const errorData = JSON.parse(xhr.responseText);
+                            if (errorData.message) {
+                                errorMessage = errorData.message;
+                            }
+                            console.error('Parsed Error:', errorData);
+                        } catch (e) {
+                            console.error('Error parsing error response:', e);
+                            // Use raw response text if available
+                            if (xhr.responseText) {
+                                errorMessage = xhr.responseText;
+                            }
+                        }
                         
                         Swal.fire({
                             icon: 'error',
                             title: 'هەڵە',
-                            text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی کردن بە سێرڤەرەوە'
+                            text: errorMessage
                         });
                     }
                 });
