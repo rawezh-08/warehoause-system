@@ -443,34 +443,11 @@ foreach ($debtTransactions as $debtTransaction) {
                                 </div>
                                 <form id="salesFilterForm" class="row g-3">
                                     <div class="col-md-3">
-                                        <label for="productFilter" class="form-label">ناوی کاڵا</label>
-                                        <select class="form-select auto-filter" id="productFilter">
-                                            <option value="">هەموو کاڵاکان</option>
-                                            <?php
-                                            $productQuery = "SELECT DISTINCT p.id, p.name 
-                                                           FROM products p 
-                                                           JOIN sale_items si ON p.id = si.product_id 
-                                                           JOIN sales s ON si.sale_id = s.id 
-                                                           WHERE s.customer_id = :customer_id 
-                                                           ORDER BY p.name";
-                                            $productStmt = $conn->prepare($productQuery);
-                                            $productStmt->bindParam(':customer_id', $customerId);
-                                            $productStmt->execute();
-                                            $products = $productStmt->fetchAll(PDO::FETCH_ASSOC);
-
-                                            foreach ($products as $product) {
-                                                echo '<option value="' . $product['id'] . '">' . htmlspecialchars($product['name']) . '</option>';
-                                            }
-                                            ?>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label for="unitFilter" class="form-label">یەکە</label>
-                                        <select class="form-select auto-filter" id="unitFilter">
-                                            <option value="">هەموو یەکەکان</option>
-                                            <option value="piece">دانە</option>
-                                            <option value="box">کارتۆن</option>
-                                            <option value="set">سێت</option>
+                                        <label for="paymentTypeFilter" class="form-label">جۆری پارەدان</label>
+                                        <select class="form-select auto-filter" id="paymentTypeFilter">
+                                            <option value="">هەموو جۆرەکان</option>
+                                            <option value="cash">نەقد</option>
+                                            <option value="credit">قەرز</option>
                                         </select>
                                     </div>
                                     <div class="col-md-3">
@@ -651,10 +628,16 @@ foreach ($debtTransactions as $debtTransaction) {
                                                             <?php else: ?>
                                                                 <span class="badge bg-warning">قەرز</span>
                                                             <?php endif; ?>
+                                                            
+                                                            <?php if (isset($sale['is_delivery']) && $sale['is_delivery'] == 1): ?>
+                                                                <span class="badge bg-info ms-1">گەیاندن</span>
+                                                            <?php endif; ?>
                                                         </td>
                                                         <td>
                                                             <div class="action-buttons">
-                                                                <a href="../../Views/receipt/print_receipt.php?sale_id=<?php echo $sale['id']; ?>"
+                                                                <a href="<?php echo (isset($sale['is_delivery']) && $sale['is_delivery'] == 1) ? 
+                                                                    '../../Views/receipt/delivery_receipt.php?sale_id=' . $sale['id'] : 
+                                                                    '../../Views/receipt/print_receipt.php?sale_id=' . $sale['id']; ?>"
                                                                     class="btn btn-sm btn-outline-success rounded-circle"
                                                                     title="چاپکردن">
                                                                     <i class="fas fa-print"></i>
@@ -1609,9 +1592,9 @@ foreach ($debtTransactions as $debtTransaction) {
     <script>
         $(document).ready(function () {
             // Initialize pagination for tables
-            initTablePagination('sales');
-            initTablePagination('debt');
-            initTablePagination('debtHistory');
+            initBasicTablePagination('sales');
+            initBasicTablePagination('debt');
+            initBasicTablePagination('debtHistory');
 
             // Table search functionality
             $('#salesTableSearch, #debtTableSearch, #debtHistoryTableSearch').on('keyup', function () {
@@ -1635,7 +1618,7 @@ foreach ($debtTransactions as $debtTransaction) {
                 $(`${tableSelector} tbody tr`).show();
             }
 
-            function initTablePagination(tableId) {
+            function initBasicTablePagination(tableId) {
                 showAllRows(tableId);  // Show all rows initially
                 updatePagination(tableId);
 
@@ -1743,18 +1726,33 @@ foreach ($debtTransactions as $debtTransaction) {
                 switch(targetTab) {
                     case 'sales-tab':
                         tableId = 'sales';
+                        showAllRows(tableId);
+                        updatePagination(tableId);
                         break;
                     case 'debt-tab':
                         tableId = 'debt';
+                        showAllRows(tableId);
+                        updatePagination(tableId);
                         break;
                     case 'debt-history-tab':
                         tableId = 'debtHistory';
+                        showAllRows(tableId);
+                        updatePagination(tableId);
                         break;
-                }
-                
-                if (tableId) {
-                    showAllRows(tableId);
-                    updatePagination(tableId);
+                    case 'draft-receipts-tab':
+                        // Re-initialize advanced pagination for draft receipts
+                        initAdvancedTablePagination({
+                            tableId: 'draftHistoryTable',
+                            recordsPerPageId: 'draftRecordsPerPage',
+                            paginationNumbersId: 'draftPaginationNumbers',
+                            prevBtnId: 'draftPrevPageBtn',
+                            nextBtnId: 'draftNextPageBtn',
+                            startRecordId: 'draftStartRecord',
+                            endRecordId: 'draftEndRecord',
+                            totalRecordsId: 'draftTotalRecords',
+                            searchInputId: 'draftTableSearch'
+                        });
+                        break;
                 }
             });
 
@@ -2297,6 +2295,16 @@ foreach ($debtTransactions as $debtTransaction) {
                 const saleId = $(this).data('id');
                 const invoiceNumber = $(this).data('invoice');
                 
+                // Show loading
+                Swal.fire({
+                    title: 'تکایە چاوەڕێ بکە...',
+                    text: 'زانیارییەکان وەردەگیرێن',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
                 // Get sale items
                 $.ajax({
                     url: '../../ajax/get_sale_items.php',
@@ -2305,28 +2313,55 @@ foreach ($debtTransactions as $debtTransaction) {
                         sale_id: saleId
                     },
                     dataType: 'json',
-                    success: function(data) {
-                        if (data.success) {
+                    success: function(response) {
+                        Swal.close();
+                        
+                        if (response.success) {
+                            // Check if sale has payments
+                            if (response.has_payments) {
+                                Swal.fire({
+                                    title: 'هەڵە!',
+                                    text: 'ناتوانرێت ئەم پسووڵە بگەڕێتەوە چونکە پارەدانەوەی لەسەر تۆمار کراوە',
+                                    icon: 'error',
+                                    confirmButtonText: 'باشە'
+                                });
+                                return;
+                            }
+                            
                             // Create return form
                             let itemsHtml = '<form id="returnSaleForm">';
                             itemsHtml += '<input type="hidden" name="sale_id" value="' + saleId + '">';
+                            itemsHtml += '<input type="hidden" name="receipt_type" value="selling">';
                             itemsHtml += '<div class="table-responsive"><table class="table table-bordered">';
                             itemsHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی کڕین</th><th>بڕی گەڕانەوە</th></tr></thead>';
                             itemsHtml += '<tbody>';
                             
-                            data.items.forEach(item => {
-                                itemsHtml += `<tr>
-                                    <td>${item.product_name}</td>
-                                    <td>${item.quantity}</td>
-                                    <td>
-                                        <input type="number" class="form-control return-quantity" 
-                                            name="return_quantities[${item.id}]" 
-                                            min="0" max="${item.quantity}" value="0">
-                                    </td>
-                                </tr>`;
+                            response.items.forEach(item => {
+                                // Calculate max returnable amount (total quantity - already returned quantity)
+                                const maxReturnable = item.quantity - (item.returned_quantity || 0);
+                                
+                                if (maxReturnable > 0) {
+                                    itemsHtml += `<tr>
+                                        <td>${item.product_name}</td>
+                                        <td>${item.quantity} (${item.returned_quantity || 0} گەڕاوە پێشتر)</td>
+                                        <td>
+                                            <input type="number" class="form-control return-quantity" 
+                                                name="return_quantities[${item.id}]" 
+                                                min="0" max="${maxReturnable}" value="0">
+                                        </td>
+                                    </tr>`;
+                                }
                             });
                             
                             itemsHtml += '</tbody></table></div>';
+                            itemsHtml += '<div class="mb-3">';
+                            itemsHtml += '<label for="returnReason" class="form-label">هۆکاری گەڕانەوە</label>';
+                            itemsHtml += '<select class="form-select" name="reason" id="returnReason">';
+                            itemsHtml += '<option value="damaged">شکاو/خراپ</option>';
+                            itemsHtml += '<option value="wrong_product">کاڵای هەڵە</option>';
+                            itemsHtml += '<option value="other">هۆکاری تر</option>';
+                            itemsHtml += '</select>';
+                            itemsHtml += '</div>';
                             itemsHtml += '<div class="mb-3">';
                             itemsHtml += '<label for="returnNotes" class="form-label">تێبینی</label>';
                             itemsHtml += '<textarea class="form-control" id="returnNotes" name="notes" rows="3"></textarea>';
@@ -2334,10 +2369,10 @@ foreach ($debtTransactions as $debtTransaction) {
                             itemsHtml += '</form>';
                             
                             Swal.fire({
-                                title: `گەڕانەوەی کاڵا - پسووڵە ${invoiceNumber}`,
+                                title: `گەڕاندنەوەی کاڵا - پسووڵە ${invoiceNumber}`,
                                 html: itemsHtml,
                                 showCancelButton: true,
-                                confirmButtonText: 'گەڕانەوە',
+                                confirmButtonText: 'گەڕاندنەوە',
                                 cancelButtonText: 'هەڵوەشاندنەوە',
                                 showLoaderOnConfirm: true,
                                 preConfirm: () => {
@@ -2377,34 +2412,16 @@ foreach ($debtTransactions as $debtTransaction) {
                                             ${response.summary.returned_amount.toLocaleString()} دینار
                                         </div>`;
                                         
-                                        // Remaining amount
-                                        summaryHtml += `<div class="mb-2">
-                                            <strong>کۆی گشتی ماوە:</strong> 
-                                            ${response.summary.remaining_amount.toLocaleString()} دینار
-                                        </div>`;
-                                        
-                                        // New debt
-                                        if (response.summary.new_debt !== undefined) {
-                                            summaryHtml += `<div class="mb-2">
-                                                <strong>قەرزی نوێ:</strong> 
-                                                ${response.summary.new_debt.toLocaleString()} دینار
-                                            </div>`;
-                                        }
-                                        
-                                        // Returned items
+                                        // Remaining items
                                         summaryHtml += '<div class="mb-2"><strong>کاڵاکانی گەڕاوە:</strong></div>';
                                         summaryHtml += '<div class="table-responsive"><table class="table table-sm table-bordered">';
-                                        summaryHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی کڕین</th><th>بڕی پێشوو گەڕاوە</th><th>بڕی گەڕانەوە</th><th>کۆی گەڕاوەکان</th><th>بڕی ماوە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
+                                        summaryHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی گەڕانەوە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
                                         summaryHtml += '<tbody>';
                                         
                                         response.summary.returned_items.forEach(item => {
                                             summaryHtml += `<tr>
                                                 <td>${item.product_name}</td>
-                                                <td>${item.original_quantity}</td>
-                                                <td>${item.previously_returned}</td>
                                                 <td>${item.returned_quantity}</td>
-                                                <td>${item.total_returned_quantity}</td>
-                                                <td>${item.remaining_quantity}</td>
                                                 <td>${item.unit_price.toLocaleString()} دینار</td>
                                                 <td>${item.total_price.toLocaleString()} دینار</td>
                                             </tr>`;
@@ -2607,7 +2624,7 @@ foreach ($debtTransactions as $debtTransaction) {
             });
 
             // Initialize draft receipts table pagination
-            initTablePagination({
+            initAdvancedTablePagination({
                 tableId: 'draftHistoryTable',
                 recordsPerPageId: 'draftRecordsPerPage',
                 paginationNumbersId: 'draftPaginationNumbers',
@@ -2619,8 +2636,8 @@ foreach ($debtTransactions as $debtTransaction) {
                 searchInputId: 'draftTableSearch'
             });
 
-            // Make sure initTablePagination function properly handles the options
-            function initTablePagination(options) {
+            // Advanced table pagination function that handles options object
+            function initAdvancedTablePagination(options) {
                 if (typeof options !== 'object' || options === null) {
                     console.error('Invalid options for table pagination');
                     return;
@@ -2994,6 +3011,181 @@ foreach ($debtTransactions as $debtTransaction) {
                 confirmButtonText: 'باشە'
             });
         }
+
+        // Custom JavaScript for search and filter functionality
+        $(document).ready(function() {
+            // Search functionality for sales history table
+            $("#salesTableSearch").on("keyup", function() {
+                const value = $(this).val().toLowerCase();
+                $("#salesHistoryTable tbody tr").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
+                updateSalesPagination();
+            });
+            
+            // Search functionality for debt history table
+            $("#debtTableSearch").on("keyup", function() {
+                const value = $(this).val().toLowerCase();
+                $("#debtHistoryTable tbody tr").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
+                updateDebtPagination();
+            });
+            
+            // Search functionality for debt return history table
+            $("#debtHistoryTableSearch").on("keyup", function() {
+                const value = $(this).val().toLowerCase();
+                $("#debtHistoryReturnTable tbody tr").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
+                updateDebtHistoryPagination();
+            });
+            
+            // Search functionality for draft receipts table
+            $("#draftTableSearch").on("keyup", function() {
+                const value = $(this).val().toLowerCase();
+                $("#draftHistoryTable tbody tr").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
+                updateDraftPagination();
+            });
+            
+            // Payment type filter functionality
+            $("#paymentTypeFilter").on("change", function() {
+                const value = $(this).val().toLowerCase();
+                if (value === "") {
+                    // Show all rows if no filter selected
+                    $("#salesHistoryTable tbody tr").show();
+                } else {
+                    // Filter rows based on payment type
+                    $("#salesHistoryTable tbody tr").each(function() {
+                        const paymentTypeCell = $(this).find("td:nth-child(13)").text().toLowerCase();
+                        const isMatch = paymentTypeCell.includes(value === "cash" ? "نەقد" : "قەرز");
+                        $(this).toggle(isMatch);
+                    });
+                }
+                updateSalesPagination();
+            });
+            
+            // Date range filter functionality
+            $("#startDate, #endDate").on("change", function() {
+                const startDate = $("#startDate").val();
+                const endDate = $("#endDate").val();
+                
+                if (startDate || endDate) {
+                    $("#salesHistoryTable tbody tr").each(function() {
+                        const dateCell = $(this).find("td:nth-child(3)").text();
+                        const rowDate = new Date(dateCell.split('/').reverse().join('-'));
+                        
+                        let showRow = true;
+                        
+                        if (startDate && new Date(startDate) > rowDate) {
+                            showRow = false;
+                        }
+                        
+                        if (endDate && new Date(endDate) < rowDate) {
+                            showRow = false;
+                        }
+                        
+                        $(this).toggle(showRow);
+                    });
+                } else {
+                    $("#salesHistoryTable tbody tr").show();
+                }
+                updateSalesPagination();
+            });
+            
+            // Reset filters button
+            $("#resetFilters").on("click", function() {
+                // Reset all filter inputs
+                $("#paymentTypeFilter").val("");
+                $("#startDate").val("");
+                $("#endDate").val("");
+                
+                // Show all rows
+                $("#salesHistoryTable tbody tr").show();
+                updateSalesPagination();
+                
+                // Add animation to reset button
+                $(this).find("i").addClass("fa-spin");
+                setTimeout(() => {
+                    $(this).find("i").removeClass("fa-spin");
+                }, 500);
+            });
+            
+            // Update pagination functions
+            function updateSalesPagination() {
+                // Add your pagination update logic here
+                // This is a basic example that updates the pagination counters
+                const visibleRows = $("#salesHistoryTable tbody tr:visible").length;
+                $("#salesTotalRecords").text(visibleRows);
+                
+                const pageSize = parseInt($("#salesRecordsPerPage").val());
+                const maxPage = Math.ceil(visibleRows / pageSize);
+                
+                if (maxPage <= 1) {
+                    $("#salesNextPageBtn").prop("disabled", true);
+                } else {
+                    $("#salesNextPageBtn").prop("disabled", false);
+                }
+                
+                $("#salesEndRecord").text(Math.min(pageSize, visibleRows));
+            }
+            
+            function updateDebtPagination() {
+                const visibleRows = $("#debtHistoryTable tbody tr:visible").length;
+                $("#debtTotalRecords").text(visibleRows);
+                
+                const pageSize = parseInt($("#debtRecordsPerPage").val());
+                const maxPage = Math.ceil(visibleRows / pageSize);
+                
+                if (maxPage <= 1) {
+                    $("#debtNextPageBtn").prop("disabled", true);
+                } else {
+                    $("#debtNextPageBtn").prop("disabled", false);
+                }
+                
+                $("#debtEndRecord").text(Math.min(pageSize, visibleRows));
+            }
+            
+            function updateDebtHistoryPagination() {
+                const visibleRows = $("#debtHistoryReturnTable tbody tr:visible").length;
+                $("#debtHistoryTotalRecords").text(visibleRows);
+                
+                const pageSize = parseInt($("#debtHistoryRecordsPerPage").val());
+                const maxPage = Math.ceil(visibleRows / pageSize);
+                
+                if (maxPage <= 1) {
+                    $("#debtHistoryNextPageBtn").prop("disabled", true);
+                } else {
+                    $("#debtHistoryNextPageBtn").prop("disabled", false);
+                }
+                
+                $("#debtHistoryEndRecord").text(Math.min(pageSize, visibleRows));
+            }
+            
+            function updateDraftPagination() {
+                const visibleRows = $("#draftHistoryTable tbody tr:visible").length;
+                $("#draftTotalRecords").text(visibleRows);
+                
+                const pageSize = parseInt($("#draftRecordsPerPage").val());
+                const maxPage = Math.ceil(visibleRows / pageSize);
+                
+                if (maxPage <= 1) {
+                    $("#draftNextPageBtn").prop("disabled", true);
+                } else {
+                    $("#draftNextPageBtn").prop("disabled", false);
+                }
+                
+                $("#draftEndRecord").text(Math.min(pageSize, visibleRows));
+            }
+            
+            // Initialize pagination
+            updateSalesPagination();
+            updateDebtPagination();
+            updateDebtHistoryPagination();
+            updateDraftPagination();
+        });
     </script>
 </body>
 
