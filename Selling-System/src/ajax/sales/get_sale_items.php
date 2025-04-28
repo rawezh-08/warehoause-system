@@ -22,7 +22,8 @@ $saleId = intval($_GET['sale_id']);
 
 // Get items from sale with product details
 try {
-    $query = "SELECT si.*, p.name as product_name, p.code as product_code
+    $query = "SELECT si.*, p.name as product_name, p.code as product_code,
+              (si.quantity - si.returned_quantity) as available_quantity
               FROM sale_items si
               JOIN products p ON si.product_id = p.id
               WHERE si.sale_id = :sale_id";

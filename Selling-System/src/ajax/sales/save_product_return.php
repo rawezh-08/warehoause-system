@@ -47,12 +47,10 @@ try {
     $saleItemIds = $_POST['sale_item_ids'];
     $returnReason = $_POST['reason'] ?? 'other';
     $returnNotes = $_POST['notes'] ?? '';
-    $returnDate = $_POST['return_date'] ?? date('Y-m-d H:i:s');
     
     // Create return record
-    $returnDate = date('Y-m-d H:i:s', strtotime($returnDate));
-    $insertReturnQuery = "INSERT INTO product_returns (receipt_id, receipt_type, reason, notes) 
-                          VALUES (:receipt_id, 'selling', :reason, :notes)";
+    $insertReturnQuery = "INSERT INTO product_returns (receipt_id, receipt_type, return_date, reason, notes) 
+                          VALUES (:receipt_id, 'selling', NOW(), :reason, :notes)";
     $returnStmt = $conn->prepare($insertReturnQuery);
     $returnStmt->bindParam(':receipt_id', $saleId);
     $returnStmt->bindParam(':reason', $returnReason);
@@ -164,9 +162,9 @@ try {
         
         // Insert debt transaction (negative amount to reduce debt)
         $debtTransactionQuery = "INSERT INTO debt_transactions (
-            customer_id, amount, transaction_type, reference_id, notes
+            customer_id, amount, transaction_type, reference_id, notes, created_at
         ) VALUES (
-            :customer_id, :amount, 'collection', :reference_id, :notes
+            :customer_id, :amount, 'collection', :reference_id, :notes, :created_at
         )";
         
         $debtStmt = $conn->prepare($debtTransactionQuery);
@@ -174,6 +172,7 @@ try {
         $debtStmt->bindParam(':amount', $totalReturnAmount, PDO::PARAM_STR);
         $debtStmt->bindParam(':reference_id', $returnId);
         $debtStmt->bindParam(':notes', $transactionNotes);
+        $debtStmt->bindParam(':created_at', $returnDate);
         $debtStmt->execute();
         
         // Update customer's debt

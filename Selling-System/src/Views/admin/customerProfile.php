@@ -2864,12 +2864,14 @@ foreach ($debtTransactions as $debtTransaction) {
                         if (response.status === 'success') {
                             let items = response.data;
                             let totalPrice = 0;
+                            let hasReturnableItems = false;
                             
                             $.each(items, function(index, item) {
                                 // Calculate remaining quantity (total - already returned)
-                                const remainingQuantity = item.quantity - item.returned_quantity;
+                                const remainingQuantity = item.available_quantity;
                                 
                                 if (remainingQuantity > 0) {
+                                    hasReturnableItems = true;
                                     // Format unit type
                                     let unitTypeDisplay = '';
                                     switch(item.unit_type) {
@@ -2885,7 +2887,10 @@ foreach ($debtTransactions as $debtTransaction) {
                                                 <input type="hidden" name="sale_item_ids[]" value="${item.id}">
                                             </td>
                                             <td>${item.product_code}</td>
-                                            <td>${remainingQuantity}</td>
+                                            <td>
+                                                ${item.quantity}
+                                                ${item.returned_quantity > 0 ? `<br><small class="text-muted">گەڕێنراوەتەوە: ${item.returned_quantity}</small>` : ''}
+                                            </td>
                                             <td>
                                                 ${unitTypeDisplay}
                                                 <input type="hidden" name="unit_types[]" value="${item.unit_type}">
@@ -2896,8 +2901,8 @@ foreach ($debtTransactions as $debtTransaction) {
                                             </td>
                                             <td>
                                                 <input type="number" class="form-control return-quantity" 
-                                                    name="return_quantities[]" min="1" max="${remainingQuantity}" 
-                                                    value="0" data-price="${item.unit_price}" required>
+                                                       name="return_quantities[]" min="1" max="${remainingQuantity}" 
+                                                       value="0" data-price="${item.unit_price}" required>
                                             </td>
                                             <td class="item-total-price">0 دینار</td>
                                         </tr>
@@ -2908,7 +2913,7 @@ foreach ($debtTransactions as $debtTransaction) {
                             });
                             
                             // Show modal if there are items to return
-                            if ($('#returnItemsTable tbody tr').length > 0) {
+                            if (hasReturnableItems) {
                                 $('#returnProductModal').modal('show');
                             } else {
                                 // Show message if all items have been returned
