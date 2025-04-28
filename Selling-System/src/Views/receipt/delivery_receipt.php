@@ -1,8 +1,8 @@
 <?php
 require_once '../../config/database.php';
 
-// Get receipt ID from URL
-$receipt_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+// Get receipt ID from URL - handle both id and sale_id parameters
+$receipt_id = isset($_GET['id']) ? intval($_GET['id']) : (isset($_GET['sale_id']) ? intval($_GET['sale_id']) : 0);
 
 if ($receipt_id <= 0) {
     die('پسووڵەی داواکراو نەدۆزرایەوە');
@@ -13,13 +13,20 @@ $stmt = $conn->prepare("
     SELECT s.*, c.name as customer_name, c.phone1 as customer_phone, c.address as customer_address
     FROM sales s
     LEFT JOIN customers c ON s.customer_id = c.id
-    WHERE s.id = ? AND s.is_delivery = 1
+    WHERE s.id = ?
 ");
 $stmt->execute([$receipt_id]);
 $receipt = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$receipt) {
     die('پسووڵەی داواکراو نەدۆزرایەوە');
+}
+
+// Check if this is a delivery receipt
+if (!isset($receipt['is_delivery']) || $receipt['is_delivery'] != 1) {
+    // Redirect to print_receipt.php if this is not a delivery receipt
+    header("Location: print_receipt.php?sale_id=" . $receipt_id);
+    exit;
 }
 
 // Fetch receipt items
