@@ -443,34 +443,11 @@ foreach ($debtTransactions as $debtTransaction) {
                                 </div>
                                 <form id="salesFilterForm" class="row g-3">
                                     <div class="col-md-3">
-                                        <label for="productFilter" class="form-label">ناوی کاڵا</label>
-                                        <select class="form-select auto-filter" id="productFilter">
-                                            <option value="">هەموو کاڵاکان</option>
-                                            <?php
-                                            $productQuery = "SELECT DISTINCT p.id, p.name 
-                                                           FROM products p 
-                                                           JOIN sale_items si ON p.id = si.product_id 
-                                                           JOIN sales s ON si.sale_id = s.id 
-                                                           WHERE s.customer_id = :customer_id 
-                                                           ORDER BY p.name";
-                                            $productStmt = $conn->prepare($productQuery);
-                                            $productStmt->bindParam(':customer_id', $customerId);
-                                            $productStmt->execute();
-                                            $products = $productStmt->fetchAll(PDO::FETCH_ASSOC);
-
-                                            foreach ($products as $product) {
-                                                echo '<option value="' . $product['id'] . '">' . htmlspecialchars($product['name']) . '</option>';
-                                            }
-                                            ?>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label for="unitFilter" class="form-label">یەکە</label>
-                                        <select class="form-select auto-filter" id="unitFilter">
-                                            <option value="">هەموو یەکەکان</option>
-                                            <option value="piece">دانە</option>
-                                            <option value="box">کارتۆن</option>
-                                            <option value="set">سێت</option>
+                                        <label for="paymentTypeFilter" class="form-label">جۆری پارەدان</label>
+                                        <select class="form-select auto-filter" id="paymentTypeFilter">
+                                            <option value="">هەموو جۆرەکان</option>
+                                            <option value="cash">نەقد</option>
+                                            <option value="credit">قەرز</option>
                                         </select>
                                     </div>
                                     <div class="col-md-3">
@@ -2994,6 +2971,181 @@ foreach ($debtTransactions as $debtTransaction) {
                 confirmButtonText: 'باشە'
             });
         }
+
+        // Custom JavaScript for search and filter functionality
+        $(document).ready(function() {
+            // Search functionality for sales history table
+            $("#salesTableSearch").on("keyup", function() {
+                const value = $(this).val().toLowerCase();
+                $("#salesHistoryTable tbody tr").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
+                updateSalesPagination();
+            });
+            
+            // Search functionality for debt history table
+            $("#debtTableSearch").on("keyup", function() {
+                const value = $(this).val().toLowerCase();
+                $("#debtHistoryTable tbody tr").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
+                updateDebtPagination();
+            });
+            
+            // Search functionality for debt return history table
+            $("#debtHistoryTableSearch").on("keyup", function() {
+                const value = $(this).val().toLowerCase();
+                $("#debtHistoryReturnTable tbody tr").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
+                updateDebtHistoryPagination();
+            });
+            
+            // Search functionality for draft receipts table
+            $("#draftTableSearch").on("keyup", function() {
+                const value = $(this).val().toLowerCase();
+                $("#draftHistoryTable tbody tr").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
+                updateDraftPagination();
+            });
+            
+            // Payment type filter functionality
+            $("#paymentTypeFilter").on("change", function() {
+                const value = $(this).val().toLowerCase();
+                if (value === "") {
+                    // Show all rows if no filter selected
+                    $("#salesHistoryTable tbody tr").show();
+                } else {
+                    // Filter rows based on payment type
+                    $("#salesHistoryTable tbody tr").each(function() {
+                        const paymentTypeCell = $(this).find("td:nth-child(13)").text().toLowerCase();
+                        const isMatch = paymentTypeCell.includes(value === "cash" ? "نەقد" : "قەرز");
+                        $(this).toggle(isMatch);
+                    });
+                }
+                updateSalesPagination();
+            });
+            
+            // Date range filter functionality
+            $("#startDate, #endDate").on("change", function() {
+                const startDate = $("#startDate").val();
+                const endDate = $("#endDate").val();
+                
+                if (startDate || endDate) {
+                    $("#salesHistoryTable tbody tr").each(function() {
+                        const dateCell = $(this).find("td:nth-child(3)").text();
+                        const rowDate = new Date(dateCell.split('/').reverse().join('-'));
+                        
+                        let showRow = true;
+                        
+                        if (startDate && new Date(startDate) > rowDate) {
+                            showRow = false;
+                        }
+                        
+                        if (endDate && new Date(endDate) < rowDate) {
+                            showRow = false;
+                        }
+                        
+                        $(this).toggle(showRow);
+                    });
+                } else {
+                    $("#salesHistoryTable tbody tr").show();
+                }
+                updateSalesPagination();
+            });
+            
+            // Reset filters button
+            $("#resetFilters").on("click", function() {
+                // Reset all filter inputs
+                $("#paymentTypeFilter").val("");
+                $("#startDate").val("");
+                $("#endDate").val("");
+                
+                // Show all rows
+                $("#salesHistoryTable tbody tr").show();
+                updateSalesPagination();
+                
+                // Add animation to reset button
+                $(this).find("i").addClass("fa-spin");
+                setTimeout(() => {
+                    $(this).find("i").removeClass("fa-spin");
+                }, 500);
+            });
+            
+            // Update pagination functions
+            function updateSalesPagination() {
+                // Add your pagination update logic here
+                // This is a basic example that updates the pagination counters
+                const visibleRows = $("#salesHistoryTable tbody tr:visible").length;
+                $("#salesTotalRecords").text(visibleRows);
+                
+                const pageSize = parseInt($("#salesRecordsPerPage").val());
+                const maxPage = Math.ceil(visibleRows / pageSize);
+                
+                if (maxPage <= 1) {
+                    $("#salesNextPageBtn").prop("disabled", true);
+                } else {
+                    $("#salesNextPageBtn").prop("disabled", false);
+                }
+                
+                $("#salesEndRecord").text(Math.min(pageSize, visibleRows));
+            }
+            
+            function updateDebtPagination() {
+                const visibleRows = $("#debtHistoryTable tbody tr:visible").length;
+                $("#debtTotalRecords").text(visibleRows);
+                
+                const pageSize = parseInt($("#debtRecordsPerPage").val());
+                const maxPage = Math.ceil(visibleRows / pageSize);
+                
+                if (maxPage <= 1) {
+                    $("#debtNextPageBtn").prop("disabled", true);
+                } else {
+                    $("#debtNextPageBtn").prop("disabled", false);
+                }
+                
+                $("#debtEndRecord").text(Math.min(pageSize, visibleRows));
+            }
+            
+            function updateDebtHistoryPagination() {
+                const visibleRows = $("#debtHistoryReturnTable tbody tr:visible").length;
+                $("#debtHistoryTotalRecords").text(visibleRows);
+                
+                const pageSize = parseInt($("#debtHistoryRecordsPerPage").val());
+                const maxPage = Math.ceil(visibleRows / pageSize);
+                
+                if (maxPage <= 1) {
+                    $("#debtHistoryNextPageBtn").prop("disabled", true);
+                } else {
+                    $("#debtHistoryNextPageBtn").prop("disabled", false);
+                }
+                
+                $("#debtHistoryEndRecord").text(Math.min(pageSize, visibleRows));
+            }
+            
+            function updateDraftPagination() {
+                const visibleRows = $("#draftHistoryTable tbody tr:visible").length;
+                $("#draftTotalRecords").text(visibleRows);
+                
+                const pageSize = parseInt($("#draftRecordsPerPage").val());
+                const maxPage = Math.ceil(visibleRows / pageSize);
+                
+                if (maxPage <= 1) {
+                    $("#draftNextPageBtn").prop("disabled", true);
+                } else {
+                    $("#draftNextPageBtn").prop("disabled", false);
+                }
+                
+                $("#draftEndRecord").text(Math.min(pageSize, visibleRows));
+            }
+            
+            // Initialize pagination
+            updateSalesPagination();
+            updateDebtPagination();
+            updateDebtHistoryPagination();
+            updateDraftPagination();
+        });
     </script>
 </body>
 

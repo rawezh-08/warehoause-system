@@ -12,6 +12,8 @@
                     <img src="../../assets/icons/dashboard.svg" alt="" class="dash-icon">
                 </div>
                 <span>بەشی سەرەکی</span>
+            </a>
+        </div>
 
         <!-- Sidebar Menu -->
         <ul class="sidebar-menu">
