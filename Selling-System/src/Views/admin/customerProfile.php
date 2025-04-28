@@ -1613,6 +1613,8 @@ foreach ($debtTransactions as $debtTransaction) {
     <script src="../../js/ajax-config.js"></script>
     <!-- Custom Scripts -->
     <script src="../../js/include-components.js"></script>
+    <!-- Return Handler Script -->
+    <script src="../../js/return-handler.js"></script>
     <!-- Page Specific Script -->
     <script>
         $(document).ready(function () {
