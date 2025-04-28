@@ -695,14 +695,61 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <div class="col-md-6 d-flex justify-content-md-end mt-3 mt-md-0">
                             <div class="d-flex gap-3">
                                 <div class="filter-dropdown">
-                                    <div class="date-filter" id="dateRangePicker">
-                                        <i class="fas fa-calendar-alt"></i>
-                                        <span>ئەمڕۆ</span>
-                                    </div>
+                                    <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                                        <i class="fas fa-filter me-2"></i> فلتەرەکان
+                                    </button>
                                 </div>
                                 <button class="btn btn-primary" onclick="window.print()">
                                     <i class="fas fa-print me-2"></i> چاپکردن
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Collapse Section -->
+                    <div class="collapse mb-4" id="filterCollapse">
+                        <div class="card">
+                            <div class="card-body">
+                                <form id="reportFilters" class="row g-3">
+                                    <!-- Date Range Filter -->
+                                    <div class="col-md-6">
+                                        <label class="form-label">ماوەی بەروار</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="dateRange" placeholder="هەڵبژاردنی ماوەی بەروار">
+                                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                <i class="fas fa-calendar-alt"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                <li><a class="dropdown-item" href="#" data-range="today">ئەمڕۆ</a></li>
+                                                <li><a class="dropdown-item" href="#" data-range="yesterday">دوێنێ</a></li>
+                                                <li><a class="dropdown-item" href="#" data-range="thisWeek">ئەم هەفتەیە</a></li>
+                                                <li><a class="dropdown-item" href="#" data-range="lastWeek">هەفتەی پێشوو</a></li>
+                                                <li><a class="dropdown-item" href="#" data-range="thisMonth">ئەم مانگە</a></li>
+                                                <li><a class="dropdown-item" href="#" data-range="lastMonth">مانگی پێشوو</a></li>
+                                                <li><a class="dropdown-item" href="#" data-range="thisYear">ئەم ساڵە</a></li>
+                                                <li><a class="dropdown-item" href="#" data-range="lastYear">ساڵی پێشوو</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <!-- Single Date Filter -->
+                                    <div class="col-md-6">
+                                        <label class="form-label">بەرواری دیاریکراو</label>
+                                        <input type="date" class="form-control" id="singleDate">
+                                    </div>
+
+                            
+
+                                    <!-- Filter Actions -->
+                                    <div class="col-12 text-end">
+                                        <button type="button" class="btn btn-secondary" id="resetFilters">
+                                            <i class="fas fa-undo me-2"></i> پاککردنەوە
+                                        </button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search me-2"></i> جێبەجێکردن
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -2051,6 +2098,138 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
             });
         });
     </script>
+
+    <!-- Add this before the closing </body> tag -->
+    <script>
+        $(document).ready(function() {
+            // Initialize DateRangePicker
+            $('#dateRange').daterangepicker({
+                locale: {
+                    format: 'YYYY-MM-DD',
+                    applyLabel: 'جێبەجێکردن',
+                    cancelLabel: 'هەڵوەشاندنەوە',
+                    fromLabel: 'لە',
+                    toLabel: 'بۆ',
+                    customRangeLabel: 'ماوەی دیاریکراو',
+                    daysOfWeek: ['یەکشەممە', 'دووشەممە', 'سێشەممە', 'چوارشەممە', 'پێنجشەممە', 'هەینی', 'شەممە'],
+                    monthNames: ['کانوونی دووەم', 'شوبات', 'ئازار', 'نیسان', 'ئایار', 'حوزەیران', 'تەمموز', 'ئاب', 'ئەیلوول', 'تشرینی یەکەم', 'تشرینی دووەم', 'کانوونی یەکەم'],
+                    firstDay: 6
+                },
+                autoUpdateInput: false,
+                showCustomRangeLabel: true,
+                ranges: {
+                    'ئەمڕۆ': [moment(), moment()],
+                    'دوێنێ': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    'ئەم هەفتەیە': [moment().startOf('week'), moment().endOf('week')],
+                    'هەفتەی پێشوو': [moment().subtract(1, 'week').startOf('week'), moment().subtract(1, 'week').endOf('week')],
+                    'ئەم مانگە': [moment().startOf('month'), moment().endOf('month')],
+                    'مانگی پێشوو': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                    'ئەم ساڵە': [moment().startOf('year'), moment().endOf('year')],
+                    'ساڵی پێشوو': [moment().subtract(1, 'year').startOf('year'), moment().subtract(1, 'year').endOf('year')]
+                }
+            });
+
+            // Handle DateRangePicker selection
+            $('#dateRange').on('apply.daterangepicker', function(ev, picker) {
+                $(this).val(picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format('YYYY-MM-DD'));
+            });
+
+            $('#dateRange').on('cancel.daterangepicker', function(ev, picker) {
+                $(this).val('');
+            });
+
+            // Quick date range selection
+            $('.dropdown-item[data-range]').click(function(e) {
+                e.preventDefault();
+                const range = $(this).data('range');
+                const picker = $('#dateRange').data('daterangepicker');
+                
+                switch(range) {
+                    case 'today':
+                        picker.setStartDate(moment());
+                        picker.setEndDate(moment());
+                        break;
+                    case 'yesterday':
+                        picker.setStartDate(moment().subtract(1, 'days'));
+                        picker.setEndDate(moment().subtract(1, 'days'));
+                        break;
+                    case 'thisWeek':
+                        picker.setStartDate(moment().startOf('week'));
+                        picker.setEndDate(moment().endOf('week'));
+                        break;
+                    case 'lastWeek':
+                        picker.setStartDate(moment().subtract(1, 'week').startOf('week'));
+                        picker.setEndDate(moment().subtract(1, 'week').endOf('week'));
+                        break;
+                    case 'thisMonth':
+                        picker.setStartDate(moment().startOf('month'));
+                        picker.setEndDate(moment().endOf('month'));
+                        break;
+                    case 'lastMonth':
+                        picker.setStartDate(moment().subtract(1, 'month').startOf('month'));
+                        picker.setEndDate(moment().subtract(1, 'month').endOf('month'));
+                        break;
+                    case 'thisYear':
+                        picker.setStartDate(moment().startOf('year'));
+                        picker.setEndDate(moment().endOf('year'));
+                        break;
+                    case 'lastYear':
+                        picker.setStartDate(moment().subtract(1, 'year').startOf('year'));
+                        picker.setEndDate(moment().subtract(1, 'year').endOf('year'));
+                        break;
+                }
+                
+                $('#dateRange').trigger('apply.daterangepicker');
+            });
+
+            // Handle form submission
+            $('#reportFilters').on('submit', function(e) {
+                e.preventDefault();
+                applyFilters();
+            });
+
+            // Reset filters
+            $('#resetFilters').click(function() {
+                $('#dateRange').val('');
+                $('#singleDate').val('');
+                $('#paymentType').val('');
+                $('#transactionType').val('');
+                $('#categoryFilter').val('');
+                applyFilters();
+            });
+
+            // Function to apply filters
+            function applyFilters() {
+                const filters = {
+                    dateRange: $('#dateRange').val(),
+                    singleDate: $('#singleDate').val(),
+                    paymentType: $('#paymentType').val(),
+                    transactionType: $('#transactionType').val(),
+                    category: $('#categoryFilter').val()
+                };
+
+                // Here you would typically make an AJAX call to update the report data
+                console.log('Applying filters:', filters);
+                
+                // For now, we'll just reload the page with the filters
+                window.location.href = 'report.php?' + $.param(filters);
+            }
+
+            // Initialize single date picker
+            $('#singleDate').on('change', function() {
+                if ($(this).val()) {
+                    $('#dateRange').val('');
+                }
+            });
+
+            // Initialize date range picker
+            $('#dateRange').on('change', function() {
+                if ($(this).val()) {
+                    $('#singleDate').val('');
+                }
+            });
+        });
+    </script>
 </body>
 
-</html>Rawezh.Jaza@0894
+</html>
