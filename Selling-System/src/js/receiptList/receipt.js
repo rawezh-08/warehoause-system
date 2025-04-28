@@ -681,7 +681,7 @@ $(document).ready(function() {
                             // Return the data as FormData
                             const formData = new FormData();
                             formData.append('receipt_id', receiptId);
-                            formData.append('receipt_type', receiptType === 'sale' ? 'selling' : 'buying');
+                            formData.append('receipt_type', receiptType);
                             formData.append('reason', reason);
                             formData.append('notes', $('#returnNotes').val());
                             formData.append('items', JSON.stringify(returnItems));

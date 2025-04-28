@@ -3461,11 +3461,7 @@ foreach ($debtTransactions as $debtTransaction) {
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     
-    <!-- Common utilities & components -->
-    <script src="../../js/navbar.js"></script>
-    <script src="../../js/sidebar.js"></script>
-    <script src="../../js/datapicker.js"></script>
-    <script src="../../js/utilities.js"></script>
+    <script src="../../js/ajax-config.js"></script>
     
     <!-- Return functionality -->
     <script src="../../js/receiptList/tabs/common-receipt-functions.js"></script>
