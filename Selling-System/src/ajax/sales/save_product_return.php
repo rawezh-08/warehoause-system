@@ -158,7 +158,7 @@ try {
         $debtTransactionQuery = "INSERT INTO debt_transactions (
             customer_id, amount, transaction_type, reference_id, notes, created_at
         ) VALUES (
-            :customer_id, :amount, 'return', :reference_id, :notes, :created_at
+            :customer_id, :amount, 'collection', :reference_id, :notes, :created_at
         )";
         
         $debtStmt = $conn->prepare($debtTransactionQuery);
