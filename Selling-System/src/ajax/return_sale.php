@@ -5,197 +5,307 @@ require_once '../includes/auth.php';
 header('Content-Type: application/json');
 
 try {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        throw new Exception('Invalid request method');
+    }
+
+    // Validate required fields
+    if (empty($_POST['sale_id']) || empty($_POST['receipt_type'])) {
+        throw new Exception('Missing required fields');
+    }
+
+    $sale_id = intval($_POST['sale_id']);
+    $receipt_type = $_POST['receipt_type'];
+    $reason = $_POST['reason'] ?? 'other';
+    $notes = $_POST['notes'] ?? '';
+    $return_quantities = $_POST['return_quantities'] ?? [];
+
+    if (empty($return_quantities)) {
+        throw new Exception('No items selected for return');
+    }
+
     $database = new Database();
     $conn = $database->getConnection();
     
-    // Get sale ID and return quantities
-    $sale_id = $_POST['sale_id'];
-    $return_quantities = $_POST['return_quantities'];
-    $notes = $_POST['notes'];
-    
     // Start transaction
     $conn->beginTransaction();
-    
-    // Get sale details
-    $saleQuery = "SELECT s.*, 
-                  (SELECT SUM(total_price) FROM sale_items WHERE sale_id = s.id) as total_amount,
-                  c.debit_on_business as customer_debt
-                  FROM sales s 
-                  JOIN customers c ON s.customer_id = c.id 
-                  WHERE s.id = ?";
-    $saleStmt = $conn->prepare($saleQuery);
-    $saleStmt->execute([$sale_id]);
-    $sale = $saleStmt->fetch(PDO::FETCH_ASSOC);
-    
-    if (!$sale) {
-        throw new Exception('پسووڵەکە نەدۆزرایەوە');
-    }
-    
-    // Check if any payments were made
-    $paymentQuery = "SELECT COUNT(*) as count FROM debt_transactions 
-                    WHERE reference_id = ? AND transaction_type IN ('payment', 'collection')";
-    $paymentStmt = $conn->prepare($paymentQuery);
-    $paymentStmt->execute([$sale_id]);
-    $paymentCount = $paymentStmt->fetch(PDO::FETCH_ASSOC)['count'];
-    
-    if ($paymentCount > 0) {
-        throw new Exception('ناتوانرێت ئەم پسووڵە بگەڕێتەوە چونکە پارەدانەوەی لەسەر تۆمار کراوە');
-    }
-    
-    // Get previous returns count
-    $returnCountQuery = "SELECT COUNT(*) as count FROM product_returns WHERE receipt_id = ? AND receipt_type = 'selling'";
-    $returnCountStmt = $conn->prepare($returnCountQuery);
-    $returnCountStmt->execute([$sale_id]);
-    $returnCount = $returnCountStmt->fetch(PDO::FETCH_ASSOC)['count'];
-    
-    // Calculate total return amount and items
-    $totalReturnAmount = 0;
-    $returnedItems = [];
-    $remainingItems = [];
-    
-    foreach ($return_quantities as $item_id => $quantity) {
-        if ($quantity > 0) {
-            $itemQuery = "SELECT si.*, p.name as product_name 
-                         FROM sale_items si 
-                         JOIN products p ON si.product_id = p.id 
-                         WHERE si.id = ?";
-            $itemStmt = $conn->prepare($itemQuery);
-            $itemStmt->execute([$item_id]);
-            $item = $itemStmt->fetch(PDO::FETCH_ASSOC);
-            
-            // Get previously returned quantity
-            $prevReturnQuery = "SELECT COALESCE(SUM(ri.quantity), 0) as returned_quantity 
-                              FROM return_items ri 
-                              JOIN product_returns pr ON ri.return_id = pr.id 
-                              WHERE pr.receipt_id = ? AND ri.product_id = ?";
-            $prevReturnStmt = $conn->prepare($prevReturnQuery);
-            $prevReturnStmt->execute([$sale_id, $item['product_id']]);
-            $prevReturned = $prevReturnStmt->fetch(PDO::FETCH_ASSOC)['returned_quantity'];
-            
-            // Calculate remaining quantity
-            $remainingQuantity = $item['quantity'] - $prevReturned;
-            
-            // Check if there's any quantity left to return
-            if ($remainingQuantity <= 0) {
-                throw new Exception("کاڵای {$item['product_name']} پێشتر بە تەواوی گەڕاوەتەوە");
-            }
-            
-            // Check if return quantity is greater than remaining quantity
-            if ($quantity > $remainingQuantity) {
-                throw new Exception("بڕی گەڕانەوەی کاڵای {$item['product_name']} ناتوانێت لە {$remainingQuantity} زیاتر بێت");
-            }
-            
-            $returnAmount = $item['unit_price'] * $quantity;
-            $totalReturnAmount += $returnAmount;
-            
-            // Add to returned items
-            $returnedItems[] = [
-                'product_name' => $item['product_name'],
-                'original_quantity' => $item['quantity'],
-                'previously_returned' => $prevReturned,
-                'returned_quantity' => $quantity,
-                'total_returned_quantity' => $prevReturned + $quantity,
-                'remaining_quantity' => $remainingQuantity - $quantity,
-                'unit_price' => $item['unit_price'],
-                'total_price' => $returnAmount
-            ];
-            
-            // Add to remaining items
-            $remainingItems[] = [
-                'product_name' => $item['product_name'],
-                'quantity' => $remainingQuantity - $quantity,
-                'unit_price' => $item['unit_price'],
-                'total_price' => $item['total_price'] - $returnAmount
-            ];
-            
-            // Update product quantity
-            $updateProductQuery = "UPDATE products 
-                                 SET current_quantity = current_quantity + ? 
-                                 WHERE id = ?";
-            $updateProductStmt = $conn->prepare($updateProductQuery);
-            $updateProductStmt->execute([$quantity, $item['product_id']]);
-        }
-    }
-    
-    // Calculate remaining amount
-    $remainingAmount = $sale['total_amount'] - $totalReturnAmount;
-    
-    // Update sale remaining amount
-    $updateSaleQuery = "UPDATE sales SET remaining_amount = ? WHERE id = ?";
-    $updateSaleStmt = $conn->prepare($updateSaleQuery);
-    $updateSaleStmt->execute([$remainingAmount, $sale_id]);
-    
-    // Update customer debt
-    $newDebt = $sale['customer_debt'];
-    if ($sale['payment_type'] == 'credit') {
-        $newDebt -= $totalReturnAmount;
-        $updateCustomerQuery = "UPDATE customers 
-                              SET debit_on_business = ? 
-                              WHERE id = ?";
-        $updateCustomerStmt = $conn->prepare($updateCustomerQuery);
-        $updateCustomerStmt->execute([$newDebt, $sale['customer_id']]);
-    }
-    
-    // Record the return
-    $returnQuery = "INSERT INTO product_returns 
-                   (receipt_id, receipt_type, return_date, total_amount, notes, created_at) 
-                   VALUES (?, 'selling', NOW(), ?, ?, NOW())";
-    $returnStmt = $conn->prepare($returnQuery);
-    $returnStmt->execute([$sale_id, $totalReturnAmount, $notes]);
-    $return_id = $conn->lastInsertId();
-    
-    // Record return items
-    foreach ($return_quantities as $item_id => $quantity) {
-        if ($quantity > 0) {
-            $itemQuery = "SELECT si.*, p.name as product_name 
-                         FROM sale_items si 
-                         JOIN products p ON si.product_id = p.id 
-                         WHERE si.id = ?";
-            $itemStmt = $conn->prepare($itemQuery);
-            $itemStmt->execute([$item_id]);
-            $item = $itemStmt->fetch(PDO::FETCH_ASSOC);
-            
-            $returnItemQuery = "INSERT INTO return_items 
-                              (return_id, product_id, quantity, unit_price, total_price, unit_type, original_unit_type, original_quantity) 
-                              VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-            $returnItemStmt = $conn->prepare($returnItemQuery);
-            $returnItemStmt->execute([
-                $return_id,
-                $item['product_id'],
-                $quantity,
-                $item['unit_price'],
-                $item['unit_price'] * $quantity,
-                $item['unit_type'],
-                $item['unit_type'],
-                $item['quantity']
-            ]);
-        }
-    }
-    
-    // Commit transaction
-    $conn->commit();
-    
-    // Prepare summary for response
-    $summary = [
-        'original_total' => $sale['total_amount'],
-        'returned_amount' => $totalReturnAmount,
-        'remaining_amount' => $remainingAmount,
-        'returned_items' => $returnedItems,
-        'remaining_items' => $remainingItems,
-        'new_debt' => $newDebt,
-        'return_count' => $returnCount + 1 // Add 1 for current return
-    ];
-    
-    echo json_encode([
-        'success' => true,
-        'message' => 'کاڵاکان بە سەرکەوتوویی گەڕایەوە',
-        'summary' => $summary
+
+    // Create return record
+    $stmt = $conn->prepare("
+        INSERT INTO product_returns (
+            receipt_id,
+            receipt_type,
+            return_date,
+            reason,
+            notes
+        ) VALUES (
+            :receipt_id,
+            :receipt_type,
+            NOW(),
+            :reason,
+            :notes
+        )
+    ");
+
+    $stmt->execute([
+        ':receipt_id' => $sale_id,
+        ':receipt_type' => $receipt_type,
+        ':reason' => $reason,
+        ':notes' => $notes
     ]);
-    
+
+    $return_id = $conn->lastInsertId();
+    $total_return_amount = 0;
+    $returned_items = [];
+
+    // Process each returned item
+    foreach ($return_quantities as $item_id => $quantity) {
+        if (floatval($quantity) <= 0) continue;
+
+        // Get original sale item details
+        $stmt = $conn->prepare("
+            SELECT si.*, p.name as product_name, p.pieces_per_box, p.boxes_per_set
+            FROM sale_items si
+            JOIN products p ON si.product_id = p.id
+            WHERE si.id = ? AND si.sale_id = ?
+        ");
+        $stmt->execute([$item_id, $sale_id]);
+        $item = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$item) {
+            throw new Exception('Invalid item ID');
+        }
+
+        // Calculate actual pieces count based on unit type
+        $pieces_count = $quantity;
+        if ($item['unit_type'] === 'box' && $item['pieces_per_box']) {
+            $pieces_count *= $item['pieces_per_box'];
+        } elseif ($item['unit_type'] === 'set' && $item['pieces_per_box'] && $item['boxes_per_set']) {
+            $pieces_count *= ($item['pieces_per_box'] * $item['boxes_per_set']);
+        }
+
+        // Insert return item record
+        $stmt = $conn->prepare("
+            INSERT INTO return_items (
+                return_id,
+                product_id,
+                quantity,
+                unit_price,
+                unit_type,
+                original_unit_type,
+                original_quantity,
+                reason,
+                total_price
+            ) VALUES (
+                :return_id,
+                :product_id,
+                :quantity,
+                :unit_price,
+                :unit_type,
+                :original_unit_type,
+                :original_quantity,
+                :reason,
+                :total_price
+            )
+        ");
+
+        $total_price = $quantity * $item['unit_price'];
+        $total_return_amount += $total_price;
+
+        $stmt->execute([
+            ':return_id' => $return_id,
+            ':product_id' => $item['product_id'],
+            ':quantity' => $quantity,
+            ':unit_price' => $item['unit_price'],
+            ':unit_type' => $item['unit_type'],
+            ':original_unit_type' => $item['unit_type'],
+            ':original_quantity' => $quantity,
+            ':reason' => $reason,
+            ':total_price' => $total_price
+        ]);
+
+        // Update returned quantity in sale items
+        $stmt = $conn->prepare("
+            UPDATE sale_items 
+            SET returned_quantity = COALESCE(returned_quantity, 0) + :quantity 
+            WHERE id = :item_id
+        ");
+
+        $stmt->execute([
+            ':quantity' => $quantity,
+            ':item_id' => $item_id
+        ]);
+
+        // Update product quantity
+        $stmt = $conn->prepare("
+            UPDATE products 
+            SET current_quantity = current_quantity + :quantity 
+            WHERE id = :product_id
+        ");
+
+        $stmt->execute([
+            ':quantity' => $pieces_count,
+            ':product_id' => $item['product_id']
+        ]);
+
+        // Record in inventory
+        $stmt = $conn->prepare("
+            INSERT INTO inventory (
+                product_id,
+                quantity,
+                reference_type,
+                reference_id,
+                notes
+            ) VALUES (
+                :product_id,
+                :quantity,
+                'return',
+                :reference_id,
+                :notes
+            )
+        ");
+
+        $stmt->execute([
+            ':product_id' => $item['product_id'],
+            ':quantity' => $pieces_count, // Positive because items are coming back
+            ':reference_id' => $return_id,
+            ':notes' => "گەڕاندنەوە: {$quantity} {$item['unit_type']} (ئەسڵی: {$quantity} {$item['unit_type']})"
+        ]);
+
+        // Add to returned items array for response
+        $returned_items[] = [
+            'product_name' => $item['product_name'],
+            'returned_quantity' => $quantity,
+            'unit_price' => $item['unit_price'],
+            'total_price' => $total_price
+        ];
+    }
+
+    // Update sale total and remaining amounts
+    $stmt = $conn->prepare("
+        SELECT s.*, 
+               COALESCE(s.paid_amount, 0) as paid_amount,
+               COALESCE(s.remaining_amount, 0) as remaining_amount,
+              (SELECT SUM((quantity - COALESCE(returned_quantity, 0)) * unit_price) 
+               FROM sale_items 
+               WHERE sale_id = s.id) as subtotal
+        FROM sales s 
+        WHERE s.id = ?
+    ");
+    $stmt->execute([$sale_id]);
+    $sale = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($sale) {
+        // Calculate new total
+        $newSubtotal = floatval($sale['subtotal']);
+        $newTotalAmount = $newSubtotal + 
+                         floatval($sale['shipping_cost'] ?? 0) + 
+                         floatval($sale['other_costs'] ?? 0) - 
+                         floatval($sale['discount'] ?? 0);
+
+        // Calculate new remaining amount
+        $paidAmount = floatval($sale['paid_amount'] ?? 0);
+        $newRemainingAmount = 0;
+
+        if ($sale['payment_type'] === 'credit') {
+            $newRemainingAmount = max(0, $newTotalAmount - $paidAmount);
+        }
+
+        // Update sale record
+        $stmt = $conn->prepare("
+            UPDATE sales 
+            SET remaining_amount = :remaining_amount,
+                updated_at = NOW()
+            WHERE id = :sale_id
+        ");
+
+        $stmt->execute([
+            ':remaining_amount' => $newRemainingAmount,
+            ':sale_id' => $sale_id
+        ]);
+
+        // Update customer debt if credit sale
+        if ($sale['payment_type'] === 'credit' && $sale['customer_id']) {
+            $oldRemainingAmount = floatval($sale['remaining_amount'] ?? 0);
+            $debtAdjustment = $oldRemainingAmount - $newRemainingAmount;
+
+            if ($debtAdjustment > 0) {
+                // Update customer debt
+                $stmt = $conn->prepare("
+                    UPDATE customers 
+                    SET debit_on_business = GREATEST(0, debit_on_business - :adjustment),
+                        updated_at = NOW()
+                    WHERE id = :customer_id
+                ");
+
+                $stmt->execute([
+                    ':adjustment' => $debtAdjustment,
+                    ':customer_id' => $sale['customer_id']
+                ]);
+
+                // Record debt transaction
+                $stmt = $conn->prepare("
+                    INSERT INTO debt_transactions (
+                        customer_id,
+                        amount,
+                        transaction_type,
+                        reference_id,
+                        notes,
+                        created_at
+                    ) VALUES (
+                        :customer_id,
+                        :amount,
+                        'return',
+                        :return_id,
+                        :notes,
+                        NOW()
+                    )
+                ");
+
+                $stmt->execute([
+                    ':customer_id' => $sale['customer_id'],
+                    ':amount' => -$debtAdjustment,
+                    ':return_id' => $return_id,
+                    ':notes' => "گەڕاندنەوەی کاڵا - " . $notes
+                ]);
+            }
+        }
+    }
+
+    // Update total_amount in product_returns
+    $stmt = $conn->prepare("
+        UPDATE product_returns 
+        SET total_amount = :total_amount 
+        WHERE id = :return_id
+    ");
+
+    $stmt->execute([
+        ':total_amount' => $total_return_amount,
+        ':return_id' => $return_id
+    ]);
+
+    $conn->commit();
+
+    // Prepare response
+    $response = [
+        'success' => true,
+        'message' => 'کاڵاکان بە سەرکەوتوویی گەڕێنرانەوە',
+        'summary' => [
+            'original_total' => floatval($sale['remaining_amount']),
+            'return_count' => count($returned_items),
+            'returned_amount' => $total_return_amount,
+            'returned_items' => $returned_items
+        ]
+    ];
+
+    echo json_encode($response);
+
 } catch (Exception $e) {
-    if (isset($conn)) {
+    if ($conn) {
         $conn->rollBack();
     }
+
+    error_log("Error in return_sale.php: " . $e->getMessage());
     
     echo json_encode([
         'success' => false,
