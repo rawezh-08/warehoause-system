@@ -26,10 +26,7 @@ $salesQuery = "SELECT s.*,
                si.quantity, si.unit_type, si.pieces_count, si.unit_price, si.total_price,
                p.name as product_name, p.code as product_code,
                SUM(si.total_price) as sale_total,
-               (SELECT SUM(total_price) FROM sale_items WHERE sale_id = s.id) as invoice_total,
-               (SELECT SUM(quantity) FROM return_items ri 
-                JOIN product_returns pr ON ri.return_id = pr.id 
-                WHERE pr.receipt_id = s.id AND pr.receipt_type = 'selling') as returned_quantity
+               (SELECT SUM(total_price) FROM sale_items WHERE sale_id = s.id) as invoice_total
                FROM sales s 
                JOIN sale_items si ON s.id = si.sale_id 
                JOIN products p ON si.product_id = p.id
@@ -724,13 +721,13 @@ foreach ($debtTransactions as $debtTransaction) {
                                                                 </button>
                                                                 <?php endif; ?>
                                                                 
-                                                                <?php if ($canReturn): ?>
-                                                                <button type="button" 
-                                                                    class="btn btn-sm btn-outline-warning rounded-circle return-product"
-                                                                    data-id="<?php echo $sale['id']; ?>"
-                                                                    data-product="<?php echo $sale['product_id']; ?>"
-                                                                    data-quantity="<?php echo $sale['quantity']; ?>"
-                                                                    title="گەڕاندنەوەی کاڵا">
+                                                                <!-- Add Return Button if applicable -->
+                                                                <?php if ($sale['payment_type'] === 'credit' && $sale['remaining_amount'] > 0): // Adjust condition if needed ?>
+                                                                <button type="button"
+                                                                        class="btn btn-sm btn-outline-warning rounded-circle return-sale-items"
+                                                                        data-sale-id="<?php echo $sale['id']; ?>"
+                                                                        data-invoice="<?php echo $sale['invoice_number']; ?>"
+                                                                        title="گەڕاندنەوەی کاڵا">
                                                                     <i class="fas fa-undo"></i>
                                                                 </button>
                                                                 <?php endif; ?>
@@ -1627,9 +1624,10 @@ foreach ($debtTransactions as $debtTransaction) {
             initBasicTablePagination('sales');
             initBasicTablePagination('debt');
             initBasicTablePagination('debtHistory');
+            initBasicTablePagination('draft'); // Added for draft receipts pagination
 
             // Table search functionality
-            $('#salesTableSearch, #debtTableSearch, #debtHistoryTableSearch').on('keyup', function () {
+            $('#salesTableSearch, #debtTableSearch, #debtHistoryTableSearch, #draftTableSearch').on('keyup', function () {
                 const tableId = $(this).attr('id').replace('TableSearch', '');
                 const value = $(this).val().toLowerCase();
                 $(`#${tableId}HistoryTable tbody tr, #${tableId}ReturnTable tbody tr`).filter(function () {
@@ -1639,7 +1637,7 @@ foreach ($debtTransactions as $debtTransaction) {
             });
 
             // Records per page change handlers
-            $('#salesRecordsPerPage, #debtRecordsPerPage, #debtHistoryRecordsPerPage').on('change', function () {
+            $('#salesRecordsPerPage, #debtRecordsPerPage, #debtHistoryRecordsPerPage, #draftRecordsPerPage').on('change', function () {
                 const tableId = $(this).attr('id').replace('RecordsPerPage', '');
                 showAllRows(tableId);  // Show all rows first
                 updatePagination(tableId);
@@ -2847,6 +2845,209 @@ foreach ($debtTransactions as $debtTransaction) {
                     });
                 }
             }
+
+            // --- Start: Return Sale Items Logic ---
+
+            // Function to load sale items into the return modal
+            function loadSaleItemsForReturn(saleId) {
+                const tableBody = $('#returnItemsTable tbody');
+                tableBody.html('<tr><td colspan="8" class="text-center"><i class="fas fa-spinner fa-spin"></i> بارکردنی کاڵاکان...</td></tr>');
+
+                $.ajax({
+                    url: '../../api/get_sale_items.php', // We need to create this endpoint
+                    type: 'GET',
+                    data: { sale_id: saleId },
+                    dataType: 'json',
+                    success: function (response) {
+                        tableBody.empty();
+                        if (response.success && response.items.length > 0) {
+                            response.items.forEach((item, index) => {
+                                const remainingQty = item.quantity - item.returned_quantity; // Quantity available to return
+                                if (remainingQty <= 0) return; // Skip items already fully returned
+
+                                // Determine available units based on product config and original sale unit
+                                let unitOptions = '<option value="piece" ' + (item.unit_type === 'piece' ? 'selected' : '') + '>دانە</option>';
+                                if (item.is_box && item.pieces_per_box > 0) {
+                                    unitOptions += '<option value="box" ' + (item.unit_type === 'box' ? 'selected' : '') + '>کارتۆن (' + item.pieces_per_box + ')</option>';
+                                }
+                                if (item.is_set && item.boxes_per_set > 0 && item.pieces_per_box > 0) {
+                                    unitOptions += '<option value="set" ' + (item.unit_type === 'set' ? 'selected' : '') + '>سێت (' + (item.pieces_per_box * item.boxes_per_set) + ')</option>';
+                                }
+                                
+                                // Calculate max return quantity based on selected unit
+                                let maxReturnQty = remainingQty; // Default to pieces
+                                if(item.unit_type === 'box' && item.pieces_per_box > 0){
+                                    maxReturnQty = Math.floor(remainingQty / item.pieces_per_box);
+                                } else if (item.unit_type === 'set' && item.pieces_per_box > 0 && item.boxes_per_set > 0) {
+                                    maxReturnQty = Math.floor(remainingQty / (item.pieces_per_box * item.boxes_per_set));
+                                }
+
+
+                                const row = `
+                                    <tr>
+                                        <td>${index + 1}</td>
+                                        <td>${item.product_name}</td>
+                                        <td>${item.product_code}</td>
+                                        <td>${item.quantity}</td>
+                                        <td>${getUnitName(item.unit_type)}</td>
+                                        <td>${formatNumber(item.unit_price)} دینار</td>
+                                        <td>
+                                            <input type="number" 
+                                                   class="form-control form-control-sm return-quantity"
+                                                   name="items[${item.sale_item_id}][quantity]"
+                                                   data-max-pieces="${remainingQty}" 
+                                                   data-pieces-per-box="${item.pieces_per_box || 1}"
+                                                   data-boxes-per-set="${item.boxes_per_set || 1}"
+                                                   data-sale-item-id="${item.sale_item_id}"
+                                                   min="0" 
+                                                   max="${maxReturnQty}" 
+                                                   value="0">
+                                            <input type="hidden" name="items[${item.sale_item_id}][product_id]" value="${item.product_id}">
+                                            <input type="hidden" name="items[${item.sale_item_id}][unit_price]" value="${item.unit_price}">
+                                             <input type="hidden" name="items[${item.sale_item_id}][original_quantity]" value="${item.quantity}">
+                                            <input type="hidden" name="items[${item.sale_item_id}][original_unit_type]" value="${item.unit_type}">
+                                            <div class="invalid-feedback">بڕی گەڕاوە نابێت لە بڕی ماوە زیاتر بێت.</div>
+                                             <small class="text-muted">ماوە: ${remainingQty} دانە</small>
+                                        </td>
+                                        <td>
+                                            <select class="form-select form-select-sm return-unit-type" 
+                                                    name="items[${item.sale_item_id}][unit_type]"
+                                                    data-sale-item-id="${item.sale_item_id}">
+                                                ${unitOptions}
+                                            </select>
+                                        </td>
+                                    </tr>`;
+                                tableBody.append(row);
+                            });
+                             // Add event listener for unit type change
+                            $('.return-unit-type').change(handleUnitChange);
+                        } else {
+                            tableBody.html('<tr><td colspan="8" class="text-center">' + (response.message || 'هیچ کاڵایەک بۆ گەڕاندنەوە نەدۆزرایەوە.') + '</td></tr>');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error fetching sale items:", error);
+                        tableBody.html('<tr><td colspan="8" class="text-center text-danger">هەڵەیەک ڕوویدا لە کاتی هێنانی کاڵاکان.</td></tr>');
+                    }
+                });
+            }
+             // Function to get unit name in Kurdish
+            function getUnitName(unitType) {
+                switch (unitType) {
+                    case 'piece': return 'دانە';
+                    case 'box': return 'کارتۆن';
+                    case 'set': return 'سێت';
+                    default: return unitType;
+                }
+            }
+
+             // Function to update max value of quantity input based on selected unit
+            function handleUnitChange() {
+                const selectedUnit = $(this).val();
+                const saleItemId = $(this).data('sale-item-id');
+                const quantityInput = $('.return-quantity[data-sale-item-id="' + saleItemId + '"]');
+                const maxPieces = parseInt(quantityInput.data('max-pieces'));
+                const piecesPerBox = parseInt(quantityInput.data('pieces-per-box'));
+                const boxesPerSet = parseInt(quantityInput.data('boxes-per-set'));
+
+                let maxReturnQty = 0;
+                if (selectedUnit === 'piece') {
+                    maxReturnQty = maxPieces;
+                } else if (selectedUnit === 'box' && piecesPerBox > 0) {
+                    maxReturnQty = Math.floor(maxPieces / piecesPerBox);
+                } else if (selectedUnit === 'set' && piecesPerBox > 0 && boxesPerSet > 0) {
+                    maxReturnQty = Math.floor(maxPieces / (piecesPerBox * boxesPerSet));
+                }
+                
+                quantityInput.attr('max', maxReturnQty);
+                // Reset quantity to 0 if current value exceeds new max
+                if (parseInt(quantityInput.val()) > maxReturnQty) {
+                     quantityInput.val(0);
+                }
+                // Remove validation error if exists
+                 quantityInput.removeClass('is-invalid');
+            }
+
+            // Event listener for opening the return modal
+            $('#salesHistoryTable').on('click', '.return-sale-items', function () {
+                const saleId = $(this).data('sale-id');
+                const invoiceNumber = $(this).data('invoice');
+
+                $('#returnSaleModalLabel #returnInvoiceNumber').text(invoiceNumber);
+                $('#returnSaleId').val(saleId);
+                $('#returnSaleForm')[0].reset(); // Reset form fields
+                $('#returnItemsTable tbody').empty(); // Clear previous items
+                $('.return-quantity').removeClass('is-invalid'); // Clear validation errors
+
+                loadSaleItemsForReturn(saleId);
+
+                $('#returnSaleModal').modal('show');
+            });
+
+            // Event listener for return form submission
+            $('#returnSaleForm').on('submit', function (e) {
+                e.preventDefault();
+
+                let hasItemsToReturn = false;
+                let isValid = true;
+                $('.return-quantity').each(function() {
+                    const quantity = parseInt($(this).val());
+                    const max = parseInt($(this).attr('max'));
+                    
+                    if (quantity > 0) {
+                        hasItemsToReturn = true;
+                        if (quantity > max) {
+                            $(this).addClass('is-invalid');
+                             isValid = false;
+                        } else {
+                            $(this).removeClass('is-invalid');
+                        }
+                    } else {
+                         $(this).removeClass('is-invalid'); // Remove error if quantity is 0
+                    }
+                });
+
+                if (!hasItemsToReturn) {
+                     Swal.fire('ئاگاداری', 'هیچ کاڵایەک بۆ گەڕاندنەوە دیاری نەکراوە یان بڕی گەڕاوە سفرە.', 'warning');
+                     return;
+                 }
+                
+                 if (!isValid) {
+                     Swal.fire('هەڵە', 'بڕی گەڕاوەی هەندێک کاڵا لە بڕی ماوە زیاترە.', 'error');
+                     return;
+                 }
+
+
+                const formData = $(this).serialize();
+                const submitButton = $('#submitReturnBtn');
+                submitButton.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>پشتڕاستکردنەوە...');
+
+                $.ajax({
+                    url: '../../api/process_sale_return.php', // We need to create this endpoint
+                    type: 'POST',
+                    data: formData,
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.success) {
+                            $('#returnSaleModal').modal('hide');
+                            Swal.fire('سەرکەوتوو بوو!', response.message || 'گەڕاندنەوەکە بە سەرکەوتوویی تۆمارکرا.', 'success');
+                            // Optionally refresh the sales table or update relevant data on the page
+                            location.reload(); // Simple refresh for now
+                        } else {
+                            Swal.fire('هەڵە!', response.message || 'هەڵەیەک ڕوویدا لە کاتی تۆمارکردنی گەڕاندنەوە.', 'error');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error submitting return:", error, xhr.responseText);
+                        Swal.fire('هەڵەی سێرڤەر!', 'هەڵەیەکی چاوەڕواننەکراو ڕوویدا.', 'error');
+                    },
+                    complete: function () {
+                        submitButton.prop('disabled', false).html('<i class="fas fa-undo me-2"></i> پشتڕاستکردنەوەی گەڕاندنەوە');
+                    }
+                });
+            });
+
+            // --- End: Return Sale Items Logic ---
         });
 
         // Load sale data for editing
@@ -3461,114 +3662,63 @@ foreach ($debtTransactions as $debtTransaction) {
     });
     </script>
 
-    <!-- Return Product Modal -->
-    <div class="modal fade" id="returnProductModal" tabindex="-1" aria-labelledby="returnProductModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+    <!-- Return Sale Items Modal -->
+    <div class="modal fade" id="returnSaleModal" tabindex="-1" aria-labelledby="returnSaleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="returnProductModalLabel">گەڕاندنەوەی کاڵا</h5>
+                    <h5 class="modal-title" id="returnSaleModalLabel">گەڕاندنەوەی کاڵا بۆ پسووڵە: <span id="returnInvoiceNumber"></span></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <form id="returnProductForm">
+                <form id="returnSaleForm">
+                    <div class="modal-body">
                         <input type="hidden" id="returnSaleId" name="sale_id">
-                        <input type="hidden" id="returnProductId" name="product_id">
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="returnQuantity" class="form-label">بڕی کاڵا</label>
-                                <input type="number" class="form-control" id="returnQuantity" name="quantity" min="1" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="returnReason" class="form-label">هۆکار</label>
-                                <select class="form-select" id="returnReason" name="reason" required>
-                                    <option value="damaged">تێکچوو</option>
-                                    <option value="wrong_product">کاڵای هەڵە</option>
-                                    <option value="customer_request">داواکاری کڕیار</option>
-                                    <option value="other">هۆکاری تر</option>
-                                </select>
-                            </div>
+                        <div class="alert alert-info">
+                            تکایە بڕی ئەو کاڵایانە دیاری بکە کە دەتەوێت بیانگەڕێنیتەوە. بڕی گەڕاوە نابێت لە بڕی فرۆشراو زیاتر بێت.
                         </div>
-                        
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="returnItemsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>ناوی کاڵا</th>
+                                        <th>کۆدی کاڵا</th>
+                                        <th>بڕی فرۆشراو</th>
+                                        <th>یەکە</th>
+                                        <th>نرخی تاک (کاتی فرۆشتن)</th>
+                                        <th>بڕی گەڕاوە</th>
+                                        <th>یەکەی گەڕاوە</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Items will be loaded here by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mb-3">
+                            <label for="returnReason" class="form-label">هۆکاری گەڕاندنەوە</label>
+                            <select class="form-select" id="returnReason" name="reason">
+                                <option value="damaged">زیانلێکەوتوو</option>
+                                <option value="wrong_product">کاڵای هەڵە</option>
+                                <option value="customer_request">داواکاری کڕیار</option>
+                                <option value="other" selected>هی تر</option>
+                            </select>
+                        </div>
                         <div class="mb-3">
                             <label for="returnNotes" class="form-label">تێبینی</label>
                             <textarea class="form-control" id="returnNotes" name="notes" rows="3"></textarea>
                         </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
-                    <button type="button" class="btn btn-primary" id="submitReturn">گەڕاندنەوە</button>
-                </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                        <button type="submit" class="btn btn-warning" id="submitReturnBtn">
+                            <i class="fas fa-undo me-2"></i> پشتڕاستکردنەوەی گەڕاندنەوە
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-
-    <script>
-    // Add this to your existing JavaScript code
-    document.addEventListener('DOMContentLoaded', function() {
-        // Handle return product button click
-        document.querySelectorAll('.return-product').forEach(button => {
-            button.addEventListener('click', function() {
-                const saleId = this.dataset.id;
-                const productId = this.dataset.product;
-                const maxQuantity = this.dataset.quantity;
-                
-                showReturnModal(saleId, productId, maxQuantity);
-            });
-        });
-    });
-
-    function showReturnModal(saleId, productId, maxQuantity) {
-        document.getElementById('returnSaleId').value = saleId;
-        document.getElementById('returnProductId').value = productId;
-        document.getElementById('returnQuantity').max = maxQuantity;
-        document.getElementById('returnQuantity').value = 1;
-        document.getElementById('returnReason').value = 'damaged';
-        document.getElementById('returnNotes').value = '';
-        
-        new bootstrap.Modal(document.getElementById('returnProductModal')).show();
-    }
-
-    document.getElementById('submitReturn').addEventListener('click', function() {
-        const form = document.getElementById('returnProductForm');
-        const formData = new FormData(form);
-        
-        fetch('../../controllers/returnProduct.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    title: 'سەرکەوتوو',
-                    text: 'کاڵا بە سەرکەوتوویی گەڕێنرایەوە',
-                    icon: 'success',
-                    confirmButtonText: 'باشە'
-                }).then(() => {
-                    location.reload();
-                });
-            } else {
-                Swal.fire({
-                    title: 'هەڵە',
-                    text: data.message || 'هەڵەیەک ڕوویدا',
-                    icon: 'error',
-                    confirmButtonText: 'باشە'
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            Swal.fire({
-                title: 'هەڵە',
-                text: 'هەڵەیەک ڕوویدا',
-                icon: 'error',
-                confirmButtonText: 'باشە'
-            });
-        });
-    });
-    </script>
 </body>
 
 </html>
