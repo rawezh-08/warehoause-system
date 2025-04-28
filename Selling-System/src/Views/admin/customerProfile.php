@@ -26,7 +26,8 @@ $salesQuery = "SELECT s.*,
                si.quantity, si.unit_type, si.pieces_count, si.unit_price, si.total_price,
                p.name as product_name, p.code as product_code,
                SUM(si.total_price) as sale_total,
-               (SELECT SUM(total_price) FROM sale_items WHERE sale_id = s.id) as invoice_total
+               (SELECT SUM(total_price) FROM sale_items WHERE sale_id = s.id) as invoice_total,
+               IFNULL(s.is_delivery, 0) as is_delivery
                FROM sales s 
                JOIN sale_items si ON s.id = si.sale_id 
                JOIN products p ON si.product_id = p.id
@@ -628,11 +629,17 @@ foreach ($debtTransactions as $debtTransaction) {
                                                             <?php else: ?>
                                                                 <span class="badge bg-warning">قەرز</span>
                                                             <?php endif; ?>
+                                                            
+                                                            <?php if ($sale['is_delivery'] == 1): ?>
+                                                                <span class="badge bg-info ms-1">گەیاندن</span>
+                                                            <?php endif; ?>
                                                         </td>
                                                         <td>
                                                             <div class="action-buttons">
-                                                                <a href="../../Views/receipt/print_receipt.php?sale_id=<?php echo $sale['id']; ?>"
-                                                                    class="btn btn-sm btn-outline-success rounded-circle"
+                                                                <a href="javascript:void(0)"
+                                                                    class="btn btn-sm btn-outline-success rounded-circle print-btn"
+                                                                    data-id="<?php echo $sale['id']; ?>"
+                                                                    data-is-delivery="<?php echo isset($sale['is_delivery']) ? $sale['is_delivery'] : 0; ?>"
                                                                     title="چاپکردن">
                                                                     <i class="fas fa-print"></i>
                                                                 </a>
@@ -2775,6 +2782,26 @@ foreach ($debtTransactions as $debtTransaction) {
                     });
                 }
             }
+
+            // Initialize pagination
+            updateSalesPagination();
+            updateDebtPagination();
+            updateDebtHistoryPagination();
+            updateDraftPagination();
+            
+            // Handle print button click for receipts
+            $(document).on('click', '.print-btn', function() {
+                const saleId = $(this).data('id');
+                const isDelivery = $(this).data('is-delivery');
+                
+                if (isDelivery == 1) {
+                    // If it's a delivery receipt, open the delivery receipt page
+                    window.open(`../../Views/receipt/delivery_receipt.php?sale_id=${saleId}`, '_blank');
+                } else {
+                    // If it's a regular receipt, open the regular receipt page
+                    window.open(`../../Views/receipt/print_receipt.php?sale_id=${saleId}`, '_blank');
+                }
+            });
         });
 
         // Load sale data for editing
