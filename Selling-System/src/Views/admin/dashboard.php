@@ -360,7 +360,6 @@ require_once '../../process/dashboard_logic.php';
                                                     <th>کاڵا</th>
                                                     <th>کۆدی کاڵا</th>
                                                     <th>فرۆشراو</th>
-                                                    <th>وردەکاری</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -401,7 +400,6 @@ require_once '../../process/dashboard_logic.php';
                                                                 </span>
                                                             </div>
                                                         </td>
-                                                        <td><a href="#" class="btn btn-sm btn-outline-primary">بینین</a></td>
                                                     </tr>
                                                 <?php endforeach; ?>
                                             </tbody>
