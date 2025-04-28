@@ -996,9 +996,14 @@ foreach ($debtTransactions as $debtTransaction) {
                             aria-labelledby="debt-history-tab">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="card-title mb-0">مێژووی گەڕاندنەوەی قەرز</h5>
-                                <button class="btn btn-sm btn-outline-primary refresh-btn">
-                                    <i class="fas fa-sync-alt"></i>
-                                </button>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-success me-2" id="printDebtHistory">
+                                        <i class="fas fa-print me-2"></i> چاپکردن
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary refresh-btn">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="table-container">
@@ -1036,74 +1041,69 @@ foreach ($debtTransactions as $debtTransaction) {
 
                                 <!-- Table Content -->
                                 <div class="table-responsive">
-                                    <table id="debtHistoryReturnTable"
-                                        class="table table-bordered custom-table table-hover">
+                                    <table id="debtHistoryTable" class="table table-bordered custom-table table-hover">
                                         <thead class="table-light">
                                             <tr>
                                                 <th>#</th>
                                                 <th>بەروار</th>
                                                 <th>بڕی پارە</th>
-                                                <th>تێبینی</th>
                                                 <th>شێوازی پارەدان</th>
+                                                <th>تێبینی</th>
                                                 <th>کردارەکان</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php
-                                            $returnTransactions = array_filter($debtTransactions, function ($transaction) {
-                                                return $transaction['transaction_type'] == 'collection';
-                                            });
-
-                                            if (count($returnTransactions) > 0):
+                                            <?php if (count($debtTransactions) > 0): ?>
+                                                <?php 
                                                 $counter = 1;
-                                                foreach ($returnTransactions as $transaction):
-                                                    $notesData = json_decode($transaction['notes'], true);
-                                                    $paymentMethod = isset($notesData['payment_method']) ? $notesData['payment_method'] : 'cash';
-                                                    $displayNotes = isset($notesData['notes']) ? $notesData['notes'] : $transaction['notes'];
-                                                    ?>
-                                                    <tr>
+                                                foreach ($debtTransactions as $transaction): 
+                                                    if ($transaction['transaction_type'] === 'collection'):
+                                                ?>
+                                                    <tr data-id="<?php echo $transaction['id']; ?>">
                                                         <td><?php echo $counter++; ?></td>
-                                                        <td><?php echo date('Y/m/d', strtotime($transaction['created_at'])); ?>
-                                                        </td>
-                                                        <td class="text-success">
-                                                            <?php echo number_format($transaction['amount']); ?> دینار</td>
-                                                        <td><?php echo !empty($displayNotes) ? htmlspecialchars($displayNotes) : '-'; ?>
+                                                        <td><?php echo date('Y/m/d', strtotime($transaction['created_at'])); ?></td>
+                                                        <td class="text-success"><?php echo number_format($transaction['amount']); ?> دینار</td>
+                                                        <td>
+                                                            <?php
+                                                            $notesObj = json_decode($transaction['notes'], true);
+                                                            $paymentMethod = is_array($notesObj) && isset($notesObj['payment_method']) ? 
+                                                                $notesObj['payment_method'] : 'cash';
+                                                            echo $paymentMethod === 'cash' ? 'نەقد' : 'FIB یان FastPay';
+                                                            ?>
                                                         </td>
                                                         <td>
                                                             <?php
-                                                            switch ($paymentMethod) {
-                                                                case 'cash':
-                                                                    echo '<span class="badge bg-success">نەقد</span>';
-                                                                    break;
-                                                                case 'transfer':
-                                                                    echo '<span class="badge bg-info">FIB یان FastPay</span>';
-                                                                    break;
-                                                                default:
-                                                                    echo '<span class="badge bg-secondary">هی تر</span>';
+                                                            if (is_array($notesObj) && isset($notesObj['notes'])) {
+                                                                echo !empty($notesObj['notes']) ? htmlspecialchars($notesObj['notes']) : '-';
+                                                            } else {
+                                                                echo !empty($transaction['notes']) ? htmlspecialchars($transaction['notes']) : '-';
                                                             }
                                                             ?>
                                                         </td>
                                                         <td>
                                                             <div class="action-buttons">
-                                                                <a href="../../Views/receipt/customer_history_receipt.php?transaction_id=<?php echo $transaction['id']; ?>"
-                                                                    class="btn btn-sm btn-outline-warning rounded-circle"
-                                                                    target="_blank"
-                                                                    title="بینینی مێژوو">
-                                                                        <i class="fas fa-edit"></i>
-                                                                    </a>
-                                                                <a href="#"
-                                                                    class="btn btn-sm btn-outline-info rounded-circle print-receipt-btn"
-                                                                    data-id="<?php echo $transaction['id']; ?>" title="چاپکردن">
-                                                                    <i class="fas fa-print"></i>
-                                                                </a>
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-primary rounded-circle edit-debt-return"
+                                                                    data-id="<?php echo $transaction['id']; ?>"
+                                                                    data-amount="<?php echo $transaction['amount']; ?>"
+                                                                    data-date="<?php echo date('Y-m-d', strtotime($transaction['created_at'])); ?>"
+                                                                    data-payment-method="<?php echo $paymentMethod; ?>"
+                                                                    data-notes="<?php echo is_array($notesObj) && isset($notesObj['notes']) ? 
+                                                                        htmlspecialchars($notesObj['notes']) : 
+                                                                        htmlspecialchars($transaction['notes']); ?>"
+                                                                    title="دەستکاری">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </button>
                                                             </div>
                                                         </td>
                                                     </tr>
-                                                <?php endforeach; ?>
+                                                <?php 
+                                                    endif;
+                                                endforeach; 
+                                                ?>
                                             <?php else: ?>
                                                 <tr>
-                                                    <td colspan="6" class="text-center">هیچ گەڕانەوەیەکی قەرز نەدۆزرایەوە
-                                                    </td>
+                                                    <td colspan="6" class="text-center">هیچ گەڕاندنەوەیەکی قەرز نەدۆزرایەوە</td>
                                                 </tr>
                                             <?php endif; ?>
                                         </tbody>
@@ -1117,7 +1117,7 @@ foreach ($debtTransactions as $debtTransaction) {
                                             <div class="pagination-info">
                                                 نیشاندانی <span id="debtHistoryStartRecord">1</span> تا <span
                                                     id="debtHistoryEndRecord">10</span> لە کۆی <span
-                                                    id="debtHistoryTotalRecords"><?php echo count($returnTransactions); ?></span>
+                                                    id="debtHistoryTotalRecords"><?php echo count($debtTransactions); ?></span>
                                                 تۆمار
                                             </div>
                                         </div>
@@ -1127,8 +1127,7 @@ foreach ($debtTransactions as $debtTransaction) {
                                                     class="btn btn-sm btn-outline-primary rounded-circle me-2" disabled>
                                                     <i class="fas fa-chevron-right"></i>
                                                 </button>
-                                                <div id="debtHistoryPaginationNumbers"
-                                                    class="pagination-numbers d-flex">
+                                                <div id="debtHistoryPaginationNumbers" class="pagination-numbers d-flex">
                                                     <!-- Will be populated by JavaScript -->
                                                 </div>
                                                 <button id="debtHistoryNextPageBtn"
@@ -3186,6 +3185,121 @@ foreach ($debtTransactions as $debtTransaction) {
             updateDebtHistoryPagination();
             updateDraftPagination();
         });
+    </script>
+
+    <!-- Edit Debt Return Modal -->
+    <div class="modal fade" id="editDebtReturnModal" tabindex="-1" aria-labelledby="editDebtReturnModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editDebtReturnModalLabel">دەستکاریکردنی گەڕاندنەوەی قەرز</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editDebtReturnForm">
+                        <input type="hidden" id="editDebtReturnId" name="id">
+                        <input type="hidden" name="customer_id" value="<?php echo $customer['id']; ?>">
+                        <input type="hidden" name="transaction_type" value="collection">
+
+                        <div class="mb-3">
+                            <label for="editReturnAmount" class="form-label">بڕی پارەی گەڕاوە</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editReturnAmount"
+                                    name="amount" min="1" required>
+                                <span class="input-group-text">دینار</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editReturnDate" class="form-label">بەرواری گەڕانەوە</label>
+                            <input type="date" class="form-control" id="editReturnDate" name="return_date" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editReturnNotes" class="form-label">تێبینی</label>
+                            <textarea class="form-control" id="editReturnNotes" name="notes" rows="3"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editPaymentMethod" class="form-label">شێوازی پارەدان</label>
+                            <select class="form-select" id="editPaymentMethod" name="payment_method">
+                                <option value="cash">نەقد</option>
+                                <option value="transfer">FIB یان FastPay</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" id="saveEditDebtReturn">پاشەکەوتکردن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add JavaScript for handling the new functionality -->
+    <script>
+    // Print debt history
+    document.getElementById('printDebtHistory').addEventListener('click', function() {
+        window.print();
+    });
+
+    // Edit debt return
+    document.querySelectorAll('.edit-debt-return').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const amount = this.dataset.amount;
+            const date = this.dataset.date;
+            const paymentMethod = this.dataset.paymentMethod;
+            const notes = this.dataset.notes;
+
+            document.getElementById('editDebtReturnId').value = id;
+            document.getElementById('editReturnAmount').value = amount;
+            document.getElementById('editReturnDate').value = date;
+            document.getElementById('editPaymentMethod').value = paymentMethod;
+            document.getElementById('editReturnNotes').value = notes;
+
+            const modal = new bootstrap.Modal(document.getElementById('editDebtReturnModal'));
+            modal.show();
+        });
+    });
+
+    // Save edited debt return
+    document.getElementById('saveEditDebtReturn').addEventListener('click', function() {
+        const form = document.getElementById('editDebtReturnForm');
+        const formData = new FormData(form);
+
+        fetch('../../api/customers/update_debt_return.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'سەرکەوتوو',
+                    text: 'گەڕاندنەوەی قەرز بە سەرکەوتوویی دەستکاری کرا'
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: data.message || 'هەڵەیەک ڕوویدا لە کاتی دەستکاریکردن'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'هەڵە',
+                text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی بە سێرڤەرەوە'
+            });
+        });
+    });
     </script>
 </body>
 
