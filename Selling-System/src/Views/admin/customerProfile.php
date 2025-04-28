@@ -3458,6 +3458,8 @@ foreach ($debtTransactions as $debtTransaction) {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     
     <!-- Common utilities & components -->
     <script src="../../js/navbar.js"></script>
@@ -3574,38 +3576,16 @@ foreach ($debtTransactions as $debtTransaction) {
                 // Prepare data for submission
                 const formData = new FormData();
                 formData.append('sale_id', returnData.receipt_id);
-                formData.append('receipt_type', 'selling');
+                formData.append('receipt_type', returnData.receipt_type);
                 formData.append('notes', returnData.notes || '');
                 formData.append('reason', returnData.reason || 'damaged');
                 
                 // Add return quantities for each item
                 returnData.items.forEach((item, index) => {
-                    console.log('Processing return item:', item);
-                    // Try to find the correct ID - could be id, product_id, or sale_item_id
-                    let itemId = null;
-                    if (item.id !== undefined) {
-                        itemId = item.id;
-                    } else if (item.product_id !== undefined) {
-                        itemId = item.product_id;
-                    } else if (item.sale_item_id !== undefined) {
-                        itemId = item.sale_item_id;
-                    }
-                    
-                    console.log('Using item ID:', itemId, 'for quantity:', item.quantity);
-                    
-                    if (itemId !== null) {
-                        formData.append(`return_quantities[${itemId}]`, item.quantity);
-                    } else {
-                        console.error('No valid ID found for item:', item);
-                    }
+                    formData.append(`return_quantities[${item.id}]`, item.quantity);
                 });
                 
                 // Submit the return data
-                console.log('Form data to be sent:');
-                for (let pair of formData.entries()) {
-                    console.log(pair[0] + ': ' + pair[1]);
-                }
-                
                 $.ajax({
                     url: '../../ajax/return_sale.php',
                     type: 'POST',
@@ -3617,22 +3597,7 @@ foreach ($debtTransactions as $debtTransaction) {
                         
                         try {
                             console.log('Return response:', response);
-                            // First try to parse if it's a string
-                            let data = response;
-                            if (typeof response === 'string') {
-                                try {
-                                    data = JSON.parse(response);
-                                } catch (parseError) {
-                                    console.error('Failed to parse response as JSON:', parseError);
-                                    // Check if the response contains an SQL error
-                                    if (response.includes('SQLSTATE')) {
-                                        data = { 
-                                            status: 'error', 
-                                            message: response.split('\n')[0] // Get first line of error
-                                        };
-                                    }
-                                }
-                            }
+                            const data = typeof response === 'string' ? JSON.parse(response) : response;
                             
                             if (data.status === 'success') {
                                 Swal.fire({
@@ -3645,20 +3610,14 @@ foreach ($debtTransactions as $debtTransaction) {
                                     window.location.reload();
                                 });
                             } else {
-                                let errorMsg = data.message || 'هەڵەیەک ڕوویدا لە کاتی گەڕاندنەوەی کاڵا';
-                                // Check for SQL error patterns
-                                if (typeof errorMsg === 'string' && errorMsg.includes('SQLSTATE')) {
-                                    errorMsg = errorMsg.split('\n')[0]; // Get first line of SQL error
-                                }
-                                
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'هەڵە',
-                                    text: errorMsg
+                                    text: data.message || 'هەڵەیەک ڕوویدا لە کاتی گەڕاندنەوەی کاڵا'
                                 });
                             }
                         } catch (e) {
-                            console.error('Error handling response:', e, response);
+                            console.error('Error parsing response:', e, response);
                             Swal.fire({
                                 icon: 'error',
                                 title: 'هەڵە',
@@ -3668,28 +3627,12 @@ foreach ($debtTransactions as $debtTransaction) {
                     },
                     error: function(xhr, status, error) {
                         console.error('AJAX Error:', xhr, status, error);
-                        console.error('Response Text:', xhr.responseText);
                         Swal.close();
-                        
-                        let errorMessage = 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی کردن بە سێرڤەرەوە';
-                        try {
-                            const errorData = JSON.parse(xhr.responseText);
-                            if (errorData.message) {
-                                errorMessage = errorData.message;
-                            }
-                            console.error('Parsed Error:', errorData);
-                        } catch (e) {
-                            console.error('Error parsing error response:', e);
-                            // Use raw response text if available
-                            if (xhr.responseText) {
-                                errorMessage = xhr.responseText;
-                            }
-                        }
                         
                         Swal.fire({
                             icon: 'error',
                             title: 'هەڵە',
-                            text: errorMessage
+                            text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندی کردن بە سێرڤەرەوە'
                         });
                     }
                 });

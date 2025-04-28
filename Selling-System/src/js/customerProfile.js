@@ -186,13 +186,6 @@ function loadPurchaseHistory(customerId) {
     ];
     
     const purchasesTableBody = $('#purchasesTableBody');
-    
-    // Check if purchasesTableBody exists
-    if (purchasesTableBody.length === 0) {
-        console.warn('Purchase table body not found');
-        return;
-    }
-    
     purchasesTableBody.empty();
     
     samplePurchases.forEach(purchase => {
@@ -228,47 +221,29 @@ function loadPurchaseHistory(customerId) {
         purchasesTableBody.append(row);
     });
     
-    // Check if DataTable plugin exists
-    if (typeof $.fn.DataTable === 'undefined') {
-        console.warn('DataTable plugin not loaded');
-        return;
-    }
-    
-    // Check if purchasesTable exists
-    if ($('#purchasesTable').length === 0) {
-        console.warn('Purchase table not found');
-        return;
-    }
-    
     // Initialize DataTable for purchases
-    try {
-        if ($.fn.DataTable.isDataTable('#purchasesTable')) {
-            $('#purchasesTable').DataTable().destroy();
-        }
-        
-        $('#purchasesTable').DataTable({
-            responsive: true,
-            language: {
-                url: 'https://cdn.datatables.net/plug-ins/1.10.25/i18n/Kurdish.json'
-            },
-            // Add RTL support
-            direction: 'rtl',
-            // Customize column rendering for proper RTL support
-            columnDefs: [
-                { className: "dt-right", targets: "_all" },
-                { className: "dt-center", targets: 4 } // Action column
-            ]
-        });
-        
-        // Fix for tab switching issues with responsive tables
-        $('#purchases-tab').on('shown.bs.tab', function() {
-            if ($.fn.DataTable.isDataTable('#purchasesTable')) {
-                $('#purchasesTable').DataTable().columns.adjust().responsive.recalc();
-            }
-        });
-    } catch (e) {
-        console.error('Error initializing DataTable:', e);
+    if ($.fn.DataTable.isDataTable('#purchasesTable')) {
+        $('#purchasesTable').DataTable().destroy();
     }
+    
+    $('#purchasesTable').DataTable({
+        responsive: true,
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.10.25/i18n/Kurdish.json'
+        },
+        // Add RTL support
+        direction: 'rtl',
+        // Customize column rendering for proper RTL support
+        columnDefs: [
+            { className: "dt-right", targets: "_all" },
+            { className: "dt-center", targets: 4 } // Action column
+        ]
+    });
+    
+    // Fix for tab switching issues with responsive tables
+    $('#purchases-tab').on('shown.bs.tab', function() {
+        $('#purchasesTable').DataTable().columns.adjust().responsive.recalc();
+    });
 }
 
 // Function to load payment history
@@ -293,13 +268,6 @@ function loadPaymentHistory(customerId) {
     ];
     
     const paymentsTableBody = $('#paymentsTableBody');
-    
-    // Check if paymentsTableBody exists
-    if (paymentsTableBody.length === 0) {
-        console.warn('Payments table body not found');
-        return;
-    }
-    
     paymentsTableBody.empty();
     
     samplePayments.forEach((payment, index) => {
@@ -334,46 +302,28 @@ function loadPaymentHistory(customerId) {
         paymentsTableBody.append(row);
     });
     
-    // Check if DataTable plugin exists
-    if (typeof $.fn.DataTable === 'undefined') {
-        console.warn('DataTable plugin not loaded');
-        return;
-    }
-    
-    // Check if paymentsTable exists
-    if ($('#paymentsTable').length === 0) {
-        console.warn('Payments table not found');
-        return;
-    }
-    
     // Initialize DataTable for payments
-    try {
-        if ($.fn.DataTable.isDataTable('#paymentsTable')) {
-            $('#paymentsTable').DataTable().destroy();
-        }
-        
-        $('#paymentsTable').DataTable({
-            responsive: true,
-            language: {
-                url: 'https://cdn.datatables.net/plug-ins/1.10.25/i18n/Kurdish.json'
-            },
-            // Add RTL support
-            direction: 'rtl',
-            // Customize column rendering for proper RTL support
-            columnDefs: [
-                { className: "dt-right", targets: "_all" }
-            ]
-        });
-        
-        // Fix for tab switching issues with responsive tables
-        $('#payments-tab').on('shown.bs.tab', function() {
-            if ($.fn.DataTable.isDataTable('#paymentsTable')) {
-                $('#paymentsTable').DataTable().columns.adjust().responsive.recalc();
-            }
-        });
-    } catch (e) {
-        console.error('Error initializing DataTable:', e);
+    if ($.fn.DataTable.isDataTable('#paymentsTable')) {
+        $('#paymentsTable').DataTable().destroy();
     }
+    
+    $('#paymentsTable').DataTable({
+        responsive: true,
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.10.25/i18n/Kurdish.json'
+        },
+        // Add RTL support
+        direction: 'rtl',
+        // Customize column rendering for proper RTL support
+        columnDefs: [
+            { className: "dt-right", targets: "_all" }
+        ]
+    });
+    
+    // Fix for tab switching issues with responsive tables
+    $('#payments-tab').on('shown.bs.tab', function() {
+        $('#paymentsTable').DataTable().columns.adjust().responsive.recalc();
+    });
 }
 
 // Function to open purchase details
