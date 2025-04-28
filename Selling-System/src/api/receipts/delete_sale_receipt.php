@@ -59,7 +59,7 @@ try {
         }
         
         // Check for returns
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM product_returns WHERE receipt_id = ? AND receipt_type = 'sale'");
+        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM product_returns WHERE receipt_id = ? AND receipt_type = 'selling'");
         $stmt->execute([$receipt_id]);
         if ($stmt->fetch(PDO::FETCH_ASSOC)['count'] > 0) {
             throw new Exception('ناتوانرێت ئەم پسووڵەیە بسڕدرێتەوە چونکە گەڕاندنەوەی کاڵای لەسەر تۆمارکراوە');
