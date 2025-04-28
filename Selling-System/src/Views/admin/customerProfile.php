@@ -720,6 +720,15 @@ foreach ($debtTransactions as $debtTransaction) {
                                                                     <i class="fas fa-trash"></i>
                                                                 </button>
                                                                 <?php endif; ?>
+                                                                
+                                                                <!-- Add Return Sale Button -->
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-warning rounded-circle return-sale"
+                                                                    data-id="<?php echo $sale['id']; ?>"
+                                                                    data-invoice="<?php echo $sale['invoice_number']; ?>"
+                                                                    title="گەڕاندنەوەی کاڵا">
+                                                                    <i class="fas fa-undo"></i>
+                                                                </button>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -2313,16 +2322,6 @@ foreach ($debtTransactions as $debtTransaction) {
                 const saleId = $(this).data('id');
                 const invoiceNumber = $(this).data('invoice');
                 
-                // Show loading
-                Swal.fire({
-                    title: 'تکایە چاوەڕێ بکە...',
-                    text: 'زانیارییەکان وەردەگیرێن',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-                
                 // Get sale items
                 $.ajax({
                     url: '../../ajax/get_sale_items.php',
@@ -2331,41 +2330,58 @@ foreach ($debtTransactions as $debtTransaction) {
                         sale_id: saleId
                     },
                     dataType: 'json',
-                    success: function(response) {
-                        Swal.close();
-                        
-                        if (response.success) {
-                            // Check if sale has payments
-                            if (response.has_payments) {
-                                Swal.fire({
-                                    title: 'هەڵە!',
-                                    text: 'ناتوانرێت ئەم پسووڵە بگەڕێتەوە چونکە پارەدانەوەی لەسەر تۆمار کراوە',
-                                    icon: 'error',
-                                    confirmButtonText: 'باشە'
-                                });
-                                return;
-                            }
-                            
+                    success: function(data) {
+                        if (data.success) {
                             // Create return form
                             let itemsHtml = '<form id="returnSaleForm">';
                             itemsHtml += '<input type="hidden" name="sale_id" value="' + saleId + '">';
-                            itemsHtml += '<input type="hidden" name="receipt_type" value="selling">';
+                            
+                            // Add introduction text explaining return limits
+                            itemsHtml += '<div class="alert alert-info mb-3">';
+                            itemsHtml += '<i class="fas fa-info-circle me-2"></i> ';
+                            itemsHtml += 'تکایە ئاگاداربە کە ناتوانیت لە بڕی ئەسڵی کەمتر بڕێک بگەڕێنیتەوە. ';
+                            itemsHtml += 'هەروەها ناتوانیت کاڵایەک دووبارە بگەڕێنیتەوە کە پێشتر گەڕێنراوەتەوە.';
+                            itemsHtml += '</div>';
+                            
                             itemsHtml += '<div class="table-responsive"><table class="table table-bordered">';
-                            itemsHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی کڕین</th><th>بڕی گەڕانەوە</th></tr></thead>';
+                            itemsHtml += '<thead><tr>';
+                            itemsHtml += '<th>ناوی کاڵا</th>';
+                            itemsHtml += '<th>بڕی فرۆشتن</th>';
+                            itemsHtml += '<th>گەڕاوە پێشتر</th>';
+                            itemsHtml += '<th>بەردەست بۆ گەڕاندنەوە</th>';
+                            itemsHtml += '<th>بڕی گەڕاندنەوە</th>';
+                            itemsHtml += '</tr></thead>';
                             itemsHtml += '<tbody>';
                             
-                            response.items.forEach(item => {
+                            data.items.forEach(item => {
                                 // Calculate max returnable amount (total quantity - already returned quantity)
-                                const maxReturnable = item.quantity - (item.returned_quantity || 0);
+                                const originalQty = parseFloat(item.quantity);
+                                const returnedQty = parseFloat(item.returned_quantity || 0);
+                                const maxReturnable = originalQty - returnedQty;
                                 
-                                if (maxReturnable > 0) {
+                                // Skip if nothing left to return
+                                if (maxReturnable <= 0) {
+                                    itemsHtml += `<tr class="table-secondary">
+                                        <td>${item.product_name}</td>
+                                        <td>${originalQty} ${item.unit_type}</td>
+                                        <td>${returnedQty} ${item.unit_type}</td>
+                                        <td>0 ${item.unit_type}</td>
+                                        <td><span class="badge bg-secondary">هەمووی گەڕاوەتەوە</span></td>
+                                    </tr>`;
+                                } else {
                                     itemsHtml += `<tr>
                                         <td>${item.product_name}</td>
-                                        <td>${item.quantity} (${item.returned_quantity || 0} گەڕاوە پێشتر)</td>
+                                        <td>${originalQty} ${item.unit_type}</td>
+                                        <td>${returnedQty} ${item.unit_type}</td>
+                                        <td><strong class="text-success">${maxReturnable} ${item.unit_type}</strong></td>
                                         <td>
-                                            <input type="number" class="form-control return-quantity" 
-                                                name="return_quantities[${item.id}]" 
-                                                min="0" max="${maxReturnable}" value="0">
+                                            <div class="input-group">
+                                                <input type="number" class="form-control return-quantity" 
+                                                    name="return_quantities[${item.id}]" 
+                                                    min="0" max="${maxReturnable}" value="0"
+                                                    step="0.001">
+                                                <span class="input-group-text">${item.unit_type}</span>
+                                            </div>
                                         </td>
                                     </tr>`;
                                 }
@@ -2377,6 +2393,7 @@ foreach ($debtTransactions as $debtTransaction) {
                             itemsHtml += '<select class="form-select" name="reason" id="returnReason">';
                             itemsHtml += '<option value="damaged">شکاو/خراپ</option>';
                             itemsHtml += '<option value="wrong_product">کاڵای هەڵە</option>';
+                            itemsHtml += '<option value="customer_return">گەڕاندنەوە لەلایەن کڕیارەوە</option>';
                             itemsHtml += '<option value="other">هۆکاری تر</option>';
                             itemsHtml += '</select>';
                             itemsHtml += '</div>';
@@ -2389,12 +2406,29 @@ foreach ($debtTransactions as $debtTransaction) {
                             Swal.fire({
                                 title: `گەڕاندنەوەی کاڵا - پسووڵە ${invoiceNumber}`,
                                 html: itemsHtml,
+                                width: '800px',
                                 showCancelButton: true,
                                 confirmButtonText: 'گەڕاندنەوە',
                                 cancelButtonText: 'هەڵوەشاندنەوە',
                                 showLoaderOnConfirm: true,
                                 preConfirm: () => {
+                                    // Validate that at least one item has been selected for return
+                                    let hasReturns = false;
+                                    document.querySelectorAll('.return-quantity').forEach(input => {
+                                        if (parseFloat(input.value) > 0) {
+                                            hasReturns = true;
+                                        }
+                                    });
+                                    
+                                    if (!hasReturns) {
+                                        Swal.showValidationMessage('تکایە لانی کەم یەک کاڵا هەڵبژێرە بۆ گەڕاندنەوە');
+                                        return false;
+                                    }
+                                    
                                     const formData = new FormData(document.getElementById('returnSaleForm'));
+                                    // Add receipt_type parameter to indicate this is a sale (selling) return
+                                    formData.append('receipt_type', 'selling');
+                                    
                                     return $.ajax({
                                         url: '../../ajax/return_sale.php',
                                         type: 'POST',
@@ -2446,23 +2480,6 @@ foreach ($debtTransactions as $debtTransaction) {
                                         });
                                         
                                         summaryHtml += '</tbody></table></div>';
-                                        
-                                        // Remaining items
-                                        summaryHtml += '<div class="mb-2"><strong>کاڵاکانی ماوە:</strong></div>';
-                                        summaryHtml += '<div class="table-responsive"><table class="table table-sm table-bordered">';
-                                        summaryHtml += '<thead><tr><th>ناوی کاڵا</th><th>بڕی ماوە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
-                                        summaryHtml += '<tbody>';
-                                        
-                                        response.summary.remaining_items.forEach(item => {
-                                            summaryHtml += `<tr>
-                                                <td>${item.product_name}</td>
-                                                <td>${item.quantity}</td>
-                                                <td>${item.unit_price.toLocaleString()} دینار</td>
-                                                <td>${item.total_price.toLocaleString()} دینار</td>
-                                            </tr>`;
-                                        });
-                                        
-                                        summaryHtml += '</tbody></table></div>';
                                         summaryHtml += '</div>';
                                         
                                         Swal.fire({
@@ -2486,17 +2503,16 @@ foreach ($debtTransactions as $debtTransaction) {
                         } else {
                             Swal.fire({
                                 title: 'هەڵە!',
-                                text: data.message,
+                                text: data.message || 'هەڵەیەک ڕوویدا لە وەرگرتنی کاڵاکان',
                                 icon: 'error',
                                 confirmButtonText: 'باشە'
                             });
                         }
                     },
                     error: function(xhr, status, error) {
-                        console.error('Ajax error:', error);
                         Swal.fire({
                             title: 'هەڵە!',
-                            text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
+                            text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە',
                             icon: 'error',
                             confirmButtonText: 'باشە'
                         });
