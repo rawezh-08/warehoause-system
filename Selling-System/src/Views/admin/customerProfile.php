@@ -26,7 +26,10 @@ $salesQuery = "SELECT s.*,
                si.quantity, si.unit_type, si.pieces_count, si.unit_price, si.total_price,
                p.name as product_name, p.code as product_code,
                SUM(si.total_price) as sale_total,
-               (SELECT SUM(total_price) FROM sale_items WHERE sale_id = s.id) as invoice_total
+               (SELECT SUM(total_price) FROM sale_items WHERE sale_id = s.id) as invoice_total,
+               (SELECT SUM(quantity) FROM return_items ri 
+                JOIN product_returns pr ON ri.return_id = pr.id 
+                WHERE pr.receipt_id = s.id AND pr.receipt_type = 'selling') as returned_quantity
                FROM sales s 
                JOIN sale_items si ON s.id = si.sale_id 
                JOIN products p ON si.product_id = p.id
@@ -718,6 +721,17 @@ foreach ($debtTransactions as $debtTransaction) {
                                                                     data-invoice="<?php echo $sale['invoice_number']; ?>"
                                                                     title="سڕینەوە">
                                                                     <i class="fas fa-trash"></i>
+                                                                </button>
+                                                                <?php endif; ?>
+                                                                
+                                                                <?php if ($canReturn): ?>
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-warning rounded-circle return-product"
+                                                                    data-id="<?php echo $sale['id']; ?>"
+                                                                    data-product="<?php echo $sale['product_id']; ?>"
+                                                                    data-quantity="<?php echo $sale['quantity']; ?>"
+                                                                    title="گەڕاندنەوەی کاڵا">
+                                                                    <i class="fas fa-undo"></i>
                                                                 </button>
                                                                 <?php endif; ?>
                                                             </div>
@@ -3442,6 +3456,115 @@ foreach ($debtTransactions as $debtTransaction) {
             // Add event listener for records per page change
             document.getElementById(`${tableId}RecordsPerPage`).addEventListener('change', function() {
                 updateTable(tableId, 1);
+            });
+        });
+    });
+    </script>
+
+    <!-- Return Product Modal -->
+    <div class="modal fade" id="returnProductModal" tabindex="-1" aria-labelledby="returnProductModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="returnProductModalLabel">گەڕاندنەوەی کاڵا</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="returnProductForm">
+                        <input type="hidden" id="returnSaleId" name="sale_id">
+                        <input type="hidden" id="returnProductId" name="product_id">
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="returnQuantity" class="form-label">بڕی کاڵا</label>
+                                <input type="number" class="form-control" id="returnQuantity" name="quantity" min="1" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="returnReason" class="form-label">هۆکار</label>
+                                <select class="form-select" id="returnReason" name="reason" required>
+                                    <option value="damaged">تێکچوو</option>
+                                    <option value="wrong_product">کاڵای هەڵە</option>
+                                    <option value="customer_request">داواکاری کڕیار</option>
+                                    <option value="other">هۆکاری تر</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="returnNotes" class="form-label">تێبینی</label>
+                            <textarea class="form-control" id="returnNotes" name="notes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" id="submitReturn">گەڕاندنەوە</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Add this to your existing JavaScript code
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle return product button click
+        document.querySelectorAll('.return-product').forEach(button => {
+            button.addEventListener('click', function() {
+                const saleId = this.dataset.id;
+                const productId = this.dataset.product;
+                const maxQuantity = this.dataset.quantity;
+                
+                showReturnModal(saleId, productId, maxQuantity);
+            });
+        });
+    });
+
+    function showReturnModal(saleId, productId, maxQuantity) {
+        document.getElementById('returnSaleId').value = saleId;
+        document.getElementById('returnProductId').value = productId;
+        document.getElementById('returnQuantity').max = maxQuantity;
+        document.getElementById('returnQuantity').value = 1;
+        document.getElementById('returnReason').value = 'damaged';
+        document.getElementById('returnNotes').value = '';
+        
+        new bootstrap.Modal(document.getElementById('returnProductModal')).show();
+    }
+
+    document.getElementById('submitReturn').addEventListener('click', function() {
+        const form = document.getElementById('returnProductForm');
+        const formData = new FormData(form);
+        
+        fetch('../../controllers/returnProduct.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    title: 'سەرکەوتوو',
+                    text: 'کاڵا بە سەرکەوتوویی گەڕێنرایەوە',
+                    icon: 'success',
+                    confirmButtonText: 'باشە'
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire({
+                    title: 'هەڵە',
+                    text: data.message || 'هەڵەیەک ڕوویدا',
+                    icon: 'error',
+                    confirmButtonText: 'باشە'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                title: 'هەڵە',
+                text: 'هەڵەیەک ڕوویدا',
+                icon: 'error',
+                confirmButtonText: 'باشە'
             });
         });
     });
