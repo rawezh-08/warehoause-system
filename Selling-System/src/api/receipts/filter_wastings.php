@@ -110,15 +110,21 @@ try {
     $totalRecords = $stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
 
     // Add pagination
-    $query .= " ORDER BY w.date DESC LIMIT :limit OFFSET :offset";
-    $params[':limit'] = $recordsPerPage;
-    $params[':offset'] = $offset;
-
+    $query .= " ORDER BY w.date DESC LIMIT ? OFFSET ?";
+    
     // Execute the main query
     $stmt = $conn->prepare($query);
-    foreach ($params as $key => $value) {
-        $stmt->bindValue($key, $value);
+    
+    // Bind all parameters
+    $paramIndex = 1;
+    foreach ($params as $value) {
+        $stmt->bindValue($paramIndex++, $value);
     }
+    
+    // Bind LIMIT and OFFSET parameters
+    $stmt->bindValue($paramIndex++, $recordsPerPage, PDO::PARAM_INT);
+    $stmt->bindValue($paramIndex, $offset, PDO::PARAM_INT);
+    
     $stmt->execute();
     $wastings = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
