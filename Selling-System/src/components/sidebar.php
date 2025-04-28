@@ -84,12 +84,12 @@
                     <div class="icon-cont">
                         <img src="../../assets/icons/spending.svg" alt="">
                     </div>
-                    <span>قەرزەکان</span>
+                    <span>مامەڵەکان</span>
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="deptsSubmenu">
-                    <li><a href="customerProfile.php">قەرزی کڕیاڕ لە ئێمە</a></li>
-                    <li><a href="suppliers.php">قەرزی ئێمە لە دابینکەر</a></li>
+                    <li><a href="customerProfile.php">کڕیارەکان</a></li>
+                    <li><a href="suppliers.php">دابینکەرەکان</a></li>
                 </ul>
             </li>
 
