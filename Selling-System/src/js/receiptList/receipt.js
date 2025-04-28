@@ -671,7 +671,7 @@ $(document).ready(function() {
                                 const quantity = parseInt($(this).val());
                                 if (quantity > 0) {
                                     const itemData = {
-                                        item_id: $(this).data('item-id'),
+                                        id: $(this).data('item-id'),
                                         quantity: quantity,
                                         unit_price: $(this).data('unit-price'),
                                         unit_type: $(this).data('unit-type')
@@ -706,8 +706,8 @@ $(document).ready(function() {
                             // Convert return items to the correct format
                             const returnQuantities = {};
                             returnItems.forEach(item => {
-                                if (item.item_id) {
-                                    returnQuantities[item.item_id] = item.quantity;
+                                if (item.id) {
+                                    returnQuantities[item.id] = item.quantity;
                                 }
                             });
                             

@@ -18,7 +18,7 @@ try {
     $receipt_type = 'selling';
     $reason = $_POST['reason'] ?? 'other';
     $notes = $_POST['notes'] ?? '';
-    $return_quantities = $_POST['return_quantities'] ?? [];
+    $return_quantities = json_decode($_POST['return_quantities'], true) ?? [];
 
     // Add debugging
     error_log("Debug - POST data: " . print_r($_POST, true));
