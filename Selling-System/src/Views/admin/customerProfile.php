@@ -1773,16 +1773,26 @@ foreach ($debtTransactions as $debtTransaction) {
                                 title: 'سەرکەوتوو بوو!',
                                 text: data.message,
                                 icon: 'success',
-                                confirmButtonText: 'باشە'
+                                confirmButtonText: 'باشە',
+                                showConfirmButton: true,
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                timer: 2000,
+                                timerProgressBar: true
                             }).then(() => {
-                                location.reload();
+                                setTimeout(() => {
+                                    location.reload();
+                                }, 500);
                             });
                         } else {
                             Swal.fire({
                                 title: 'هەڵە!',
                                 text: data.message,
                                 icon: 'error',
-                                confirmButtonText: 'باشە'
+                                confirmButtonText: 'باشە',
+                                showConfirmButton: true,
+                                allowOutsideClick: false,
+                                allowEscapeKey: false
                             });
                         }
                     },
@@ -1854,16 +1864,26 @@ foreach ($debtTransactions as $debtTransaction) {
                                 title: 'سەرکەوتوو بوو!',
                                 text: 'گەڕانەوەی قەرز بەسەرکەوتوویی تۆمارکرا',
                                 icon: 'success',
-                                confirmButtonText: 'باشە'
+                                confirmButtonText: 'باشە',
+                                showConfirmButton: true,
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                timer: 2000,
+                                timerProgressBar: true
                             }).then(() => {
-                                location.reload();
+                                setTimeout(() => {
+                                    location.reload();
+                                }, 500);
                             });
                         } else {
                             Swal.fire({
                                 title: 'هەڵە!',
                                 text: data.message || 'هەڵەیەک ڕوویدا لە تۆمارکردنی گەڕانەوەی قەرز',
                                 icon: 'error',
-                                confirmButtonText: 'باشە'
+                                confirmButtonText: 'باشە',
+                                showConfirmButton: true,
+                                allowOutsideClick: false,
+                                allowEscapeKey: false
                             });
                         }
                     },
@@ -2192,16 +2212,26 @@ foreach ($debtTransactions as $debtTransaction) {
                                 title: 'سەرکەوتوو بوو!',
                                 text: 'پارەی پێشەکی بەسەرکەوتوویی تۆمارکرا',
                                 icon: 'success',
-                                confirmButtonText: 'باشە'
+                                confirmButtonText: 'باشە',
+                                showConfirmButton: true,
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                timer: 2000,
+                                timerProgressBar: true
                             }).then(() => {
-                                location.reload();
+                                setTimeout(() => {
+                                    location.reload();
+                                }, 500);
                             });
                         } else {
                             Swal.fire({
                                 title: 'هەڵە!',
                                 text: data.message || 'هەڵەیەک ڕوویدا لە تۆمارکردنی پارەی پێشەکی',
                                 icon: 'error',
-                                confirmButtonText: 'باشە'
+                                confirmButtonText: 'باشە',
+                                showConfirmButton: true,
+                                allowOutsideClick: false,
+                                allowEscapeKey: false
                             });
                         }
                     },
@@ -2264,16 +2294,26 @@ foreach ($debtTransactions as $debtTransaction) {
                                         title: 'سەرکەوتوو بوو!',
                                         text: data.message,
                                         icon: 'success',
-                                        confirmButtonText: 'باشە'
+                                        confirmButtonText: 'باشە',
+                                        showConfirmButton: true,
+                                        allowOutsideClick: false,
+                                        allowEscapeKey: false,
+                                        timer: 2000,
+                                        timerProgressBar: true
                                     }).then(() => {
-                                        location.reload();
+                                        setTimeout(() => {
+                                            location.reload();
+                                        }, 500);
                                     });
                                 } else {
                                     Swal.fire({
                                         title: 'هەڵە!',
                                         text: data.message,
                                         icon: 'error',
-                                        confirmButtonText: 'باشە'
+                                        confirmButtonText: 'باشە',
+                                        showConfirmButton: true,
+                                        allowOutsideClick: false,
+                                        allowEscapeKey: false
                                     });
                                 }
                             },
@@ -2432,16 +2472,26 @@ foreach ($debtTransactions as $debtTransaction) {
                                             title: 'سەرکەوتوو بوو!',
                                             html: response.message + summaryHtml,
                                             icon: 'success',
-                                            confirmButtonText: 'باشە'
+                                            confirmButtonText: 'باشە',
+                                            showConfirmButton: true,
+                                            allowOutsideClick: false,
+                                            allowEscapeKey: false,
+                                            timer: 2000,
+                                            timerProgressBar: true
                                         }).then(() => {
-                                            location.reload();
+                                            setTimeout(() => {
+                                                location.reload();
+                                            }, 500);
                                         });
                                     } else {
                                         Swal.fire({
                                             title: 'هەڵە!',
                                             text: response.message,
                                             icon: 'error',
-                                            confirmButtonText: 'باشە'
+                                            confirmButtonText: 'باشە',
+                                            showConfirmButton: true,
+                                            allowOutsideClick: false,
+                                            allowEscapeKey: false
                                         });
                                     }
                                 }
@@ -2960,7 +3010,12 @@ foreach ($debtTransactions as $debtTransaction) {
                             icon: 'success',
                             title: 'سەرکەوتوو بوو!',
                             text: response.message,
-                            confirmButtonText: 'باشە'
+                            confirmButtonText: 'باشە',
+                            showConfirmButton: true,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            timer: 2000,
+                            timerProgressBar: true
                         }).then(() => {
                             // Close modal and reload page
                             $('#editSaleModal').modal('hide');
