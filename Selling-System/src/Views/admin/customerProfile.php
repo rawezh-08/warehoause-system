@@ -1589,8 +1589,26 @@ foreach ($debtTransactions as $debtTransaction) {
     <script src="../../js/ajax-config.js"></script>
     <!-- Custom Scripts -->
     <script src="../../js/menuComponent.js"></script>
-    <!-- Custom Print Handler -->
-    <script src="../../js/print-handler.js"></script>
+    <script src="../../js/customerProfile.js"></script>
+    
+    <!-- Custom JavaScript for print functionality -->
+    <script>
+        $(document).ready(function() {
+            // Handle print button click for receipts
+            $(document).on('click', '.print-btn', function() {
+                const saleId = $(this).data('id');
+                const isDelivery = $(this).data('is-delivery');
+                
+                if (isDelivery == 1) {
+                    // If it's a delivery receipt, open the delivery receipt page
+                    window.open(`../../Views/receipt/delivery_receipt.php?sale_id=${saleId}`, '_blank');
+                } else {
+                    // If it's a regular receipt, open the regular receipt page
+                    window.open(`../../Views/receipt/print_receipt.php?sale_id=${saleId}`, '_blank');
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>
