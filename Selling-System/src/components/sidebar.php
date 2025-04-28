@@ -59,7 +59,7 @@
                 <ul class="submenu collapse" id="salesSubmenu">
                     <li><a href="addReceipt.php">زیادکردنی پسوڵە</a></li>
 
-                    <li><a href="draftAndWithdrawal.php">ڕەشنووسەکان و بەفیڕۆچوو</a></li>
+                    <li><a href="draftAndWithdrawal.php">لیستی پسووڵەکان</a></li>
                 </ul>
             </li>
 
