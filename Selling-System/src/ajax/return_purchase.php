@@ -209,14 +209,12 @@ try {
         // Update purchase record
         $stmt = $conn->prepare("
             UPDATE purchases 
-            SET total_amount = :total_amount,
-                remaining_amount = :remaining_amount,
+            SET remaining_amount = :remaining_amount,
                 updated_at = NOW()
             WHERE id = :purchase_id
         ");
 
         $stmt->execute([
-            ':total_amount' => $newTotalAmount,
             ':remaining_amount' => $newRemainingAmount,
             ':purchase_id' => $purchase_id
         ]);
@@ -269,6 +267,18 @@ try {
         }
     }
 
+    // Update total_amount in product_returns
+    $stmt = $conn->prepare("
+        UPDATE product_returns 
+        SET total_amount = :total_amount 
+        WHERE id = :return_id
+    ");
+
+    $stmt->execute([
+        ':total_amount' => $total_return_amount,
+        ':return_id' => $return_id
+    ]);
+
     $conn->commit();
 
     // Prepare response
@@ -276,7 +286,7 @@ try {
         'success' => true,
         'message' => 'کاڵاکان بە سەرکەوتوویی گەڕێنرانەوە',
         'summary' => [
-            'original_total' => floatval($purchase['total_amount']),
+            'original_total' => floatval($purchase['remaining_amount']),
             'return_count' => count($returned_items),
             'returned_amount' => $total_return_amount,
             'returned_items' => $returned_items
