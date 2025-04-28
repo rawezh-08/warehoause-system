@@ -130,14 +130,22 @@ try {
         $updateSaleItemStmt->execute();
         
         // Update inventory (add returned items back to stock)
-        $inventoryQuery = "INSERT INTO inventory (product_id, quantity, reference_type, reference_id, notes) 
-                          VALUES (:product_id, :return_quantity, 'return', :return_id, :notes)";
+        $inventoryQuery = "UPDATE inventory 
+                          SET quantity = quantity + :return_quantity 
+                          WHERE product_id = :product_id";
         $inventoryStmt = $conn->prepare($inventoryQuery);
-        $inventoryStmt->bindParam(':product_id', $productId);
         $inventoryStmt->bindParam(':return_quantity', $returnQuantity);
-        $inventoryStmt->bindParam(':return_id', $returnId);
-        $inventoryStmt->bindParam(':notes', $returnNotes);
+        $inventoryStmt->bindParam(':product_id', $productId);
         $inventoryStmt->execute();
+        
+        // Update product quantity
+        $updateProductQuery = "UPDATE products 
+                              SET current_quantity = current_quantity + :return_quantity 
+                              WHERE id = :product_id";
+        $updateProductStmt = $conn->prepare($updateProductQuery);
+        $updateProductStmt->bindParam(':return_quantity', $returnQuantity);
+        $updateProductStmt->bindParam(':product_id', $productId);
+        $updateProductStmt->execute();
     }
     
     // Update the product_return record with total amount
