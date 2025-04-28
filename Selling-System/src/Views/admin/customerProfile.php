@@ -516,17 +516,12 @@ foreach ($debtTransactions as $debtTransaction) {
                                 <i class="fas fa-file-alt"></i>ڕەشنووسەکان
                             </button>
                         </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="delivery-receipts-tab" data-bs-toggle="tab" data-bs-target="#delivery-receipts" type="button" role="tab" aria-controls="delivery-receipts" aria-selected="false">
-                                <i class="fas fa-truck"></i>گەیاندنەوەی پارەدان
-                            </button>
-                        </li>
                     </ul>
                 </div>
 
                 <!-- Tab Content -->
                 <div class="card-body">
-                    <div class="tab-content" id="customerTabsContent">
+                    <div class="tab-content">
                         <!-- Sales History Tab -->
                         <div class="tab-pane fade show active" id="sales-content" role="tabpanel"
                             aria-labelledby="sales-tab">
@@ -632,6 +627,10 @@ foreach ($debtTransactions as $debtTransaction) {
                                                                 <span class="badge bg-success">نەقد</span>
                                                             <?php else: ?>
                                                                 <span class="badge bg-warning">قەرز</span>
+                                                            <?php endif; ?>
+                                                            
+                                                            <?php if (isset($sale['is_delivery']) && $sale['is_delivery'] == 1): ?>
+                                                                <span class="badge bg-info ms-1">گەیاندن</span>
                                                             <?php endif; ?>
                                                         </td>
                                                         <td>
@@ -1456,60 +1455,6 @@ foreach ($debtTransactions as $debtTransaction) {
                                                 </button>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Delivery Receipts Tab -->
-                        <div class="tab-pane fade" id="delivery-receipts" role="tabpanel" aria-labelledby="delivery-receipts-tab">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th>ژمارەی پسووڵە</th>
-                                                    <th>بەروار</th>
-                                                    <th>جۆری پارەدان</th>
-                                                    <th>ناونیشانی گەیاندن</th>
-                                                    <th>کۆی گشتی</th>
-                                                    <th>کردارەکان</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php
-                                                // Get delivery receipts for this customer
-                                                $stmt = $conn->prepare("
-                                                    SELECT s.*, 
-                                                        SUM((si.quantity - COALESCE(si.returned_quantity, 0)) * si.unit_price) + s.shipping_cost + s.other_costs - s.discount as total_amount
-                                                    FROM sales s
-                                                    LEFT JOIN sale_items si ON s.id = si.sale_id
-                                                    WHERE s.customer_id = ? AND s.is_delivery = 1
-                                                    GROUP BY s.id
-                                                    ORDER BY s.date DESC
-                                                ");
-                                                $stmt->execute([$customer_id]);
-                                                $delivery_receipts = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-                                                foreach ($delivery_receipts as $receipt): ?>
-                                                    <tr>
-                                                        <td><?php echo htmlspecialchars($receipt['invoice_number']); ?></td>
-                                                        <td><?php echo date('Y/m/d', strtotime($receipt['date'])); ?></td>
-                                                        <td><?php echo $receipt['payment_type'] === 'cash' ? 'کاش' : 'قەرز'; ?></td>
-                                                        <td><?php echo htmlspecialchars($receipt['delivery_address']); ?></td>
-                                                        <td><?php echo number_format($receipt['total_amount']); ?></td>
-                                                        <td>
-                                                            <a href="../receipt/delivery_receipt.php?id=<?php echo $receipt['id']; ?>" 
-                                                               class="btn btn-primary btn-sm" 
-                                                               target="_blank">
-                                                                <i class="fas fa-print"></i> چاپکردن
-                                                            </a>
-                                                        </td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
                                     </div>
                                 </div>
                             </div>
