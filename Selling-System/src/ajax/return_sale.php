@@ -49,7 +49,7 @@ try {
 
     $stmt->execute([
         ':receipt_id' => $sale_id,
-        ':receipt_type' => $receipt_type,
+        ':receipt_type' => 'selling',
         ':reason' => $reason,
         ':notes' => $notes
     ]);
