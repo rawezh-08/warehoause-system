@@ -374,7 +374,10 @@ $total = $subtotal + $receipt['shipping_cost'] + $receipt['other_costs'] - $rece
                     <div class="contact-item">
                         <i class="fas fa-phone-alt"></i>
                         <span>5656 225 0771</span>
+                      
+                        <i class="fas fa-phone-alt">
                         <span>8786 147 0750</span>
+                        </i>
                     </div>
                 </div>
                 <button class="btn btn-primary btn-sm no-print" onclick="window.print()">
