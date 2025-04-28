@@ -76,6 +76,17 @@ try {
             throw new Exception('Invalid item ID');
         }
 
+        // Check if return quantity is valid (not exceeding original sale minus already returned)
+        $originalQuantity = floatval($item['quantity']);
+        $alreadyReturned = floatval($item['returned_quantity'] ?? 0);
+        $maxReturnable = $originalQuantity - $alreadyReturned;
+        
+        if (floatval($quantity) > $maxReturnable) {
+            throw new Exception('بڕی داواکراو بۆ گەڕاندنەوە زیاترە لە بڕی بەردەست. بۆ ' . 
+                htmlspecialchars($item['product_name']) . 
+                '، تەنها ' . $maxReturnable . ' ' . $item['unit_type'] . ' بەردەستە بۆ گەڕاندنەوە');
+        }
+
         // Calculate actual pieces count based on unit type
         $pieces_count = $quantity;
         if ($item['unit_type'] === 'box' && $item['pieces_per_box']) {
