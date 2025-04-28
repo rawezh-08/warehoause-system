@@ -1051,7 +1051,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
 
                     <!-- Export & Report Options -->
-                    <div class="row mb-4">
+                    <!-- <div class="row mb-4">
                         <div class="col-lg-6 col-md-12 mb-4">
                             <div class="report-card">
                                 <div class="card-body">
@@ -1127,7 +1127,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
 
                     <!-- New Report Sections -->
 
@@ -1411,37 +1411,77 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     fontFamily: 'rabar_021, sans-serif',
                     toolbar: {
                         show: false
+                    },
+                    background: '#fff',
+                    animations: {
+                        enabled: true,
+                        easing: 'easeinout',
+                        speed: 800,
+                        animateGradually: {
+                            enabled: true,
+                            delay: 150
+                        },
+                        dynamicAnimation: {
+                            enabled: true,
+                            speed: 350
+                        }
                     }
                 },
                 dataLabels: {
-                    enabled: false,
-                    style: {
-                        fontFamily: 'rabar_021, sans-serif'
-                    }
+                    enabled: false
                 },
                 stroke: {
                     curve: 'smooth',
-                    width: 3
+                    width: 3,
+                    lineCap: 'round'
                 },
-                colors: ['#7380ec'],
+                colors: ['#4361ee'],
                 xaxis: {
                     categories: [<?php echo "'" . implode("','", array_map(function ($item) {
                                         return $item['month'];
                                     }, $monthlySales)) . "'"; ?>],
                     labels: {
                         style: {
-                            fontFamily: 'rabar_021, sans-serif'
+                            fontFamily: 'rabar_021, sans-serif',
+                            fontSize: '12px'
                         }
+                    },
+                    axisBorder: {
+                        show: true,
+                        color: '#e0e0e0'
+                    },
+                    axisTicks: {
+                        show: true,
+                        color: '#e0e0e0'
                     }
                 },
                 yaxis: {
                     labels: {
                         style: {
-                            fontFamily: 'rabar_021, sans-serif'
+                            fontFamily: 'rabar_021, sans-serif',
+                            fontSize: '12px'
+                        },
+                        formatter: function(val) {
+                            return (val / 1000).toFixed(0) + ' هەزار';
                         }
+                    },
+                    axisBorder: {
+                        show: true,
+                        color: '#e0e0e0'
+                    }
+                },
+                grid: {
+                    borderColor: '#f1f1f1',
+                    strokeDashArray: 4,
+                    padding: {
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        left: 0
                     }
                 },
                 tooltip: {
+                    theme: 'light',
                     y: {
                         formatter: function(val) {
                             return val.toLocaleString() + ' د.ع';
@@ -1457,14 +1497,16 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         shade: 'light',
                         type: 'vertical',
                         shadeIntensity: 0.5,
-                        gradientToColors: ['rgba(115, 128, 236, 0.2)'],
+                        gradientToColors: ['rgba(67, 97, 238, 0.2)'],
                         inverseColors: false,
-                        opacityFrom: 0.7,
+                        opacityFrom: 0.8,
                         opacityTo: 0.2,
                         stops: [0, 100]
                     }
                 },
                 legend: {
+                    position: 'top',
+                    horizontalAlign: 'right',
                     style: {
                         fontFamily: 'rabar_021, sans-serif'
                     }
@@ -1502,85 +1544,116 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     stacked: false,
                     toolbar: {
                         show: false
+                    },
+                    animations: {
+                        enabled: true,
+                        easing: 'easeinout',
+                        speed: 800
                     }
                 },
                 plotOptions: {
                     bar: {
-                        borderRadius: 5,
-                        columnWidth: '50%',
-                    },
+                        borderRadius: 8,
+                        columnWidth: '55%',
+                        dataLabels: {
+                            position: 'top'
+                        }
+                    }
                 },
                 stroke: {
-                    width: [0, 0, 3]
+                    width: [0, 0, 3],
+                    curve: 'smooth',
+                    lineCap: 'round'
                 },
-                colors: ['#7380ec', '#ff7782', '#41f1b6'],
+                colors: ['#4361ee', '#ff6b6b', '#2ecc71'],
                 xaxis: {
                     categories: [<?php echo "'" . implode("','", array_map(function ($item) {
                                         return $item['month'];
                                     }, $monthlyProfitData)) . "'"; ?>],
                     labels: {
                         style: {
-                            fontFamily: 'rabar_021, sans-serif'
+                            fontFamily: 'rabar_021, sans-serif',
+                            fontSize: '12px'
                         }
+                    },
+                    axisBorder: {
+                        show: true,
+                        color: '#e0e0e0'
+                    },
+                    axisTicks: {
+                        show: true,
+                        color: '#e0e0e0'
                     }
                 },
                 yaxis: [{
-                        axisTicks: {
-                            show: true,
+                    axisTicks: {
+                        show: true,
+                    },
+                    axisBorder: {
+                        show: true,
+                        color: '#4361ee'
+                    },
+                    labels: {
+                        style: {
+                            colors: '#4361ee',
+                            fontFamily: 'rabar_021, sans-serif',
+                            fontSize: '12px'
                         },
-                        axisBorder: {
-                            show: true,
-                            color: '#7380ec'
-                        },
-                        labels: {
-                            style: {
-                                colors: '#7380ec',
-                                fontFamily: 'rabar_021, sans-serif'
-                            },
-                            formatter: function(val) {
-                                return (val / 1000).toFixed(0) + ' هەزار';
-                            }
-                        },
-                        title: {
-                            text: "داهات",
-                            style: {
-                                color: '#7380ec',
-                                fontFamily: 'rabar_021, sans-serif'
-                            }
+                        formatter: function(val) {
+                            return (val / 1000).toFixed(0) + ' هەزار';
                         }
                     },
-                    {
-                        seriesName: 'خەرجی',
-                        show: false
+                    title: {
+                        text: "داهات",
+                        style: {
+                            color: '#4361ee',
+                            fontFamily: 'rabar_021, sans-serif',
+                            fontSize: '14px'
+                        }
+                    }
+                }, {
+                    seriesName: 'خەرجی',
+                    show: false
+                }, {
+                    opposite: true,
+                    axisTicks: {
+                        show: true,
                     },
-                    {
-                        opposite: true,
-                        axisTicks: {
-                            show: true,
+                    axisBorder: {
+                        show: true,
+                        color: '#2ecc71'
+                    },
+                    labels: {
+                        style: {
+                            colors: '#2ecc71',
+                            fontFamily: 'rabar_021, sans-serif',
+                            fontSize: '12px'
                         },
-                        axisBorder: {
-                            show: true,
-                            color: '#41f1b6'
-                        },
-                        labels: {
-                            style: {
-                                colors: '#41f1b6',
-                                fontFamily: 'rabar_021, sans-serif'
-                            },
-                            formatter: function(val) {
-                                return (val / 1000).toFixed(0) + ' هەزار';
-                            }
-                        },
-                        title: {
-                            text: "قازانج",
-                            style: {
-                                color: '#41f1b6',
-                                fontFamily: 'rabar_021, sans-serif'
-                            }
+                        formatter: function(val) {
+                            return (val / 1000).toFixed(0) + ' هەزار';
                         }
                     },
-                ],
+                    title: {
+                        text: "قازانج",
+                        style: {
+                            color: '#2ecc71',
+                            fontFamily: 'rabar_021, sans-serif',
+                            fontSize: '14px'
+                        }
+                    }
+                }],
+                grid: {
+                    borderColor: '#f1f1f1',
+                    strokeDashArray: 4,
+                    padding: {
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        left: 0
+                    }
+                },
                 tooltip: {
+                    theme: 'light',
                     y: {
                         formatter: function(val) {
                             return val.toLocaleString() + ' د.ع';
@@ -1592,6 +1665,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 },
                 legend: {
                     position: 'top',
+                    horizontalAlign: 'right',
                     style: {
                         fontFamily: 'rabar_021, sans-serif'
                     }
@@ -1610,27 +1684,34 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     type: 'donut',
                     height: 350,
                     fontFamily: 'rabar_021, sans-serif',
+                    animations: {
+                        enabled: true,
+                        easing: 'easeinout',
+                        speed: 800
+                    }
                 },
                 labels: [<?php echo "'" . implode("','", array_map(function ($item) {
                                 return $item['category_name'];
                             }, $categorySalesAnalysis)) . "'"; ?>],
-                colors: ['#7380ec', '#41f1b6', '#ffbb55', '#ff7782', '#9a86f3', '#4a3df5', '#f53d3d', '#1ea896', '#ffc107', '#6c757d'],
+                colors: ['#4361ee', '#2ecc71', '#ff6b6b', '#f1c40f', '#9b59b6', '#3498db', '#e74c3c', '#1abc9c', '#f39c12', '#34495e'],
                 plotOptions: {
                     pie: {
                         donut: {
-                            size: '55%',
+                            size: '60%',
                             labels: {
                                 show: true,
                                 name: {
                                     show: true,
                                     fontSize: '22px',
                                     fontWeight: 600,
-                                    fontFamily: 'rabar_021, sans-serif'
+                                    fontFamily: 'rabar_021, sans-serif',
+                                    color: '#2c3e50'
                                 },
                                 value: {
                                     show: true,
                                     fontSize: '16px',
                                     fontFamily: 'rabar_021, sans-serif',
+                                    color: '#2c3e50',
                                     formatter: function(val) {
                                         return val + '%';
                                     }
@@ -1638,7 +1719,9 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 total: {
                                     show: true,
                                     label: 'کۆی گشتی',
+                                    fontSize: '16px',
                                     fontFamily: 'rabar_021, sans-serif',
+                                    color: '#2c3e50',
                                     formatter: function(w) {
                                         return '100%';
                                     }
@@ -1651,10 +1734,20 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     position: 'bottom',
                     horizontalAlign: 'center',
                     fontFamily: 'rabar_021, sans-serif',
+                    fontSize: '12px',
                     labels: {
                         useSeriesColors: false,
-                        fontFamily: 'rabar_021, sans-serif'
+                        colors: '#2c3e50'
                     },
+                    markers: {
+                        width: 12,
+                        height: 12,
+                        radius: 6
+                    },
+                    itemMargin: {
+                        horizontal: 10,
+                        vertical: 5
+                    }
                 },
                 responsive: [{
                     breakpoint: 480,
@@ -1668,6 +1761,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     }
                 }],
                 tooltip: {
+                    theme: 'light',
                     y: {
                         formatter: function(val) {
                             return val + '%';
@@ -1696,6 +1790,11 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     fontFamily: 'rabar_021, sans-serif',
                     toolbar: {
                         show: false
+                    },
+                    animations: {
+                        enabled: true,
+                        easing: 'easeinout',
+                        speed: 800
                     }
                 },
                 plotOptions: {
@@ -1704,6 +1803,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         dataLabels: {
                             position: 'top'
                         },
+                        columnWidth: '60%'
                     }
                 },
                 dataLabels: {
@@ -1714,11 +1814,11 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     offsetY: -20,
                     style: {
                         fontSize: '12px',
-                        colors: ["#304758"],
+                        colors: ["#2c3e50"],
                         fontFamily: 'rabar_021, sans-serif'
                     }
                 },
-                colors: ['#9a86f3'],
+                colors: ['#4361ee'],
                 xaxis: {
                     categories: [<?php echo "'" . implode("','", array_map(function ($item) {
                                         return $item['month'];
@@ -1726,37 +1826,27 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     position: 'bottom',
                     labels: {
                         style: {
-                            fontFamily: 'rabar_021, sans-serif'
+                            fontFamily: 'rabar_021, sans-serif',
+                            fontSize: '12px'
                         }
                     },
                     axisBorder: {
-                        show: false
+                        show: true,
+                        color: '#e0e0e0'
                     },
                     axisTicks: {
-                        show: false
-                    },
-                    crosshairs: {
-                        fill: {
-                            type: 'gradient',
-                            gradient: {
-                                colorFrom: '#D8E3F0',
-                                colorTo: '#BED1E6',
-                                stops: [0, 100],
-                                opacityFrom: 0.4,
-                                opacityTo: 0.5,
-                            }
-                        }
-                    },
-                    tooltip: {
-                        enabled: true,
+                        show: true,
+                        color: '#e0e0e0'
                     }
                 },
                 yaxis: {
                     axisBorder: {
-                        show: false
+                        show: true,
+                        color: '#e0e0e0'
                     },
                     axisTicks: {
-                        show: false,
+                        show: true,
+                        color: '#e0e0e0'
                     },
                     labels: {
                         show: true,
@@ -1764,11 +1854,23 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             return (val / 1000).toFixed(0) + ' هەزار';
                         },
                         style: {
-                            fontFamily: 'rabar_021, sans-serif'
+                            fontFamily: 'rabar_021, sans-serif',
+                            fontSize: '12px'
                         }
                     }
                 },
+                grid: {
+                    borderColor: '#f1f1f1',
+                    strokeDashArray: 4,
+                    padding: {
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        left: 0
+                    }
+                },
                 tooltip: {
+                    theme: 'light',
                     y: {
                         formatter: function(val) {
                             return val.toLocaleString() + ' د.ع';
@@ -1789,12 +1891,6 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         opacityFrom: 0.85,
                         opacityTo: 0.85,
                         stops: [50, 0, 100]
-                    }
-                },
-                legend: {
-                    labels: {
-                        useSeriesColors: false,
-                        fontFamily: 'rabar_021, sans-serif'
                     }
                 }
             };
@@ -1827,35 +1923,50 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     stacked: false,
                     toolbar: {
                         show: false
+                    },
+                    animations: {
+                        enabled: true,
+                        easing: 'easeinout',
+                        speed: 800
                     }
                 },
                 plotOptions: {
                     bar: {
                         horizontal: false,
                         columnWidth: '55%',
-                        borderRadius: 5,
-                    },
+                        borderRadius: 8,
+                        dataLabels: {
+                            position: 'top'
+                        }
+                    }
                 },
                 dataLabels: {
-                    enabled: false,
-                    style: {
-                        fontFamily: 'rabar_021, sans-serif'
-                    }
+                    enabled: false
                 },
                 stroke: {
                     show: true,
                     width: [0, 0, 3],
-                    curve: 'smooth'
+                    curve: 'smooth',
+                    lineCap: 'round'
                 },
-                colors: ['#41f1b6', '#ff7782', '#7380ec'],
+                colors: ['#2ecc71', '#ff6b6b', '#4361ee'],
                 xaxis: {
                     categories: [<?php echo "'" . implode("','", array_map(function ($item) {
                                         return $item['month'];
                                     }, $formattedCashFlow)) . "'"; ?>],
                     labels: {
                         style: {
-                            fontFamily: 'rabar_021, sans-serif'
+                            fontFamily: 'rabar_021, sans-serif',
+                            fontSize: '12px'
                         }
+                    },
+                    axisBorder: {
+                        show: true,
+                        color: '#e0e0e0'
+                    },
+                    axisTicks: {
+                        show: true,
+                        color: '#e0e0e0'
                     }
                 },
                 yaxis: {
@@ -1867,11 +1978,31 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             return (val / 1000).toFixed(0) + ' هەزار';
                         },
                         style: {
-                            fontFamily: 'rabar_021, sans-serif'
+                            fontFamily: 'rabar_021, sans-serif',
+                            fontSize: '12px'
                         }
+                    },
+                    axisBorder: {
+                        show: true,
+                        color: '#e0e0e0'
+                    },
+                    axisTicks: {
+                        show: true,
+                        color: '#e0e0e0'
+                    }
+                },
+                grid: {
+                    borderColor: '#f1f1f1',
+                    strokeDashArray: 4,
+                    padding: {
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        left: 0
                     }
                 },
                 tooltip: {
+                    theme: 'light',
                     y: {
                         formatter: function(val) {
                             return val.toLocaleString() + ' د.ع';
@@ -1887,7 +2018,13 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     offsetY: 0,
                     labels: {
                         useSeriesColors: false,
-                        fontFamily: 'rabar_021, sans-serif'
+                        fontFamily: 'rabar_021, sans-serif',
+                        fontSize: '12px'
+                    },
+                    markers: {
+                        width: 12,
+                        height: 12,
+                        radius: 6
                     }
                 },
                 fill: {
