@@ -262,11 +262,16 @@ try {
                     )
                 ");
 
+                $transactionNote = "گەڕاندنەوەی کاڵا بە بڕی " . number_format($total_return_amount) . " دینار";
+                if (!empty($notes)) {
+                    $transactionNote .= " - " . $notes;
+                }
+
                 $stmt->execute([
                     ':customer_id' => $sale['customer_id'],
-                    ':amount' => -$debtAdjustment,
+                    ':amount' => $debtAdjustment,
                     ':return_id' => $return_id,
-                    ':notes' => "گەڕاندنەوەی کاڵا - " . $notes
+                    ':notes' => $transactionNote
                 ]);
             }
         }
