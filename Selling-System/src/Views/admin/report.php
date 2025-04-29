@@ -711,6 +711,18 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <div class="card">
                             <div class="card-body">
                                 <form id="reportFilters" class="row g-3">
+                                    <!-- Date Filter -->
+                                    <div class="col-md-6">
+                                        <label class="form-label">ماوەی بەروار</label>
+                                        <select class="form-select" id="dateFilter">
+                                            <option value="">هەموو کات</option>
+                                            <option value="today">ئەمڕۆ</option>
+                                            <option value="thisWeek">ئەم هەفتەیە</option>
+                                            <option value="thisMonth">ئەم مانگە</option>
+                                            <option value="thisYear">ئەم ساڵە</option>
+                                        </select>
+                                    </div>
+
                                     <!-- Filter Actions -->
                                     <div class="col-12 text-end">
                                         <button type="button" class="btn btn-secondary" id="resetFilters">
@@ -2081,12 +2093,48 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Reset filters
             $('#resetFilters').click(function() {
+                $('#dateFilter').val('');
                 applyFilters();
             });
 
             // Function to apply filters
             function applyFilters() {
+                const dateFilter = $('#dateFilter').val();
+                let startDate = '';
+                let endDate = '';
+
+                // Set date range based on selected filter
+                if (dateFilter) {
+                    const today = new Date();
+                    switch(dateFilter) {
+                        case 'today':
+                            startDate = today.toISOString().split('T')[0];
+                            endDate = startDate;
+                            break;
+                        case 'thisWeek':
+                            const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+                            const endOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 6));
+                            startDate = startOfWeek.toISOString().split('T')[0];
+                            endDate = endOfWeek.toISOString().split('T')[0];
+                            break;
+                        case 'thisMonth':
+                            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                            startDate = startOfMonth.toISOString().split('T')[0];
+                            endDate = endOfMonth.toISOString().split('T')[0];
+                            break;
+                        case 'thisYear':
+                            const startOfYear = new Date(today.getFullYear(), 0, 1);
+                            const endOfYear = new Date(today.getFullYear(), 11, 31);
+                            startDate = startOfYear.toISOString().split('T')[0];
+                            endDate = endOfYear.toISOString().split('T')[0];
+                            break;
+                    }
+                }
+
                 const filters = {
+                    startDate: startDate,
+                    endDate: endDate,
                     paymentType: $('#paymentType').val(),
                     transactionType: $('#transactionType').val(),
                     category: $('#categoryFilter').val()
