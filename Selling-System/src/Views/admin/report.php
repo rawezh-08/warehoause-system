@@ -1354,10 +1354,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-4">
                                         <h5 class="card-title">بەرهەمە باشفرۆشەکان</h5>
-                                        <div class="btn-group">
-                                            <button type="button" class="btn btn-sm btn-outline-primary active" id="sortBySales">بەپێی فرۆشتن</button>
-                                            <button type="button" class="btn btn-sm btn-outline-primary" id="sortByProfit">بەپێی قازانج</button>
-                                        </div>
+                                  
                                     </div>
                                     <div class="table-responsive">
                                         <table class="table table-hover report-table" id="bestSellingTable">
