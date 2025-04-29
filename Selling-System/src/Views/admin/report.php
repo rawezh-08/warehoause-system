@@ -179,8 +179,7 @@ $stmt = $conn->prepare("
         sales s
     JOIN
         sale_items si ON s.id = si.sale_id
-    WHERE 
-        s.date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+    $dateFilter
     GROUP BY 
         DATE_FORMAT(s.date, '%Y-%m')
     ORDER BY 
@@ -414,23 +413,25 @@ $stmt = $conn->prepare("
             FROM purchases pu
             JOIN purchase_items pi ON pu.id = pi.purchase_id
             WHERE DATE_FORMAT(pu.date, '%Y-%m') = DATE_FORMAT(s.date, '%Y-%m')
+            " . (!empty($dateFilter) ? "AND " . substr($dateFilter, 6) : "") . "
         ) as purchase_cost,
         (
             SELECT COALESCE(SUM(amount), 0)
             FROM expenses
             WHERE DATE_FORMAT(expense_date, '%Y-%m') = DATE_FORMAT(s.date, '%Y-%m')
+            " . (!empty($dateFilter) ? "AND DATE(expense_date) BETWEEN '$startDate' AND '$endDate'" : "") . "
         ) as expenses,
         (
             SELECT COALESCE(SUM(amount), 0)
             FROM employee_payments
             WHERE DATE_FORMAT(payment_date, '%Y-%m') = DATE_FORMAT(s.date, '%Y-%m')
+            " . (!empty($dateFilter) ? "AND DATE(payment_date) BETWEEN '$startDate' AND '$endDate'" : "") . "
         ) as employee_expenses
     FROM
         sales s
     JOIN
         sale_items si ON s.id = si.sale_id
-    WHERE
-        s.date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+    $dateFilter
     GROUP BY
         DATE_FORMAT(s.date, '%Y-%m')
     ORDER BY
@@ -462,13 +463,16 @@ $stmt = $conn->prepare("
         c.name as category_name,
         COUNT(DISTINCT si.id) as sale_count,
         SUM(si.total_price) as total_sales,
-        ROUND(SUM(si.total_price) / (SELECT SUM(total_price) FROM sale_items) * 100, 1) as percentage
+        ROUND(SUM(si.total_price) / (SELECT SUM(total_price) FROM sale_items si2 JOIN sales s2 ON si2.sale_id = s2.id $dateFilter) * 100, 1) as percentage
     FROM
         categories c
     JOIN
         products p ON c.id = p.category_id
     JOIN
         sale_items si ON p.id = si.product_id
+    JOIN
+        sales s ON si.sale_id = s.id
+    $dateFilter
     GROUP BY
         c.id, c.name
     ORDER BY
@@ -571,6 +575,7 @@ $stmt = $conn->prepare("
             sales s
         WHERE 
             s.payment_type = 'cash'
+            " . (!empty($dateFilter) ? "AND " . substr($dateFilter, 6) : "") . "
         
         UNION ALL
         
@@ -583,6 +588,7 @@ $stmt = $conn->prepare("
             debt_transactions dt
         WHERE 
             dt.transaction_type = 'payment'
+            " . (!empty($dateFilter) ? "AND DATE(dt.created_at) BETWEEN '$startDate' AND '$endDate'" : "") . "
         
         UNION ALL
         
@@ -595,6 +601,7 @@ $stmt = $conn->prepare("
             purchases p
         WHERE 
             p.payment_type = 'cash'
+            " . (!empty($dateFilter) ? "AND DATE(p.date) BETWEEN '$startDate' AND '$endDate'" : "") . "
         
         UNION ALL
         
@@ -605,6 +612,7 @@ $stmt = $conn->prepare("
             e.amount as outgoing
         FROM 
             expenses e
+            " . (!empty($dateFilter) ? "WHERE DATE(e.expense_date) BETWEEN '$startDate' AND '$endDate'" : "") . "
         
         UNION ALL
         
@@ -615,9 +623,8 @@ $stmt = $conn->prepare("
             ep.amount as outgoing
         FROM 
             employee_payments ep
+            " . (!empty($dateFilter) ? "WHERE DATE(ep.payment_date) BETWEEN '$startDate' AND '$endDate'" : "") . "
     ) as cash_flow
-    WHERE
-        source_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
     GROUP BY
         DATE_FORMAT(source_date, '%Y-%m')
     ORDER BY
