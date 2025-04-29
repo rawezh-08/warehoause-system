@@ -173,6 +173,9 @@ require_once '../../process/addProduct_logic.php';
                                                         <input type="text" id="selling_price_wholesale" name="selling_price_wholesale" class="form-control" placeholder="نرخی فرۆشتن (کۆمەڵ)" required>
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
+                                                    <div class="invalid-feedback">
+                                                        تکایە نرخی فرۆشتن (کۆمەڵ) بنووسە
+                                                    </div>
                                                 </div>
                                             </div>
                                             

@@ -26,12 +26,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $notes = $_POST['notes'] ?? '';
         $category_id = $_POST['category_id'];
         $unit_id = $_POST['unit_id'];
-        $pieces_per_box = $_POST['pieces_per_box'] ?? null;
-        $boxes_per_set = $_POST['boxes_per_set'] ?? null;
-        $purchase_price = $_POST['purchase_price'] ?? 0;
-        $selling_price_single = $_POST['selling_price_single'] ?? 0;
-        $selling_price_wholesale = $_POST['selling_price_wholesale'] ?? null;
-        $min_quantity = $_POST['min_quantity'] ?? 0;
+        // Clean number inputs
+        $purchasePrice = isset($_POST['purchase_price']) ? str_replace(',', '', $_POST['purchase_price']) : null;
+        $sellingPriceSingle = isset($_POST['selling_price_single']) ? str_replace(',', '', $_POST['selling_price_single']) : null;
+        $sellingPriceWholesale = isset($_POST['selling_price_wholesale']) ? str_replace(',', '', $_POST['selling_price_wholesale']) : null;
+        $minQuantity = isset($_POST['min_quantity']) ? str_replace(',', '', $_POST['min_quantity']) : 0;
+        $piecesPerBox = isset($_POST['pieces_per_box']) && $_POST['pieces_per_box'] !== '' ? 
+            (int)str_replace(',', '', $_POST['pieces_per_box']) : 0;
+        $boxesPerSet = isset($_POST['boxes_per_set']) && $_POST['boxes_per_set'] !== '' ? 
+            (int)str_replace(',', '', $_POST['boxes_per_set']) : 0;
 
         // Handle image upload
         $image_url = null;
@@ -101,12 +104,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $notes,
             $category_id,
             $unit_id,
-            $pieces_per_box,
-            $boxes_per_set,
-            $purchase_price,
-            $selling_price_single,
-            $selling_price_wholesale,
-            $min_quantity
+            $piecesPerBox,
+            $boxesPerSet,
+            $purchasePrice,
+            $sellingPriceSingle,
+            $sellingPriceWholesale,
+            $minQuantity
         ];
 
         // Add image path to params if uploaded

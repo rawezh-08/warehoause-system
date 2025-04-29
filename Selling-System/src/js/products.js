@@ -600,135 +600,78 @@ $(document).ready(function() {
     // Initialize event handlers
     initializeEventHandlers();
 
-    // Handle save changes button
+    // Handle save product changes
     $('#saveProductChanges').on('click', function() {
-        const formData = new FormData(document.getElementById('editProductForm'));
-        const productId = formData.get('id');
-        const productRow = $(`button.edit-product[data-id="${productId}"]`).closest('tr');
+        const form = $('#editProductForm');
         
-        // Remove commas from number fields before sending
-        const numberFields = ['purchase_price', 'selling_price_single', 'selling_price_wholesale', 'min_quantity'];
-        numberFields.forEach(field => {
-            const value = formData.get(field);
-            if (value) {
-                formData.set(field, value.replace(/,/g, ''));
-            }
-        });
-
+        // Validate form
+        if (!form[0].checkValidity()) {
+            form[0].reportValidity();
+            return;
+        }
+        
+        // Get form data
+        const formData = new FormData(form[0]);
+        
+        // Handle empty values for boxes_per_set and pieces_per_box
+        const boxesPerSet = $('#edit_boxes_per_set').val();
+        const piecesPerBox = $('#edit_pieces_per_box').val();
+        
+        if (boxesPerSet === '') {
+            formData.set('boxes_per_set', '0');
+        }
+        if (piecesPerBox === '') {
+            formData.set('pieces_per_box', '0');
+        }
+        
         // Show loading state
-        $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> جاوەڕێ بکە...');
-
-        fetch('../../process/updateProduct.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Update the image in the table if a new image was uploaded
-                if (data.image_url) {
-                    productRow.find('.product-image')
-                        .attr('src', data.image_url)
-                        .closest('td')
-                        .html(`<img src="${data.image_url}" 
-                                   alt="${formData.get('name')}" 
-                                   class="product-image"
-                                   style="cursor: pointer;"
-                                   onclick="showLargeImage(this.src, '${formData.get('name')}')"
-                                   data-bs-toggle="tooltip"
-                                   data-bs-placement="top"
-                                   title="${formData.get('name')}">`);
+        const saveButton = $(this);
+        saveButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> چاوەڕێ بکە...');
+        
+        // Send AJAX request
+        $.ajax({
+            url: '../../process/updateProduct.php',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    // Show success message
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'سەرکەوتوو',
+                        text: 'زانیاریەکانی کاڵا بە سەرکەوتوویی گۆڕدرا',
+                        confirmButtonText: 'باشە'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Reload the page to show updated data
+                            window.location.reload();
+                        }
+                    });
+                } else {
+                    // Show error message
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: response.message || 'هەڵەیەک ڕوویدا لە کاتی گۆڕینی زانیاریەکانی کاڵا',
+                        confirmButtonText: 'باشە'
+                    });
                 }
-
-                // Collect updated values
-                const updatedData = {
-                    name: formData.get('name'),
-                    code: formData.get('code'),
-                    barcode: formData.get('barcode') || '-',
-                    category_id: formData.get('category_id'),
-                    category_name: $('#edit_category option:selected').text(),
-                    unit_id: formData.get('unit_id'),
-                    unit_name: $('#edit_unit option:selected').text(),
-                    pieces_per_box: formData.get('pieces_per_box') || '-',
-                    boxes_per_set: formData.get('boxes_per_set') || '-',
-                    purchase_price: formData.get('purchase_price'),
-                    selling_price_single: formData.get('selling_price_single'),
-                    selling_price_wholesale: formData.get('selling_price_wholesale') || '-',
-                    min_quantity: formData.get('min_quantity'),
-                    notes: formData.get('notes') || ''
-                };
-                
-                // Update the table row
-                productRow.find('td:nth-child(3)').text(updatedData.code);
-                productRow.find('td:nth-child(4)').text(updatedData.barcode);
-                productRow.find('td:nth-child(5)').text(updatedData.name);
-                productRow.find('td:nth-child(6)').text(updatedData.category_name);
-                productRow.find('td:nth-child(7)').text(updatedData.unit_name);
-                productRow.find('td:nth-child(8)').text(updatedData.pieces_per_box);
-                productRow.find('td:nth-child(9)').text(updatedData.boxes_per_set);
-                productRow.find('td:nth-child(10)').text(numberFormat(updatedData.purchase_price) + ' د.ع');
-                productRow.find('td:nth-child(11)').text(numberFormat(updatedData.selling_price_single) + ' د.ع');
-                productRow.find('td:nth-child(12)').text(numberFormat(updatedData.selling_price_wholesale) + ' د.ع');
-                productRow.find('td:nth-child(13)').text(updatedData.min_quantity);
-                
-                // Update data attributes of action buttons
-                const editButton = productRow.find('button.edit-product');
-                editButton.attr('data-name', updatedData.name);
-                editButton.attr('data-code', updatedData.code);
-                editButton.attr('data-barcode', updatedData.barcode);
-                editButton.attr('data-category', updatedData.category_id);
-                editButton.attr('data-unit', updatedData.unit_id);
-                editButton.attr('data-pieces-per-box', updatedData.pieces_per_box);
-                editButton.attr('data-boxes-per-set', updatedData.boxes_per_set);
-                editButton.attr('data-purchase', updatedData.purchase_price);
-                editButton.attr('data-selling-single', updatedData.selling_price_single);
-                editButton.attr('data-selling-wholesale', updatedData.selling_price_wholesale);
-                editButton.attr('data-min-qty', updatedData.min_quantity);
-                editButton.attr('data-notes', updatedData.notes);
-                editButton.attr('aria-label', 'گۆڕینی ' + updatedData.name);
-                
-                // Update notes button
-                const notesButton = productRow.find('button.view-notes');
-                notesButton.attr('data-name', updatedData.name);
-                notesButton.attr('data-notes', updatedData.notes || 'هیچ تێبینیەک نییە');
-                notesButton.attr('aria-label', 'بینینی تێبینیەکانی ' + updatedData.name);
-                
-                // Update delete button
-                const deleteButton = productRow.find('button.delete-product');
-                deleteButton.attr('aria-label', 'سڕینەوەی ' + updatedData.name);
-                
-                // Highlight the updated row temporarily
-                productRow.addClass('table-success');
-                setTimeout(() => {
-                    productRow.removeClass('table-success');
-                }, 2000);
-                
-                // Hide the modal
-                bootstrap.Modal.getInstance(document.getElementById('editProductModal')).hide();
-                
-                // Show success message
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
                 Swal.fire({
-                    title: 'سەرکەوتوو بوو!',
-                    text: 'زانیاریەکانی کاڵاکە بە سەرکەوتوویی گۆڕدرا.',
-                    icon: 'success',
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە سێرڤەرەوە',
                     confirmButtonText: 'باشە'
                 });
-            } else {
-                throw new Error(data.message || 'کێشەیەک ڕوویدا لە گۆڕینی زانیاریەکان.');
+            },
+            complete: function() {
+                // Reset button state
+                saveButton.prop('disabled', false).html('پاشەکەوتکردن');
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            Swal.fire({
-                title: 'هەڵە!',
-                text: error.message || 'کێشەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە.',
-                icon: 'error',
-                confirmButtonText: 'باشە'
-            });
-        })
-        .finally(() => {
-            // Reset button state
-            $('#saveProductChanges').prop('disabled', false).text('پاشەکەوتکردن');
         });
     });
 

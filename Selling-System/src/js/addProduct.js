@@ -687,8 +687,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Validate the form with browser's built-in validation
             if (!this.checkValidity()) {
-                // Trigger browser's validation UI
-                this.reportValidity();
+                // Show custom error message
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: 'تکایە هەموو خانەکان پڕ بکەوە',
+                    confirmButtonText: 'باشە'
+                });
                 return false;
             }
             
@@ -732,12 +737,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
                 
-                // Log the form data being sent
-                console.log('Submitting form data:');
-                for (let [key, value] of formData.entries()) {
-                    console.log(`${key}: ${value}`);
-                }
-                
                 // Submit form using fetch
                 const response = await fetch('../../process/add_product.php', {
                     method: 'POST',
@@ -747,7 +746,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('Server response:', errorText);
-                    throw new Error(`Server responded with status: ${response.status}`);
+                    throw new Error(`هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە سێرڤەرەوە`);
                 }
                 
                 let data;
@@ -755,7 +754,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     data = await response.json();
                 } catch (parseError) {
                     console.error('Error parsing JSON response:', await response.text());
-                    throw new Error('Invalid JSON response from server');
+                    throw new Error('هەڵەیەک ڕوویدا لە کاتی وەرگرتنی وەڵامەکە');
                 }
                 
                 if (data.success) {
