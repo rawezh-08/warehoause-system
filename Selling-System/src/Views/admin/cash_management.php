@@ -78,10 +78,12 @@ if (!empty($adminIds)) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
-    <!-- Global CSS -->
     <link rel="stylesheet" href="../../assets/css/custom.css">
-    <link rel="stylesheet" href="../../css/global.css">
+    <!-- Page CSS -->
     <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/employeePayment/style.css">
+    <link rel="stylesheet" href="../../css/products.css">
 </head>
 
 <body>
@@ -148,8 +150,7 @@ if (!empty($adminIds)) {
                                             <select class="form-select" id="transaction_type" name="transaction_type" required>
                                                 <option value="initial_balance">پارەی سەرەتایی</option>
                                                 <option value="deposit">پارەی زیادە</option>
-                                                <option value="withdrawal">پارەی دەرکردن</option>
-                                                <option value="adjustment">گۆڕانکاری</option>
+                                           
                                             </select>
                                         </div>
 
