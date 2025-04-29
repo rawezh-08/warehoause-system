@@ -466,9 +466,9 @@ require_once '../../config/database.php';
                     <input type="text" class="form-control receipt-number" placeholder="ژمارەی پسوڵە" readonly>
                 </div>
                 <div class="col-md-4 col-sm-12">
-                    <label class="form-label">کڕیار</label>
+                    <label class="form-label">کڕیار هەڵبژێرە (ئارەزوومەندانە)</label>
                     <select class="form-select customer-select">
-                        <option value="" selected disabled>کڕیار هەڵبژێرە</option>
+                        <option value="" selected disabled>کڕیار هەڵبژێرە (ئارەزوومەندانە)</option>
                     </select>
                 </div>
                 <div class="col-md-4 col-sm-12">
