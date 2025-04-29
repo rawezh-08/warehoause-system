@@ -184,8 +184,51 @@ $warehouseLosses = 0;
 // Calculate net profit (simple calculation)
 $netProfit = $totalSales - $totalPurchases - $warehouseExpenses - $employeeExpenses - $warehouseLosses;
 
-// Estimate available cash (from sales minus expenses and purchases)
-$availableCash = $totalCashSales - $totalCashPurchases - $warehouseExpenses - $employeeExpenses;
+// Calculate available cash (from sales minus expenses and purchases)
+$stmt = $conn->prepare("
+    SELECT 
+        COALESCE(SUM(amount), 0) as total_cash 
+    FROM cash_management
+");
+$stmt->execute();
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
+$availableCash = $result['total_cash'] ?? 0;
+
+// Add cash from sales
+$stmt = $conn->prepare("
+    SELECT 
+        COALESCE(SUM(si.total_price), 0) as total_cash_sales 
+    FROM 
+        sales s
+    JOIN 
+        sale_items si ON s.id = si.sale_id
+    WHERE 
+        s.payment_type = 'cash'
+    " . ($dateCondition ? ' AND ' . substr($dateCondition, 6) : '')
+);
+$stmt->execute();
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
+$availableCash += $result['total_cash_sales'];
+
+// Subtract cash purchases
+$stmt = $conn->prepare("
+    SELECT 
+        COALESCE(SUM(pi.total_price), 0) as total_cash_purchases 
+    FROM 
+        purchases p
+    JOIN 
+        purchase_items pi ON p.id = pi.purchase_id
+    WHERE 
+        p.payment_type = 'cash'
+    " . ($dateCondition ? ' AND ' . substr($dateCondition, 6) : '')
+);
+$stmt->execute();
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
+$availableCash -= $result['total_cash_purchases'];
+
+// Subtract expenses
+$availableCash -= $warehouseExpenses;
+$availableCash -= $employeeExpenses;
 
 // Get monthly sales data for the past 6 months
 $stmt = $conn->prepare("
