@@ -359,11 +359,11 @@ function initializeEventHandlers() {
             }
             
             // Check file size (allow up to 20MB since we resize on server)
-            if (file.size > 20 * 1024 * 1024) {
+            if (file.size > 5 * 1024 * 1024) {
                 Swal.fire({
                     icon: 'error',
                     title: 'هەڵە',
-                    text: 'قەبارەی وێنە دەبێت کەمتر بێت لە 20 مێگابایت'
+                    text: 'قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت'
                 });
                 this.value = '';
                 return;

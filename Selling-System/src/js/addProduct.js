@@ -140,12 +140,12 @@ document.addEventListener('DOMContentLoaded', function() {
         productImageInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
-                // Check file size (20MB max instead of 5MB since we resize on server)
-                if (file.size > 20 * 1024 * 1024) {
+                // Check file size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
                     Swal.fire({
                         icon: 'error',
                         title: 'هەڵە',
-                        text: 'قەبارەی وێنە دەبێت کەمتر بێت لە 20 مێگابایت'
+                        text: 'قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت'
                     });
                     this.value = '';
                     return;
