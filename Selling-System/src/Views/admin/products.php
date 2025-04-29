@@ -134,7 +134,7 @@ require_once '../../process/products_logic.php';
                 <div class="card shadow-sm" style="border-radius: 24px; border: 1px solid #9ec5ff;">
                     <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0">لیستی کاڵاکان</h5>
-                        <a href="../../views/admin/addProduct.php" class="btn btn-primary add-product-btn">
+                        <a href="../../Views/admin/addProduct.php" class="btn btn-primary add-product-btn">
                            زیادکردنی کاڵای نوێ  <img src="../../assets/icons/add-square.svg" alt="">
                         </a>
                     </div>
