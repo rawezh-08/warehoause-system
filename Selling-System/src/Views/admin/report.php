@@ -711,23 +711,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link rel="stylesheet" href="../../test/main.css">
  
     <style>
-        .date-filter-btn {
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            margin: 0 2px;
-            min-width: 110px;
-            text-align: center;
-            white-space: nowrap;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            border: 1px solid #dee2e6;
-            background-color: white;
-            color: #495057;
-            font-weight: 500;
-        }
+   
         
         .date-filter-btn i {
             margin-left: 8px;
