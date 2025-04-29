@@ -571,7 +571,17 @@ $stmt = $conn->prepare("
 $stmt->execute();
 $customerBehaviorAnalysis = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// 8. Cash flow statistics
+// Get current cash balance
+$stmt = $conn->prepare("
+    SELECT 
+        COALESCE(SUM(amount), 0) as total_cash 
+    FROM cash_management
+");
+$stmt->execute();
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
+$totalCash = $result['total_cash'] ?? 0;
+
+// Get cash flow data
 $stmt = $conn->prepare("
     SELECT
         DATE_FORMAT(source_date, '%Y-%m') as month,
@@ -579,6 +589,22 @@ $stmt = $conn->prepare("
         SUM(outgoing) as total_outgoing,
         SUM(incoming - outgoing) as net_cash
     FROM (
+        -- Cash inflow from cash management
+        SELECT 
+            created_at as source_date,
+            CASE 
+                WHEN transaction_type IN ('initial_balance', 'deposit') THEN amount
+                ELSE 0
+            END as incoming,
+            CASE 
+                WHEN transaction_type IN ('withdrawal') THEN ABS(amount)
+                ELSE 0
+            END as outgoing
+        FROM 
+            cash_management
+        
+        UNION ALL
+        
         -- Cash inflow from cash sales
         SELECT 
             s.date as source_date,
