@@ -1239,7 +1239,7 @@ $tabs = [
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Include Custom JS -->
-    <script src="../../js/include-components.js"></script>
+
     <script src="../../js/supplier-advance-payment.js"></script>
     <!-- Custom JS for this page -->
     <script>
