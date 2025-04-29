@@ -35,6 +35,14 @@ try {
     $debtStmt->execute();
     $supplier = $debtStmt->fetch(PDO::FETCH_ASSOC);
 
+    if (!$supplier) {
+        echo json_encode([
+            'success' => false, 
+            'message' => 'دابینکەر نەدۆزرایەوە'
+        ]);
+        exit;
+    }
+
     if ($supplier['debt_on_myself'] > 0) {
         echo json_encode([
             'success' => false, 
@@ -51,20 +59,34 @@ try {
     
     // Encode metadata to JSON
     $jsonNotes = json_encode($metadata);
+    if ($jsonNotes === false) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'هەڵەیەک ڕوویدا لە کاتی پێکهێنانی تێبینیەکان'
+        ]);
+        exit;
+    }
 
-    // Insert advance payment transaction
-    $query = "INSERT INTO supplier_debt_transactions 
-              (supplier_id, amount, transaction_type, notes, created_by) 
-              VALUES (:supplier_id, :amount, :transaction_type, :notes, :created_by)";
+    // Start transaction
+    $conn->beginTransaction();
 
-    $stmt = $conn->prepare($query);
-    $stmt->bindParam(':supplier_id', $supplier_id);
-    $stmt->bindParam(':amount', $amount);
-    $stmt->bindParam(':transaction_type', $transaction_type);
-    $stmt->bindParam(':notes', $jsonNotes);
-    $stmt->bindParam(':created_by', $_SESSION['user_id']);
+    try {
+        // Insert advance payment transaction
+        $query = "INSERT INTO supplier_debt_transactions 
+                  (supplier_id, amount, transaction_type, notes, created_by) 
+                  VALUES (:supplier_id, :amount, :transaction_type, :notes, :created_by)";
 
-    if ($stmt->execute()) {
+        $stmt = $conn->prepare($query);
+        $stmt->bindParam(':supplier_id', $supplier_id);
+        $stmt->bindParam(':amount', $amount);
+        $stmt->bindParam(':transaction_type', $transaction_type);
+        $stmt->bindParam(':notes', $jsonNotes);
+        $stmt->bindParam(':created_by', $_SESSION['user_id']);
+
+        if (!$stmt->execute()) {
+            throw new PDOException('هەڵەیەک ڕوویدا لە کاتی تۆمارکردنی پارەی پێشەکی');
+        }
+
         // Update supplier's debt_on_supplier
         $updateQuery = "UPDATE suppliers 
                        SET debt_on_supplier = debt_on_supplier + :amount 
@@ -72,16 +94,32 @@ try {
         $updateStmt = $conn->prepare($updateQuery);
         $updateStmt->bindParam(':amount', $amount);
         $updateStmt->bindParam(':supplier_id', $supplier_id);
-        $updateStmt->execute();
+        
+        if (!$updateStmt->execute()) {
+            throw new PDOException('هەڵەیەک ڕوویدا لە کاتی نوێکردنەوەی بەلەمەکانی دابینکەر');
+        }
+
+        // Commit transaction
+        $conn->commit();
 
         echo json_encode([
             'success' => true,
             'message' => 'پارەی پێشەکی بە سەرکەوتوویی تۆمارکرا',
             'transaction_id' => $conn->lastInsertId()
         ]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'هەڵەیەک ڕوویدا لە کاتی تۆمارکردنی پارەی پێشەکی']);
+    } catch (PDOException $e) {
+        // Rollback transaction on error
+        $conn->rollBack();
+        throw $e;
     }
 } catch (PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە داتابەیس']);
+    echo json_encode([
+        'success' => false, 
+        'message' => 'هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە داتابەیس: ' . $e->getMessage()
+    ]);
+} catch (Exception $e) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'هەڵەیەک ڕوویدا: ' . $e->getMessage()
+    ]);
 } 
