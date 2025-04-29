@@ -46,12 +46,6 @@
     color: var(--danger-color);
 }
 
-/* Input group styles */
-.input-group .form-control,
-.input-group .form-select {
-    border-radius: 0 var(--border-radius) var(--border-radius) 0;
-}
-
 /* Search inputs */
 .search-input {
     height: 42px;
