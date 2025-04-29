@@ -184,10 +184,8 @@ $warehouseLosses = 0;
 // Calculate net profit (simple calculation)
 $netProfit = $totalSales - $totalPurchases - $warehouseExpenses - $employeeExpenses - $warehouseLosses;
 
-// Get the actual cash balance directly from cash_management
-$stmt = $conn->prepare("SELECT COALESCE(SUM(amount), 0) as cash_balance FROM cash_management");
-$stmt->execute();
-$availableCash = $stmt->fetch(PDO::FETCH_ASSOC)['cash_balance'] ?? 0;
+// Estimate available cash (from sales minus expenses and purchases)
+$availableCash = $totalCashSales - $totalCashPurchases - $warehouseExpenses - $employeeExpenses;
 
 // Get monthly sales data for the past 6 months
 $stmt = $conn->prepare("
@@ -1019,20 +1017,17 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 <i class="fas fa-ellipsis-v"></i>
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-end">
-                                                <li><a class="dropdown-item" href="cash_management.php">بەڕێوەبردنی پارە</a></li>
+                                                <li><a class="dropdown-item" href="#">بینینی حیسابات</a></li>
                                             </ul>
                                         </div>
                                     </div>
-                                    <h6 class="stat-title"><?php echo $availableCash >= 0 ? 'پارەی دەخیلە' : 'کورتهێنانی دەخیلە'; ?></h6>
+                                    <h6 class="stat-title"><?php echo $availableCash >= 0 ? 'پارەی بەردەست' : 'کورتهێنان'; ?></h6>
                                     <h3 class="stat-value"><?php echo number_format(abs($availableCash)); ?> د.ع</h3>
                                     <div class="stat-status <?php echo $availableCash >= 0 ? 'text-primary' : 'text-danger'; ?> fw-bold">
                                         <?php echo $availableCash >= 0 ? 'پارە هەیە' : 'کورتهێنان'; ?>
                                     </div>
                                     <div class="stat-change <?php echo $availableCash >= 0 ? 'positive' : 'negative'; ?> mt-2">
-                                        <i class="fas <?php echo $availableCash >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'; ?>"></i> 
-                                        <a href="cash_management.php" class="text-decoration-none <?php echo $availableCash >= 0 ? 'text-success' : 'text-danger'; ?>">
-                                            بەڕێوەبردنی پارە
-                                        </a>
+                                        <i class="fas <?php echo $availableCash >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'; ?>"></i> 8.9%
                                     </div>
                                 </div>
                             </div>
