@@ -76,87 +76,78 @@ try {
         $filename = uniqid() . '_' . time() . '.' . $extension;
         $filepath = $uploadDir . $filename;
         
-        // Check file size and resize if needed
-        if ($image['size'] > 5 * 1024 * 1024 || $imageInfo[0] > 1200 || $imageInfo[1] > 1200) {
-            // Image needs resizing
-            list($width, $height) = $imageInfo;
+        // Always resize the image to ensure consistent size and quality
+        list($width, $height) = $imageInfo;
+        
+        // Calculate new dimensions (max 800px width or height while maintaining aspect ratio)
+        $maxDimension = 800;
+        if ($width > $height) {
+            $newWidth = $maxDimension;
+            $newHeight = intval($height * $maxDimension / $width);
+        } else {
+            $newHeight = $maxDimension;
+            $newWidth = intval($width * $maxDimension / $height);
+        }
+        
+        // Create image resource based on file type
+        $sourceImage = null;
+        switch ($extension) {
+            case 'jpeg':
+            case 'jpg':
+                $sourceImage = imagecreatefromjpeg($image['tmp_name']);
+                break;
+            case 'png':
+                $sourceImage = imagecreatefrompng($image['tmp_name']);
+                break;
+            case 'gif':
+                $sourceImage = imagecreatefromgif($image['tmp_name']);
+                break;
+            default:
+                // For unsupported file types, try to move the file directly
+                if (!move_uploaded_file($image['tmp_name'], $filepath)) {
+                    throw new Exception('هەڵەیەک ڕوویدا لە کاتی هەڵگرتنی وێنەکە');
+                }
+                $imagePath = 'uploads/products/' . $filename;
+                break;
+        }
+        
+        if ($sourceImage) {
+            // Create a new true color image with new dimensions
+            $destinationImage = imagecreatetruecolor($newWidth, $newHeight);
             
-            // Calculate new dimensions (max 800px width or height while maintaining aspect ratio)
-            $maxDimension = 800;
-            if ($width > $height) {
-                $newWidth = $maxDimension;
-                $newHeight = intval($height * $maxDimension / $width);
-            } else {
-                $newHeight = $maxDimension;
-                $newWidth = intval($width * $maxDimension / $height);
+            // Preserve transparency for PNG images
+            if ($extension == 'png') {
+                imagealphablending($destinationImage, false);
+                imagesavealpha($destinationImage, true);
+                $transparent = imagecolorallocatealpha($destinationImage, 255, 255, 255, 127);
+                imagefilledrectangle($destinationImage, 0, 0, $newWidth, $newHeight, $transparent);
             }
             
-            // Create image resource based on file type
-            $sourceImage = null;
+            // Resize the image
+            imagecopyresampled(
+                $destinationImage, $sourceImage,
+                0, 0, 0, 0,
+                $newWidth, $newHeight, $width, $height
+            );
+            
+            // Save the resized image
             switch ($extension) {
                 case 'jpeg':
                 case 'jpg':
-                    $sourceImage = imagecreatefromjpeg($image['tmp_name']);
+                    imagejpeg($destinationImage, $filepath, 80); // 80% quality
                     break;
                 case 'png':
-                    $sourceImage = imagecreatefrompng($image['tmp_name']);
+                    imagepng($destinationImage, $filepath, 8); // Compression level 8 (0-9)
                     break;
                 case 'gif':
-                    $sourceImage = imagecreatefromgif($image['tmp_name']);
-                    break;
-                default:
-                    // For unsupported file types, try to move the file directly
-                    if (!move_uploaded_file($image['tmp_name'], $filepath)) {
-                        throw new Exception('هەڵەیەک ڕوویدا لە کاتی هەڵگرتنی وێنەکە');
-                    }
-                    $imagePath = 'uploads/products/' . $filename;
+                    imagegif($destinationImage, $filepath);
                     break;
             }
             
-            if ($sourceImage) {
-                // Create a new true color image with new dimensions
-                $destinationImage = imagecreatetruecolor($newWidth, $newHeight);
-                
-                // Preserve transparency for PNG images
-                if ($extension == 'png') {
-                    imagealphablending($destinationImage, false);
-                    imagesavealpha($destinationImage, true);
-                    $transparent = imagecolorallocatealpha($destinationImage, 255, 255, 255, 127);
-                    imagefilledrectangle($destinationImage, 0, 0, $newWidth, $newHeight, $transparent);
-                }
-                
-                // Resize the image
-                imagecopyresampled(
-                    $destinationImage, $sourceImage,
-                    0, 0, 0, 0,
-                    $newWidth, $newHeight, $width, $height
-                );
-                
-                // Save the resized image
-                switch ($extension) {
-                    case 'jpeg':
-                    case 'jpg':
-                        imagejpeg($destinationImage, $filepath, 80); // 80% quality
-                        break;
-                    case 'png':
-                        imagepng($destinationImage, $filepath, 8); // Compression level 8 (0-9)
-                        break;
-                    case 'gif':
-                        imagegif($destinationImage, $filepath);
-                        break;
-                }
-                
-                // Free up memory
-                imagedestroy($sourceImage);
-                imagedestroy($destinationImage);
-                
-                $imagePath = 'uploads/products/' . $filename;
-            }
-        } else {
-            // If image is already small enough, just move it
-            if (!move_uploaded_file($image['tmp_name'], $filepath)) {
-                throw new Exception('هەڵەیەک ڕوویدا لە کاتی هەڵگرتنی وێنەکە');
-            }
+            // Free up memory
+            imagedestroy($sourceImage);
+            imagedestroy($destinationImage);
+            
             $imagePath = 'uploads/products/' . $filename;
         }
     }
