@@ -33,7 +33,24 @@ $totalProducts = getCount('products');
 $totalCategories = getCount('categories');
 $totalSuppliers = getCount('suppliers');
 
-// Get sales data - Using correct column names from the database
+// Get filter parameters from URL
+$dateRange = isset($_GET['dateRange']) ? $_GET['dateRange'] : '';
+$singleDate = isset($_GET['singleDate']) ? $_GET['singleDate'] : '';
+
+// Build date filter conditions
+$dateFilter = '';
+if (!empty($dateRange)) {
+    $dates = explode(' - ', $dateRange);
+    if (count($dates) === 2) {
+        $startDate = $dates[0];
+        $endDate = $dates[1];
+        $dateFilter = "WHERE s.date BETWEEN '$startDate' AND '$endDate'";
+    }
+} elseif (!empty($singleDate)) {
+    $dateFilter = "WHERE DATE(s.date) = '$singleDate'";
+}
+
+// Update the sales data query to use date filter
 $stmt = $conn->prepare("
     SELECT 
         COALESCE(SUM(si.total_price), 0) as total_sales 
@@ -41,12 +58,13 @@ $stmt = $conn->prepare("
         sales s
     JOIN 
         sale_items si ON s.id = si.sale_id
+    $dateFilter
 ");
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalSales = $result['total_sales'];
 
-// Get cash and credit sales
+// Update cash sales query
 $stmt = $conn->prepare("
     SELECT 
         COALESCE(SUM(si.total_price), 0) as total_cash_sales 
@@ -56,11 +74,13 @@ $stmt = $conn->prepare("
         sale_items si ON s.id = si.sale_id
     WHERE 
         s.payment_type = 'cash'
-");
+    " . (!empty($dateFilter) ? "AND " . substr($dateFilter, 6) : "")
+);
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalCashSales = $result['total_cash_sales'];
 
+// Update credit sales query
 $stmt = $conn->prepare("
     SELECT 
         COALESCE(SUM(si.total_price), 0) as total_credit_sales 
@@ -70,7 +90,8 @@ $stmt = $conn->prepare("
         sale_items si ON s.id = si.sale_id
     WHERE 
         s.payment_type = 'credit'
-");
+    " . (!empty($dateFilter) ? "AND " . substr($dateFilter, 6) : "")
+);
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalCreditSales = $result['total_credit_sales'];
@@ -2208,11 +2229,14 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     category: $('#categoryFilter').val()
                 };
 
-                // Here you would typically make an AJAX call to update the report data
-                console.log('Applying filters:', filters);
-                
-                // For now, we'll just reload the page with the filters
-                window.location.href = 'report.php?' + $.param(filters);
+                // Build query string
+                const queryString = Object.entries(filters)
+                    .filter(([_, value]) => value) // Remove empty values
+                    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+                    .join('&');
+
+                // Reload page with filters
+                window.location.href = 'report.php' + (queryString ? `?${queryString}` : '');
             }
 
             // Initialize single date picker
@@ -2228,6 +2252,19 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     $('#singleDate').val('');
                 }
             });
+
+            // Add filter value restoration on page load
+            // Restore date range if present in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const dateRange = urlParams.get('dateRange');
+            const singleDate = urlParams.get('singleDate');
+            
+            if (dateRange) {
+                $('#dateRange').val(dateRange);
+            }
+            if (singleDate) {
+                $('#singleDate').val(singleDate);
+            }
         });
     </script>
 </body>
