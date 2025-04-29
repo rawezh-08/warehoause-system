@@ -119,10 +119,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            alert('قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت');
-            return;
-        }
+        // if (file.size > 5 * 1024 * 1024) {
+        //     alert('قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت');
+        //     return;
+        // }
         
         const reader = new FileReader();
         reader.onload = function(event) {
