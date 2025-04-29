@@ -784,6 +784,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // Create FormData object
             const formData = new FormData(this);
             
+            // Check if we have a compressed image and use it instead
+            const fileInput = document.getElementById('productImage');
+            if (fileInput && fileInput.files.length > 0 && fileInput.compressedImage) {
+                // Replace the file with the compressed version
+                formData.delete('image');
+                formData.append('image', fileInput.compressedImage);
+            }
+            
             try {
                 // Show loading indicator
                 Swal.fire({
@@ -1076,37 +1084,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-$('#saveQuickProduct').on('click', function(e) {
-    e.preventDefault();
-    console.log('Save button clicked');
-
-    // Get form data
-    const productData = {
-        name: $('#productName').val(),
-        category_id: $('#productCategory').val(),
-        unit_id: $('#productUnit').val(),
-        quantity: $('#productQuantity').val(),
-        purchase_price: $('#productPurchasePrice').val(),
-        selling_price_single: $('#productSellingPrice').val(),
-        selling_price_wholesale: $('#productWholesalePrice').val() || $('#productSellingPrice').val(),
-        code: 'Q' + Math.floor(Math.random() * 1000000),
-        barcode: Date.now().toString()
-    };
-
-    // Validate form
-    if (!$('#quickAddProductForm')[0].checkValidity()) {
-        console.log('Form validation failed');
-        $('#quickAddProductForm')[0].reportValidity();
-        return;
-    }
-
-    // Show loading state
-    const saveButton = $(this);
-    saveButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> چاوەڕێ بکە...');
-
-    // ... existing code ...
-});
-
 // Add this function for client-side image compression
 function compressImage(file, maxSizeMB, maxDimension) {
     return new Promise((resolve, reject) => {
@@ -1194,101 +1171,4 @@ function compressImage(file, maxSizeMB, maxDimension) {
         // Read the file as a data URL (base64 encoded string)
         reader.readAsDataURL(file);
     });
-}
-
-// Override form submission to use compressed image
-if (addProductForm) {
-    const originalSubmitEvent = addProductForm.onsubmit;
-    
-    addProductForm.addEventListener('submit', function(e) {
-        // Get the file input element
-        const fileInput = document.getElementById('productImage');
-        
-        // If we have a compressed image and a file was selected
-        if (fileInput && fileInput.files.length > 0 && fileInput.compressedImage) {
-            // Prevent the original submit
-            e.preventDefault();
-            
-            // Create a new FormData instance
-            const formData = new FormData(this);
-            
-            // Replace the file with the compressed version
-            formData.delete('image');
-            formData.append('image', fileInput.compressedImage);
-            
-            // Show loading indicator
-            Swal.fire({
-                title: 'تکایە چاوەڕێ بکە...',
-                text: 'زیادکردنی کاڵا بەردەوامە',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-            
-            // Clean number inputs
-            const numberFields = [
-                'buyingPrice',
-                'sellingPrice',
-                'selling_price_wholesale',
-                'piecesPerBox',
-                'boxesPerSet',
-                'min_quantity',
-                'current_quantity'
-            ];
-            
-            numberFields.forEach(field => {
-                const input = document.getElementById(field);
-                if (input && input.value) {
-                    const cleanValue = input.value.replace(/,/g, '');
-                    formData.set(field, cleanValue);
-                }
-            });
-            
-            // Submit the form with fetch API
-            fetch('../../process/add_product.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error(text);
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'سەرکەوتوو',
-                        text: data.message || 'کاڵاکە بە سەرکەوتوویی زیاد کرا',
-                        confirmButtonText: 'باشە'
-                    });
-                    
-                    // Reset form and image preview
-                    addProductForm.reset();
-                    resetImagePreview();
-                    
-                    // Reset to first tab
-                    switchToTab('basic-info');
-                    
-                    // Refresh the latest products list
-                    updateLatestProducts();
-                } else {
-                    throw new Error(data.message || 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'هەڵە',
-                    text: error.message || 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا',
-                    confirmButtonText: 'باشە'
-                });
-            });
-        }
-    }, true); // Use capturing to ensure this runs first
 } 
