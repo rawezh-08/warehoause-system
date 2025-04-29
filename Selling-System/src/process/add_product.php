@@ -48,6 +48,10 @@ try {
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
         $image = $_FILES['image'];
         
+        // Log original file size
+        $originalSize = $image['size'];
+        error_log("Original image size: " . round($originalSize / 1024 / 1024, 2) . "MB");
+        
         // Check if file is actually an image using getimagesize
         $imageInfo = @getimagesize($image['tmp_name']);
         if ($imageInfo === false) {
@@ -150,6 +154,9 @@ try {
             
             // Check the size of the compressed image
             $compressedSize = filesize($filepath);
+            error_log("Compressed image size: " . round($compressedSize / 1024 / 1024, 2) . "MB");
+            error_log("Compression ratio: " . round(($originalSize - $compressedSize) / $originalSize * 100, 2) . "%");
+            
             if ($compressedSize > 5 * 1024 * 1024) {
                 // If still too large, delete the file and throw error
                 unlink($filepath);
