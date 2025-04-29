@@ -695,7 +695,7 @@ $dir = $lang === 'ar' ? 'rtl' : 'rtl';
         <section class="customer-info">
             <div class="info-group">
                 <div class="info-label"><?php echo $t['customer']; ?></div>
-                <div class="info-value"><?php echo isset($customer_name) ? $customer_name : 'هیچ'; ?></div>
+                <div class="info-value"><?php echo isset($customer_name) && !empty($customer_name) ? $customer_name : '-'; ?></div>
             </div>
             <?php if (isset($sale['customer_phone']) && !empty($sale['customer_phone'])): ?>
             <div class="info-group">
