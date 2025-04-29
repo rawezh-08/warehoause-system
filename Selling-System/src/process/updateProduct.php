@@ -27,10 +27,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $category_id = $_POST['category_id'];
         $unit_id = $_POST['unit_id'];
         // Clean number inputs
-        $purchasePrice = isset($_POST['purchase_price']) ? str_replace(',', '', $_POST['purchase_price']) : null;
-        $sellingPriceSingle = isset($_POST['selling_price_single']) ? str_replace(',', '', $_POST['selling_price_single']) : null;
-        $sellingPriceWholesale = isset($_POST['selling_price_wholesale']) ? str_replace(',', '', $_POST['selling_price_wholesale']) : null;
-        $minQuantity = isset($_POST['min_quantity']) ? str_replace(',', '', $_POST['min_quantity']) : 0;
+        $purchasePrice = isset($_POST['purchase_price']) ? (int)str_replace(',', '', $_POST['purchase_price']) : 0;
+        $sellingPriceSingle = isset($_POST['selling_price_single']) ? (int)str_replace(',', '', $_POST['selling_price_single']) : 0;
+        $sellingPriceWholesale = isset($_POST['selling_price_wholesale']) ? (int)str_replace(',', '', $_POST['selling_price_wholesale']) : 0;
+        $minQuantity = isset($_POST['min_quantity']) ? (int)str_replace(',', '', $_POST['min_quantity']) : 0;
         $piecesPerBox = isset($_POST['pieces_per_box']) && $_POST['pieces_per_box'] !== '' ? 
             (int)str_replace(',', '', $_POST['pieces_per_box']) : 0;
         $boxesPerSet = isset($_POST['boxes_per_set']) && $_POST['boxes_per_set'] !== '' ? 

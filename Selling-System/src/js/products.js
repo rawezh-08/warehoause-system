@@ -623,6 +623,15 @@ $(document).ready(function() {
         if (piecesPerBox === '') {
             formData.set('pieces_per_box', '0');
         }
+
+        // Remove commas from number fields before sending
+        const numberFields = ['purchase_price', 'selling_price_single', 'selling_price_wholesale', 'min_quantity'];
+        numberFields.forEach(field => {
+            const value = formData.get(field);
+            if (value) {
+                formData.set(field, value.replace(/,/g, ''));
+            }
+        });
         
         // Show loading state
         const saveButton = $(this);
@@ -734,6 +743,7 @@ $(document).ready(function() {
     $(document).on('input', '#edit_purchase_price, #edit_selling_price_single, #edit_selling_price_wholesale', function() {
         let value = $(this).val().replace(/[^\d]/g, '');
         if (value) {
+            // Convert to number and format with commas
             value = parseInt(value).toLocaleString('en-US');
             $(this).val(value);
         }
