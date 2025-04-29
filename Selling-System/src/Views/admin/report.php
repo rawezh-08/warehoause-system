@@ -185,7 +185,22 @@ $warehouseLosses = 0;
 $netProfit = $totalSales - $totalPurchases - $warehouseExpenses - $employeeExpenses - $warehouseLosses;
 
 // Estimate available cash (from sales minus expenses and purchases)
-$availableCash = $totalCashSales - $totalCashPurchases - $warehouseExpenses - $employeeExpenses;
+$estimatedAvailableCash = $totalCashSales - $totalCashPurchases - $warehouseExpenses - $employeeExpenses;
+
+// Check if cash management table has any records
+$stmt = $conn->prepare("SELECT COUNT(*) as count FROM cash_management");
+$stmt->execute();
+$cashManagementCount = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+
+if ($cashManagementCount > 0) {
+    // If records exist, get the actual balance from cash_management
+    $stmt = $conn->prepare("SELECT COALESCE(SUM(amount), 0) as cash_balance FROM cash_management");
+    $stmt->execute();
+    $availableCash = $stmt->fetch(PDO::FETCH_ASSOC)['cash_balance'] ?? 0;
+} else {
+    // If no records exist, use the estimated value
+    $availableCash = $estimatedAvailableCash;
+}
 
 // Get monthly sales data for the past 6 months
 $stmt = $conn->prepare("
@@ -603,18 +618,6 @@ $stmt = $conn->prepare("
         
         UNION ALL
         
-        -- Cash inflow from cash management (initial balance and deposits)
-        SELECT 
-            cm.created_at as source_date,
-            cm.amount as incoming,
-            0 as outgoing
-        FROM 
-            cash_management cm
-        WHERE 
-            cm.transaction_type IN ('initial_balance', 'deposit')
-        
-        UNION ALL
-        
         -- Cash outflow from purchases
         SELECT 
             p.date as source_date,
@@ -644,18 +647,6 @@ $stmt = $conn->prepare("
             ep.amount as outgoing
         FROM 
             employee_payments ep
-            
-        UNION ALL
-        
-        -- Cash outflow from cash management (withdrawals)
-        SELECT 
-            cm.created_at as source_date,
-            0 as incoming,
-            ABS(cm.amount) as outgoing
-        FROM 
-            cash_management cm
-        WHERE 
-            cm.transaction_type = 'withdrawal'
     ) as cash_flow
     WHERE
         source_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
@@ -1041,17 +1032,20 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 <i class="fas fa-ellipsis-v"></i>
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-end">
-                                                <li><a class="dropdown-item" href="#">بینینی حیسابات</a></li>
+                                                <li><a class="dropdown-item" href="cash_management.php">بەڕێوەبردنی پارە</a></li>
                                             </ul>
                                         </div>
                                     </div>
-                                    <h6 class="stat-title"><?php echo $availableCash >= 0 ? 'پارەی بەردەست' : 'کورتهێنان'; ?></h6>
+                                    <h6 class="stat-title"><?php echo $availableCash >= 0 ? 'پارەی دەخیلە' : 'کورتهێنانی دەخیلە'; ?></h6>
                                     <h3 class="stat-value"><?php echo number_format(abs($availableCash)); ?> د.ع</h3>
                                     <div class="stat-status <?php echo $availableCash >= 0 ? 'text-primary' : 'text-danger'; ?> fw-bold">
                                         <?php echo $availableCash >= 0 ? 'پارە هەیە' : 'کورتهێنان'; ?>
                                     </div>
                                     <div class="stat-change <?php echo $availableCash >= 0 ? 'positive' : 'negative'; ?> mt-2">
-                                        <i class="fas <?php echo $availableCash >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'; ?>"></i> 8.9%
+                                        <i class="fas <?php echo $availableCash >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'; ?>"></i> 
+                                        <a href="cash_management.php" class="text-decoration-none <?php echo $availableCash >= 0 ? 'text-success' : 'text-danger'; ?>">
+                                            بەڕێوەبردنی پارە
+                                        </a>
                                     </div>
                                 </div>
                             </div>
