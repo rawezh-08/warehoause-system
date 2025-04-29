@@ -239,8 +239,25 @@
     }
     
     .chart-container {
-        height: 380px;
-        position: relative;
+        background: #fff;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
+        height: auto;
+        min-height: 450px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chart-container .card-title {
+        margin-bottom: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .chart-container > div {
+        flex: 1;
+        min-height: 400px;
     }
     
     .card-title {
@@ -610,28 +627,6 @@
         background-color: #f8f9fa;
     }
 
-    /* Chart Containers */
-    .chart-container {
-        background: #fff;
-        border-radius: 15px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        margin-bottom: 1.5rem;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .chart-container .card-title {
-        margin-bottom: 1rem;
-        flex-shrink: 0;
-    }
-
-    .chart-container > div {
-        flex: 1;
-        min-height: 300px;
-    }
-
     /* Loading States */
     .loading-overlay {
         position: absolute;
@@ -699,6 +694,14 @@
             width: 40px;
             height: 40px;
             font-size: 1.2rem;
+        }
+
+        .chart-container {
+            min-height: 400px;
+        }
+        
+        .chart-container > div {
+            min-height: 350px;
         }
     }
 
