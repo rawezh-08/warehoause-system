@@ -3,6 +3,82 @@
  * Handles tab navigation, form validation, image uploads, and other interactions
  */
 
+// Global function for resetting image preview so it can be called from anywhere
+function resetImagePreview() {
+    const imagePreview = document.querySelector('.image-preview');
+    if (imagePreview) {
+        imagePreview.innerHTML = `
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>وێنە هەڵبژێرە</p>
+        `;
+    }
+}
+
+// Global function for tab switching
+function switchToTab(tabId) {
+    // Get tab items and content
+    const tabItems = document.querySelectorAll('.tab-item');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const tabIds = ['basic-info', 'price-info'];
+    
+    // Update tab items
+    tabItems.forEach(item => {
+        if (item.getAttribute('data-tab') === tabId) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
+
+    // Update tab contents
+    tabContents.forEach(content => {
+        if (content.id === `${tabId}-content`) {
+            content.style.display = 'block';
+        } else {
+            content.style.display = 'none';
+        }
+    });
+
+    // Update current tab index
+    let currentTabIndex = tabIds.indexOf(tabId);
+
+    // Update navigation buttons
+    updateNavigationButtons(currentTabIndex, tabIds);
+}
+
+// Helper function for updating navigation buttons
+function updateNavigationButtons(currentTabIndex, tabIds) {
+    const isLastTab = currentTabIndex === tabIds.length - 1;
+    const isFirstTab = currentTabIndex === 0;
+    
+    // Update previous buttons
+    const allPrevButtons = ['prevTabBtn', 'prevTabBtn2'];
+    allPrevButtons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.style.display = isFirstTab ? 'none' : 'block';
+        }
+    });
+
+    // Update next buttons
+    const allNextButtons = ['nextTabBtn'];
+    allNextButtons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.style.display = isLastTab ? 'none' : 'block';
+        }
+    });
+
+    // Update submit buttons
+    const allSubmitButtons = ['submitBtn', 'submitBtn2'];
+    allSubmitButtons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.style.display = isLastTab ? 'block' : 'none';
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements - Add null checks
     const sidebar = document.getElementById('sidebar-container');
@@ -321,33 +397,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Functions
     
-    // Switch to a specific tab
-    function switchToTab(tabId) {
-        // Update tab items
-        tabItems.forEach(item => {
-            if (item.getAttribute('data-tab') === tabId) {
-                item.classList.add('active');
-            } else {
-                item.classList.remove('active');
-            }
-        });
-
-        // Update tab contents
-        tabContents.forEach(content => {
-            if (content.id === `${tabId}-content`) {
-                content.style.display = 'block';
-            } else {
-                content.style.display = 'none';
-            }
-        });
-
-        // Update current tab index
-        currentTabIndex = tabIds.indexOf(tabId);
-
-        // Update navigation buttons
-        updateNavigationButtons();
-    }
-    
     // Go to next tab
     function goToNextTab() {
         if (currentTabIndex < tabIds.length - 1) {
@@ -360,36 +409,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentTabIndex > 0) {
             switchToTab(tabIds[currentTabIndex - 1]);
         }
-    }
-    
-    // Update navigation buttons
-    function updateNavigationButtons() {
-        const isLastTab = currentTabIndex === tabIds.length - 1;
-        const isFirstTab = currentTabIndex === 0;
-
-        // Update previous buttons
-        allPrevButtons.forEach(btnId => {
-            const btn = document.getElementById(btnId);
-            if (btn) {
-                btn.style.display = isFirstTab ? 'none' : 'block';
-            }
-        });
-
-        // Update next buttons
-        allNextButtons.forEach(btnId => {
-            const btn = document.getElementById(btnId);
-            if (btn) {
-                btn.style.display = isLastTab ? 'none' : 'block';
-            }
-        });
-
-        // Update submit buttons
-        allSubmitButtons.forEach(btnId => {
-            const btn = document.getElementById(btnId);
-            if (btn) {
-                btn.style.display = isLastTab ? 'block' : 'none';
-            }
-        });
     }
     
     // Validate current tab
@@ -863,17 +882,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 errorElement.remove();
             }
         });
-    }
-
-    // Reset image preview
-    function resetImagePreview() {
-        const imagePreview = document.querySelector('.image-preview');
-        if (imagePreview) {
-            imagePreview.innerHTML = `
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>وێنە هەڵبژێرە</p>
-            `;
-        }
     }
 });
 
