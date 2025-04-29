@@ -105,6 +105,27 @@ $total_pages = ceil($total_records / $records_per_page);
             justify-content: center;
             margin-top: 20px;
         }
+        .action-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            background: #fff;
+            border: 1px solid #dc3545;
+            color: #dc3545;
+        }
+        .action-btn:hover {
+            background: #dc3545;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 5px rgba(220, 53, 69, 0.2);
+        }
+        .action-btn i {
+            font-size: 14px;
+        }
     </style>
 </head>
 
@@ -211,10 +232,10 @@ $total_pages = ceil($total_records / $records_per_page);
                                                     </td>
                                                     <td><?php echo htmlspecialchars($transaction['notes']); ?></td>
                                                     <td>
-                                                        <button class="btn btn-sm btn-danger delete-transaction" 
+                                                        <button class="action-btn delete-transaction" 
                                                                 data-id="<?php echo $transaction['id']; ?>"
                                                                 data-amount="<?php echo number_format($transaction['amount']); ?>">
-                                                            <i class="fas fa-trash"></i>
+                                                            <i class="fas fa-trash-alt"></i>
                                                         </button>
                                                     </td>
                                                 </tr>
