@@ -33,30 +33,7 @@ $totalProducts = getCount('products');
 $totalCategories = getCount('categories');
 $totalSuppliers = getCount('suppliers');
 
-// Get filter parameters from URL
-$dateRange = isset($_GET['dateRange']) ? $_GET['dateRange'] : '';
-$singleDate = isset($_GET['singleDate']) ? $_GET['singleDate'] : '';
-
-// Initialize date variables
-$startDate = '';
-$endDate = '';
-
-// Build date filter conditions
-$dateFilter = '';
-if (!empty($dateRange)) {
-    $dates = explode(' - ', $dateRange);
-    if (count($dates) === 2) {
-        $startDate = $dates[0];
-        $endDate = $dates[1];
-        $dateFilter = "WHERE s.date BETWEEN '$startDate' AND '$endDate'";
-    }
-} elseif (!empty($singleDate)) {
-    $startDate = $singleDate;
-    $endDate = $singleDate;
-    $dateFilter = "WHERE DATE(s.date) = '$singleDate'";
-}
-
-// Update the sales data query to use date filter
+// Get sales data - Using correct column names from the database
 $stmt = $conn->prepare("
     SELECT 
         COALESCE(SUM(si.total_price), 0) as total_sales 
@@ -64,13 +41,12 @@ $stmt = $conn->prepare("
         sales s
     JOIN 
         sale_items si ON s.id = si.sale_id
-    $dateFilter
 ");
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalSales = $result['total_sales'];
 
-// Update cash sales query
+// Get cash and credit sales
 $stmt = $conn->prepare("
     SELECT 
         COALESCE(SUM(si.total_price), 0) as total_cash_sales 
@@ -80,13 +56,11 @@ $stmt = $conn->prepare("
         sale_items si ON s.id = si.sale_id
     WHERE 
         s.payment_type = 'cash'
-    " . (!empty($dateFilter) ? "AND " . substr($dateFilter, 6) : "")
-);
+");
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalCashSales = $result['total_cash_sales'];
 
-// Update credit sales query
 $stmt = $conn->prepare("
     SELECT 
         COALESCE(SUM(si.total_price), 0) as total_credit_sales 
@@ -96,8 +70,7 @@ $stmt = $conn->prepare("
         sale_items si ON s.id = si.sale_id
     WHERE 
         s.payment_type = 'credit'
-    " . (!empty($dateFilter) ? "AND " . substr($dateFilter, 6) : "")
-);
+");
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalCreditSales = $result['total_credit_sales'];
@@ -185,7 +158,8 @@ $stmt = $conn->prepare("
         sales s
     JOIN
         sale_items si ON s.id = si.sale_id
-    " . (!empty($dateFilter) ? $dateFilter : "WHERE s.date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)") . "
+    WHERE 
+        s.date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
     GROUP BY 
         DATE_FORMAT(s.date, '%Y-%m')
     ORDER BY 
@@ -419,25 +393,23 @@ $stmt = $conn->prepare("
             FROM purchases pu
             JOIN purchase_items pi ON pu.id = pi.purchase_id
             WHERE DATE_FORMAT(pu.date, '%Y-%m') = DATE_FORMAT(s.date, '%Y-%m')
-            " . (!empty($dateFilter) ? "AND DATE(pu.date) BETWEEN '$startDate' AND '$endDate'" : "") . "
         ) as purchase_cost,
         (
             SELECT COALESCE(SUM(amount), 0)
             FROM expenses
             WHERE DATE_FORMAT(expense_date, '%Y-%m') = DATE_FORMAT(s.date, '%Y-%m')
-            " . (!empty($dateFilter) ? "AND DATE(expense_date) BETWEEN '$startDate' AND '$endDate'" : "") . "
         ) as expenses,
         (
             SELECT COALESCE(SUM(amount), 0)
             FROM employee_payments
             WHERE DATE_FORMAT(payment_date, '%Y-%m') = DATE_FORMAT(s.date, '%Y-%m')
-            " . (!empty($dateFilter) ? "AND DATE(payment_date) BETWEEN '$startDate' AND '$endDate'" : "") . "
         ) as employee_expenses
     FROM
         sales s
     JOIN
         sale_items si ON s.id = si.sale_id
-    " . (!empty($dateFilter) ? $dateFilter : "WHERE s.date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)") . "
+    WHERE
+        s.date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
     GROUP BY
         DATE_FORMAT(s.date, '%Y-%m')
     ORDER BY
@@ -469,21 +441,13 @@ $stmt = $conn->prepare("
         c.name as category_name,
         COUNT(DISTINCT si.id) as sale_count,
         SUM(si.total_price) as total_sales,
-        ROUND(SUM(si.total_price) / (
-            SELECT COALESCE(SUM(total_price), 0)
-            FROM sale_items si2 
-            JOIN sales s2 ON si2.sale_id = s2.id 
-            " . (!empty($dateFilter) ? $dateFilter : "") . "
-        ) * 100, 1) as percentage
+        ROUND(SUM(si.total_price) / (SELECT SUM(total_price) FROM sale_items) * 100, 1) as percentage
     FROM
         categories c
     JOIN
         products p ON c.id = p.category_id
     JOIN
         sale_items si ON p.id = si.product_id
-    JOIN
-        sales s ON si.sale_id = s.id
-    " . (!empty($dateFilter) ? $dateFilter : "") . "
     GROUP BY
         c.id, c.name
     ORDER BY
@@ -586,7 +550,6 @@ $stmt = $conn->prepare("
             sales s
         WHERE 
             s.payment_type = 'cash'
-            " . (!empty($dateFilter) ? "AND DATE(s.date) BETWEEN '$startDate' AND '$endDate'" : "") . "
         
         UNION ALL
         
@@ -599,7 +562,6 @@ $stmt = $conn->prepare("
             debt_transactions dt
         WHERE 
             dt.transaction_type = 'payment'
-            " . (!empty($dateFilter) ? "AND DATE(dt.created_at) BETWEEN '$startDate' AND '$endDate'" : "") . "
         
         UNION ALL
         
@@ -612,7 +574,6 @@ $stmt = $conn->prepare("
             purchases p
         WHERE 
             p.payment_type = 'cash'
-            " . (!empty($dateFilter) ? "AND DATE(p.date) BETWEEN '$startDate' AND '$endDate'" : "") . "
         
         UNION ALL
         
@@ -623,7 +584,6 @@ $stmt = $conn->prepare("
             e.amount as outgoing
         FROM 
             expenses e
-            " . (!empty($dateFilter) ? "WHERE DATE(e.expense_date) BETWEEN '$startDate' AND '$endDate'" : "") . "
         
         UNION ALL
         
@@ -634,8 +594,9 @@ $stmt = $conn->prepare("
             ep.amount as outgoing
         FROM 
             employee_payments ep
-            " . (!empty($dateFilter) ? "WHERE DATE(ep.payment_date) BETWEEN '$startDate' AND '$endDate'" : "") . "
     ) as cash_flow
+    WHERE
+        source_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
     GROUP BY
         DATE_FORMAT(source_date, '%Y-%m')
     ORDER BY
@@ -750,35 +711,6 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <div class="card">
                             <div class="card-body">
                                 <form id="reportFilters" class="row g-3">
-                                    <!-- Date Range Filter -->
-                                    <div class="col-md-6">
-                                        <label class="form-label">ماوەی بەروار</label>
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" id="dateRange" placeholder="هەڵبژاردنی ماوەی بەروار">
-                                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                                <i class="fas fa-calendar-alt"></i>
-                                            </button>
-                                            <ul class="dropdown-menu dropdown-menu-end">
-                                                <li><a class="dropdown-item" href="#" data-range="today">ئەمڕۆ</a></li>
-                                                <li><a class="dropdown-item" href="#" data-range="yesterday">دوێنێ</a></li>
-                                                <li><a class="dropdown-item" href="#" data-range="thisWeek">ئەم هەفتەیە</a></li>
-                                                <li><a class="dropdown-item" href="#" data-range="lastWeek">هەفتەی پێشوو</a></li>
-                                                <li><a class="dropdown-item" href="#" data-range="thisMonth">ئەم مانگە</a></li>
-                                                <li><a class="dropdown-item" href="#" data-range="lastMonth">مانگی پێشوو</a></li>
-                                                <li><a class="dropdown-item" href="#" data-range="thisYear">ئەم ساڵە</a></li>
-                                                <li><a class="dropdown-item" href="#" data-range="lastYear">ساڵی پێشوو</a></li>
-                                            </ul>
-                                        </div>
-                                    </div>
-
-                                    <!-- Single Date Filter -->
-                                    <div class="col-md-6">
-                                        <label class="form-label">بەرواری دیاریکراو</label>
-                                        <input type="date" class="form-control" id="singleDate">
-                                    </div>
-
-                            
-
                                     <!-- Filter Actions -->
                                     <div class="col-12 text-end">
                                         <button type="button" class="btn btn-secondary" id="resetFilters">
@@ -2141,86 +2073,6 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <!-- Add this before the closing </body> tag -->
     <script>
         $(document).ready(function() {
-            // Initialize DateRangePicker
-            $('#dateRange').daterangepicker({
-                locale: {
-                    format: 'YYYY-MM-DD',
-                    applyLabel: 'جێبەجێکردن',
-                    cancelLabel: 'هەڵوەشاندنەوە',
-                    fromLabel: 'لە',
-                    toLabel: 'بۆ',
-                    customRangeLabel: 'ماوەی دیاریکراو',
-                    daysOfWeek: ['یەکشەممە', 'دووشەممە', 'سێشەممە', 'چوارشەممە', 'پێنجشەممە', 'هەینی', 'شەممە'],
-                    monthNames: ['کانوونی دووەم', 'شوبات', 'ئازار', 'نیسان', 'ئایار', 'حوزەیران', 'تەمموز', 'ئاب', 'ئەیلوول', 'تشرینی یەکەم', 'تشرینی دووەم', 'کانوونی یەکەم'],
-                    firstDay: 6
-                },
-                autoUpdateInput: false,
-                showCustomRangeLabel: true,
-                ranges: {
-                    'ئەمڕۆ': [moment(), moment()],
-                    'دوێنێ': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-                    'ئەم هەفتەیە': [moment().startOf('week'), moment().endOf('week')],
-                    'هەفتەی پێشوو': [moment().subtract(1, 'week').startOf('week'), moment().subtract(1, 'week').endOf('week')],
-                    'ئەم مانگە': [moment().startOf('month'), moment().endOf('month')],
-                    'مانگی پێشوو': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-                    'ئەم ساڵە': [moment().startOf('year'), moment().endOf('year')],
-                    'ساڵی پێشوو': [moment().subtract(1, 'year').startOf('year'), moment().subtract(1, 'year').endOf('year')]
-                }
-            });
-
-            // Handle DateRangePicker selection
-            $('#dateRange').on('apply.daterangepicker', function(ev, picker) {
-                $(this).val(picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format('YYYY-MM-DD'));
-            });
-
-            $('#dateRange').on('cancel.daterangepicker', function(ev, picker) {
-                $(this).val('');
-            });
-
-            // Quick date range selection
-            $('.dropdown-item[data-range]').click(function(e) {
-                e.preventDefault();
-                const range = $(this).data('range');
-                const picker = $('#dateRange').data('daterangepicker');
-                
-                switch(range) {
-                    case 'today':
-                        picker.setStartDate(moment());
-                        picker.setEndDate(moment());
-                        break;
-                    case 'yesterday':
-                        picker.setStartDate(moment().subtract(1, 'days'));
-                        picker.setEndDate(moment().subtract(1, 'days'));
-                        break;
-                    case 'thisWeek':
-                        picker.setStartDate(moment().startOf('week'));
-                        picker.setEndDate(moment().endOf('week'));
-                        break;
-                    case 'lastWeek':
-                        picker.setStartDate(moment().subtract(1, 'week').startOf('week'));
-                        picker.setEndDate(moment().subtract(1, 'week').endOf('week'));
-                        break;
-                    case 'thisMonth':
-                        picker.setStartDate(moment().startOf('month'));
-                        picker.setEndDate(moment().endOf('month'));
-                        break;
-                    case 'lastMonth':
-                        picker.setStartDate(moment().subtract(1, 'month').startOf('month'));
-                        picker.setEndDate(moment().subtract(1, 'month').endOf('month'));
-                        break;
-                    case 'thisYear':
-                        picker.setStartDate(moment().startOf('year'));
-                        picker.setEndDate(moment().endOf('year'));
-                        break;
-                    case 'lastYear':
-                        picker.setStartDate(moment().subtract(1, 'year').startOf('year'));
-                        picker.setEndDate(moment().subtract(1, 'year').endOf('year'));
-                        break;
-                }
-                
-                $('#dateRange').trigger('apply.daterangepicker');
-            });
-
             // Handle form submission
             $('#reportFilters').on('submit', function(e) {
                 e.preventDefault();
@@ -2229,59 +2081,22 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Reset filters
             $('#resetFilters').click(function() {
-                $('#dateRange').val('');
-                $('#singleDate').val('');
-                $('#paymentType').val('');
-                $('#transactionType').val('');
-                $('#categoryFilter').val('');
                 applyFilters();
             });
 
             // Function to apply filters
             function applyFilters() {
                 const filters = {
-                    dateRange: $('#dateRange').val(),
-                    singleDate: $('#singleDate').val(),
                     paymentType: $('#paymentType').val(),
                     transactionType: $('#transactionType').val(),
                     category: $('#categoryFilter').val()
                 };
 
-                // Build query string
-                const queryString = Object.entries(filters)
-                    .filter(([_, value]) => value) // Remove empty values
-                    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-                    .join('&');
-
-                // Reload page with filters
-                window.location.href = 'report.php' + (queryString ? `?${queryString}` : '');
-            }
-
-            // Initialize single date picker
-            $('#singleDate').on('change', function() {
-                if ($(this).val()) {
-                    $('#dateRange').val('');
-                }
-            });
-
-            // Initialize date range picker
-            $('#dateRange').on('change', function() {
-                if ($(this).val()) {
-                    $('#singleDate').val('');
-                }
-            });
-
-            // Add filter value restoration on page load
-            // Restore date range if present in URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const dateRange = urlParams.get('dateRange');
-            const singleDate = urlParams.get('singleDate');
-            
-            if (dateRange) {
-                $('#dateRange').val(dateRange);
-            }
-            if (singleDate) {
-                $('#singleDate').val(singleDate);
+                // Here you would typically make an AJAX call to update the report data
+                console.log('Applying filters:', filters);
+                
+                // For now, we'll just reload the page with the filters
+                window.location.href = 'report.php?' + $.param(filters);
             }
         });
     </script>
