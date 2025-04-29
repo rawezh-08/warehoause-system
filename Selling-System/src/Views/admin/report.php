@@ -694,8 +694,34 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </div>
                     </div>
 
-                    <!-- Filter Collapse Section -->
-                    
+                    <!-- Date Filter Buttons -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="date-filter-container">
+                                <div class="btn-group" role="group" aria-label="Date filters">
+                                    <button type="button" class="btn btn-outline-primary active" data-filter="today">ئەمڕۆ</button>
+                                    <button type="button" class="btn btn-outline-primary" data-filter="week">ئەم هەفتە</button>
+                                    <button type="button" class="btn btn-outline-primary" data-filter="month">ئەم مانگە</button>
+                                    <button type="button" class="btn btn-outline-primary" data-filter="year">ئەم ساڵ</button>
+                                    <button type="button" class="btn btn-outline-primary" data-filter="custom">کاتی دیاریکراو</button>
+                                </div>
+                                <div id="customDateRange" class="mt-3" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-5">
+                                            <input type="date" class="form-control" id="startDate">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <input type="date" class="form-control" id="endDate">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button type="button" class="btn btn-primary w-100" id="applyCustomDate">جێبەجێکردن</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Statistics Cards -->
                     <div class="row mb-4">
                         <!-- Products Count -->
@@ -708,7 +734,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             <i class="fas fa-box text-primary"></i>
                                         </div>
                                     </div>
-                                    <h3 class="stat-value"><?php echo number_format($totalProducts); ?></h3>
+                                    <h3 class="stat-value" id="totalProducts"></h3>
                                     <div class="stat-change positive mt-2">
                                         <i class="fas fa-arrow-up"></i> 12.5%
                                     </div>
@@ -726,7 +752,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             <i class="fas fa-warehouse text-warning"></i>
                                         </div>
                                     </div>
-                                    <h3 class="stat-value"><?php echo number_format($totalInventoryValue); ?> د.ع</h3>
+                                    <h3 class="stat-value" id="totalInventoryValue"></h3>
                                     <div class="stat-change positive mt-2">
                                         <i class="fas fa-arrow-up"></i> 9.3%
                                     </div>
@@ -753,15 +779,15 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         </div>
                                     </div>
                                     <h6 class="stat-title">کۆی فرۆشتن</h6>
-                                    <h3 class="stat-value"><?php echo number_format($totalSales); ?> د.ع</h3>
+                                    <h3 class="stat-value" id="totalSales"></h3>
                                     <div class="d-flex justify-content-between align-items-center mt-3">
                                         <div class="text-success">
                                             <i class="fas fa-money-bill-wave"></i> نەقد
-                                            <div class="fw-bold"><?php echo number_format($totalCashSales); ?> د.ع</div>
+                                            <div class="fw-bold" id="totalCashSales"></div>
                                         </div>
                                         <div class="text-primary">
                                             <i class="fas fa-credit-card"></i> قەرز
-                                            <div class="fw-bold"><?php echo number_format($totalCreditSales); ?> د.ع</div>
+                                            <div class="fw-bold" id="totalCreditSales"></div>
                                         </div>
                                     </div>
                                     <div class="stat-change positive mt-2">
@@ -790,15 +816,15 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         </div>
                                     </div>
                                     <h6 class="stat-title">کۆی کڕین</h6>
-                                    <h3 class="stat-value"><?php echo number_format($totalPurchases); ?> د.ع</h3>
+                                    <h3 class="stat-value" id="totalPurchases"></h3>
                                     <div class="d-flex justify-content-between align-items-center mt-3">
                                         <div class="text-warning">
                                             <i class="fas fa-money-bill-wave"></i> نەقد
-                                            <div class="fw-bold"><?php echo number_format($totalCashPurchases); ?> د.ع</div>
+                                            <div class="fw-bold" id="totalCashPurchases"></div>
                                         </div>
                                         <div class="text-primary">
                                             <i class="fas fa-credit-card"></i> قەرز
-                                            <div class="fw-bold"><?php echo number_format($totalCreditPurchases); ?> د.ع</div>
+                                            <div class="fw-bold" id="totalCreditPurchases"></div>
                                         </div>
                                     </div>
                                     <div class="stat-change positive mt-2">
@@ -826,7 +852,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         </div>
                                     </div>
                                     <h6 class="stat-title">قازانجی خاوێن</h6>
-                                    <h3 class="stat-value"><?php echo number_format($netProfit); ?> د.ع</h3>
+                                    <h3 class="stat-value" id="netProfit"></h3>
                                     <div class="stat-status <?php echo $netProfit >= 0 ? 'text-success' : 'text-danger'; ?> fw-bold">
                                         <?php echo $netProfit >= 0 ? 'قازانج' : 'زەرەر'; ?>
                                     </div>
@@ -855,7 +881,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         </div>
                                     </div>
                                     <h6 class="stat-title"><?php echo $availableCash >= 0 ? 'پارەی بەردەست' : 'کورتهێنان'; ?></h6>
-                                    <h3 class="stat-value"><?php echo number_format(abs($availableCash)); ?> د.ع</h3>
+                                    <h3 class="stat-value" id="availableCash"></h3>
                                     <div class="stat-status <?php echo $availableCash >= 0 ? 'text-primary' : 'text-danger'; ?> fw-bold">
                                         <?php echo $availableCash >= 0 ? 'پارە هەیە' : 'کورتهێنان'; ?>
                                     </div>
@@ -2038,6 +2064,143 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 // Sort by profit logic here (if needed)
             });
+
+            // Date filter functionality
+            let currentFilter = 'today';
+            
+            // Function to update date range based on filter
+            function updateDateRange(filter) {
+                const today = new Date();
+                let startDate, endDate;
+                
+                switch(filter) {
+                    case 'today':
+                        startDate = new Date(today.setHours(0, 0, 0, 0));
+                        endDate = new Date(today.setHours(23, 59, 59, 999));
+                        break;
+                    case 'week':
+                        startDate = new Date(today.setDate(today.getDate() - today.getDay()));
+                        endDate = new Date(today.setDate(today.getDate() + 6));
+                        break;
+                    case 'month':
+                        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                        endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                        break;
+                    case 'year':
+                        startDate = new Date(today.getFullYear(), 0, 1);
+                        endDate = new Date(today.getFullYear(), 11, 31);
+                        break;
+                }
+                
+                return { startDate, endDate };
+            }
+
+            // Function to format date for API
+            function formatDate(date) {
+                return date.toISOString().split('T')[0];
+            }
+
+            // Function to update statistics based on date range
+            function updateStatistics(startDate, endDate) {
+                // Show loading state
+                $('.report-card').addClass('loading');
+                
+                // Make AJAX call to get filtered data
+                $.ajax({
+                    url: 'get_filtered_statistics.php',
+                    method: 'POST',
+                    data: {
+                        start_date: formatDate(startDate),
+                        end_date: formatDate(endDate)
+                    },
+                    success: function(response) {
+                        // Update statistics cards with new data
+                        updateStatisticsCards(response);
+                        
+                        // Update charts with new data
+                        updateCharts(response);
+                        
+                        // Remove loading state
+                        $('.report-card').removeClass('loading');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching filtered data:', error);
+                        $('.report-card').removeClass('loading');
+                    }
+                });
+            }
+
+            // Function to update statistics cards
+            function updateStatisticsCards(data) {
+                // Update each card with new data
+                $('#totalProducts').text(data.total_products);
+                $('#totalInventoryValue').text(data.total_inventory_value + ' د.ع');
+                $('#totalSales').text(data.total_sales + ' د.ع');
+                $('#totalCashSales').text(data.total_cash_sales + ' د.ع');
+                $('#totalCreditSales').text(data.total_credit_sales + ' د.ع');
+                $('#totalPurchases').text(data.total_purchases + ' د.ع');
+                $('#totalCashPurchases').text(data.total_cash_purchases + ' د.ع');
+                $('#totalCreditPurchases').text(data.total_credit_purchases + ' د.ع');
+                $('#netProfit').text(data.net_profit + ' د.ع');
+                $('#availableCash').text(data.available_cash + ' د.ع');
+                // ... update other statistics
+            }
+
+            // Function to update charts
+            function updateCharts(data) {
+                // Update monthly profit chart
+                monthlyProfitChart.updateSeries([{
+                    name: 'داهات',
+                    data: data.monthly_profit.revenue
+                }, {
+                    name: 'خەرجی',
+                    data: data.monthly_profit.expenses
+                }, {
+                    name: 'قازانج',
+                    data: data.monthly_profit.profit
+                }]);
+
+                // Update category sales chart
+                categorySalesChart.updateSeries(data.category_sales.percentages);
+                categorySalesChart.updateOptions({
+                    labels: data.category_sales.categories
+                });
+
+                // Update other charts similarly
+            }
+
+            // Handle filter button clicks
+            $('.date-filter-container .btn-group .btn').click(function() {
+                const filter = $(this).data('filter');
+                
+                // Update active state
+                $('.date-filter-container .btn-group .btn').removeClass('active');
+                $(this).addClass('active');
+                
+                // Show/hide custom date range
+                if (filter === 'custom') {
+                    $('#customDateRange').show();
+                } else {
+                    $('#customDateRange').hide();
+                    currentFilter = filter;
+                    const { startDate, endDate } = updateDateRange(filter);
+                    updateStatistics(startDate, endDate);
+                }
+            });
+
+            // Handle custom date range
+            $('#applyCustomDate').click(function() {
+                const startDate = new Date($('#startDate').val());
+                const endDate = new Date($('#endDate').val());
+                
+                if (startDate && endDate) {
+                    updateStatistics(startDate, endDate);
+                }
+            });
+
+            // Initialize with today's data
+            const { startDate, endDate } = updateDateRange('today');
+            updateStatistics(startDate, endDate);
         });
     </script>
 
