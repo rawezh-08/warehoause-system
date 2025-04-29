@@ -45,26 +45,8 @@ try {
 
     // Handle image upload
     $imagePath = null;
-    if (isset($_FILES['image'])) {
-        // Check for upload errors
-        if ($_FILES['image']['error'] !== UPLOAD_ERR_OK) {
-            $errorMessage = match($_FILES['image']['error']) {
-                UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'قەبارەی وێنەکە زۆر گەورەیە. تکایە وێنەیەکی بچووکتر هەڵبژێرە.',
-                UPLOAD_ERR_PARTIAL => 'تەنها بەشێک لە وێنەکە هەڵگرا. تکایە دووبارە هەوڵ بدەوە.',
-                UPLOAD_ERR_NO_FILE => 'هیچ وێنەیەک هەڵنەبژێردراوە.',
-                UPLOAD_ERR_NO_TMP_DIR => 'فۆڵدەری کاتییەکە بوونی نییە.',
-                UPLOAD_ERR_CANT_WRITE => 'نەتوانرا وێنەکە هەڵبگرێت.',
-                UPLOAD_ERR_EXTENSION => 'هەڵەیەک ڕوویدا لە کاتی هەڵگرتنی وێنەکە.',
-                default => 'هەڵەیەک ڕوویدا لە کاتی هەڵگرتنی وێنەکە.'
-            };
-            throw new Exception($errorMessage);
-        }
-
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
         $image = $_FILES['image'];
-        
-        // Log original file size
-        $originalSize = $image['size'];
-        error_log("Original image size: " . round($originalSize / 1024 / 1024, 2) . "MB");
         
         // Check if file is actually an image using getimagesize
         $imageInfo = @getimagesize($image['tmp_name']);
@@ -97,8 +79,8 @@ try {
         // Always resize the image to ensure consistent size and quality
         list($width, $height) = $imageInfo;
         
-        // Calculate new dimensions (max 600px width or height while maintaining aspect ratio)
-        $maxDimension = 600; // Reduced from 800 to 600 for smaller file size
+        // Calculate new dimensions (max 800px width or height while maintaining aspect ratio)
+        $maxDimension = 800;
         if ($width > $height) {
             $newWidth = $maxDimension;
             $newHeight = intval($height * $maxDimension / $width);
@@ -141,21 +123,21 @@ try {
                 imagefilledrectangle($destinationImage, 0, 0, $newWidth, $newHeight, $transparent);
             }
             
-            // Resize the image with better quality
+            // Resize the image
             imagecopyresampled(
                 $destinationImage, $sourceImage,
                 0, 0, 0, 0,
                 $newWidth, $newHeight, $width, $height
             );
             
-            // Save the resized image with higher compression
+            // Save the resized image
             switch ($extension) {
                 case 'jpeg':
                 case 'jpg':
-                    imagejpeg($destinationImage, $filepath, 70); // Reduced quality from 80 to 70 for better compression
+                    imagejpeg($destinationImage, $filepath, 80); // 80% quality
                     break;
                 case 'png':
-                    imagepng($destinationImage, $filepath, 9); // Increased compression from 8 to 9 (maximum)
+                    imagepng($destinationImage, $filepath, 8); // Compression level 8 (0-9)
                     break;
                 case 'gif':
                     imagegif($destinationImage, $filepath);
@@ -165,17 +147,6 @@ try {
             // Free up memory
             imagedestroy($sourceImage);
             imagedestroy($destinationImage);
-            
-            // Check the size of the compressed image
-            $compressedSize = filesize($filepath);
-            error_log("Compressed image size: " . round($compressedSize / 1024 / 1024, 2) . "MB");
-            error_log("Compression ratio: " . round(($originalSize - $compressedSize) / $originalSize * 100, 2) . "%");
-            
-            // if ($compressedSize > 5 * 1024 * 1024) {
-            //     // If still too large, delete the file and throw error
-            //     unlink($filepath);
-            //     throw new Exception('قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت');
-            // }
             
             $imagePath = 'uploads/products/' . $filename;
         }

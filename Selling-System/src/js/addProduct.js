@@ -136,46 +136,46 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Image upload functionality
-    // if (productImageInput) {
-    //     productImageInput.addEventListener('change', function(e) {
-    //         const file = e.target.files[0];
-    //         if (file) {
-    //             // Check file size (5MB max)
-    //             if (file.size > 5 * 1024 * 1024) {
-    //                 Swal.fire({
-    //                     icon: 'error',
-    //                     title: 'هەڵە',
-    //                     text: 'قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت'
-    //                 });
-    //                 this.value = '';
-    //                 return;
-    //             }
+    if (productImageInput) {
+        productImageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Check file size (20MB max instead of 5MB since we resize on server)
+                if (file.size > 20 * 1024 * 1024) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: 'قەبارەی وێنە دەبێت کەمتر بێت لە 20 مێگابایت'
+                    });
+                    this.value = '';
+                    return;
+                }
 
-    //             // Check if file is an image
-    //             if (!file.type.startsWith('image/')) {
-    //                 Swal.fire({
-    //                     icon: 'error',
-    //                     title: 'هەڵە',
-    //                     text: 'تەنها فایلی وێنە قبوڵ دەکرێت'
-    //                 });
-    //                 this.value = '';
-    //                 return;
-    //             }
+                // Check if file is an image
+                if (!file.type.startsWith('image/')) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: 'تەنها فایلی وێنە قبوڵ دەکرێت'
+                    });
+                    this.value = '';
+                    return;
+                }
 
-    //             // Preview image
-    //             const reader = new FileReader();
-    //             reader.onload = function(e) {
-    //                 const preview = document.querySelector('.image-preview');
-    //                 if (preview) {
-    //                     preview.innerHTML = `
-    //                         <img src="${e.target.result}" alt="Preview" style="max-width: 100%; max-height: 200px;">
-    //                         <p class="text-muted small mt-2">وێنەکە بەشێوەیەکی ئۆتۆماتیکی بچووک دەکرێتەوە ئەگەر پێویست بێت</p>`;
-    //                 }
-    //             };
-    //             reader.readAsDataURL(file);
-    //         }
-    //     });
-    // }
+                // Preview image
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.querySelector('.image-preview');
+                    if (preview) {
+                        preview.innerHTML = `
+                            <img src="${e.target.result}" alt="Preview" style="max-width: 100%; max-height: 200px;">
+                            <p class="text-muted small mt-2">وێنەکە بەشێوەیەکی ئۆتۆماتیکی بچووک دەکرێتەوە ئەگەر پێویست بێت</p>`;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
     
     // Auto-calculate profit when prices change
     if (buyingPriceInput && sellingPriceInput) {
