@@ -390,41 +390,87 @@ require_once '../../process/addProduct_logic.php';
 
     <!-- Add this before the closing </body> tag -->
     <script>
-        // Handle decimal number inputs
         $(document).ready(function() {
-            $('.decimal-input').on('input', function(e) {
-                // Allow only numbers and decimal point
-                this.value = this.value.replace(/[^0-9.]/g, '');
+            // Function to handle decimal input
+            function handleDecimalInput(input) {
+                // Replace Arabic decimal with English decimal
+                let value = input.value.replace(/٫/g, '.');
+                
+                // Remove any non-numeric characters except decimal point
+                value = value.replace(/[^\d.]/g, '');
                 
                 // Ensure only one decimal point
-                if(this.value.split('.').length > 2) {
-                    this.value = this.value.replace(/\.+$/, '');
+                let parts = value.split('.');
+                if (parts.length > 2) {
+                    value = parts[0] + '.' + parts.slice(1).join('');
                 }
                 
                 // Limit to 2 decimal places
-                if(this.value.includes('.')) {
-                    let parts = this.value.split('.');
-                    if(parts[1].length > 2) {
-                        this.value = parts[0] + '.' + parts[1].slice(0, 2);
-                    }
+                if (parts.length > 1 && parts[1].length > 2) {
+                    value = parts[0] + '.' + parts[1].substring(0, 2);
                 }
+                
+                input.value = value;
+            }
+
+            // Handle input events
+            $('.decimal-input').on('input', function(e) {
+                handleDecimalInput(this);
             });
 
-            // Prevent non-numeric keys
+            // Handle keypress events
             $('.decimal-input').on('keypress', function(e) {
-                // Allow: backspace, delete, tab, escape, enter, decimal point
-                if ($.inArray(e.keyCode, [46, 8, 9, 27, 13, 110, 190]) !== -1 ||
-                    // Allow: Ctrl+A, Command+A
-                    (e.keyCode === 65 && (e.ctrlKey === true || e.metaKey === true)) ||
-                    // Allow: home, end, left, right, down, up
-                    (e.keyCode >= 35 && e.keyCode <= 40)) {
-                    return;
+                // Get the pressed key
+                let charCode = e.which ? e.which : e.keyCode;
+                
+                // Allow special keys (backspace, delete, arrows, etc)
+                if (e.ctrlKey || e.altKey || e.metaKey ||
+                    charCode < 32 || // Control characters
+                    (charCode >= 37 && charCode <= 40)) { // Arrow keys
+                    return true;
                 }
-                // Ensure that it is a number or decimal point and stop the keypress
-                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && 
-                    (e.keyCode !== 46 && e.keyCode !== 190)) {
-                    e.preventDefault();
+                
+                // Get the pressed character
+                let char = String.fromCharCode(charCode);
+                
+                // Allow numbers
+                if (/[0-9]/.test(char)) {
+                    return true;
                 }
+                
+                // Allow decimal point (both English and Arabic)
+                if (char === '.' || char === '٫') {
+                    // Check if there's already a decimal point
+                    let value = this.value;
+                    if (!value.includes('.') && !value.includes('٫')) {
+                        return true;
+                    }
+                }
+                
+                // Block all other characters
+                e.preventDefault();
+                return false;
+            });
+
+            // Handle paste events
+            $('.decimal-input').on('paste', function(e) {
+                e.preventDefault();
+                let pastedData = (e.originalEvent.clipboardData || window.clipboardData).getData('text');
+                
+                // Clean the pasted data
+                pastedData = pastedData.replace(/[^\d.٫]/g, ''); // Remove anything that's not a number or decimal
+                pastedData = pastedData.replace(/٫/g, '.'); // Replace Arabic decimal with English decimal
+                
+                // Insert at cursor position
+                let startPos = this.selectionStart;
+                let endPos = this.selectionEnd;
+                let value = this.value;
+                
+                this.value = value.substring(0, startPos) + pastedData + value.substring(endPos);
+                handleDecimalInput(this);
+                
+                // Set cursor position after pasted text
+                this.setSelectionRange(startPos + pastedData.length, startPos + pastedData.length);
             });
         });
     </script>
