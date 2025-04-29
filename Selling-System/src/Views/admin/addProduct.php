@@ -156,21 +156,21 @@ require_once '../../process/addProduct_logic.php';
                                                 <div class="col-md-4 mb-3" style="direction: rtl;">
                                                     <label for="buyingPrice" class="form-label">نرخی کڕین</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="buyingPrice" name="purchase_price" class="form-control" placeholder="نرخی کڕین" step="0.01" required>
+                                                        <input type="text" id="buyingPrice" name="purchase_price" class="form-control decimal-input" placeholder="نرخی کڕین" required>
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label for="sellingPrice" class="form-label">نرخی فرۆشتن</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="sellingPrice" name="selling_price_single" class="form-control" placeholder="نرخی فرۆشتن" required>
+                                                        <input type="text" id="sellingPrice" name="selling_price_single" class="form-control decimal-input" placeholder="نرخی فرۆشتن" required>
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label for="selling_price_wholesale" class="form-label">نرخی فرۆشتن (کۆمەڵ)</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="selling_price_wholesale" name="selling_price_wholesale" class="form-control" placeholder="نرخی فرۆشتن (کۆمەڵ)" required>
+                                                        <input type="text" id="selling_price_wholesale" name="selling_price_wholesale" class="form-control decimal-input" placeholder="نرخی فرۆشتن (کۆمەڵ)" required>
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                     <div class="invalid-feedback">
@@ -384,6 +384,47 @@ require_once '../../process/addProduct_logic.php';
             // Clear the form when the modal is closed
             $('#addCategoryModal').on('hidden.bs.modal', function() {
                 $('#addCategoryForm')[0].reset();
+            });
+        });
+    </script>
+
+    <!-- Add this before the closing </body> tag -->
+    <script>
+        // Handle decimal number inputs
+        $(document).ready(function() {
+            $('.decimal-input').on('input', function(e) {
+                // Allow only numbers and decimal point
+                this.value = this.value.replace(/[^0-9.]/g, '');
+                
+                // Ensure only one decimal point
+                if(this.value.split('.').length > 2) {
+                    this.value = this.value.replace(/\.+$/, '');
+                }
+                
+                // Limit to 2 decimal places
+                if(this.value.includes('.')) {
+                    let parts = this.value.split('.');
+                    if(parts[1].length > 2) {
+                        this.value = parts[0] + '.' + parts[1].slice(0, 2);
+                    }
+                }
+            });
+
+            // Prevent non-numeric keys
+            $('.decimal-input').on('keypress', function(e) {
+                // Allow: backspace, delete, tab, escape, enter, decimal point
+                if ($.inArray(e.keyCode, [46, 8, 9, 27, 13, 110, 190]) !== -1 ||
+                    // Allow: Ctrl+A, Command+A
+                    (e.keyCode === 65 && (e.ctrlKey === true || e.metaKey === true)) ||
+                    // Allow: home, end, left, right, down, up
+                    (e.keyCode >= 35 && e.keyCode <= 40)) {
+                    return;
+                }
+                // Ensure that it is a number or decimal point and stop the keypress
+                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && 
+                    (e.keyCode !== 46 && e.keyCode !== 190)) {
+                    e.preventDefault();
+                }
             });
         });
     </script>
