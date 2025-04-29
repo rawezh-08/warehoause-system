@@ -184,23 +184,10 @@ $warehouseLosses = 0;
 // Calculate net profit (simple calculation)
 $netProfit = $totalSales - $totalPurchases - $warehouseExpenses - $employeeExpenses - $warehouseLosses;
 
-// Estimate available cash (from sales minus expenses and purchases)
-$estimatedAvailableCash = $totalCashSales - $totalCashPurchases - $warehouseExpenses - $employeeExpenses;
-
-// Check if cash management table has any records
-$stmt = $conn->prepare("SELECT COUNT(*) as count FROM cash_management");
+// Get the actual cash balance directly from cash_management
+$stmt = $conn->prepare("SELECT COALESCE(SUM(amount), 0) as cash_balance FROM cash_management");
 $stmt->execute();
-$cashManagementCount = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
-
-if ($cashManagementCount > 0) {
-    // If records exist, get the actual balance from cash_management
-    $stmt = $conn->prepare("SELECT COALESCE(SUM(amount), 0) as cash_balance FROM cash_management");
-    $stmt->execute();
-    $availableCash = $stmt->fetch(PDO::FETCH_ASSOC)['cash_balance'] ?? 0;
-} else {
-    // If no records exist, use the estimated value
-    $availableCash = $estimatedAvailableCash;
-}
+$availableCash = $stmt->fetch(PDO::FETCH_ASSOC)['cash_balance'] ?? 0;
 
 // Get monthly sales data for the past 6 months
 $stmt = $conn->prepare("
