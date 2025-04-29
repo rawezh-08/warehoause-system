@@ -38,31 +38,32 @@ $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalCash = $result['total_cash'] ?? 0;
 
-// Get transaction history
+// Set up pagination
+$records_per_page = 10;
+$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+$offset = ($page - 1) * $records_per_page;
+
+// Get transaction history with pagination
 $stmt = $conn->prepare("
     SELECT 
         amount,
         transaction_type,
         notes,
-        created_at,
-        created_by
+        created_at
     FROM cash_management
     ORDER BY created_at DESC
+    LIMIT :offset, :limit
 ");
+$stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+$stmt->bindParam(':limit', $records_per_page, PDO::PARAM_INT);
 $stmt->execute();
 $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Get admin usernames for display
-$adminIds = array_unique(array_column($transactions, 'created_by'));
-$adminUsernames = [];
-if (!empty($adminIds)) {
-    $placeholders = str_repeat('?,', count($adminIds) - 1) . '?';
-    $stmt = $conn->prepare("SELECT id, username FROM admin_accounts WHERE id IN ($placeholders)");
-    $stmt->execute($adminIds);
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $adminUsernames[$row['id']] = $row['username'];
-    }
-}
+// Get total number of transactions
+$stmt = $conn->prepare("SELECT COUNT(*) as total FROM cash_management");
+$stmt->execute();
+$total_records = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+$total_pages = ceil($total_records / $records_per_page);
 ?>
 
 <!DOCTYPE html>
@@ -76,14 +77,21 @@ if (!empty($adminIds)) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="../../assets/css/custom.css">
     <!-- Page CSS -->
     <link rel="stylesheet" href="../../css/dashboard.css">
     <link rel="stylesheet" href="../../css/global.css">
     <link rel="stylesheet" href="../../css/employeePayment/style.css">
     <link rel="stylesheet" href="../../css/products.css">
+    <style>
+        .report-table th, .report-table td {
+            border: 1px solid #dee2e6;
+        }
+        .pagination {
+            justify-content: center;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 
 <body>
@@ -123,18 +131,6 @@ if (!empty($adminIds)) {
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                     <?php endif; ?>
-
-                    <!-- Current Balance Card -->
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5 class="card-title">پارەی بەردەست</h5>
-                                    <h2 class="text-primary mb-0"><?php echo number_format($totalCash); ?> د.ع</h2>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- Transaction Form -->
                     <div class="row mb-4">
@@ -187,7 +183,6 @@ if (!empty($adminIds)) {
                                                     <th>جۆری پارە</th>
                                                     <th>بڕی پارە</th>
                                                     <th>تێبینی</th>
-                                                    <th>دروستکراوە لەلایەن</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -211,11 +206,39 @@ if (!empty($adminIds)) {
                                                         <?php echo number_format($transaction['amount']); ?> د.ع
                                                     </td>
                                                     <td><?php echo htmlspecialchars($transaction['notes']); ?></td>
-                                                    <td><?php echo $adminUsernames[$transaction['created_by']] ?? 'Unknown'; ?></td>
                                                 </tr>
                                                 <?php endforeach; ?>
                                             </tbody>
                                         </table>
+                                        
+                                        <!-- Pagination -->
+                                        <?php if ($total_pages > 1): ?>
+                                        <nav aria-label="صفحات">
+                                            <ul class="pagination">
+                                                <?php if ($page > 1): ?>
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page=<?php echo $page - 1; ?>" aria-label="پێشتر">
+                                                        <span aria-hidden="true">&laquo;</span>
+                                                    </a>
+                                                </li>
+                                                <?php endif; ?>
+                                                
+                                                <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                                                <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
+                                                    <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                                                </li>
+                                                <?php endfor; ?>
+                                                
+                                                <?php if ($page < $total_pages): ?>
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page=<?php echo $page + 1; ?>" aria-label="دواتر">
+                                                        <span aria-hidden="true">&raquo;</span>
+                                                    </a>
+                                                </li>
+                                                <?php endif; ?>
+                                            </ul>
+                                        </nav>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
@@ -230,9 +253,6 @@ if (!empty($adminIds)) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-    <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 
     <!-- Global JS -->
     <script src="../../js/include-components.js"></script>
