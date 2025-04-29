@@ -1543,6 +1543,21 @@ INSERT INTO `admin_accounts` (`id`, `username`, `password_hash`, `created_at`, `
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `cash_management`
+--
+
+CREATE TABLE `cash_management` (
+  `id` int(11) NOT NULL,
+  `amount` decimal(10,2) NOT NULL COMMENT 'Positive for deposits, negative for withdrawals',
+  `transaction_type` enum('initial_balance','deposit','withdrawal','adjustment') NOT NULL,
+  `notes` text DEFAULT NULL,
+  `created_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `categories`
 --
 
