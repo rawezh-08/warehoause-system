@@ -73,9 +73,7 @@ $stmt = $conn->prepare("
         sales s
     JOIN 
         sale_items si ON s.id = si.sale_id
-    WHERE 
-        s.is_draft = 0
-        " . ($dateCondition ? ' AND ' . substr($dateCondition, 6) : '') . "
+    " . $dateCondition . "
 ");
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -91,7 +89,6 @@ $stmt = $conn->prepare("
         sale_items si ON s.id = si.sale_id
     WHERE 
         s.payment_type = 'cash'
-        AND s.is_draft = 0
     " . ($dateCondition ? ' AND ' . substr($dateCondition, 6) : '')
 );
 $stmt->execute();
@@ -107,7 +104,6 @@ $stmt = $conn->prepare("
         sale_items si ON s.id = si.sale_id
     WHERE 
         s.payment_type = 'credit'
-        AND s.is_draft = 0
     " . ($dateCondition ? ' AND ' . substr($dateCondition, 6) : '')
 );
 $stmt->execute();
@@ -160,12 +156,7 @@ $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalCreditPurchases = $result['total_credit_purchases'];
 
 // Calculate discounts, expenses, and other financial data
-$stmt = $conn->prepare("
-    SELECT COALESCE(SUM(discount), 0) as total_sale_discounts 
-    FROM sales 
-    WHERE is_draft = 0
-    " . ($dateCondition ? ' AND ' . substr($dateCondition, 6) : '')
-);
+$stmt = $conn->prepare("SELECT COALESCE(SUM(discount), 0) as total_sale_discounts FROM sales " . $dateCondition);
 $stmt->execute();
 $saleDiscounts = $stmt->fetch(PDO::FETCH_ASSOC)['total_sale_discounts'];
 
@@ -249,8 +240,7 @@ $stmt = $conn->prepare("
     JOIN
         sale_items si ON s.id = si.sale_id
     WHERE 
-        s.is_draft = 0
-        AND s.date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+        s.date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
     GROUP BY 
         DATE_FORMAT(s.date, '%Y-%m')
     ORDER BY 
@@ -299,8 +289,7 @@ $stmt = $conn->prepare("
     JOIN 
         sales s ON si.sale_id = s.id
     WHERE 
-        s.is_draft = 0
-        AND s.date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
+        s.date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
     GROUP BY 
         p.id, p.name
     ORDER BY 
@@ -337,8 +326,6 @@ $stmt = $conn->prepare("
         'سەرکەوتوو' as status
     FROM 
         sales s
-    WHERE
-        s.is_draft = 0
     ORDER BY 
         s.date DESC
     LIMIT 3)
@@ -364,12 +351,7 @@ $stmt->execute();
 $recentTransactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Calculate total products sold
-$stmt = $conn->prepare("
-    SELECT COALESCE(SUM(si.pieces_count), 0) as total 
-    FROM sale_items si
-    JOIN sales s ON si.sale_id = s.id
-    WHERE s.is_draft = 0
-");
+$stmt = $conn->prepare("SELECT COALESCE(SUM(pieces_count), 0) as total FROM sale_items");
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalProductsSold = $result['total'];
@@ -408,10 +390,6 @@ $stmt = $conn->prepare("
         sale_items si
     JOIN 
         products p ON si.product_id = p.id
-    JOIN
-        sales s ON si.sale_id = s.id
-    WHERE
-        s.is_draft = 0
     GROUP BY 
         p.id, p.name, p.code, p.image
     ORDER BY 
@@ -434,7 +412,7 @@ $stmt = $conn->prepare("
     FROM 
         customers c
     LEFT JOIN 
-        sales s ON c.id = s.customer_id AND s.is_draft = 0
+        sales s ON c.id = s.customer_id
     LEFT JOIN 
         sale_items si ON s.id = si.sale_id
     WHERE 
@@ -512,8 +490,7 @@ $stmt = $conn->prepare("
     JOIN
         sale_items si ON s.id = si.sale_id
     WHERE
-        s.is_draft = 0
-        AND s.date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+        s.date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
     GROUP BY
         DATE_FORMAT(s.date, '%Y-%m')
     ORDER BY
@@ -545,22 +522,13 @@ $stmt = $conn->prepare("
         c.name as category_name,
         COUNT(DISTINCT si.id) as sale_count,
         SUM(si.total_price) as total_sales,
-        ROUND(SUM(si.total_price) / (
-            SELECT SUM(si2.total_price) 
-            FROM sale_items si2 
-            JOIN sales s2 ON si2.sale_id = s2.id 
-            WHERE s2.is_draft = 0
-        ) * 100, 1) as percentage
+        ROUND(SUM(si.total_price) / (SELECT SUM(total_price) FROM sale_items) * 100, 1) as percentage
     FROM
         categories c
     JOIN
         products p ON c.id = p.category_id
     JOIN
         sale_items si ON p.id = si.product_id
-    JOIN
-        sales s ON si.sale_id = s.id
-    WHERE
-        s.is_draft = 0
     GROUP BY
         c.id, c.name
     ORDER BY
@@ -579,8 +547,7 @@ $stmt = $conn->prepare("
     JOIN
         sale_items si ON s.id = si.sale_id
     WHERE
-        s.is_draft = 0
-        AND s.date >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+        s.date >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
     GROUP BY
         DATE_FORMAT(s.date, '%Y-%m')
     ORDER BY
@@ -636,8 +603,6 @@ $stmt = $conn->prepare("
         sales s ON c.id = s.customer_id
     JOIN
         sale_items si ON s.id = si.sale_id
-    WHERE
-        s.is_draft = 0
     GROUP BY
         c.id, c.name
     HAVING
