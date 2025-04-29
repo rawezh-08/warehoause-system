@@ -48,9 +48,9 @@ class Product {
         }
         
         // پشتڕاستکردنەوەی قەبارەی فایل (5MB)
-        if ($file['size'] > 5 * 1024 * 1024) {
-            throw new Exception('قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت');
-        }
+        // if ($file['size'] > 5 * 1024 * 1024) {
+        //     throw new Exception('قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت');
+        // }
         
         // دروستکردنی ناوی فایل
         $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
