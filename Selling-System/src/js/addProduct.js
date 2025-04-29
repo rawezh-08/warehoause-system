@@ -140,7 +140,20 @@ document.addEventListener('DOMContentLoaded', function() {
         productImageInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
-                // Check file size (20MB max instead of 5MB since we resize on server)
+                // Show loading indicator for the image
+                const preview = document.querySelector('.image-preview');
+                if (preview) {
+                    preview.innerHTML = `
+                        <div class="d-flex justify-content-center align-items-center flex-column">
+                            <div class="spinner-border text-primary mb-2" role="status">
+                                <span class="visually-hidden">چاوەڕێ بکە...</span>
+                            </div>
+                            <p>ئامادەکردنی وێنە...</p>
+                        </div>
+                    `;
+                }
+
+                // Check file size (20MB max)
                 if (file.size > 20 * 1024 * 1024) {
                     Swal.fire({
                         icon: 'error',
@@ -148,6 +161,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         text: 'قەبارەی وێنە دەبێت کەمتر بێت لە 20 مێگابایت'
                     });
                     this.value = '';
+                    if (preview) {
+                        preview.innerHTML = `
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>وێنە هەڵبژێرە</p>
+                        `;
+                    }
                     return;
                 }
 
@@ -159,20 +178,48 @@ document.addEventListener('DOMContentLoaded', function() {
                         text: 'تەنها فایلی وێنە قبوڵ دەکرێت'
                     });
                     this.value = '';
+                    if (preview) {
+                        preview.innerHTML = `
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>وێنە هەڵبژێرە</p>
+                        `;
+                    }
                     return;
                 }
 
-                // Preview image
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const preview = document.querySelector('.image-preview');
-                    if (preview) {
-                        preview.innerHTML = `
-                            <img src="${e.target.result}" alt="Preview" style="max-width: 100%; max-height: 200px;">
-                            <p class="text-muted small mt-2">وێنەکە بەشێوەیەکی ئۆتۆماتیکی بچووک دەکرێتەوە ئەگەر پێویست بێت</p>`;
-                    }
-                };
-                reader.readAsDataURL(file);
+                // Compress image client-side before uploading to reduce upload time
+                compressImage(file, 1.5, 600) // Compress to max 1.5MB and max width/height 600px
+                    .then(compressedFile => {
+                        // Store the compressed file for form submission
+                        this.compressedImage = compressedFile;
+                        
+                        // Preview the compressed image
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            if (preview) {
+                                preview.innerHTML = `
+                                    <img src="${e.target.result}" alt="Preview" style="max-width: 100%; max-height: 200px;">
+                                    <p class="text-muted small mt-2">وێنە ئامادەیە بۆ ئەپلۆدکردن</p>
+                                    <p class="text-muted small">قەبارە: ${Math.round(compressedFile.size / 1024)} KB</p>
+                                `;
+                            }
+                        };
+                        reader.readAsDataURL(compressedFile);
+                    })
+                    .catch(error => {
+                        console.error('Error compressing image:', error);
+                        // If compression fails, use the original file
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            if (preview) {
+                                preview.innerHTML = `
+                                    <img src="${e.target.result}" alt="Preview" style="max-width: 100%; max-height: 200px;">
+                                    <p class="text-muted small mt-2">وێنەکە بەشێوەیەکی ئۆتۆماتیکی بچووک دەکرێتەوە ئەگەر پێویست بێت</p>
+                                `;
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    });
             }
         });
     }
@@ -1050,4 +1097,190 @@ $('#saveQuickProduct').on('click', function(e) {
     saveButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> چاوەڕێ بکە...');
 
     // ... existing code ...
-}); 
+});
+
+// Add this function for client-side image compression
+function compressImage(file, maxSizeMB, maxDimension) {
+    return new Promise((resolve, reject) => {
+        // Create a FileReader to read the file
+        const reader = new FileReader();
+        
+        // Set up FileReader onload handler
+        reader.onload = function(readerEvent) {
+            // Create an HTMLImageElement to get image dimensions
+            const img = new Image();
+            
+            img.onload = function() {
+                // Calculate new dimensions while maintaining aspect ratio
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > height && width > maxDimension) {
+                    height = Math.round(height * maxDimension / width);
+                    width = maxDimension;
+                } else if (height > maxDimension) {
+                    width = Math.round(width * maxDimension / height);
+                    height = maxDimension;
+                }
+                
+                // Create a canvas element to compress the image
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                
+                // Draw the image on the canvas
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Start with high quality
+                let quality = 0.8;
+                let compressedDataUrl;
+                let compressedBlob;
+                
+                // Function to check if we've reached target size
+                const checkSize = (dataUrl) => {
+                    // Convert data URL to Blob
+                    const byteString = atob(dataUrl.split(',')[1]);
+                    const mimeType = dataUrl.split(',')[0].split(':')[1].split(';')[0];
+                    const ab = new ArrayBuffer(byteString.length);
+                    const ia = new Uint8Array(ab);
+                    for (let i = 0; i < byteString.length; i++) {
+                        ia[i] = byteString.charCodeAt(i);
+                    }
+                    const blob = new Blob([ab], { type: mimeType });
+                    
+                    // Check size and proceed accordingly
+                    if (blob.size <= maxSizeMB * 1024 * 1024) {
+                        // Size is good, create a File object from the blob
+                        compressedBlob = blob;
+                        const fileName = file.name.split('.')[0] + '.jpg';
+                        const compressedFile = new File([blob], fileName, { type: 'image/jpeg' });
+                        resolve(compressedFile);
+                    } else if (quality > 0.1) {
+                        // If file is still too large, reduce quality and try again
+                        quality -= 0.1;
+                        compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                        checkSize(compressedDataUrl);
+                    } else {
+                        // Can't compress enough, return the best we can do
+                        const fileName = file.name.split('.')[0] + '.jpg';
+                        const compressedFile = new File([compressedBlob], fileName, { type: 'image/jpeg' });
+                        resolve(compressedFile);
+                    }
+                };
+                
+                // Start compression
+                compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                checkSize(compressedDataUrl);
+            };
+            
+            // Set the HTMLImageElement source to FileReader result
+            img.src = readerEvent.target.result;
+        };
+        
+        // Handle FileReader errors
+        reader.onerror = function() {
+            reject(new Error('Failed to read file'));
+        };
+        
+        // Read the file as a data URL (base64 encoded string)
+        reader.readAsDataURL(file);
+    });
+}
+
+// Override form submission to use compressed image
+if (addProductForm) {
+    const originalSubmitEvent = addProductForm.onsubmit;
+    
+    addProductForm.addEventListener('submit', function(e) {
+        // Get the file input element
+        const fileInput = document.getElementById('productImage');
+        
+        // If we have a compressed image and a file was selected
+        if (fileInput && fileInput.files.length > 0 && fileInput.compressedImage) {
+            // Prevent the original submit
+            e.preventDefault();
+            
+            // Create a new FormData instance
+            const formData = new FormData(this);
+            
+            // Replace the file with the compressed version
+            formData.delete('image');
+            formData.append('image', fileInput.compressedImage);
+            
+            // Show loading indicator
+            Swal.fire({
+                title: 'تکایە چاوەڕێ بکە...',
+                text: 'زیادکردنی کاڵا بەردەوامە',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Clean number inputs
+            const numberFields = [
+                'buyingPrice',
+                'sellingPrice',
+                'selling_price_wholesale',
+                'piecesPerBox',
+                'boxesPerSet',
+                'min_quantity',
+                'current_quantity'
+            ];
+            
+            numberFields.forEach(field => {
+                const input = document.getElementById(field);
+                if (input && input.value) {
+                    const cleanValue = input.value.replace(/,/g, '');
+                    formData.set(field, cleanValue);
+                }
+            });
+            
+            // Submit the form with fetch API
+            fetch('../../process/add_product.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'سەرکەوتوو',
+                        text: data.message || 'کاڵاکە بە سەرکەوتوویی زیاد کرا',
+                        confirmButtonText: 'باشە'
+                    });
+                    
+                    // Reset form and image preview
+                    addProductForm.reset();
+                    resetImagePreview();
+                    
+                    // Reset to first tab
+                    switchToTab('basic-info');
+                    
+                    // Refresh the latest products list
+                    updateLatestProducts();
+                } else {
+                    throw new Error(data.message || 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: error.message || 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا',
+                    confirmButtonText: 'باشە'
+                });
+            });
+        }
+    }, true); // Use capturing to ensure this runs first
+} 

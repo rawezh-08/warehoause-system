@@ -117,7 +117,8 @@ try {
         log_debug('File details', [
             'extension' => $extension,
             'filename' => $filename,
-            'filepath' => $filepath
+            'filepath' => $filepath,
+            'original_size' => filesize($image['tmp_name']) / (1024 * 1024) . ' MB'
         ]);
         
         // Check GD library
@@ -131,8 +132,9 @@ try {
             log_debug('Image dimensions', $imageInfo);
             list($width, $height) = $imageInfo;
             
-            // Calculate new dimensions (max 800px width or height while maintaining aspect ratio)
-            $maxDimension = 800;
+            // More aggressive optimization for faster upload and smaller file size
+            // Calculate new dimensions (max 600px width or height while maintaining aspect ratio)
+            $maxDimension = 600; // Reduced from 800px to 600px
             if ($width > $height) {
                 $newWidth = $maxDimension;
                 $newHeight = intval($height * $maxDimension / $width);
@@ -188,18 +190,62 @@ try {
                     $newWidth, $newHeight, $width, $height
                 );
                 
-                // Save the resized image
+                // Save the resized image with lower quality for smaller file size
                 $saveResult = false;
                 switch ($extension) {
                     case 'jpeg':
                     case 'jpg':
-                        $saveResult = imagejpeg($destinationImage, $filepath, 80); // 80% quality
+                        $saveResult = imagejpeg($destinationImage, $filepath, 60); // Reduced quality from 80% to 60%
                         break;
                     case 'png':
-                        $saveResult = imagepng($destinationImage, $filepath, 8); // Compression level 8 (0-9)
+                        // Convert PNG to JPG for smaller file size if it's not transparent
+                        $hasTransparency = false;
+                        if (function_exists('imagecolortransparent') && function_exists('imagealpha')) {
+                            for ($x = 0; $x < $width; $x++) {
+                                for ($y = 0; $y < $height; $y++) {
+                                    $color = imagecolorat($sourceImage, $x, $y);
+                                    $alpha = ($color >> 24) & 0x7F;
+                                    if ($alpha > 0) { // If any pixel has transparency
+                                        $hasTransparency = true;
+                                        break 2;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (!$hasTransparency) {
+                            // Convert to JPG if no transparency
+                            $jpgFilename = pathinfo($filename, PATHINFO_FILENAME) . '.jpg';
+                            $jpgFilepath = $uploadDir . $jpgFilename;
+                            $saveResult = imagejpeg($destinationImage, $jpgFilepath, 60);
+                            $filename = $jpgFilename;
+                            $filepath = $jpgFilepath;
+                            log_debug('Converted PNG to JPG for smaller file size');
+                        } else {
+                            // Keep as PNG but with higher compression
+                            $saveResult = imagepng($destinationImage, $filepath, 9); // Increased compression from 8 to 9 (max)
+                        }
                         break;
                     case 'gif':
-                        $saveResult = imagegif($destinationImage, $filepath);
+                        // Convert GIF to JPG if not animated
+                        $isAnimated = false;
+                        if (function_exists('imagecreatefromgif')) {
+                            $fileContent = file_get_contents($image['tmp_name']);
+                            $count = preg_match_all('#\x00\x21\xF9\x04.{4}\x00(\x2C|\x21)#s', $fileContent, $matches);
+                            $isAnimated = $count > 1;
+                        }
+                        
+                        if (!$isAnimated) {
+                            // Convert to JPG if not animated
+                            $jpgFilename = pathinfo($filename, PATHINFO_FILENAME) . '.jpg';
+                            $jpgFilepath = $uploadDir . $jpgFilename;
+                            $saveResult = imagejpeg($destinationImage, $jpgFilepath, 60);
+                            $filename = $jpgFilename;
+                            $filepath = $jpgFilepath;
+                            log_debug('Converted GIF to JPG for smaller file size');
+                        } else {
+                            $saveResult = imagegif($destinationImage, $filepath);
+                        }
                         break;
                 }
                 
@@ -209,6 +255,35 @@ try {
                 imagedestroy($sourceImage);
                 imagedestroy($destinationImage);
                 
+                // Check if the file size exceeds 2MB even after optimization
+                if (file_exists($filepath) && filesize($filepath) > 2 * 1024 * 1024) {
+                    log_debug('File still too large after initial optimization, compressing further');
+                    
+                    // Further compress the image to ensure it's under 2MB
+                    if (in_array($extension, ['jpg', 'jpeg']) || 
+                        pathinfo($filepath, PATHINFO_EXTENSION) == 'jpg') {
+                        // Re-compress the JPEG with even lower quality
+                        $source = imagecreatefromjpeg($filepath);
+                        if ($source) {
+                            // Try with progressively lower quality until file size is under 1.9MB
+                            $quality = 50; // Start with 50% quality
+                            $fileSizeOk = false;
+                            
+                            while (!$fileSizeOk && $quality > 10) {
+                                imagejpeg($source, $filepath, $quality);
+                                if (filesize($filepath) <= 1.9 * 1024 * 1024) {
+                                    $fileSizeOk = true;
+                                } else {
+                                    $quality -= 10;
+                                }
+                            }
+                            
+                            imagedestroy($source);
+                            log_debug('Final image quality', $quality);
+                        }
+                    }
+                }
+                
                 // Make sure the file was created
                 if (!$saveResult || !file_exists($filepath)) {
                     log_debug('Failed to save resized image');
@@ -216,22 +291,57 @@ try {
                 }
                 
                 $imagePath = 'uploads/products/' . $filename;
-                log_debug('Image path saved', $imagePath);
+                log_debug('Image path saved', [
+                    'path' => $imagePath,
+                    'final_size' => file_exists($filepath) ? (filesize($filepath) / (1024 * 1024)) . ' MB' : 'unknown'
+                ]);
             } else {
                 log_debug('Failed to create source image');
+                // As a fallback, move and resize the file directly using standard PHP
                 if (move_uploaded_file($image['tmp_name'], $filepath)) {
+                    // Check if the file is over 2MB, if so we'll try to compress it further
+                    if (filesize($filepath) > 2 * 1024 * 1024 && function_exists('imagecreatefromstring')) {
+                        $imgString = file_get_contents($filepath);
+                        $source = @imagecreatefromstring($imgString);
+                        
+                        if ($source) {
+                            // Try to compress into a JPEG
+                            $compressedFilepath = $uploadDir . pathinfo($filename, PATHINFO_FILENAME) . '.jpg';
+                            imagejpeg($source, $compressedFilepath, 60);
+                            imagedestroy($source);
+                            
+                            // If compressed version is smaller, use it instead
+                            if (file_exists($compressedFilepath) && 
+                                filesize($compressedFilepath) < filesize($filepath)) {
+                                unlink($filepath); // Delete original
+                                $filepath = $compressedFilepath;
+                                $filename = pathinfo($compressedFilepath, PATHINFO_BASENAME);
+                                log_debug('Used compressed version instead', [
+                                    'new_filename' => $filename,
+                                    'new_size' => filesize($filepath) / (1024 * 1024) . ' MB'
+                                ]);
+                            }
+                        }
+                    }
+                    
                     $imagePath = 'uploads/products/' . $filename;
-                    log_debug('Fallback: Moved file directly', $imagePath);
+                    log_debug('Fallback: Moved file directly', [
+                        'path' => $imagePath,
+                        'size' => filesize($filepath) / (1024 * 1024) . ' MB'
+                    ]);
                 } else {
                     log_debug('Fallback failed: Could not move file');
                 }
             }
         } catch (Exception $e) {
             log_debug('Error in image processing', $e->getMessage());
-            // If image processing fails, try direct upload
+            // If image processing fails, try direct upload as a last resort
             if (move_uploaded_file($image['tmp_name'], $filepath)) {
                 $imagePath = 'uploads/products/' . $filename;
-                log_debug('Error recovery: Moved file directly', $imagePath);
+                log_debug('Error recovery: Moved file directly', [
+                    'path' => $imagePath,
+                    'size' => filesize($filepath) / (1024 * 1024) . ' MB'
+                ]);
             }
         }
     } else if (isset($_FILES['image'])) {
