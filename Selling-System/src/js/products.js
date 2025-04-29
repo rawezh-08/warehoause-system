@@ -358,16 +358,16 @@ function initializeEventHandlers() {
                 return;
             }
             
-            // Check file size (allow up to 20MB since we resize on server)
-            if (file.size > 5 * 1024 * 1024) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'هەڵە',
-                    text: 'قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت'
-                });
-                this.value = '';
-                return;
-            }
+            // // Check file size (allow up to 20MB since we resize on server)
+            // if (file.size > 5 * 1024 * 1024) {
+            //     Swal.fire({
+            //         icon: 'error',
+            //         title: 'هەڵە',
+            //         text: 'قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت'
+            //     });
+            //     this.value = '';
+            //     return;
+            // }
             
             const reader = new FileReader();
             reader.onload = function(e) {

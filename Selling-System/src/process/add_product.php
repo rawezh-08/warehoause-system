@@ -171,11 +171,11 @@ try {
             error_log("Compressed image size: " . round($compressedSize / 1024 / 1024, 2) . "MB");
             error_log("Compression ratio: " . round(($originalSize - $compressedSize) / $originalSize * 100, 2) . "%");
             
-            if ($compressedSize > 5 * 1024 * 1024) {
-                // If still too large, delete the file and throw error
-                unlink($filepath);
-                throw new Exception('قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت');
-            }
+            // if ($compressedSize > 5 * 1024 * 1024) {
+            //     // If still too large, delete the file and throw error
+            //     unlink($filepath);
+            //     throw new Exception('قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت');
+            // }
             
             $imagePath = 'uploads/products/' . $filename;
         }
