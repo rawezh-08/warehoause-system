@@ -688,21 +688,9 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <div class="container-fluid">
                     <!-- Page Header -->
                     <div class="row mb-4 align-items-center">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <h3 class="page-title mb-0">ڕاپۆرتەکان</h3>
                             <p class="text-muted mb-0">ڕاپۆرتی هەموو چالاکییەکانی کۆگا</p>
-                        </div>
-                        <div class="col-md-6 d-flex justify-content-md-end mt-3 mt-md-0">
-                            <div class="d-flex gap-3">
-                                <div class="filter-dropdown">
-                                    <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
-                                        <i class="fas fa-filter me-2"></i> فلتەرەکان
-                                    </button>
-                                </div>
-                                <button class="btn btn-primary" onclick="window.print()">
-                                    <i class="fas fa-print me-2"></i> چاپکردن
-                                </button>
-                            </div>
                         </div>
                     </div>
 
