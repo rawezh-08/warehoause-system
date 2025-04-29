@@ -48,10 +48,10 @@ try {
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
         $image = $_FILES['image'];
         
-        // Validate file type
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        if (!in_array($image['type'], $allowedTypes)) {
-            throw new Exception('تەنها فایلی وێنە (JPG, PNG, GIF) قبوڵ دەکرێت');
+        // Check if file is actually an image using getimagesize
+        $imageInfo = getimagesize($image['tmp_name']);
+        if ($imageInfo === false) {
+            throw new Exception('تەنها فایلی وێنە قبوڵ دەکرێت');
         }
         
         // Validate file size (max 5MB)
@@ -67,7 +67,7 @@ try {
             mkdir($uploadDir, 0777, true);
         }
         
-        // Generate unique filename
+        // Generate unique filename with original extension
         $extension = pathinfo($image['name'], PATHINFO_EXTENSION);
         $filename = uniqid() . '_' . time() . '.' . $extension;
         $filepath = $uploadDir . $filename;

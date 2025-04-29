@@ -46,15 +46,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mkdir($upload_dir, 0777, true);
             }
 
+            // Check if file is actually an image using getimagesize
+            $imageInfo = getimagesize($_FILES['image']['tmp_name']);
+            if ($imageInfo === false) {
+                throw new Exception('تەنها فایلی وێنە قبوڵ دەکرێت');
+            }
+            
             // Get file extension
             $file_extension = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
-            
-            // Allowed file types
-            $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
-            
-            if (!in_array($file_extension, $allowed_types)) {
-                throw new Exception('جۆری فایلەکە ڕێگەپێدراو نییە. تەنها jpg, jpeg, png, gif ڕێگەپێدراون.');
-            }
             
             // Generate unique filename
             $new_filename = uniqid('product_') . '.' . $file_extension;
@@ -75,8 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Update image path in database
                 $image_path = 'uploads/products/' . $new_filename;
                 $image_url = "../../api/product_image.php?filename=" . urlencode($new_filename);
-            } else {
-                throw new Exception('کێشەیەک هەیە لە باکردنی وێنەکە');
             }
         }
 
