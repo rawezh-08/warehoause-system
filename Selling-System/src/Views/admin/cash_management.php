@@ -202,12 +202,7 @@ if (!empty($adminIds)) {
                                                             case 'deposit':
                                                                 echo '<span class="badge bg-success">پارەی زیادە</span>';
                                                                 break;
-                                                            case 'withdrawal':
-                                                                echo '<span class="badge bg-danger">پارەی دەرکردن</span>';
-                                                                break;
-                                                            case 'adjustment':
-                                                                echo '<span class="badge bg-warning">گۆڕانکاری</span>';
-                                                                break;
+                                            
                                                         }
                                                         ?>
                                                     </td>
