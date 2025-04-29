@@ -711,25 +711,20 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <div class="card">
                             <div class="card-body">
                                 <form id="reportFilters" class="row g-3">
-                                    <!-- Date Filter -->
-                                    <div class="col-md-6">
-                                        <label class="form-label">ماوەی بەروار</label>
-                                        <select class="form-select" id="dateFilter">
-                                            <option value="">هەموو کات</option>
-                                            <option value="today">ئەمڕۆ</option>
-                                            <option value="thisWeek">ئەم هەفتەیە</option>
-                                            <option value="thisMonth">ئەم مانگە</option>
-                                            <option value="thisYear">ئەم ساڵە</option>
-                                        </select>
+                                    <!-- Date Filter Options -->
+                                    <div class="col-12">
+                                        <div class="btn-group w-100" role="group">
+                                            <button type="button" class="btn btn-outline-primary active" data-date-filter="today">ئەمڕۆ</button>
+                                            <button type="button" class="btn btn-outline-primary" data-date-filter="thisWeek">ئەم هەفتەیە</button>
+                                            <button type="button" class="btn btn-outline-primary" data-date-filter="thisMonth">ئەم مانگە</button>
+                                            <button type="button" class="btn btn-outline-primary" data-date-filter="thisYear">ئەم ساڵە</button>
+                                        </div>
                                     </div>
 
                                     <!-- Filter Actions -->
                                     <div class="col-12 text-end">
                                         <button type="button" class="btn btn-secondary" id="resetFilters">
                                             <i class="fas fa-undo me-2"></i> پاککردنەوە
-                                        </button>
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-search me-2"></i> جێبەجێکردن
                                         </button>
                                     </div>
                                 </form>
@@ -2085,67 +2080,138 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <!-- Add this before the closing </body> tag -->
     <script>
         $(document).ready(function() {
-            // Handle form submission
-            $('#reportFilters').on('submit', function(e) {
-                e.preventDefault();
-                applyFilters();
+            // Handle date filter button clicks
+            $('.btn-group .btn[data-date-filter]').click(function() {
+                // Remove active class from all buttons
+                $('.btn-group .btn').removeClass('active');
+                // Add active class to clicked button
+                $(this).addClass('active');
+                
+                // Get the selected date filter
+                const dateFilter = $(this).data('date-filter');
+                applyDateFilter(dateFilter);
             });
 
             // Reset filters
             $('#resetFilters').click(function() {
-                $('#dateFilter').val('');
-                applyFilters();
+                // Remove active class from all buttons
+                $('.btn-group .btn').removeClass('active');
+                // Add active class to today button
+                $('.btn-group .btn[data-date-filter="today"]').addClass('active');
+                
+                // Apply today filter
+                applyDateFilter('today');
             });
 
-            // Function to apply filters
-            function applyFilters() {
-                const dateFilter = $('#dateFilter').val();
-                let startDate = '';
-                let endDate = '';
+            // Function to apply date filter
+            function applyDateFilter(dateFilter) {
+                let startDate, endDate;
+                
+                switch(dateFilter) {
+                    case 'today':
+                        startDate = moment().startOf('day');
+                        endDate = moment().endOf('day');
+                        break;
+                    case 'thisWeek':
+                        startDate = moment().startOf('week');
+                        endDate = moment().endOf('week');
+                        break;
+                    case 'thisMonth':
+                        startDate = moment().startOf('month');
+                        endDate = moment().endOf('month');
+                        break;
+                    case 'thisYear':
+                        startDate = moment().startOf('year');
+                        endDate = moment().endOf('year');
+                        break;
+                }
 
-                // Set date range based on selected filter
-                if (dateFilter) {
-                    const today = new Date();
-                    switch(dateFilter) {
-                        case 'today':
-                            startDate = today.toISOString().split('T')[0];
-                            endDate = startDate;
-                            break;
-                        case 'thisWeek':
-                            const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
-                            const endOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 6));
-                            startDate = startOfWeek.toISOString().split('T')[0];
-                            endDate = endOfWeek.toISOString().split('T')[0];
-                            break;
-                        case 'thisMonth':
-                            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-                            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                            startDate = startOfMonth.toISOString().split('T')[0];
-                            endDate = endOfMonth.toISOString().split('T')[0];
-                            break;
-                        case 'thisYear':
-                            const startOfYear = new Date(today.getFullYear(), 0, 1);
-                            const endOfYear = new Date(today.getFullYear(), 11, 31);
-                            startDate = startOfYear.toISOString().split('T')[0];
-                            endDate = endOfYear.toISOString().split('T')[0];
-                            break;
+                // Make AJAX call to update report data
+                $.ajax({
+                    url: 'get_report_data.php',
+                    method: 'POST',
+                    data: {
+                        startDate: startDate.format('YYYY-MM-DD'),
+                        endDate: endDate.format('YYYY-MM-DD')
+                    },
+                    success: function(response) {
+                        // Update the report data
+                        updateReportData(response);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching report data:', error);
+                    }
+                });
+            }
+
+            // Function to update report data
+            function updateReportData(data) {
+                // Update statistics cards
+                $('.stat-value').each(function() {
+                    const statId = $(this).data('stat-id');
+                    if (data.stats && data.stats[statId]) {
+                        $(this).text(data.stats[statId]);
+                    }
+                });
+
+                // Update charts
+                if (data.charts) {
+                    // Update monthly profit chart
+                    if (data.charts.monthlyProfit) {
+                        monthlyProfitChart.updateSeries(data.charts.monthlyProfit);
+                    }
+                    
+                    // Update category sales chart
+                    if (data.charts.categorySales) {
+                        categorySalesChart.updateSeries(data.charts.categorySales);
+                    }
+                    
+                    // Update sales forecast chart
+                    if (data.charts.salesForecast) {
+                        salesForecastChart.updateSeries(data.charts.salesForecast);
+                    }
+                    
+                    // Update cash flow chart
+                    if (data.charts.cashFlow) {
+                        cashFlowChart.updateSeries(data.charts.cashFlow);
                     }
                 }
 
-                const filters = {
-                    startDate: startDate,
-                    endDate: endDate,
-                    paymentType: $('#paymentType').val(),
-                    transactionType: $('#transactionType').val(),
-                    category: $('#categoryFilter').val()
-                };
-
-                // Here you would typically make an AJAX call to update the report data
-                console.log('Applying filters:', filters);
-                
-                // For now, we'll just reload the page with the filters
-                window.location.href = 'report.php?' + $.param(filters);
+                // Update tables
+                if (data.tables) {
+                    // Update low stock alert table
+                    if (data.tables.lowStock) {
+                        updateTable('#lowStockTable tbody', data.tables.lowStock);
+                    }
+                    
+                    // Update best selling products table
+                    if (data.tables.bestSelling) {
+                        updateTable('#bestSellingTable tbody', data.tables.bestSelling);
+                    }
+                    
+                    // Update customer debt table
+                    if (data.tables.customerDebt) {
+                        updateTable('#customerDebtTable tbody', data.tables.customerDebt);
+                    }
+                }
             }
+
+            // Helper function to update table data
+            function updateTable(selector, data) {
+                const tbody = $(selector);
+                tbody.empty();
+                
+                data.forEach(function(row) {
+                    const tr = $('<tr>');
+                    Object.values(row).forEach(function(cell) {
+                        tr.append($('<td>').text(cell));
+                    });
+                    tbody.append(tr);
+                });
+            }
+
+            // Initialize with today's data
+            applyDateFilter('today');
         });
     </script>
 </body>
