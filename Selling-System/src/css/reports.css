@@ -197,6 +197,8 @@
         letter-spacing: 0.5px;
         text-transform: uppercase;
         font-weight: 500;
+        background-clip: text;
+        -webkit-background-clip: text;
     }
     
     .stat-value {
@@ -208,6 +210,8 @@
         background: linear-gradient(45deg, var(--text-primary), #4a4a4a);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        background-clip: text;
+        -webkit-background-clip: text;
     }
     
     .stat-change {

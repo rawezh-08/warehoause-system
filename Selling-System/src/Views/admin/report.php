@@ -712,9 +712,6 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
  
     <style>
         .date-filter-btn {
-            width: 100px;
-            height: 100px;
-          
             padding: 8px 16px;
             font-size: 0.9rem;
             margin: 0 2px;
@@ -725,10 +722,11 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
             align-items: center;
             justify-content: center;
             transition: all 0.3s ease;
-           
-            background-color: white;
+            background: none;
             color: #495057;
             font-weight: 500;
+            border: none;
+            position: relative;
         }
         
         .date-filter-btn i {
@@ -737,25 +735,31 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
         
         .date-filter-btn.active {
+            color: #4361ee;
+            background: none;
+            border: none;
+        }
+
+        .date-filter-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
             background-color: #4361ee;
-            color: white;
-            border-color: #4361ee;
-            box-shadow: 0 2px 4px rgba(67, 97, 238, 0.2);
         }
         
         .date-filter-btn:hover:not(.active) {
-            background-color: #f8f9fa;
-            border-color: #4361ee;
+            background: none;
             color: #4361ee;
         }
         
         .filter-container {
             background-color: white;
-            border-radius: 12px;
             padding: 16px 20px;
             margin-bottom: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border: 1px solid #edf2f9;
+            border: none;
         }
 
         .btn-group {
