@@ -712,53 +712,73 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
  
     <style>
         .date-filter-btn {
-            border-radius: 20px;
-            padding: 5px 15px;
+            border-radius: 8px;
+            padding: 8px 16px;
             font-size: 0.9rem;
             margin: 0 2px;
-            min-width: 100px;
+            min-width: 110px;
             text-align: center;
             white-space: nowrap;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             transition: all 0.3s ease;
+            border: 1px solid #dee2e6;
+            background-color: white;
+            color: #495057;
+            font-weight: 500;
         }
         
         .date-filter-btn i {
-            margin-left: 5px;
+            margin-left: 8px;
+            font-size: 0.9rem;
         }
         
         .date-filter-btn.active {
             background-color: #4361ee;
             color: white;
             border-color: #4361ee;
+            box-shadow: 0 2px 4px rgba(67, 97, 238, 0.2);
         }
         
         .date-filter-btn:hover:not(.active) {
-            background-color: #e9ecef;
-            border-color: #dee2e6;
+            background-color: #f8f9fa;
+            border-color: #4361ee;
+            color: #4361ee;
         }
         
         .filter-container {
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            background-color: white;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid #edf2f9;
         }
 
         .btn-group {
             display: flex;
             flex-wrap: wrap;
-            gap: 5px;
+            gap: 8px;
             justify-content: flex-end;
+        }
+
+        .filter-title {
+            color: #495057;
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .filter-title i {
+            color: #4361ee;
+            margin-left: 8px;
         }
 
         @media (max-width: 768px) {
             .filter-container .d-flex {
                 flex-direction: column;
-                gap: 10px;
+                gap: 16px;
             }
             
             .btn-group {
@@ -769,6 +789,10 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
             .date-filter-btn {
                 flex: 1;
                 min-width: auto;
+            }
+
+            .filter-title {
+                text-align: center;
             }
         }
     </style>
@@ -799,21 +823,21 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <div class="col-12">
                             <div class="filter-container">
                                 <div class="d-flex justify-content-between align-items-center flex-wrap">
-                                    <h5 class="mb-0 mb-md-0"><i class="fas fa-filter me-2"></i> فلتەر بە پێی بەروار</h5>
+                                    <h5 class="filter-title"><i class="fas fa-filter"></i> فلتەر بە پێی بەروار</h5>
                                     <div class="btn-group">
-                                        <a href="?date_filter=today" class="btn btn-outline-primary date-filter-btn <?php echo $dateFilter == 'today' ? 'active' : ''; ?>">
+                                        <a href="?date_filter=today" class="btn date-filter-btn <?php echo $dateFilter == 'today' ? 'active' : ''; ?>">
                                             <i class="fas fa-calendar-day"></i> ئەمڕۆ
                                         </a>
-                                        <a href="?date_filter=this_week" class="btn btn-outline-primary date-filter-btn <?php echo $dateFilter == 'this_week' ? 'active' : ''; ?>">
+                                        <a href="?date_filter=this_week" class="btn date-filter-btn <?php echo $dateFilter == 'this_week' ? 'active' : ''; ?>">
                                             <i class="fas fa-calendar-week"></i> ئەم هەفتە
                                         </a>
-                                        <a href="?date_filter=this_month" class="btn btn-outline-primary date-filter-btn <?php echo $dateFilter == 'this_month' ? 'active' : ''; ?>">
+                                        <a href="?date_filter=this_month" class="btn date-filter-btn <?php echo $dateFilter == 'this_month' ? 'active' : ''; ?>">
                                             <i class="fas fa-calendar-alt"></i> ئەم مانگە
                                         </a>
-                                        <a href="?date_filter=this_year" class="btn btn-outline-primary date-filter-btn <?php echo $dateFilter == 'this_year' ? 'active' : ''; ?>">
+                                        <a href="?date_filter=this_year" class="btn date-filter-btn <?php echo $dateFilter == 'this_year' ? 'active' : ''; ?>">
                                             <i class="fas fa-calendar"></i> ئەم ساڵ
                                         </a>
-                                        <a href="?date_filter=all" class="btn btn-outline-primary date-filter-btn <?php echo $dateFilter == 'all' || $dateFilter == '' ? 'active' : ''; ?>">
+                                        <a href="?date_filter=all" class="btn date-filter-btn <?php echo $dateFilter == 'all' || $dateFilter == '' ? 'active' : ''; ?>">
                                             <i class="fas fa-infinity"></i> هەموو کات
                                         </a>
                                     </div>
