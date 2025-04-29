@@ -48,11 +48,6 @@ try {
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
         $image = $_FILES['image'];
         
-        // Check file size (5MB max)
-        if ($image['size'] > 5 * 1024 * 1024) {
-            throw new Exception('قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت');
-        }
-        
         // Check if file is actually an image using getimagesize
         $imageInfo = @getimagesize($image['tmp_name']);
         if ($imageInfo === false) {
@@ -152,6 +147,14 @@ try {
             // Free up memory
             imagedestroy($sourceImage);
             imagedestroy($destinationImage);
+            
+            // Check the size of the compressed image
+            $compressedSize = filesize($filepath);
+            if ($compressedSize > 5 * 1024 * 1024) {
+                // If still too large, delete the file and throw error
+                unlink($filepath);
+                throw new Exception('قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت');
+            }
             
             $imagePath = 'uploads/products/' . $filename;
         }
