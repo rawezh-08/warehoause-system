@@ -712,6 +712,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Clean number inputs (remove commas)
             cleanNumberInputs();
             
+            // Set selling_price_wholesale to selling_price_single if empty
+            const sellingPriceWholesale = document.getElementById('selling_price_wholesale');
+            if (sellingPriceWholesale && !sellingPriceWholesale.value) {
+                sellingPriceWholesale.value = document.getElementById('sellingPrice').value;
+            }
+            
             // Create FormData object
             const formData = new FormData(this);
             

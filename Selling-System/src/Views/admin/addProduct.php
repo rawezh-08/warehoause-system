@@ -170,7 +170,7 @@ require_once '../../process/addProduct_logic.php';
                                                 <div class="col-md-4 mb-3">
                                                     <label for="selling_price_wholesale" class="form-label">نرخی فرۆشتن (کۆمەڵ)</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="selling_price_wholesale" name="selling_price_wholesale" class="form-control" placeholder="نرخی فرۆشتن (کۆمەڵ)">
+                                                        <input type="text" id="selling_price_wholesale" name="selling_price_wholesale" class="form-control" placeholder="نرخی فرۆشتن (کۆمەڵ)" required>
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
