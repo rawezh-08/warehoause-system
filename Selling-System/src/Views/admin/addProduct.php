@@ -156,19 +156,8 @@ require_once '../../process/addProduct_logic.php';
                                                 <div class="col-md-4 mb-3" style="direction: rtl;">
                                                     <label for="buyingPrice" class="form-label">نرخی کڕین</label>
                                                     <div class="input-group">
-                                                        <input type="number" 
-                                                               id="buyingPrice" 
-                                                               name="purchase_price" 
-                                                               class="form-control" 
-                                                               placeholder="نرخی کڕین" 
-                                                               step="0.1"
-                                                               min="0"
-                                                               pattern="[0-9]*[.,]?[0-9]+"
-                                                               required>
+                                                        <input type="number" id="buyingPrice" name="purchase_price" class="form-control" placeholder="نرخی کڕین" step="0.01" required>
                                                         <span class="input-group-text">د.ع</span>
-                                                    </div>
-                                                    <div class="invalid-feedback">
-                                                        تکایە نرخێکی دروست بنووسە
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4 mb-3">
