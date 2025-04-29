@@ -29,6 +29,10 @@
     border-color: var(--primary-color);
 }
 
+.select2{
+    border-radius: var(--border-radius-lg);
+}
+
 /* Form validation */
 .is-invalid {
     border-color: var(--danger-color) !important;

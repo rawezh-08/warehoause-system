@@ -16,7 +16,7 @@
 @import 'shared/tables.css';
 @import 'shared/uploads.css';
 @import 'shared/components/sidebar.css';
-
+@import 'shared/forms.css';
 
 @font-face {
     font-family: 'Rabar';
