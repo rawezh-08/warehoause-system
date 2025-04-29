@@ -45,7 +45,21 @@ try {
 
     // Handle image upload
     $imagePath = null;
-    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+    if (isset($_FILES['image'])) {
+        // Check for upload errors
+        if ($_FILES['image']['error'] !== UPLOAD_ERR_OK) {
+            $errorMessage = match($_FILES['image']['error']) {
+                UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'قەبارەی وێنەکە زۆر گەورەیە. تکایە وێنەیەکی بچووکتر هەڵبژێرە.',
+                UPLOAD_ERR_PARTIAL => 'تەنها بەشێک لە وێنەکە هەڵگرا. تکایە دووبارە هەوڵ بدەوە.',
+                UPLOAD_ERR_NO_FILE => 'هیچ وێنەیەک هەڵنەبژێردراوە.',
+                UPLOAD_ERR_NO_TMP_DIR => 'فۆڵدەری کاتییەکە بوونی نییە.',
+                UPLOAD_ERR_CANT_WRITE => 'نەتوانرا وێنەکە هەڵبگرێت.',
+                UPLOAD_ERR_EXTENSION => 'هەڵەیەک ڕوویدا لە کاتی هەڵگرتنی وێنەکە.',
+                default => 'هەڵەیەک ڕوویدا لە کاتی هەڵگرتنی وێنەکە.'
+            };
+            throw new Exception($errorMessage);
+        }
+
         $image = $_FILES['image'];
         
         // Log original file size
