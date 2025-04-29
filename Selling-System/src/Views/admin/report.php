@@ -1206,29 +1206,6 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </div>
                     </div>
 
-                    <!-- Monthly Profit/Loss Analysis and Category Sales -->
-                    <div class="row mb-4">
-                        <!-- Monthly Profit/Loss Analysis -->
-                        <div class="col-md-8 mb-4 mb-md-0">
-                            <div class="report-card">
-                                <div class="card-body">
-                                    <h5 class="card-title">شیکاری قازانج و زەرەر بەپێی مانگ</h5>
-                                    <div id="monthlyProfitAnalysisChart" style="height: 350px;"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Category Sales Analysis -->
-                        <div class="col-md-4">
-                            <div class="report-card">
-                                <div class="card-body">
-                                    <h5 class="card-title">فرۆشتن بەپێی کاتەگۆری</h5>
-                                    <div id="categorySalesAnalysisChart" style="height: 350px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Sales Forecast and Cash Flow -->
                     <div class="row mb-4">
                         <!-- Sales Forecast -->
@@ -1255,44 +1232,6 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </div>
                     </div>
 
-                    <!-- Customer Behavior Analysis -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="report-card">
-                                <div class="card-body">
-                                    <h5 class="card-title">شیکاری هەڵسوکەوتی کڕیارەکان</h5>
-                                    <div class="table-responsive">
-                                        <table class="table table-hover report-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>کڕیار</th>
-                                                    <th>ژمارەی کڕین</th>
-                                                    <th>کۆی خەرجکردن</th>
-                                                    <th>تێکڕای قەرز</th>
-                                                    <th>دوایین کڕین</th>
-                                                    <th>دەستکاری</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php foreach ($customerBehaviorAnalysis as $customer): ?>
-                                                    <tr>
-                                                        <td><?php echo $customer['name']; ?></td>
-                                                        <td><?php echo $customer['purchase_count']; ?></td>
-                                                        <td><?php echo number_format($customer['total_spent']); ?> د.ع</td>
-                                                        <td><?php echo number_format($customer['avg_remaining']); ?> د.ع</td>
-                                                        <td><?php echo date('Y-m-d', strtotime($customer['last_purchase_date'])); ?> (<?php echo $customer['days_since_last_purchase']; ?> ڕۆژ)</td>
-                                                        <td>
-                                                            <a href="customerProfile.php?id=<?php echo $customer['id']; ?>" class="btn btn-sm btn-outline-primary">پڕۆفایل</a>
-                                                        </td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -1706,18 +1645,6 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
             if (document.querySelector("#categorySalesChart")) {
                 const categorySalesChart = new ApexCharts(document.querySelector("#categorySalesChart"), categorySalesOptions);
                 categorySalesChart.render();
-            }
-
-            // Initialize the monthly profit analysis chart
-            if (document.querySelector("#monthlyProfitAnalysisChart")) {
-                const monthlyProfitAnalysisChart = new ApexCharts(document.querySelector("#monthlyProfitAnalysisChart"), monthlyProfitOptions);
-                monthlyProfitAnalysisChart.render();
-            }
-
-            // Initialize the category sales analysis chart
-            if (document.querySelector("#categorySalesAnalysisChart")) {
-                const categorySalesAnalysisChart = new ApexCharts(document.querySelector("#categorySalesAnalysisChart"), categorySalesOptions);
-                categorySalesAnalysisChart.render();
             }
 
             // Sales Forecast Chart
