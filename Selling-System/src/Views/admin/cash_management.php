@@ -3,30 +3,42 @@
 require_once '../../includes/auth.php';
 require_once '../../config/database.php';
 
-// Handle form submissions
+// Handle form submissions and delete actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
-        $amount = floatval($_POST['amount']);
-        $transaction_type = $_POST['transaction_type'];
-        $notes = $_POST['notes'];
-        $created_by = $_SESSION['user_id'];
+        if ($_POST['action'] === 'delete_transaction') {
+            // Handle delete action
+            $transaction_id = intval($_POST['transaction_id']);
+            try {
+                $stmt = $conn->prepare("DELETE FROM cash_management WHERE id = ?");
+                $stmt->execute([$transaction_id]);
+                $success = true;
+                $success_message = "سەرکەوتوویی سڕایەوە";
+            } catch (PDOException $e) {
+                $error = "هەڵەیەک ڕوویدا لە کاتی سڕینەوە: " . $e->getMessage();
+            }
+        } else if ($_POST['action'] === 'add_transaction') {
+            // Existing add transaction code...
+            $amount = floatval($_POST['amount']);
+            $transaction_type = $_POST['transaction_type'];
+            $notes = $_POST['notes'];
+            $created_by = $_SESSION['user_id'];
 
-        // For withdrawals, make amount negative
-        if ($transaction_type === 'withdrawal') {
-            $amount = -$amount;
-        }
+            if ($transaction_type === 'withdrawal') {
+                $amount = -$amount;
+            }
 
-        try {
-            $stmt = $conn->prepare("
-                INSERT INTO cash_management (amount, transaction_type, notes, created_by)
-                VALUES (?, ?, ?, ?)
-            ");
-            $stmt->execute([$amount, $transaction_type, $notes, $created_by]);
-            
-            // Set success flag instead of redirecting
-            $success = true;
-        } catch (PDOException $e) {
-            $error = "هەڵەیەک ڕوویدا: " . $e->getMessage();
+            try {
+                $stmt = $conn->prepare("
+                    INSERT INTO cash_management (amount, transaction_type, notes, created_by)
+                    VALUES (?, ?, ?, ?)
+                ");
+                $stmt->execute([$amount, $transaction_type, $notes, $created_by]);
+                $success = true;
+                $success_message = "سەرکەوتوویی تۆمارکرا";
+            } catch (PDOException $e) {
+                $error = "هەڵەیەک ڕوویدا: " . $e->getMessage();
+            }
         }
     }
 }
@@ -45,6 +57,7 @@ $offset = ($page - 1) * $records_per_page;
 // Get transaction history with pagination
 $stmt = $conn->prepare("
     SELECT 
+        id,
         amount,
         transaction_type,
         notes,
@@ -174,6 +187,7 @@ $total_pages = ceil($total_records / $records_per_page);
                                                     <th>جۆری پارە</th>
                                                     <th>بڕی پارە</th>
                                                     <th>تێبینی</th>
+                                                    <th>کردارەکان</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -189,7 +203,6 @@ $total_pages = ceil($total_records / $records_per_page);
                                                             case 'deposit':
                                                                 echo '<span class="badge bg-success">پارەی زیادە</span>';
                                                                 break;
-                                            
                                                         }
                                                         ?>
                                                     </td>
@@ -197,6 +210,13 @@ $total_pages = ceil($total_records / $records_per_page);
                                                         <?php echo number_format($transaction['amount']); ?> د.ع
                                                     </td>
                                                     <td><?php echo htmlspecialchars($transaction['notes']); ?></td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-danger delete-transaction" 
+                                                                data-id="<?php echo $transaction['id']; ?>"
+                                                                data-amount="<?php echo number_format($transaction['amount']); ?>">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </td>
                                                 </tr>
                                                 <?php endforeach; ?>
                                             </tbody>
@@ -269,11 +289,46 @@ $total_pages = ceil($total_records / $records_per_page);
                 }
             });
             
+            // Handle delete transaction
+            $('.delete-transaction').on('click', function() {
+                const transactionId = $(this).data('id');
+                const amount = $(this).data('amount');
+                
+                Swal.fire({
+                    title: 'دڵنیای لە سڕینەوە؟',
+                    text: `ئایا دڵنیای لە سڕینەوەی ئەم تۆمارە بە بڕی ${amount} د.ع؟`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'بەڵێ، بیسڕەوە',
+                    cancelButtonText: 'نەخێر',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Create and submit form
+                        const form = $('<form>', {
+                            'method': 'POST',
+                            'action': ''
+                        }).append($('<input>', {
+                            'type': 'hidden',
+                            'name': 'action',
+                            'value': 'delete_transaction'
+                        })).append($('<input>', {
+                            'type': 'hidden',
+                            'name': 'transaction_id',
+                            'value': transactionId
+                        }));
+                        
+                        $('body').append(form);
+                        form.submit();
+                    }
+                });
+            });
+
             <?php if (isset($success)): ?>
             // Show success message with SweetAlert2
             Swal.fire({
                 title: 'سەرکەوتوو!',
-                text: 'سەرکەوتوویی تۆمارکرا',
+                text: '<?php echo $success_message; ?>',
                 icon: 'success',
                 confirmButtonText: 'باشە'
             }).then((result) => {
