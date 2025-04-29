@@ -156,21 +156,21 @@ require_once '../../process/addProduct_logic.php';
                                                 <div class="col-md-4 mb-3" style="direction: rtl;">
                                                     <label for="buyingPrice" class="form-label">نرخی کڕین</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="buyingPrice" name="purchase_price" class="form-control decimal-input" placeholder="نرخی کڕین" required>
+                                                        <input type="text" id="buyingPrice" name="purchase_price" class="form-control" placeholder="نرخی کڕین" required>
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label for="sellingPrice" class="form-label">نرخی فرۆشتن</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="sellingPrice" name="selling_price_single" class="form-control decimal-input" placeholder="نرخی فرۆشتن" required>
+                                                        <input type="text" id="sellingPrice" name="selling_price_single" class="form-control" placeholder="نرخی فرۆشتن" required>
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label for="selling_price_wholesale" class="form-label">نرخی فرۆشتن (کۆمەڵ)</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="selling_price_wholesale" name="selling_price_wholesale" class="form-control decimal-input" placeholder="نرخی فرۆشتن (کۆمەڵ)" required>
+                                                        <input type="text" id="selling_price_wholesale" name="selling_price_wholesale" class="form-control" placeholder="نرخی فرۆشتن (کۆمەڵ)" required>
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                     <div class="invalid-feedback">
@@ -384,93 +384,6 @@ require_once '../../process/addProduct_logic.php';
             // Clear the form when the modal is closed
             $('#addCategoryModal').on('hidden.bs.modal', function() {
                 $('#addCategoryForm')[0].reset();
-            });
-        });
-    </script>
-
-    <!-- Add this before the closing </body> tag -->
-    <script>
-        $(document).ready(function() {
-            // Function to handle decimal input
-            function handleDecimalInput(input) {
-                // Replace Arabic decimal with English decimal
-                let value = input.value.replace(/٫/g, '.');
-                
-                // Remove any non-numeric characters except decimal point
-                value = value.replace(/[^\d.]/g, '');
-                
-                // Ensure only one decimal point
-                let parts = value.split('.');
-                if (parts.length > 2) {
-                    value = parts[0] + '.' + parts.slice(1).join('');
-                }
-                
-                // Limit to 2 decimal places
-                if (parts.length > 1 && parts[1].length > 2) {
-                    value = parts[0] + '.' + parts[1].substring(0, 2);
-                }
-                
-                input.value = value;
-            }
-
-            // Handle input events
-            $('.decimal-input').on('input', function(e) {
-                handleDecimalInput(this);
-            });
-
-            // Handle keypress events
-            $('.decimal-input').on('keypress', function(e) {
-                // Get the pressed key
-                let charCode = e.which ? e.which : e.keyCode;
-                
-                // Allow special keys (backspace, delete, arrows, etc)
-                if (e.ctrlKey || e.altKey || e.metaKey ||
-                    charCode < 32 || // Control characters
-                    (charCode >= 37 && charCode <= 40)) { // Arrow keys
-                    return true;
-                }
-                
-                // Get the pressed character
-                let char = String.fromCharCode(charCode);
-                
-                // Allow numbers
-                if (/[0-9]/.test(char)) {
-                    return true;
-                }
-                
-                // Allow decimal point (both English and Arabic)
-                if (char === '.' || char === '٫') {
-                    // Check if there's already a decimal point
-                    let value = this.value;
-                    if (!value.includes('.') && !value.includes('٫')) {
-                        return true;
-                    }
-                }
-                
-                // Block all other characters
-                e.preventDefault();
-                return false;
-            });
-
-            // Handle paste events
-            $('.decimal-input').on('paste', function(e) {
-                e.preventDefault();
-                let pastedData = (e.originalEvent.clipboardData || window.clipboardData).getData('text');
-                
-                // Clean the pasted data
-                pastedData = pastedData.replace(/[^\d.٫]/g, ''); // Remove anything that's not a number or decimal
-                pastedData = pastedData.replace(/٫/g, '.'); // Replace Arabic decimal with English decimal
-                
-                // Insert at cursor position
-                let startPos = this.selectionStart;
-                let endPos = this.selectionEnd;
-                let value = this.value;
-                
-                this.value = value.substring(0, startPos) + pastedData + value.substring(endPos);
-                handleDecimalInput(this);
-                
-                // Set cursor position after pasted text
-                this.setSelectionRange(startPos + pastedData.length, startPos + pastedData.length);
             });
         });
     </script>

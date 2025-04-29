@@ -636,59 +636,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Function to format number inputs
-    function formatNumber(input) {
-        // Remove any non-numeric characters except decimal point and minus sign
-        let value = input.value.replace(/[^\d.-]/g, '');
-        
-        // Ensure only one decimal point
-        let parts = value.split('.');
-        if (parts.length > 2) {
-            value = parts[0] + '.' + parts.slice(1).join('');
-        }
-        
-        // Limit to 2 decimal places
-        if (parts.length > 1 && parts[1].length > 2) {
-            value = parts[0] + '.' + parts[1].substring(0, 2);
-        }
-        
-        input.value = value;
-    }
-
-    // Clean number inputs
+    // زیادکردنی فانکشن بۆ پاککردنەوەی کۆماکان لە ژمارەکان
     function cleanNumberInputs() {
-        const numberInputs = document.querySelectorAll('input[type="text"].decimal-input');
-        numberInputs.forEach(input => {
-            input.addEventListener('input', function() {
-                formatNumber(this);
-            });
-            
-            input.addEventListener('keypress', function(e) {
-                // Get the character that would be added
-                const char = String.fromCharCode(e.which);
-                
-                // Allow: numbers, decimal point, minus sign
-                if (!/[\d.-]/.test(char)) {
-                    e.preventDefault();
-                    return false;
-                }
-                
-                // Special handling for decimal point
-                if (char === '.') {
-                    // Prevent multiple decimal points
-                    if (this.value.includes('.')) {
-                        e.preventDefault();
-                        return false;
-                    }
-                }
-                
-                return true;
-            });
+        // پاککردنەوەی داتای ژمارەکان لە کۆما
+        const numberFields = [
+            'buyingPrice',
+            'sellingPrice',
+            'selling_price_wholesale',
+            'piecesPerBox',
+            'boxesPerSet',
+            'min_quantity',
+            'current_quantity'
+        ];
+        
+        numberFields.forEach(field => {
+            const input = document.getElementById(field);
+            if (input && input.value) {
+                // لابردنی کۆماکان
+                input.value = input.value.replace(/,/g, '');
+                console.log(`Cleaned ${field}: ${input.value}`);
+            }
         });
+        
+        // زیادکردنی پشتڕاستکردنەوە بۆ لەبار هەموو بەهاکان
+        return true;
     }
-
-    // Initialize number input handling
-    cleanNumberInputs();
     
     // Initialize by making sure we're on the correct tab and buttons are set up
     switchToTab('basic-info');
@@ -924,6 +896,18 @@ async function updateLatestProducts() {
             `;
         }
     }
+}
+
+// Format numbers with commas
+function formatNumber(input) {
+    // Remove all non-digit characters and commas
+    let value = input.value.replace(/[^\d]/g, '');
+    
+    // Add comma every three digits
+    value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    
+    // Update input value
+    input.value = value;
 }
 
 // Function to handle unit type changes
