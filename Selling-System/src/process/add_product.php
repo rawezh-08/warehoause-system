@@ -61,6 +61,11 @@ try {
             }
         }
         
+        // Validate file size (max 5MB)
+        if ($image['size'] > 5 * 1024 * 1024) {
+            throw new Exception('قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت');
+        }
+        
         // Upload directory
         $uploadDir = __DIR__ . '/../uploads/products/';
         
@@ -76,70 +81,9 @@ try {
         $filename = uniqid() . '_' . time() . '.' . $extension;
         $filepath = $uploadDir . $filename;
         
-        // Resize image if it's too large
-        $maxWidth = 800; // Maximum width in pixels
-        $maxHeight = 800; // Maximum height in pixels
-        $quality = 80; // JPEG quality (0-100)
-        
-        // Get original image dimensions
-        list($width, $height) = $imageInfo;
-        
-        // Calculate new dimensions
-        if ($width > $maxWidth || $height > $maxHeight) {
-            $ratio = min($maxWidth / $width, $maxHeight / $height);
-            $newWidth = round($width * $ratio);
-            $newHeight = round($height * $ratio);
-            
-            // Create new image
-            $newImage = imagecreatetruecolor($newWidth, $newHeight);
-            
-            // Handle transparency for PNG images
-            if ($extension === 'png') {
-                imagealphablending($newImage, false);
-                imagesavealpha($newImage, true);
-                $transparent = imagecolorallocatealpha($newImage, 255, 255, 255, 127);
-                imagefilledrectangle($newImage, 0, 0, $newWidth, $newHeight, $transparent);
-            }
-            
-            // Load original image
-            switch ($mimeType) {
-                case 'image/jpeg':
-                    $sourceImage = imagecreatefromjpeg($image['tmp_name']);
-                    break;
-                case 'image/png':
-                    $sourceImage = imagecreatefrompng($image['tmp_name']);
-                    break;
-                case 'image/gif':
-                    $sourceImage = imagecreatefromgif($image['tmp_name']);
-                    break;
-                default:
-                    throw new Exception('جۆری وێنەکە پشتگیری ناکرێت');
-            }
-            
-            // Resize image
-            imagecopyresampled($newImage, $sourceImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-            
-            // Save resized image
-            switch ($mimeType) {
-                case 'image/jpeg':
-                    imagejpeg($newImage, $filepath, $quality);
-                    break;
-                case 'image/png':
-                    imagepng($newImage, $filepath, round(9 * $quality / 100));
-                    break;
-                case 'image/gif':
-                    imagegif($newImage, $filepath);
-                    break;
-            }
-            
-            // Free memory
-            imagedestroy($newImage);
-            imagedestroy($sourceImage);
-        } else {
-            // If image is small enough, just move it
-            if (!move_uploaded_file($image['tmp_name'], $filepath)) {
-                throw new Exception('هەڵەیەک ڕوویدا لە کاتی هەڵگرتنی وێنەکە');
-            }
+        // Move uploaded file
+        if (!move_uploaded_file($image['tmp_name'], $filepath)) {
+            throw new Exception('هەڵەیەک ڕوویدا لە کاتی هەڵگرتنی وێنەکە');
         }
         
         $imagePath = 'uploads/products/' . $filename;

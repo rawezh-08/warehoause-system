@@ -140,6 +140,17 @@ document.addEventListener('DOMContentLoaded', function() {
         productImageInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
+                // Check file size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: 'قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت'
+                    });
+                    this.value = '';
+                    return;
+                }
+
                 // Check if file is an image
                 if (!file.type.startsWith('image/')) {
                     Swal.fire({
@@ -156,21 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 reader.onload = function(e) {
                     const preview = document.querySelector('.image-preview');
                     if (preview) {
-                        preview.innerHTML = `
-                            <img src="${e.target.result}" alt="Preview" style="max-width: 100%; max-height: 200px;">
-                            <button type="button" class="btn btn-sm btn-danger mt-2" id="removeImage">
-                                <i class="fas fa-trash"></i> سڕینەوەی وێنە
-                            </button>
-                        `;
-                        
-                        // Add event listener for remove button
-                        document.getElementById('removeImage').addEventListener('click', function() {
-                            productImageInput.value = '';
-                            preview.innerHTML = `
-                                <i class="fas fa-cloud-upload-alt"></i>
-                                <p>وێنە هەڵبژێرە</p>
-                            `;
-                        });
+                        preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 100%; max-height: 200px;">`;
                     }
                 };
                 reader.readAsDataURL(file);
