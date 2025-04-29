@@ -690,6 +690,14 @@ foreach ($payments as $payment) {
                     <label class="form-check-label" for="credit_only"><?php echo $t['credit_only']; ?></label>
                 </div>
             </div>
+
+            <div class="form-group">
+                <label for="show_debt_only" class="form-label d-block">&nbsp;</label>
+                <div class="form-check">
+                    <input type="checkbox" id="show_debt_only" name="show_debt_only" value="1" class="form-check-input" <?php echo isset($_GET['show_debt_only']) ? 'checked' : ''; ?>>
+                    <label class="form-check-label" for="show_debt_only">تەنها دۆخی قەرز نیشان بدە</label>
+                </div>
+            </div>
             
             <div class="form-group" style="flex: 0 0 auto;">
                 <a href="?<?php echo $customerId > 0 ? 'customer_id=' . $customerId : 'transaction_id=' . $transactionId; ?>&lang=<?php echo $lang; ?>" class="btn-reset">
@@ -742,7 +750,7 @@ foreach ($payments as $payment) {
             </div>
         </section>
 
-        <section class="items-section">
+        <section class="items-section" <?php echo isset($_GET['show_debt_only']) ? 'style="display: none;"' : ''; ?>>
             <h2 class="section-title">
                 <?php echo $t['purchase_history']; ?>
                 <?php if ($creditOnly): ?>
@@ -796,7 +804,7 @@ foreach ($payments as $payment) {
             </div>
 
             <h2 class="section-title"><?php echo $t['debt_return_history']; ?></h2>
-            <div class="table-responsive">
+            <div class="table-responsive" <?php echo isset($_GET['show_debt_only']) ? 'style="display: none;"' : ''; ?>>
                 <table class="items-table">
                     <thead>
                         <tr>
@@ -980,6 +988,24 @@ foreach ($payments as $payment) {
             url = url.slice(0, -1);
             window.location.href = url;
         }
+    });
+    </script>
+
+    <script>
+    document.getElementById('show_debt_only').addEventListener('change', function() {
+        const sections = document.querySelectorAll('.table-responsive');
+        sections.forEach(section => {
+            section.style.display = this.checked ? 'none' : '';
+        });
+        
+        // Update URL to maintain state on page refresh
+        const url = new URL(window.location.href);
+        if (this.checked) {
+            url.searchParams.set('show_debt_only', '1');
+        } else {
+            url.searchParams.delete('show_debt_only');
+        }
+        window.history.replaceState({}, '', url);
     });
     </script>
 </body>
