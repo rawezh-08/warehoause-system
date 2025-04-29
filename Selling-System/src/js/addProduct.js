@@ -1022,4 +1022,35 @@ document.addEventListener('DOMContentLoaded', function() {
     if (refreshButton) {
         refreshButton.addEventListener('click', updateLatestProducts);
     }
+});
+
+$('#saveQuickProduct').on('click', function(e) {
+    e.preventDefault();
+    console.log('Save button clicked');
+
+    // Get form data
+    const productData = {
+        name: $('#productName').val(),
+        category_id: $('#productCategory').val(),
+        unit_id: $('#productUnit').val(),
+        quantity: $('#productQuantity').val(),
+        purchase_price: $('#productPurchasePrice').val(),
+        selling_price_single: $('#productSellingPrice').val(),
+        selling_price_wholesale: $('#productWholesalePrice').val() || $('#productSellingPrice').val(),
+        code: 'Q' + Math.floor(Math.random() * 1000000),
+        barcode: Date.now().toString()
+    };
+
+    // Validate form
+    if (!$('#quickAddProductForm')[0].checkValidity()) {
+        console.log('Form validation failed');
+        $('#quickAddProductForm')[0].reportValidity();
+        return;
+    }
+
+    // Show loading state
+    const saveButton = $(this);
+    saveButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> چاوەڕێ بکە...');
+
+    // ... existing code ...
 }); 

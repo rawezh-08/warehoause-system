@@ -658,7 +658,7 @@ require_once '../../config/database.php';
                         </div>
                         <div class="mb-3">
                             <label for="productWholesalePrice" class="form-label">نرخی کۆ</label>
-                            <input type="number" class="form-control" id="productWholesalePrice">
+                            <input type="number" class="form-control" id="productWholesalePrice" required>
                         </div>
                     </form>
                 </div>

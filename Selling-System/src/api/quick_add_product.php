@@ -18,7 +18,7 @@ try {
     $unit_id = $_POST['unit_id'];
     $purchase_price = $_POST['purchase_price'];
     $selling_price_single = $_POST['selling_price_single'];
-    $selling_price_wholesale = $_POST['selling_price_wholesale'] ?? $selling_price_single;
+    $selling_price_wholesale = !empty($_POST['selling_price_wholesale']) ? $_POST['selling_price_wholesale'] : $selling_price_single;
     $code = $_POST['code'];
     $barcode = $_POST['barcode'];
     $quantity = intval($_POST['quantity']);
