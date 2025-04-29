@@ -23,9 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
             $stmt->execute([$amount, $transaction_type, $notes, $created_by]);
             
-            // Redirect to prevent form resubmission
-            header("Location: cash_management.php?success=1");
-            exit;
+            // Set success flag instead of redirecting
+            $success = true;
         } catch (PDOException $e) {
             $error = "هەڵەیەک ڕوویدا: " . $e->getMessage();
         }
@@ -77,6 +76,8 @@ $total_pages = ceil($total_records / $records_per_page);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <link rel="stylesheet" href="../../assets/css/custom.css">
     <!-- Page CSS -->
     <link rel="stylesheet" href="../../css/dashboard.css">
@@ -114,15 +115,6 @@ $total_pages = ceil($total_records / $records_per_page);
                         </div>
                     </div>
 
-                    <!-- Success Message -->
-                    <?php if (isset($_GET['success'])): ?>
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <i class="fas fa-check-circle me-2"></i>
-                        ئەمەڕەکە بە سەرکەوتوویی تۆمارکرا
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                    <?php endif; ?>
-
                     <!-- Error Message -->
                     <?php if (isset($error)): ?>
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -132,13 +124,14 @@ $total_pages = ceil($total_records / $records_per_page);
                     </div>
                     <?php endif; ?>
 
-                    <!-- Transaction Form -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
+                    <!-- Form and Transaction History Side by Side -->
+                    <div class="row">
+                        <!-- Transaction Form -->
+                        <div class="col-md-4">
                             <div class="card">
                                 <div class="card-body">
                                     <h5 class="card-title">زیادکردنی پارە</h5>
-                                    <form method="POST" action="">
+                                    <form method="POST" action="" id="cashForm">
                                         <input type="hidden" name="action" value="add_transaction">
                                         
                                         <div class="mb-3">
@@ -167,11 +160,9 @@ $total_pages = ceil($total_records / $records_per_page);
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Transaction History -->
-                    <div class="row">
-                        <div class="col-12">
+                        
+                        <!-- Transaction History -->
+                        <div class="col-md-8">
                             <div class="card">
                                 <div class="card-body">
                                     <h5 class="card-title">مێژووی پارەکان</h5>
@@ -253,6 +244,8 @@ $total_pages = ceil($total_records / $records_per_page);
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
 
     <!-- Global JS -->
     <script src="../../js/include-components.js"></script>
@@ -260,16 +253,36 @@ $total_pages = ceil($total_records / $records_per_page);
     <script>
         $(document).ready(function() {
             // Form validation
-            $('form').on('submit', function(e) {
+            $('#cashForm').on('submit', function(e) {
                 const amount = parseFloat($('#amount').val());
                 const transactionType = $('#transaction_type').val();
                 
                 if (amount <= 0) {
                     e.preventDefault();
-                    alert('تکایە بڕی پارەکە بە دروستی بنووسە');
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'تکایە بڕی پارەکە بە دروستی بنووسە',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
                     return false;
                 }
             });
+            
+            <?php if (isset($success)): ?>
+            // Show success message with SweetAlert2
+            Swal.fire({
+                title: 'سەرکەوتوو!',
+                text: 'سەرکەوتوویی تۆمارکرا',
+                icon: 'success',
+                confirmButtonText: 'باشە'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Reload to update the table
+                    window.location.href = 'cash_management.php';
+                }
+            });
+            <?php endif; ?>
         });
     </script>
 </body>
