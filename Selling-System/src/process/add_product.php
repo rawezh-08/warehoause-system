@@ -49,9 +49,16 @@ try {
         $image = $_FILES['image'];
         
         // Check if file is actually an image using getimagesize
-        $imageInfo = getimagesize($image['tmp_name']);
+        $imageInfo = @getimagesize($image['tmp_name']);
         if ($imageInfo === false) {
-            throw new Exception('تەنها فایلی وێنە قبوڵ دەکرێت');
+            // Try to check MIME type as fallback
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $image['tmp_name']);
+            finfo_close($finfo);
+            
+            if (!str_starts_with($mimeType, 'image/')) {
+                throw new Exception('تەنها فایلی وێنە قبوڵ دەکرێت');
+            }
         }
         
         // Validate file size (max 5MB)
@@ -64,7 +71,9 @@ try {
         
         // Create directory if it doesn't exist
         if (!file_exists($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
+            if (!mkdir($uploadDir, 0777, true)) {
+                throw new Exception('نەتوانرا فۆڵدەری وێنەکان دروست بکرێت');
+            }
         }
         
         // Generate unique filename with original extension
@@ -73,9 +82,11 @@ try {
         $filepath = $uploadDir . $filename;
         
         // Move uploaded file
-        if (move_uploaded_file($image['tmp_name'], $filepath)) {
-            $imagePath = 'uploads/products/' . $filename;
+        if (!move_uploaded_file($image['tmp_name'], $filepath)) {
+            throw new Exception('هەڵەیەک ڕوویدا لە کاتی هەڵگرتنی وێنەکە');
         }
+        
+        $imagePath = 'uploads/products/' . $filename;
     }
 
     // Insert product into database

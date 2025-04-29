@@ -137,7 +137,42 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Image upload functionality
     if (productImageInput) {
-        productImageInput.addEventListener('change', handleImageUpload);
+        productImageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Check file size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: 'قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت'
+                    });
+                    this.value = '';
+                    return;
+                }
+
+                // Check if file is an image
+                if (!file.type.startsWith('image/')) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: 'تەنها فایلی وێنە قبوڵ دەکرێت'
+                    });
+                    this.value = '';
+                    return;
+                }
+
+                // Preview image
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.querySelector('.image-preview');
+                    if (preview) {
+                        preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 100%; max-height: 200px;">`;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
     }
     
     // Auto-calculate profit when prices change
@@ -486,51 +521,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (errorElement && errorElement.classList.contains('invalid-feedback')) {
             errorElement.remove();
         }
-    }
-    
-    function handleImageUpload(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        // Validate file type
-        if (!file.type.match('image.*')) {
-            alert('تکایە تەنها فایلی وێنە هەڵبژێرە');
-            return;
-        }
-        
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            alert('قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت');
-            return;
-        }
-        
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            imagePreview.innerHTML = `
-                <img src="${event.target.result}" style="max-width: 100%; max-height: 200px; object-fit: contain;">
-                <button type="button" class="btn btn-sm btn-danger mt-2" id="removeImage">
-                    <i class="fas fa-trash"></i> سڕینەوەی وێنە
-                </button>
-            `;
-
-            // زیادکردنی event listener بۆ دوگمەی سڕینەوە
-            document.getElementById('removeImage').addEventListener('click', function() {
-                productImageInput.value = '';
-                imagePreview.innerHTML = `
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <p>وێنە هەڵبژێرە</p>
-                `;
-            });
-        };
-        
-        reader.readAsDataURL(file);
-    }
-    
-    function resetImageUpload() {
-        imagePreview.innerHTML = `
-            <i class="fas fa-cloud-upload-alt"></i>
-            <p>وێنە هەڵبژێرە</p>
-        `;
     }
     
     function updateProfit() {
