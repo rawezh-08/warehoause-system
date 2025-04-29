@@ -603,6 +603,18 @@ $stmt = $conn->prepare("
         
         UNION ALL
         
+        -- Cash inflow from cash management (initial balance and deposits)
+        SELECT 
+            cm.created_at as source_date,
+            cm.amount as incoming,
+            0 as outgoing
+        FROM 
+            cash_management cm
+        WHERE 
+            cm.transaction_type IN ('initial_balance', 'deposit')
+        
+        UNION ALL
+        
         -- Cash outflow from purchases
         SELECT 
             p.date as source_date,
@@ -632,6 +644,18 @@ $stmt = $conn->prepare("
             ep.amount as outgoing
         FROM 
             employee_payments ep
+            
+        UNION ALL
+        
+        -- Cash outflow from cash management (withdrawals)
+        SELECT 
+            cm.created_at as source_date,
+            0 as incoming,
+            ABS(cm.amount) as outgoing
+        FROM 
+            cash_management cm
+        WHERE 
+            cm.transaction_type = 'withdrawal'
     ) as cash_flow
     WHERE
         source_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
