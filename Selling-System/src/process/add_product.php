@@ -84,8 +84,8 @@ try {
         // Always resize the image to ensure consistent size and quality
         list($width, $height) = $imageInfo;
         
-        // Calculate new dimensions (max 800px width or height while maintaining aspect ratio)
-        $maxDimension = 800;
+        // Calculate new dimensions (max 600px width or height while maintaining aspect ratio)
+        $maxDimension = 600; // Reduced from 800 to 600 for smaller file size
         if ($width > $height) {
             $newWidth = $maxDimension;
             $newHeight = intval($height * $maxDimension / $width);
@@ -128,21 +128,21 @@ try {
                 imagefilledrectangle($destinationImage, 0, 0, $newWidth, $newHeight, $transparent);
             }
             
-            // Resize the image
+            // Resize the image with better quality
             imagecopyresampled(
                 $destinationImage, $sourceImage,
                 0, 0, 0, 0,
                 $newWidth, $newHeight, $width, $height
             );
             
-            // Save the resized image
+            // Save the resized image with higher compression
             switch ($extension) {
                 case 'jpeg':
                 case 'jpg':
-                    imagejpeg($destinationImage, $filepath, 80); // 80% quality
+                    imagejpeg($destinationImage, $filepath, 70); // Reduced quality from 80 to 70 for better compression
                     break;
                 case 'png':
-                    imagepng($destinationImage, $filepath, 8); // Compression level 8 (0-9)
+                    imagepng($destinationImage, $filepath, 9); // Increased compression from 8 to 9 (maximum)
                     break;
                 case 'gif':
                     imagegif($destinationImage, $filepath);
