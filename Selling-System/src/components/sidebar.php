@@ -75,6 +75,7 @@
                 <ul class="submenu collapse" id="expensesSubmenu">
                     <li><a href="employeePayment.php">زیادکردنی خەرجی</a></li>
                     <li><a href="expensesHistory.php">لیستی خەرجییەکان</a></li>
+                    <li><a href="cash_management.php">دەخیلە</a></li>
                 </ul>
             </li>
 
