@@ -184,21 +184,8 @@ $warehouseLosses = 0;
 // Calculate net profit (simple calculation)
 $netProfit = $totalSales - $totalPurchases - $warehouseExpenses - $employeeExpenses - $warehouseLosses;
 
-// Calculate available cash including cash management
-$stmt = $conn->prepare("
-    SELECT 
-        COALESCE(SUM(CASE 
-            WHEN transaction_type IN ('initial_balance', 'deposit') THEN amount
-            WHEN transaction_type = 'withdrawal' THEN -amount
-            ELSE 0
-        END), 0) as cash_management_balance
-    FROM cash_management
-");
-$stmt->execute();
-$cashManagementBalance = $stmt->fetch(PDO::FETCH_ASSOC)['cash_management_balance'];
-
-// Update available cash calculation
-$availableCash = $totalCashSales - $totalCashPurchases - $warehouseExpenses - $employeeExpenses + $cashManagementBalance;
+// Estimate available cash (from sales minus expenses and purchases)
+$availableCash = $totalCashSales - $totalCashPurchases - $warehouseExpenses - $employeeExpenses;
 
 // Get monthly sales data for the past 6 months
 $stmt = $conn->prepare("
@@ -616,21 +603,6 @@ $stmt = $conn->prepare("
         
         UNION ALL
         
-        -- Cash inflow from cash management (deposits and initial balance)
-        SELECT 
-            cm.created_at as source_date,
-            CASE 
-                WHEN cm.transaction_type IN ('initial_balance', 'deposit') THEN cm.amount
-                ELSE 0
-            END as incoming,
-            0 as outgoing
-        FROM 
-            cash_management cm
-        WHERE 
-            cm.transaction_type IN ('initial_balance', 'deposit')
-        
-        UNION ALL
-        
         -- Cash outflow from purchases
         SELECT 
             p.date as source_date,
@@ -660,18 +632,6 @@ $stmt = $conn->prepare("
             ep.amount as outgoing
         FROM 
             employee_payments ep
-            
-        UNION ALL
-        
-        -- Cash outflow from cash management (withdrawals)
-        SELECT 
-            cm.created_at as source_date,
-            0 as incoming,
-            ABS(cm.amount) as outgoing
-        FROM 
-            cash_management cm
-        WHERE 
-            cm.transaction_type = 'withdrawal'
     ) as cash_flow
     WHERE
         source_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
