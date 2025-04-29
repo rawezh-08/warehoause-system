@@ -43,13 +43,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Create directory if it doesn't exist
             if (!file_exists($upload_dir)) {
-                mkdir($upload_dir, 0777, true);
+                if (!mkdir($upload_dir, 0777, true)) {
+                    throw new Exception('نەتوانرا فۆڵدەری وێنەکان دروست بکرێت');
+                }
             }
 
             // Check if file is actually an image using getimagesize
-            $imageInfo = getimagesize($_FILES['image']['tmp_name']);
+            $imageInfo = @getimagesize($_FILES['image']['tmp_name']);
             if ($imageInfo === false) {
-                throw new Exception('تەنها فایلی وێنە قبوڵ دەکرێت');
+                // Try to check MIME type as fallback
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mimeType = finfo_file($finfo, $_FILES['image']['tmp_name']);
+                finfo_close($finfo);
+                
+                if (!str_starts_with($mimeType, 'image/')) {
+                    throw new Exception('تەنها فایلی وێنە قبوڵ دەکرێت');
+                }
             }
             
             // Get file extension
@@ -59,22 +68,99 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $new_filename = uniqid('product_') . '.' . $file_extension;
             $upload_path = $upload_dir . $new_filename;
             
-            // Move uploaded file
-            if (move_uploaded_file($_FILES['image']['tmp_name'], $upload_path)) {
-                // Get the old image path from database
-                $stmt = $conn->prepare("SELECT image FROM products WHERE id = ?");
-                $stmt->execute([$id]);
-                $old_image = $stmt->fetchColumn();
+            // Get the old image path from database
+            $stmt = $conn->prepare("SELECT image FROM products WHERE id = ?");
+            $stmt->execute([$id]);
+            $old_image = $stmt->fetchColumn();
+            
+            // Check file size and resize if needed
+            if ($_FILES['image']['size'] > 5 * 1024 * 1024 || $imageInfo[0] > 1200 || $imageInfo[1] > 1200) {
+                // Image needs resizing
+                list($width, $height) = $imageInfo;
                 
-                // Delete old image if exists
-                if ($old_image && file_exists(dirname(__DIR__) . '/' . $old_image)) {
-                    unlink(dirname(__DIR__) . '/' . $old_image);
+                // Calculate new dimensions (max 800px width or height while maintaining aspect ratio)
+                $maxDimension = 800;
+                if ($width > $height) {
+                    $newWidth = $maxDimension;
+                    $newHeight = intval($height * $maxDimension / $width);
+                } else {
+                    $newHeight = $maxDimension;
+                    $newWidth = intval($width * $maxDimension / $height);
                 }
                 
-                // Update image path in database
-                $image_path = 'uploads/products/' . $new_filename;
-                $image_url = "../../api/product_image.php?filename=" . urlencode($new_filename);
+                // Create image resource based on file type
+                $sourceImage = null;
+                switch ($file_extension) {
+                    case 'jpeg':
+                    case 'jpg':
+                        $sourceImage = imagecreatefromjpeg($_FILES['image']['tmp_name']);
+                        break;
+                    case 'png':
+                        $sourceImage = imagecreatefrompng($_FILES['image']['tmp_name']);
+                        break;
+                    case 'gif':
+                        $sourceImage = imagecreatefromgif($_FILES['image']['tmp_name']);
+                        break;
+                    default:
+                        // For unsupported file types, try to move the file directly
+                        if (!move_uploaded_file($_FILES['image']['tmp_name'], $upload_path)) {
+                            throw new Exception('هەڵەیەک ڕوویدا لە کاتی هەڵگرتنی وێنەکە');
+                        }
+                        break;
+                }
+                
+                if ($sourceImage) {
+                    // Create a new true color image with new dimensions
+                    $destinationImage = imagecreatetruecolor($newWidth, $newHeight);
+                    
+                    // Preserve transparency for PNG images
+                    if ($file_extension == 'png') {
+                        imagealphablending($destinationImage, false);
+                        imagesavealpha($destinationImage, true);
+                        $transparent = imagecolorallocatealpha($destinationImage, 255, 255, 255, 127);
+                        imagefilledrectangle($destinationImage, 0, 0, $newWidth, $newHeight, $transparent);
+                    }
+                    
+                    // Resize the image
+                    imagecopyresampled(
+                        $destinationImage, $sourceImage,
+                        0, 0, 0, 0,
+                        $newWidth, $newHeight, $width, $height
+                    );
+                    
+                    // Save the resized image
+                    switch ($file_extension) {
+                        case 'jpeg':
+                        case 'jpg':
+                            imagejpeg($destinationImage, $upload_path, 80); // 80% quality
+                            break;
+                        case 'png':
+                            imagepng($destinationImage, $upload_path, 8); // Compression level 8 (0-9)
+                            break;
+                        case 'gif':
+                            imagegif($destinationImage, $upload_path);
+                            break;
+                    }
+                    
+                    // Free up memory
+                    imagedestroy($sourceImage);
+                    imagedestroy($destinationImage);
+                }
+            } else {
+                // If image is already small enough, just move it
+                if (!move_uploaded_file($_FILES['image']['tmp_name'], $upload_path)) {
+                    throw new Exception('هەڵەیەک ڕوویدا لە کاتی هەڵگرتنی وێنەکە');
+                }
             }
+            
+            // Delete old image if exists
+            if ($old_image && file_exists(dirname(__DIR__) . '/' . $old_image)) {
+                unlink(dirname(__DIR__) . '/' . $old_image);
+            }
+            
+            // Update image path in database
+            $image_path = 'uploads/products/' . $new_filename;
+            $image_url = "../../api/product_image.php?filename=" . urlencode($new_filename);
         }
 
         // Update SQL query to include image if uploaded
