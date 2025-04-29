@@ -140,12 +140,12 @@ document.addEventListener('DOMContentLoaded', function() {
         productImageInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
-                // Check file size (5MB max)
-                if (file.size > 5 * 1024 * 1024) {
+                // Check file size (20MB max instead of 5MB since we resize on server)
+                if (file.size > 20 * 1024 * 1024) {
                     Swal.fire({
                         icon: 'error',
                         title: 'هەڵە',
-                        text: 'قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت'
+                        text: 'قەبارەی وێنە دەبێت کەمتر بێت لە 20 مێگابایت'
                     });
                     this.value = '';
                     return;
@@ -167,7 +167,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 reader.onload = function(e) {
                     const preview = document.querySelector('.image-preview');
                     if (preview) {
-                        preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 100%; max-height: 200px;">`;
+                        preview.innerHTML = `
+                            <img src="${e.target.result}" alt="Preview" style="max-width: 100%; max-height: 200px;">
+                            <p class="text-muted small mt-2">وێنەکە بەشێوەیەکی ئۆتۆماتیکی بچووک دەکرێتەوە ئەگەر پێویست بێت</p>`;
                     }
                 };
                 reader.readAsDataURL(file);
