@@ -207,7 +207,6 @@
         line-height: 1.2;
         background: linear-gradient(45deg, var(--text-primary), #4a4a4a);
         -webkit-background-clip: text;
-        background-clip: text;
         -webkit-text-fill-color: transparent;
     }
     
@@ -555,7 +554,6 @@
         font-weight: 700;
         background: linear-gradient(45deg, #363949, #566bf7);
         -webkit-background-clip: text;
-        background-clip: text;
         -webkit-text-fill-color: transparent;
     }
     
@@ -859,127 +857,4 @@
     .btn-outline-primary:hover {
         transform: translateY(-1px);
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Filter Section Styles */
-    .filter-dropdown .btn {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    #filterCollapse {
-        transition: all 0.3s ease;
-    }
-
-    #filterCollapse .card {
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-
-    #filterCollapse .form-label {
-        font-weight: 500;
-        color: #2c3e50;
-        margin-bottom: 0.5rem;
-    }
-
-    #filterCollapse .form-select,
-    #filterCollapse .form-control {
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        font-size: 0.9rem;
-    }
-
-    #filterCollapse .form-select:focus,
-    #filterCollapse .form-control:focus {
-        border-color: #4361ee;
-        box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
-    }
-
-    #filterCollapse .btn-group {
-        gap: 0.5rem;
-    }
-
-    #filterCollapse .btn-group .btn {
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        font-size: 0.9rem;
-    }
-
-    #filterCollapse .btn-group .btn.active {
-        background-color: #4361ee;
-        border-color: #4361ee;
-        color: white;
-    }
-
-    /* Loading State */
-    .loading {
-        position: relative;
-        pointer-events: none;
-        opacity: 0.7;
-    }
-
-    .loading::after {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 40px;
-        height: 40px;
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #4361ee;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        0% { transform: translate(-50%, -50%) rotate(0deg); }
-        100% { transform: translate(-50%, -50%) rotate(360deg); }
-    }
-
-    /* DateRangePicker Customization */
-    .daterangepicker {
-        font-family: 'rabar_021', sans-serif;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .daterangepicker .calendar-table {
-        border: none;
-    }
-
-    .daterangepicker td.active,
-    .daterangepicker td.active:hover {
-        background-color: #4361ee;
-    }
-
-    .daterangepicker .ranges li.active {
-        background-color: #4361ee;
-    }
-
-    .daterangepicker .ranges li:hover {
-        background-color: #f8f9fa;
-    }
-
-    /* Responsive Adjustments */
-    @media (max-width: 768px) {
-        #filterCollapse .row {
-            margin-bottom: 1rem;
-        }
-        
-        #filterCollapse .col-md-4 {
-            margin-bottom: 1rem;
-        }
-        
-        #filterCollapse .btn-group {
-            flex-wrap: wrap;
-        }
-        
-        #filterCollapse .btn-group .btn {
-            flex: 1;
-            min-width: 120px;
-        }
     }
