@@ -453,31 +453,7 @@
         to { opacity: 1; transform: translateY(0); }
     }
     
-    .btn {
-        border-radius: 12px;
-        padding: 0.6rem 1.2rem;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
     
-    .btn::after {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 5px;
-        height: 5px;
-        background: rgba(255, 255, 255, 0.5);
-        opacity: 0;
-        border-radius: 100%;
-        transform: scale(1, 1) translate(-50%, -50%);
-        transform-origin: 50% 50%;
-    }
-    
-    .btn:focus:not(:active)::after {
-        animation: ripple 1s ease-out;
-    }
     
     @keyframes ripple {
         0% {
@@ -490,48 +466,7 @@
         }
     }
     
-    .btn-sm {
-        padding: 0.4rem 0.8rem;
-        border-radius: 8px;
-    }
-    
-    .btn-primary {
-        background: linear-gradient(45deg, var(--chart-primary), #566bf7);
-        border: none;
-        box-shadow: 0 4px 15px rgba(115, 128, 236, 0.2);
-    }
-    
-    .btn-primary:hover {
-        background: linear-gradient(45deg, #5a68e4, #7380ec);
-        box-shadow: 0 6px 18px rgba(115, 128, 236, 0.3);
-        transform: translateY(-2px);
-    }
-    
-    .btn-light {
-        background-color: white;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-    
-    .btn-light:hover {
-        background-color: #f8f9fa;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        transform: translateY(-2px);
-    }
-    
-    .btn-outline-primary {
-        color: var(--chart-primary);
-        border-color: var(--chart-primary);
-        background-color: transparent;
-    }
-    
-    .btn-outline-primary:hover {
-        color: white;
-        background: linear-gradient(45deg, var(--chart-primary), #566bf7);
-        border-color: transparent;
-        box-shadow: 0 4px 15px rgba(115, 128, 236, 0.2);
-        transform: translateY(-2px);
-    }
-    
+   
     .card-title {
         position: relative;
         padding-bottom: 0.8rem;
@@ -848,13 +783,4 @@
         margin-bottom: 1rem;
     }
 
-    /* Button Styles */
-    .btn-outline-primary {
-        border-width: 1px;
-        font-weight: 500;
-    }
-
-    .btn-outline-primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
+  
