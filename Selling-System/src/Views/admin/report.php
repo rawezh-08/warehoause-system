@@ -5,6 +5,40 @@
 require_once '../../includes/auth.php';
 require_once '../../config/database.php';
 
+// Filter date parameters
+$filterPeriod = isset($_GET['period']) ? $_GET['period'] : 'all';
+$startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
+$endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
+
+// Set date filters based on period if not explicitly provided
+if ($filterPeriod && !$startDate && !$endDate) {
+    $today = date('Y-m-d');
+    $endDate = $today;
+    
+    if ($filterPeriod === 'today') {
+        $startDate = $today;
+    } elseif ($filterPeriod === 'week') {
+        // Get the first day of the current week (assuming week starts on Sunday)
+        $startDate = date('Y-m-d', strtotime('last sunday'));
+    } elseif ($filterPeriod === 'month') {
+        // Get the first day of the current month
+        $startDate = date('Y-m-d', strtotime('first day of this month'));
+    } elseif ($filterPeriod === 'year') {
+        // Get the first day of the current year
+        $startDate = date('Y-m-d', strtotime('first day of january this year'));
+    } elseif ($filterPeriod === 'all') {
+        // No date filtering
+        $startDate = '';
+        $endDate = '';
+    }
+}
+
+// Build date filter condition for SQL queries
+$dateFilterCondition = '';
+if ($startDate && $endDate) {
+    $dateFilterCondition = " AND date BETWEEN '$startDate' AND '$endDate'";
+}
+
 // Temporarily disable ONLY_FULL_GROUP_BY to fix SQL errors
 $conn->query("SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
 
@@ -41,6 +75,8 @@ $stmt = $conn->prepare("
         sales s
     JOIN 
         sale_items si ON s.id = si.sale_id
+    WHERE 
+        1=1" . ($dateFilterCondition ? str_replace("date", "s.date", $dateFilterCondition) : "") . "
 ");
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -55,7 +91,7 @@ $stmt = $conn->prepare("
     JOIN 
         sale_items si ON s.id = si.sale_id
     WHERE 
-        s.payment_type = 'cash'
+        s.payment_type = 'cash'" . ($dateFilterCondition ? str_replace("date", "s.date", $dateFilterCondition) : "") . "
 ");
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -69,7 +105,7 @@ $stmt = $conn->prepare("
     JOIN 
         sale_items si ON s.id = si.sale_id
     WHERE 
-        s.payment_type = 'credit'
+        s.payment_type = 'credit'" . ($dateFilterCondition ? str_replace("date", "s.date", $dateFilterCondition) : "") . "
 ");
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -83,6 +119,8 @@ $stmt = $conn->prepare("
         purchases p
     JOIN 
         purchase_items pi ON p.id = pi.purchase_id
+    WHERE 
+        1=1" . ($dateFilterCondition ? str_replace("date", "p.date", $dateFilterCondition) : "") . "
 ");
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -97,7 +135,7 @@ $stmt = $conn->prepare("
     JOIN 
         purchase_items pi ON p.id = pi.purchase_id
     WHERE 
-        p.payment_type = 'cash'
+        p.payment_type = 'cash'" . ($dateFilterCondition ? str_replace("date", "p.date", $dateFilterCondition) : "") . "
 ");
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -111,31 +149,47 @@ $stmt = $conn->prepare("
     JOIN 
         purchase_items pi ON p.id = pi.purchase_id
     WHERE 
-        p.payment_type = 'credit'
+        p.payment_type = 'credit'" . ($dateFilterCondition ? str_replace("date", "p.date", $dateFilterCondition) : "") . "
 ");
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalCreditPurchases = $result['total_credit_purchases'];
 
 // Calculate discounts, expenses, and other financial data
-$stmt = $conn->prepare("SELECT COALESCE(SUM(discount), 0) as total_sale_discounts FROM sales");
+$stmt = $conn->prepare("
+    SELECT COALESCE(SUM(discount), 0) as total_sale_discounts 
+    FROM sales
+    WHERE 1=1" . $dateFilterCondition . "
+");
 $stmt->execute();
 $saleDiscounts = $stmt->fetch(PDO::FETCH_ASSOC)['total_sale_discounts'];
 
-$stmt = $conn->prepare("SELECT COALESCE(SUM(discount), 0) as total_purchase_discounts FROM purchases");
+$stmt = $conn->prepare("
+    SELECT COALESCE(SUM(discount), 0) as total_purchase_discounts 
+    FROM purchases
+    WHERE 1=1" . ($dateFilterCondition ? str_replace("date", "date", $dateFilterCondition) : "") . "
+");
 $stmt->execute();
 $purchaseDiscounts = $stmt->fetch(PDO::FETCH_ASSOC)['total_purchase_discounts'];
 
 $totalDiscounts = $saleDiscounts + $purchaseDiscounts;
 
 // Get employee expenses
-$stmt = $conn->prepare("SELECT COALESCE(SUM(amount), 0) as total_employee_expenses FROM employee_payments");
+$stmt = $conn->prepare("
+    SELECT COALESCE(SUM(amount), 0) as total_employee_expenses 
+    FROM employee_payments
+    WHERE 1=1" . ($dateFilterCondition ? str_replace("date", "payment_date", $dateFilterCondition) : "") . "
+");
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $employeeExpenses = $result['total_employee_expenses'];
 
 // Get warehouse expenses (from expenses table)
-$stmt = $conn->prepare("SELECT COALESCE(SUM(amount), 0) as total_warehouse_expenses FROM expenses");
+$stmt = $conn->prepare("
+    SELECT COALESCE(SUM(amount), 0) as total_warehouse_expenses 
+    FROM expenses
+    WHERE 1=1" . ($dateFilterCondition ? str_replace("date", "expense_date", $dateFilterCondition) : "") . "
+");
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $warehouseExpenses = $result['total_warehouse_expenses'];
@@ -150,7 +204,7 @@ $netProfit = $totalSales - $totalPurchases - $warehouseExpenses - $employeeExpen
 $availableCash = $totalCashSales - $totalCashPurchases - $warehouseExpenses - $employeeExpenses;
 
 // Get monthly sales data for the past 6 months
-$stmt = $conn->prepare("
+$monthlyDataQuery = "
     SELECT 
         DATE_FORMAT(s.date, '%Y-%m') as month,
         COALESCE(SUM(si.total_price), 0) as sales
@@ -158,14 +212,23 @@ $stmt = $conn->prepare("
         sales s
     JOIN
         sale_items si ON s.id = si.sale_id
-    WHERE 
-        s.date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+    WHERE ";
+
+if ($startDate && $endDate) {
+    $monthlyDataQuery .= "s.date BETWEEN '$startDate' AND '$endDate'";
+} else {
+    $monthlyDataQuery .= "s.date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)";
+}
+
+$monthlyDataQuery .= "
     GROUP BY 
         DATE_FORMAT(s.date, '%Y-%m')
     ORDER BY 
         month ASC
     LIMIT 6
-");
+";
+
+$stmt = $conn->prepare($monthlyDataQuery);
 $stmt->execute();
 $monthlyData = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -199,8 +262,11 @@ $stmt = $conn->prepare("
     SELECT 
         p.id,
         p.name,
-        SUM(si.pieces_count) as quantity,
-        SUM(si.total_price) as amount
+        p.code,
+        p.image,
+        SUM(si.pieces_count) as total_quantity,
+        SUM(si.total_price) as total_sales,
+        COALESCE(SUM(si.total_price) - SUM(si.pieces_count * p.purchase_price), 0) as total_profit
     FROM 
         sale_items si
     JOIN 
@@ -208,15 +274,15 @@ $stmt = $conn->prepare("
     JOIN 
         sales s ON si.sale_id = s.id
     WHERE 
-        s.date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
+        1=1" . ($dateFilterCondition ? str_replace("date", "s.date", $dateFilterCondition) : "") . "
     GROUP BY 
-        p.id, p.name
+        p.id, p.name, p.code, p.image
     ORDER BY 
-        amount DESC
-    LIMIT 5
+        total_sales DESC
+    LIMIT 10
 ");
 $stmt->execute();
-$topProducts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$bestSellingProducts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get low stock products
 $stmt = $conn->prepare("
@@ -237,7 +303,7 @@ $stmt->execute();
 $lowStockProducts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get recent transactions
-$stmt = $conn->prepare("
+$recentTransQuery = "
     (SELECT 
         s.date as date,
         'فرۆشتن' as type,
@@ -245,6 +311,8 @@ $stmt = $conn->prepare("
         'سەرکەوتوو' as status
     FROM 
         sales s
+    WHERE 
+        1=1" . ($dateFilterCondition ? str_replace("date", "s.date", $dateFilterCondition) : "") . "
     ORDER BY 
         s.date DESC
     LIMIT 3)
@@ -258,6 +326,8 @@ $stmt = $conn->prepare("
         'سەرکەوتوو' as status
     FROM 
         purchases p
+    WHERE 
+        1=1" . ($dateFilterCondition ? str_replace("date", "p.date", $dateFilterCondition) : "") . "
     ORDER BY 
         p.date DESC
     LIMIT 2)
@@ -265,12 +335,19 @@ $stmt = $conn->prepare("
     ORDER BY 
         date DESC
     LIMIT 5
-");
+";
+
+$stmt = $conn->prepare($recentTransQuery);
 $stmt->execute();
 $recentTransactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Calculate total products sold
-$stmt = $conn->prepare("SELECT COALESCE(SUM(pieces_count), 0) as total FROM sale_items");
+$stmt = $conn->prepare("
+    SELECT COALESCE(SUM(pieces_count), 0) as total 
+    FROM sale_items si
+    JOIN sales s ON si.sale_id = s.id
+    WHERE 1=1" . ($dateFilterCondition ? str_replace("date", "s.date", $dateFilterCondition) : "") . "
+");
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalProductsSold = $result['total'];
@@ -309,6 +386,10 @@ $stmt = $conn->prepare("
         sale_items si
     JOIN 
         products p ON si.product_id = p.id
+    JOIN 
+        sales s ON si.sale_id = s.id
+    WHERE 
+        1=1" . ($dateFilterCondition ? str_replace("date", "s.date", $dateFilterCondition) : "") . "
     GROUP BY 
         p.id, p.name, p.code, p.image
     ORDER BY 
@@ -331,7 +412,7 @@ $stmt = $conn->prepare("
     FROM 
         customers c
     LEFT JOIN 
-        sales s ON c.id = s.customer_id
+        sales s ON c.id = s.customer_id" . ($dateFilterCondition ? " AND " . str_replace("date", "s.date", ltrim($dateFilterCondition, " AND")) : "") . "
     LEFT JOIN 
         sale_items si ON s.id = si.sale_id
     WHERE 
@@ -384,7 +465,7 @@ $stmt->execute();
 $criticalStockCount = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
 
 // 4. Profit/Loss analysis by month
-$stmt = $conn->prepare("
+$profitLossQuery = "
     SELECT
         DATE_FORMAT(s.date, '%Y-%m') as month,
         COALESCE(SUM(si.total_price), 0) as sales_revenue,
@@ -392,30 +473,58 @@ $stmt = $conn->prepare("
             SELECT COALESCE(SUM(pi.total_price), 0)
             FROM purchases pu
             JOIN purchase_items pi ON pu.id = pi.purchase_id
-            WHERE DATE_FORMAT(pu.date, '%Y-%m') = DATE_FORMAT(s.date, '%Y-%m')
+            WHERE DATE_FORMAT(pu.date, '%Y-%m') = DATE_FORMAT(s.date, '%Y-%m')";
+
+if ($dateFilterCondition) {
+    $profitLossQuery .= str_replace("date", "pu.date", $dateFilterCondition);
+}
+
+$profitLossQuery .= "
         ) as purchase_cost,
         (
             SELECT COALESCE(SUM(amount), 0)
             FROM expenses
-            WHERE DATE_FORMAT(expense_date, '%Y-%m') = DATE_FORMAT(s.date, '%Y-%m')
+            WHERE DATE_FORMAT(expense_date, '%Y-%m') = DATE_FORMAT(s.date, '%Y-%m')";
+
+if ($dateFilterCondition) {
+    $profitLossQuery .= str_replace("date", "expense_date", $dateFilterCondition);
+}
+
+$profitLossQuery .= "
         ) as expenses,
         (
             SELECT COALESCE(SUM(amount), 0)
             FROM employee_payments
-            WHERE DATE_FORMAT(payment_date, '%Y-%m') = DATE_FORMAT(s.date, '%Y-%m')
+            WHERE DATE_FORMAT(payment_date, '%Y-%m') = DATE_FORMAT(s.date, '%Y-%m')";
+
+if ($dateFilterCondition) {
+    $profitLossQuery .= str_replace("date", "payment_date", $dateFilterCondition);
+}
+
+$profitLossQuery .= "
         ) as employee_expenses
     FROM
         sales s
     JOIN
         sale_items si ON s.id = si.sale_id
     WHERE
-        s.date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+        1=1";
+
+if ($dateFilterCondition) {
+    $profitLossQuery .= str_replace("date", "s.date", $dateFilterCondition);
+} else {
+    $profitLossQuery .= " AND s.date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)";
+}
+
+$profitLossQuery .= "
     GROUP BY
         DATE_FORMAT(s.date, '%Y-%m')
     ORDER BY
         month DESC
     LIMIT 12
-");
+";
+
+$stmt = $conn->prepare($profitLossQuery);
 $stmt->execute();
 $monthlyProfitLoss = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -441,13 +550,17 @@ $stmt = $conn->prepare("
         c.name as category_name,
         COUNT(DISTINCT si.id) as sale_count,
         SUM(si.total_price) as total_sales,
-        ROUND(SUM(si.total_price) / (SELECT SUM(total_price) FROM sale_items) * 100, 1) as percentage
+        ROUND(SUM(si.total_price) / (SELECT SUM(si2.total_price) FROM sale_items si2 JOIN sales s2 ON si2.sale_id = s2.id WHERE 1=1" . ($dateFilterCondition ? str_replace("date", "s2.date", $dateFilterCondition) : "") . ") * 100, 1) as percentage
     FROM
         categories c
     JOIN
         products p ON c.id = p.category_id
     JOIN
         sale_items si ON p.id = si.product_id
+    JOIN
+        sales s ON si.sale_id = s.id
+    WHERE
+        1=1" . ($dateFilterCondition ? str_replace("date", "s.date", $dateFilterCondition) : "") . "
     GROUP BY
         c.id, c.name
     ORDER BY
@@ -534,7 +647,7 @@ $stmt->execute();
 $customerBehaviorAnalysis = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // 8. Cash flow statistics
-$stmt = $conn->prepare("
+$cashFlowQuery = "
     SELECT
         DATE_FORMAT(source_date, '%Y-%m') as month,
         SUM(incoming) as total_incoming,
@@ -549,7 +662,7 @@ $stmt = $conn->prepare("
         FROM 
             sales s
         WHERE 
-            s.payment_type = 'cash'
+            s.payment_type = 'cash'" . ($dateFilterCondition ? str_replace("date", "s.date", $dateFilterCondition) : "") . "
         
         UNION ALL
         
@@ -561,7 +674,7 @@ $stmt = $conn->prepare("
         FROM 
             debt_transactions dt
         WHERE 
-            dt.transaction_type = 'payment'
+            dt.transaction_type = 'payment'" . ($dateFilterCondition ? str_replace("date", "dt.created_at", $dateFilterCondition) : "") . "
         
         UNION ALL
         
@@ -573,7 +686,7 @@ $stmt = $conn->prepare("
         FROM 
             purchases p
         WHERE 
-            p.payment_type = 'cash'
+            p.payment_type = 'cash'" . ($dateFilterCondition ? str_replace("date", "p.date", $dateFilterCondition) : "") . "
         
         UNION ALL
         
@@ -583,7 +696,7 @@ $stmt = $conn->prepare("
             0 as incoming,
             e.amount as outgoing
         FROM 
-            expenses e
+            expenses e" . ($dateFilterCondition ? str_replace("date", "e.expense_date", $dateFilterCondition) : "") . "
         
         UNION ALL
         
@@ -593,7 +706,7 @@ $stmt = $conn->prepare("
             0 as incoming,
             ep.amount as outgoing
         FROM 
-            employee_payments ep
+            employee_payments ep" . ($dateFilterCondition ? str_replace("date", "ep.payment_date", $dateFilterCondition) : "") . "
     ) as cash_flow
     WHERE
         source_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
@@ -601,7 +714,9 @@ $stmt = $conn->prepare("
         DATE_FORMAT(source_date, '%Y-%m')
     ORDER BY
         month ASC
-");
+";
+
+$stmt = $conn->prepare($cashFlowQuery);
 $stmt->execute();
 $cashFlowData = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -690,7 +805,32 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="row mb-4 align-items-center">
                         <div class="col-md-6">
                             <h3 class="page-title mb-0">ڕاپۆرتەکان</h3>
-                            <p class="text-muted mb-0">ڕاپۆرتی هەموو چالاکییەکانی کۆگا</p>
+                            <p class="text-muted mb-0">
+                                ڕاپۆرتی هەموو چالاکییەکانی کۆگا
+                                <?php 
+                                if ($filterPeriod !== 'all') {
+                                    echo '<span class="badge bg-primary ms-2">';
+                                    switch($filterPeriod) {
+                                        case 'today':
+                                            echo 'ئەمڕۆ';
+                                            break;
+                                        case 'week':
+                                            echo 'ئەم هەفتە';
+                                            break;
+                                        case 'month':
+                                            echo 'ئەم مانگە';
+                                            break;
+                                        case 'year':
+                                            echo 'ئەم ساڵ';
+                                            break;
+                                        case 'custom':
+                                            echo $startDate . ' - ' . $endDate;
+                                            break;
+                                    }
+                                    echo '</span>';
+                                }
+                                ?>
+                            </p>
                         </div>
                         <div class="col-md-6 d-flex justify-content-md-end mt-3 mt-md-0">
                             <div class="d-flex gap-3">
@@ -710,24 +850,35 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="collapse mb-4" id="filterCollapse">
                         <div class="card">
                             <div class="card-body">
-                                <form id="reportFilters" class="row g-3">
-                                    <!-- Date Filter Options -->
-                                    <div class="col-12">
-                                        <div class="btn-group w-100" role="group">
-                                            <button type="button" class="btn btn-outline-primary active" data-date-filter="today">ئەمڕۆ</button>
-                                            <button type="button" class="btn btn-outline-primary" data-date-filter="thisWeek">ئەم هەفتەیە</button>
-                                            <button type="button" class="btn btn-outline-primary" data-date-filter="thisMonth">ئەم مانگە</button>
-                                            <button type="button" class="btn btn-outline-primary" data-date-filter="thisYear">ئەم ساڵە</button>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5 class="mb-3">فلتەر بەپێی بەروار</h5>
+                                        <div class="date-filter-btns mb-3">
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-outline-primary date-filter" data-period="today">ئەمڕۆ</button>
+                                                <button type="button" class="btn btn-outline-primary date-filter" data-period="week">ئەم هەفتە</button>
+                                                <button type="button" class="btn btn-outline-primary date-filter" data-period="month">ئەم مانگە</button>
+                                                <button type="button" class="btn btn-outline-primary date-filter" data-period="year">ئەم ساڵ</button>
+                                                <button type="button" class="btn btn-outline-primary date-filter active" data-period="all">هەمووی</button>
+                                            </div>
                                         </div>
                                     </div>
-
-                                    <!-- Filter Actions -->
-                                    <div class="col-12 text-end">
-                                        <button type="button" class="btn btn-secondary" id="resetFilters">
-                                            <i class="fas fa-undo me-2"></i> پاککردنەوە
-                                        </button>
+                                    <div class="col-md-6">
+                                        <h5 class="mb-3">فلتەری پێشکەوتوو</h5>
+                                        <div class="date-range-picker mb-3">
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="dateRangePicker" placeholder="هەڵبژاردنی بەروار">
+                                                <button class="btn btn-primary" type="button" id="applyCustomDateRange">
+                                                    <i class="fas fa-check"></i> سەپاندن
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                </form>
+                                </div>
+                                <div class="text-end mt-3">
+                                    <button class="btn btn-primary" id="applyFilters">سەپاندنی فلتەرەکان</button>
+                                    <button class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#filterCollapse">داخستن</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1063,13 +1214,63 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="row mb-4">
                         <div class="col-md-8">
                             <div class="chart-container">
-                                <h5 class="card-title mb-4"> قازانج و زەرەر بەپێی مانگ</h5>
+                                <h5 class="card-title mb-4">
+                                    قازانج و زەرەر بەپێی مانگ
+                                    <?php 
+                                    if ($filterPeriod !== 'all') {
+                                        echo '<span class="badge bg-primary ms-2 small">';
+                                        switch($filterPeriod) {
+                                            case 'today':
+                                                echo 'ئەمڕۆ';
+                                                break;
+                                            case 'week':
+                                                echo 'ئەم هەفتە';
+                                                break;
+                                            case 'month':
+                                                echo 'ئەم مانگە';
+                                                break;
+                                            case 'year':
+                                                echo 'ئەم ساڵ';
+                                                break;
+                                            case 'custom':
+                                                echo $startDate . ' - ' . $endDate;
+                                                break;
+                                        }
+                                        echo '</span>';
+                                    }
+                                    ?>
+                                </h5>
                                 <div id="monthlyProfitChart" style="height: 350px;"></div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="chart-container">
-                                <h5 class="card-title mb-4">فرۆشتن بەپێی کاتەگۆری</h5>
+                                <h5 class="card-title mb-4">
+                                    فرۆشتن بەپێی کاتەگۆری
+                                    <?php 
+                                    if ($filterPeriod !== 'all') {
+                                        echo '<span class="badge bg-primary ms-2 small">';
+                                        switch($filterPeriod) {
+                                            case 'today':
+                                                echo 'ئەمڕۆ';
+                                                break;
+                                            case 'week':
+                                                echo 'ئەم هەفتە';
+                                                break;
+                                            case 'month':
+                                                echo 'ئەم مانگە';
+                                                break;
+                                            case 'year':
+                                                echo 'ئەم ساڵ';
+                                                break;
+                                            case 'custom':
+                                                echo $startDate . ' - ' . $endDate;
+                                                break;
+                                        }
+                                        echo '</span>';
+                                    }
+                                    ?>
+                                </h5>
                                 <div id="categorySalesChart" style="height: 350px;"></div>
                             </div>
                         </div>
@@ -1420,6 +1621,95 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             tooltipTriggerList.map(function(tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Initialize DateRangePicker
+            $('#dateRangePicker').daterangepicker({
+                opens: 'left',
+                locale: {
+                    format: 'YYYY-MM-DD',
+                    applyLabel: 'سەپاندن',
+                    cancelLabel: 'هەڵوەشاندنەوە',
+                    fromLabel: 'لە',
+                    toLabel: 'بۆ',
+                    customRangeLabel: 'هەڵبژاردن',
+                    daysOfWeek: ['یەکشەممە', 'دووشەممە', 'سێشەممە', 'چوارشەممە', 'پێنجشەممە', 'هەینی', 'شەممە'],
+                    monthNames: ['بەفرانبار', 'ڕەشەمێ', 'نەورۆز', 'گوڵان', 'جۆزەردان', 'پووشپەڕ', 'گەلاوێژ', 'خەرمانان', 'ڕەزبەر', 'گەڵاڕێزان', 'سەرماوەز', 'بەفرانبار'],
+                    firstDay: 6
+                }
+            });
+
+            // Mark the current filter as active
+            const currentPeriod = '<?php echo $filterPeriod; ?>';
+            if (currentPeriod) {
+                $('.date-filter').removeClass('active');
+                $(`.date-filter[data-period="${currentPeriod}"]`).addClass('active');
+            }
+
+            // If we have custom dates, update the date range picker
+            <?php if ($startDate && $endDate && $filterPeriod === 'custom'): ?>
+            $('#dateRangePicker').val('<?php echo $startDate; ?> - <?php echo $endDate; ?>');
+            <?php endif; ?>
+
+            // Handle date filter button clicks
+            $('.date-filter').click(function() {
+                $('.date-filter').removeClass('active');
+                $(this).addClass('active');
+            });
+
+            // Apply filters
+            $('#applyFilters').click(function() {
+                const selectedPeriod = $('.date-filter.active').data('period');
+                let startDate, endDate;
+                
+                if (selectedPeriod === 'custom') {
+                    const dateRange = $('#dateRangePicker').val().split(' - ');
+                    startDate = dateRange[0];
+                    endDate = dateRange[1];
+                } else {
+                    // Construct the date range based on selected period
+                    const today = new Date();
+                    endDate = today.toISOString().split('T')[0]; // Today
+                    
+                    if (selectedPeriod === 'today') {
+                        startDate = endDate;
+                    } else if (selectedPeriod === 'week') {
+                        // Get the first day of the current week (Sunday)
+                        const firstDayOfWeek = new Date(today);
+                        const day = today.getDay(); // 0 for Sunday, 1 for Monday, etc.
+                        firstDayOfWeek.setDate(today.getDate() - day);
+                        startDate = firstDayOfWeek.toISOString().split('T')[0];
+                    } else if (selectedPeriod === 'month') {
+                        // Get the first day of the current month
+                        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                        startDate = firstDayOfMonth.toISOString().split('T')[0];
+                    } else if (selectedPeriod === 'year') {
+                        // Get the first day of the current year
+                        const firstDayOfYear = new Date(today.getFullYear(), 0, 1);
+                        startDate = firstDayOfYear.toISOString().split('T')[0];
+                    } else if (selectedPeriod === 'all') {
+                        // Don't set date filters
+                        startDate = '';
+                        endDate = '';
+                    }
+                }
+                
+                // Redirect to the same page with filter parameters
+                window.location.href = `report.php?start_date=${startDate}&end_date=${endDate}&period=${selectedPeriod}`;
+            });
+
+            // Custom date range selection
+            $('#applyCustomDateRange').click(function() {
+                $('.date-filter').removeClass('active');
+                
+                // Check if a custom filter button already exists
+                if ($('.date-filter[data-period="custom"]').length) {
+                    $('.date-filter[data-period="custom"]').addClass('active');
+                } else {
+                    // Create a custom filter button
+                    $('<button type="button" class="btn btn-outline-primary date-filter active" data-period="custom">فلتەری دەستکرد</button>')
+                        .insertBefore($('.date-filter:first'));
+                }
             });
 
             // Monthly Sales Chart
@@ -2079,140 +2369,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     <!-- Add this before the closing </body> tag -->
     <script>
-        $(document).ready(function() {
-            // Handle date filter button clicks
-            $('.btn-group .btn[data-date-filter]').click(function() {
-                // Remove active class from all buttons
-                $('.btn-group .btn').removeClass('active');
-                // Add active class to clicked button
-                $(this).addClass('active');
-                
-                // Get the selected date filter
-                const dateFilter = $(this).data('date-filter');
-                applyDateFilter(dateFilter);
-            });
-
-            // Reset filters
-            $('#resetFilters').click(function() {
-                // Remove active class from all buttons
-                $('.btn-group .btn').removeClass('active');
-                // Add active class to today button
-                $('.btn-group .btn[data-date-filter="today"]').addClass('active');
-                
-                // Apply today filter
-                applyDateFilter('today');
-            });
-
-            // Function to apply date filter
-            function applyDateFilter(dateFilter) {
-                let startDate, endDate;
-                
-                switch(dateFilter) {
-                    case 'today':
-                        startDate = moment().startOf('day');
-                        endDate = moment().endOf('day');
-                        break;
-                    case 'thisWeek':
-                        startDate = moment().startOf('week');
-                        endDate = moment().endOf('week');
-                        break;
-                    case 'thisMonth':
-                        startDate = moment().startOf('month');
-                        endDate = moment().endOf('month');
-                        break;
-                    case 'thisYear':
-                        startDate = moment().startOf('year');
-                        endDate = moment().endOf('year');
-                        break;
-                }
-
-                // Make AJAX call to update report data
-                $.ajax({
-                    url: 'get_report_data.php',
-                    method: 'POST',
-                    data: {
-                        startDate: startDate.format('YYYY-MM-DD'),
-                        endDate: endDate.format('YYYY-MM-DD')
-                    },
-                    success: function(response) {
-                        // Update the report data
-                        updateReportData(response);
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error fetching report data:', error);
-                    }
-                });
-            }
-
-            // Function to update report data
-            function updateReportData(data) {
-                // Update statistics cards
-                $('.stat-value').each(function() {
-                    const statId = $(this).data('stat-id');
-                    if (data.stats && data.stats[statId]) {
-                        $(this).text(data.stats[statId]);
-                    }
-                });
-
-                // Update charts
-                if (data.charts) {
-                    // Update monthly profit chart
-                    if (data.charts.monthlyProfit) {
-                        monthlyProfitChart.updateSeries(data.charts.monthlyProfit);
-                    }
-                    
-                    // Update category sales chart
-                    if (data.charts.categorySales) {
-                        categorySalesChart.updateSeries(data.charts.categorySales);
-                    }
-                    
-                    // Update sales forecast chart
-                    if (data.charts.salesForecast) {
-                        salesForecastChart.updateSeries(data.charts.salesForecast);
-                    }
-                    
-                    // Update cash flow chart
-                    if (data.charts.cashFlow) {
-                        cashFlowChart.updateSeries(data.charts.cashFlow);
-                    }
-                }
-
-                // Update tables
-                if (data.tables) {
-                    // Update low stock alert table
-                    if (data.tables.lowStock) {
-                        updateTable('#lowStockTable tbody', data.tables.lowStock);
-                    }
-                    
-                    // Update best selling products table
-                    if (data.tables.bestSelling) {
-                        updateTable('#bestSellingTable tbody', data.tables.bestSelling);
-                    }
-                    
-                    // Update customer debt table
-                    if (data.tables.customerDebt) {
-                        updateTable('#customerDebtTable tbody', data.tables.customerDebt);
-                    }
-                }
-            }
-
-            // Helper function to update table data
-            function updateTable(selector, data) {
-                const tbody = $(selector);
-                tbody.empty();
-                
-                data.forEach(function(row) {
-                    const tr = $('<tr>');
-                    Object.values(row).forEach(function(cell) {
-                        tr.append($('<td>').text(cell));
-                    });
-                    tbody.append(tr);
-                });
-            }
-
-            // Initialize with today's data
-            applyDateFilter('today');
-        });
+      
     </script>
 </body>
 
