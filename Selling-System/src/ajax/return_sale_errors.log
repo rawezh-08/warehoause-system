@@ -1,0 +1,36 @@
+[28-Apr-2025 17:20:11 UTC] Starting return_sale.php script
+[28-Apr-2025 17:20:11 UTC] POST data received: Array
+(
+    [sale_id] => 8
+    [receipt_type] => sale
+    [notes] => 
+    [reason] => damaged
+    [return_quantities] => Array
+        (
+            [undefined] => 1
+        )
+
+)
+
+[28-Apr-2025 17:20:11 UTC] Processing sale_id: 8, receipt_type: sale
+[28-Apr-2025 17:20:11 UTC] Invalid receipt type: sale
+[28-Apr-2025 17:20:11 UTC] Error in return_sale.php: Invalid receipt type
+[28-Apr-2025 17:20:11 UTC] Stack trace: #0 {main}
+[28-Apr-2025 17:23:53 UTC] Starting return_sale.php script
+[28-Apr-2025 17:23:53 UTC] POST data received: Array
+(
+    [sale_id] => 5
+    [receipt_type] => sale
+    [notes] => 
+    [reason] => damaged
+    [return_quantities] => Array
+        (
+            [undefined] => 1
+        )
+
+)
+
+[28-Apr-2025 17:23:53 UTC] Validating receipt_type: 'sale'
+[28-Apr-2025 17:23:53 UTC] Invalid receipt type. Expected 'selling' or 'buying', got: 'sale'
+[28-Apr-2025 17:23:53 UTC] Error in return_sale.php: Invalid receipt type. Got: sale
+[28-Apr-2025 17:23:53 UTC] Stack trace: #0 {main}

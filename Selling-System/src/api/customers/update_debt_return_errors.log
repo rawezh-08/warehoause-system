@@ -1,0 +1,26 @@
+[28-Apr-2025 14:46:33 UTC] Starting update_debt_return.php script
+[28-Apr-2025 14:46:33 UTC] POST data received: Array
+(
+    [id] => 4
+    [customer_id] => 1
+    [transaction_type] => collection
+    [amount] => 531000
+    [return_date] => 2025-04-28
+    [notes] => 
+    [payment_method] => cash
+)
+
+[28-Apr-2025 14:46:33 UTC] Database connection established successfully
+[28-Apr-2025 14:46:49 UTC] Starting update_debt_return.php script
+[28-Apr-2025 14:46:49 UTC] POST data received: Array
+(
+    [id] => 4
+    [customer_id] => 1
+    [transaction_type] => collection
+    [amount] => 53000
+    [return_date] => 2025-04-28
+    [notes] => 
+    [payment_method] => cash
+)
+
+[28-Apr-2025 14:46:49 UTC] Database connection established successfully
