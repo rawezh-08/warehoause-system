@@ -606,3 +606,73 @@
 )
 
 [28-Apr-2025 20:52:11 UTC] Database connection established successfully
+[29-Apr-2025 06:03:06 UTC] Starting get_wasting_data.php script
+[29-Apr-2025 06:03:06 UTC] POST data received: Array
+(
+    [start_date] => 
+    [end_date] => 
+    [search] => 
+    [records_per_page] => 10
+)
+
+[29-Apr-2025 06:03:06 UTC] Database connection established successfully
+[29-Apr-2025 07:47:55 UTC] Starting get_wasting_data.php script
+[29-Apr-2025 07:47:55 UTC] POST data received: Array
+(
+    [start_date] => 
+    [end_date] => 
+    [search] => 
+    [records_per_page] => 10
+)
+
+[29-Apr-2025 07:47:55 UTC] Database connection established successfully
+[29-Apr-2025 07:48:04 UTC] Starting get_wasting_data.php script
+[29-Apr-2025 07:48:04 UTC] POST data received: Array
+(
+    [start_date] => 
+    [end_date] => 
+    [search] => 
+    [records_per_page] => 10
+)
+
+[29-Apr-2025 07:48:04 UTC] Database connection established successfully
+[29-Apr-2025 07:48:08 UTC] Starting get_wasting_data.php script
+[29-Apr-2025 07:48:08 UTC] POST data received: Array
+(
+    [start_date] => 
+    [end_date] => 
+    [search] => 
+    [records_per_page] => 10
+)
+
+[29-Apr-2025 07:48:08 UTC] Database connection established successfully
+[29-Apr-2025 07:49:06 UTC] Starting get_wasting_data.php script
+[29-Apr-2025 07:49:06 UTC] POST data received: Array
+(
+    [start_date] => 
+    [end_date] => 
+    [search] => 
+    [records_per_page] => 10
+)
+
+[29-Apr-2025 07:49:06 UTC] Database connection established successfully
+[29-Apr-2025 07:50:29 UTC] Starting get_wasting_data.php script
+[29-Apr-2025 07:50:29 UTC] POST data received: Array
+(
+    [start_date] => 
+    [end_date] => 
+    [search] => 
+    [records_per_page] => 10
+)
+
+[29-Apr-2025 07:50:29 UTC] Database connection established successfully
+[29-Apr-2025 11:13:02 UTC] Starting get_wasting_data.php script
+[29-Apr-2025 11:13:02 UTC] POST data received: Array
+(
+    [start_date] => 
+    [end_date] => 
+    [search] => 
+    [records_per_page] => 10
+)
+
+[29-Apr-2025 11:13:02 UTC] Database connection established successfully

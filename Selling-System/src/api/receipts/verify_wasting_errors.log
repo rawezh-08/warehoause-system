@@ -24,3 +24,10 @@ Stack trace:
 )
 
 [28-Apr-2025 15:42:36 UTC] Database connection established successfully
+[29-Apr-2025 07:49:42 UTC] Starting verify_wasting.php script
+[29-Apr-2025 07:49:42 UTC] POST data received: Array
+(
+    [wasting_id] => 1
+)
+
+[29-Apr-2025 07:49:42 UTC] Database connection established successfully
