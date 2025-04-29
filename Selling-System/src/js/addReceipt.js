@@ -1210,12 +1210,8 @@ $(document).ready(function() {
                 parseFloat(tabPane.find('.grand-total').val()) || 0;
 
             if (tabType === RECEIPT_TYPES.SELLING) {
-                formData.customer_id = tabPane.find('.customer-select').val();
+                formData.customer_id = tabPane.find('.customer-select').val() || null;
                 formData.price_type = tabPane.find('.price-type').val();
-                if (!formData.customer_id) {
-                    Swal.fire('خەتا', 'تکایە کڕیار هەڵبژێرە', 'error');
-                    return null;
-                }
             } else {
                 formData.supplier_id = tabPane.find('.supplier-select').val();
                 if (!formData.supplier_id) {

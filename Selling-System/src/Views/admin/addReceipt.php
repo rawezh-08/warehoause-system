@@ -73,7 +73,7 @@ require_once '../../config/database.php';
                         <div class="col-md-4">
                             <label class="form-label">کڕیار</label>
                             <select class="form-select customer-select">
-                                <option value="" selected disabled>کڕیار هەڵبژێرە</option>
+                                <option value="">کڕیار هەڵبژێرە (ئارەزوومەندانە)</option>
                             </select>
                             <div class="customer-advance-info mt-2" style="display: none;">
                                 <small class="text-muted">پارەی پێشەکی: <span class="advance-amount">0</span> دینار</small>

@@ -36,9 +36,7 @@ if (!$data) {
 
 // Validate required fields
 $required_fields = ['receipt_type', 'invoice_number', 'date', 'payment_type'];
-if ($data['receipt_type'] === 'selling') {
-    $required_fields[] = 'customer_id';
-} elseif ($data['receipt_type'] === 'buying') {
+if ($data['receipt_type'] === 'buying') {
     $required_fields[] = 'supplier_id';
 }
 
@@ -70,12 +68,10 @@ if ($is_draft) {
     $check_stmt = $conn->prepare("
         SELECT id FROM sales 
         WHERE invoice_number = ? 
-        AND customer_id = ? 
         AND is_draft = 1
     ");
     $check_stmt->execute([
-        $data['invoice_number'],
-        $data['customer_id']
+        $data['invoice_number']
     ]);
     
     if ($check_stmt->fetch()) {
@@ -83,8 +79,7 @@ if ($is_draft) {
             'success' => false,
             'message' => 'ئەم ڕەشنووسە پێشتر هەیە',
             'debug' => [
-                'invoice_number' => $data['invoice_number'],
-                'customer_id' => $data['customer_id']
+                'invoice_number' => $data['invoice_number']
             ]
         ]);
         exit;
@@ -92,18 +87,7 @@ if ($is_draft) {
 }
 
 // Validate receipt type specific fields
-if ($data['receipt_type'] === 'selling') {
-    if (empty($data['customer_id'])) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'کڕیار پێویستە',
-            'debug' => [
-                'customer_id' => $data['customer_id'] ?? 'missing'
-            ]
-        ]);
-        exit;
-    }
-} elseif ($data['receipt_type'] === 'buying') {
+if ($data['receipt_type'] === 'buying') {
     if (empty($data['supplier_id'])) {
         echo json_encode([
             'success' => false,

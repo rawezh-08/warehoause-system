@@ -1959,7 +1959,7 @@ INSERT INTO `return_items` (`id`, `return_id`, `product_id`, `quantity`, `unit_p
 CREATE TABLE `sales` (
   `id` int(11) NOT NULL,
   `invoice_number` varchar(50) NOT NULL,
-  `customer_id` int(11) NOT NULL,
+  `customer_id` int(11) DEFAULT NULL,
   `date` timestamp NOT NULL DEFAULT current_timestamp(),
   `payment_type` enum('cash','credit') NOT NULL,
   `discount` decimal(10,0) DEFAULT 0,
