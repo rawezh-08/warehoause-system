@@ -1,0 +1,117 @@
+[28-Apr-2025 15:23:06 UTC] Starting filter_wastings.php script
+[28-Apr-2025 15:23:06 UTC] POST data received: Array
+(
+    [start_date] => 2025-04-01
+    [end_date] => 2025-04-02
+)
+
+[28-Apr-2025 15:23:06 UTC] Database connection established successfully
+[28-Apr-2025 15:23:06 UTC] Error in filter_wastings.php: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''10' OFFSET '0'' at line 13
+[28-Apr-2025 15:23:06 UTC] Stack trace: #0 /var/www/html/warehoause-system/Selling-System/src/api/receipts/filter_wastings.php(105): PDOStatement->execute()
+#1 {main}
+[28-Apr-2025 15:25:27 UTC] Starting filter_wastings.php script
+[28-Apr-2025 15:25:27 UTC] POST data received: Array
+(
+    [start_date] => 2025-04-01
+    [end_date] => 2025-04-01
+)
+
+[28-Apr-2025 15:25:27 UTC] Database connection established successfully
+[28-Apr-2025 15:25:27 UTC] Error in filter_wastings.php: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''10' OFFSET '0'' at line 13
+[28-Apr-2025 15:25:27 UTC] Stack trace: #0 /var/www/html/warehoause-system/Selling-System/src/api/receipts/filter_wastings.php(105): PDOStatement->execute()
+#1 {main}
+[28-Apr-2025 15:26:48 UTC] Starting filter_wastings.php script
+[28-Apr-2025 15:26:48 UTC] POST data received: Array
+(
+    [start_date] => 2025-04-01
+    [end_date] => 2025-04-01
+)
+
+[28-Apr-2025 15:26:48 UTC] Database connection established successfully
+[28-Apr-2025 15:26:48 UTC] Processed parameters: {"start_date":"2025-04-01","end_date":"2025-04-01","search":null,"records_per_page":10,"page":1}
+[28-Apr-2025 15:26:48 UTC] Final query: SELECT w.*, 
+                     GROUP_CONCAT(
+                         CONCAT(p.name, ' (', wi.quantity, ' ', 
+                         CASE wi.unit_type 
+                             WHEN 'piece' THEN 'دانە'
+                             WHEN 'box' THEN 'کارتۆن'
+                             WHEN 'set' THEN 'سێت'
+                         END, ')')
+                     SEPARATOR ', ') as products_list,
+                     SUM(wi.total_price) as total_amount
+              FROM wastings w
+              LEFT JOIN wasting_items wi ON w.id = wi.wasting_id
+              LEFT JOIN products p ON wi.product_id = p.id WHERE DATE(w.date) >= :start_date AND DATE(w.date) <= :end_date GROUP BY w.id
+[28-Apr-2025 15:26:48 UTC] Query parameters: {":start_date":"2025-04-01",":end_date":"2025-04-01"}
+[28-Apr-2025 15:26:48 UTC] Error in filter_wastings.php: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''10' OFFSET '0'' at line 13
+[28-Apr-2025 15:26:48 UTC] Stack trace: #0 /var/www/html/warehoause-system/Selling-System/src/api/receipts/filter_wastings.php(121): PDOStatement->execute()
+#1 {main}
+[28-Apr-2025 15:32:32 UTC] Starting filter_wastings.php script
+[28-Apr-2025 15:32:32 UTC] POST data received: Array
+(
+    [start_date] => 2025-04-01
+    [end_date] => 2025-04-01
+)
+
+[28-Apr-2025 15:32:32 UTC] Database connection established successfully
+[28-Apr-2025 15:32:32 UTC] Processed parameters: {"start_date":"2025-04-01","end_date":"2025-04-01","search":null,"records_per_page":10,"page":1}
+[28-Apr-2025 15:32:32 UTC] Final query: SELECT w.*, 
+                     GROUP_CONCAT(
+                         CONCAT(p.name, ' (', wi.quantity, ' ', 
+                         CASE wi.unit_type 
+                             WHEN 'piece' THEN 'دانە'
+                             WHEN 'box' THEN 'کارتۆن'
+                             WHEN 'set' THEN 'سێت'
+                         END, ')')
+                     SEPARATOR ', ') as products_list,
+                     SUM(wi.total_price) as total_amount
+              FROM wastings w
+              LEFT JOIN wasting_items wi ON w.id = wi.wasting_id
+              LEFT JOIN products p ON wi.product_id = p.id WHERE DATE(w.date) >= :start_date AND DATE(w.date) <= :end_date GROUP BY w.id
+[28-Apr-2025 15:32:32 UTC] Query parameters: {":start_date":"2025-04-01",":end_date":"2025-04-01"}
+[28-Apr-2025 15:32:32 UTC] Error in filter_wastings.php: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''10' OFFSET '0'' at line 13
+[28-Apr-2025 15:32:32 UTC] Stack trace: #0 /var/www/html/warehoause-system/Selling-System/src/api/receipts/filter_wastings.php(121): PDOStatement->execute()
+#1 {main}
+[28-Apr-2025 15:34:51 UTC] Starting filter_wastings.php script
+[28-Apr-2025 15:34:51 UTC] POST data received: Array
+(
+    [start_date] => 2025-04-01
+    [end_date] => 2025-04-01
+)
+
+[28-Apr-2025 15:34:51 UTC] Error in filter_wastings.php: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''10' OFFSET '0'' at line 19
+[28-Apr-2025 15:34:51 UTC] Stack trace: #0 /var/www/html/warehoause-system/Selling-System/src/api/receipts/filter_wastings.php(122): PDOStatement->execute()
+#1 {main}
+[28-Apr-2025 15:35:09 UTC] Starting filter_wastings.php script
+[28-Apr-2025 15:35:09 UTC] POST data received: Array
+(
+)
+
+[28-Apr-2025 15:35:09 UTC] Error in filter_wastings.php: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''10' OFFSET '0'' at line 19
+[28-Apr-2025 15:35:09 UTC] Stack trace: #0 /var/www/html/warehoause-system/Selling-System/src/api/receipts/filter_wastings.php(122): PDOStatement->execute()
+#1 {main}
+[28-Apr-2025 15:36:13 UTC] Starting filter_wastings.php script
+[28-Apr-2025 15:36:13 UTC] POST data received: Array
+(
+)
+
+[28-Apr-2025 15:36:14 UTC] Starting filter_wastings.php script
+[28-Apr-2025 15:36:14 UTC] POST data received: Array
+(
+)
+
+[28-Apr-2025 15:36:23 UTC] Starting filter_wastings.php script
+[28-Apr-2025 15:36:23 UTC] POST data received: Array
+(
+    [start_date] => 2025-04-01
+    [end_date] => 2025-04-01
+)
+
+[28-Apr-2025 15:36:23 UTC] Error in filter_wastings.php: SQLSTATE[HY093]: Invalid parameter number: mixed named and positional parameters
+[28-Apr-2025 15:36:23 UTC] Stack trace: #0 /var/www/html/warehoause-system/Selling-System/src/api/receipts/filter_wastings.php(128): PDOStatement->execute()
+#1 {main}
+[28-Apr-2025 15:36:30 UTC] Starting filter_wastings.php script
+[28-Apr-2025 15:36:30 UTC] POST data received: Array
+(
+)
+
