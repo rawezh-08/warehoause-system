@@ -10,7 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 // Check if user is authenticated
 if (!isAuthenticated()) {
     http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
+    echo json_encode(['error' => 'تکایە چوونە ژوورەوە بکەن بۆ بینینی ئەم پەرەیە']);
     exit;
 }
 
@@ -28,25 +28,28 @@ try {
             $data = json_decode(file_get_contents('php://input'), true);
             
             if (!isset($data['amount']) || !isset($data['transaction_type'])) {
-                throw new Exception('Amount and transaction type are required');
+                throw new Exception('بڕی پارە و جۆری مامەڵە پێویستن');
             }
             
             $amount = floatval($data['amount']);
             $transaction_type = $data['transaction_type'];
             $notes = $data['notes'] ?? null;
             
-            // Get user ID from session or default to 1
-            $created_by = getCurrentUserId() ?? 1;
+            // Get admin ID from session
+            $created_by = getCurrentUserId();
+            if (!$created_by) {
+                throw new Exception('تکایە چوونە ژوورەوە بکەن بۆ بینینی ئەم پەرەیە');
+            }
             
             // Validate transaction type
             $valid_types = ['initial_balance', 'deposit', 'withdrawal', 'adjustment'];
             if (!in_array($transaction_type, $valid_types)) {
-                throw new Exception('Invalid transaction type');
+                throw new Exception('جۆری مامەڵە نادروستە');
             }
             
             // Validate amount
             if ($amount <= 0) {
-                throw new Exception('Amount must be greater than zero');
+                throw new Exception('بڕی پارە دەبێت گەورەتر بێت لە سفر');
             }
             
             // For withdrawals, amount should be negative
@@ -65,7 +68,7 @@ try {
             
             echo json_encode([
                 'success' => true,
-                'message' => 'Transaction recorded successfully',
+                'message' => 'مامەڵەکە بە سەرکەوتوویی تۆمار کرا',
                 'transaction_id' => $conn->lastInsertId()
             ]);
             break;
@@ -74,14 +77,15 @@ try {
             // Get cash management transactions
             $stmt = $conn->prepare("
                 SELECT 
-                    id,
-                    amount,
-                    transaction_type,
-                    notes,
-                    created_at,
-                    created_by
-                FROM cash_management
-                ORDER BY created_at DESC
+                    cm.id,
+                    cm.amount,
+                    cm.transaction_type,
+                    cm.notes,
+                    cm.created_at,
+                    COALESCE(aa.username, 'Unknown') as created_by_name
+                FROM cash_management cm
+                LEFT JOIN admin_accounts aa ON cm.created_by = aa.id
+                ORDER BY cm.created_at DESC
             ");
             
             $stmt->execute();

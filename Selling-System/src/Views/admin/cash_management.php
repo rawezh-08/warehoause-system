@@ -10,7 +10,8 @@ $stmt = $conn->prepare("
         transaction_type,
         notes,
         created_at,
-        created_by
+        created_by,
+        created_by_name
     FROM cash_management
     ORDER BY created_at DESC
 ");
@@ -133,7 +134,7 @@ $totalBalance = $stmt->fetch(PDO::FETCH_ASSOC)['total_balance'];
                                                         <?php echo number_format(abs($transaction['amount'])); ?> د.ع
                                                     </td>
                                                     <td><?php echo $transaction['notes']; ?></td>
-                                                    <td><?php echo $transaction['created_by']; ?></td>
+                                                    <td><?php echo $transaction['created_by_name']; ?></td>
                                                 </tr>
                                                 <?php endforeach; ?>
                                             </tbody>
