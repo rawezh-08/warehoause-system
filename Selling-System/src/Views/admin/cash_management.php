@@ -5,15 +5,16 @@ require_once '../../config/database.php';
 // Get cash management transactions
 $stmt = $conn->prepare("
     SELECT 
-        id,
-        amount,
-        transaction_type,
-        notes,
-        created_at,
-        created_by,
-        created_by_name
-    FROM cash_management
-    ORDER BY created_at DESC
+        cm.id,
+        cm.amount,
+        cm.transaction_type,
+        cm.notes,
+        cm.created_at,
+        cm.created_by,
+        COALESCE(u.username, 'Unknown') as created_by_name
+    FROM cash_management cm
+    LEFT JOIN users u ON cm.created_by = u.id
+    ORDER BY cm.created_at DESC
 ");
 $stmt->execute();
 $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
