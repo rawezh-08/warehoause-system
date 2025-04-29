@@ -37,6 +37,10 @@ $totalSuppliers = getCount('suppliers');
 $dateRange = isset($_GET['dateRange']) ? $_GET['dateRange'] : '';
 $singleDate = isset($_GET['singleDate']) ? $_GET['singleDate'] : '';
 
+// Initialize date variables
+$startDate = '';
+$endDate = '';
+
 // Build date filter conditions
 $dateFilter = '';
 if (!empty($dateRange)) {
@@ -47,6 +51,8 @@ if (!empty($dateRange)) {
         $dateFilter = "WHERE s.date BETWEEN '$startDate' AND '$endDate'";
     }
 } elseif (!empty($singleDate)) {
+    $startDate = $singleDate;
+    $endDate = $singleDate;
     $dateFilter = "WHERE DATE(s.date) = '$singleDate'";
 }
 
@@ -179,7 +185,7 @@ $stmt = $conn->prepare("
         sales s
     JOIN
         sale_items si ON s.id = si.sale_id
-    $dateFilter
+    " . (!empty($dateFilter) ? $dateFilter : "WHERE s.date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)") . "
     GROUP BY 
         DATE_FORMAT(s.date, '%Y-%m')
     ORDER BY 
@@ -413,7 +419,7 @@ $stmt = $conn->prepare("
             FROM purchases pu
             JOIN purchase_items pi ON pu.id = pi.purchase_id
             WHERE DATE_FORMAT(pu.date, '%Y-%m') = DATE_FORMAT(s.date, '%Y-%m')
-            " . (!empty($dateFilter) ? "AND " . substr($dateFilter, 6) : "") . "
+            " . (!empty($dateFilter) ? "AND DATE(pu.date) BETWEEN '$startDate' AND '$endDate'" : "") . "
         ) as purchase_cost,
         (
             SELECT COALESCE(SUM(amount), 0)
@@ -431,7 +437,7 @@ $stmt = $conn->prepare("
         sales s
     JOIN
         sale_items si ON s.id = si.sale_id
-    $dateFilter
+    " . (!empty($dateFilter) ? $dateFilter : "WHERE s.date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)") . "
     GROUP BY
         DATE_FORMAT(s.date, '%Y-%m')
     ORDER BY
@@ -463,7 +469,12 @@ $stmt = $conn->prepare("
         c.name as category_name,
         COUNT(DISTINCT si.id) as sale_count,
         SUM(si.total_price) as total_sales,
-        ROUND(SUM(si.total_price) / (SELECT SUM(total_price) FROM sale_items si2 JOIN sales s2 ON si2.sale_id = s2.id $dateFilter) * 100, 1) as percentage
+        ROUND(SUM(si.total_price) / (
+            SELECT COALESCE(SUM(total_price), 0)
+            FROM sale_items si2 
+            JOIN sales s2 ON si2.sale_id = s2.id 
+            " . (!empty($dateFilter) ? $dateFilter : "") . "
+        ) * 100, 1) as percentage
     FROM
         categories c
     JOIN
@@ -472,7 +483,7 @@ $stmt = $conn->prepare("
         sale_items si ON p.id = si.product_id
     JOIN
         sales s ON si.sale_id = s.id
-    $dateFilter
+    " . (!empty($dateFilter) ? $dateFilter : "") . "
     GROUP BY
         c.id, c.name
     ORDER BY
@@ -575,7 +586,7 @@ $stmt = $conn->prepare("
             sales s
         WHERE 
             s.payment_type = 'cash'
-            " . (!empty($dateFilter) ? "AND " . substr($dateFilter, 6) : "") . "
+            " . (!empty($dateFilter) ? "AND DATE(s.date) BETWEEN '$startDate' AND '$endDate'" : "") . "
         
         UNION ALL
         
