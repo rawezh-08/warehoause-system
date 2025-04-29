@@ -184,13 +184,8 @@ $warehouseLosses = 0;
 // Calculate net profit (simple calculation)
 $netProfit = $totalSales - $totalPurchases - $warehouseExpenses - $employeeExpenses - $warehouseLosses;
 
-// Get cash management balance
-$stmt = $conn->prepare("SELECT COALESCE(SUM(amount), 0) as total_balance FROM cash_management");
-$stmt->execute();
-$cashManagementBalance = $stmt->fetch(PDO::FETCH_ASSOC)['total_balance'];
-
-// Estimate available cash (including initial balance and direct cash deposits/withdrawals)
-$availableCash = $totalCashSales - $totalCashPurchases - $warehouseExpenses - $employeeExpenses + $cashManagementBalance;
+// Estimate available cash (from sales minus expenses and purchases)
+$availableCash = $totalCashSales - $totalCashPurchases - $warehouseExpenses - $employeeExpenses;
 
 // Get monthly sales data for the past 6 months
 $stmt = $conn->prepare("
@@ -637,16 +632,6 @@ $stmt = $conn->prepare("
             ep.amount as outgoing
         FROM 
             employee_payments ep
-            
-        UNION ALL
-        
-        -- Cash management transactions
-        SELECT 
-            cm.created_at as source_date,
-            CASE WHEN cm.amount > 0 THEN cm.amount ELSE 0 END as incoming,
-            CASE WHEN cm.amount < 0 THEN ABS(cm.amount) ELSE 0 END as outgoing
-        FROM 
-            cash_management cm
     ) as cash_flow
     WHERE
         source_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
@@ -1032,7 +1017,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 <i class="fas fa-ellipsis-v"></i>
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-end">
-                                                <li><a class="dropdown-item" href="cash_management.php">بەڕێوەبردنی پارەی کاش</a></li>
+                                                <li><a class="dropdown-item" href="#">بینینی حیسابات</a></li>
                                             </ul>
                                         </div>
                                     </div>

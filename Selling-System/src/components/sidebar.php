@@ -93,16 +93,6 @@
                 </ul>
             </li>
 
-            <!-- Cash Management -->
-            <li class="menu-item">
-                <a href="cash_management.php" class="item-link">
-                    <div class="icon-cont">
-                        <img src="../../assets/icons/spending.svg" alt="">
-                    </div>
-                    <span>بەڕێوەبردنی پارەی کاش</span>
-                </a>
-            </li>
-
             <!-- Reports -->
             <li class="menu-item">
                 <a href="report.php" class="item-link">
