@@ -24,6 +24,7 @@ require_once '../../process/products_logic.php';
     <link rel="stylesheet" href="../../css/products.css">
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="../../test/main.css">
     <style>
         .badge {
             font-size: 0.85rem;
@@ -87,9 +88,7 @@ require_once '../../process/products_logic.php';
                                            placeholder="ناوی کاڵا، کۆد یان بارکۆد..." 
                                            value="<?php echo htmlspecialchars($search); ?>"
                                            aria-label="گەڕان بە ناو ، کۆد، بارکۆد">
-                                    <button type="button" class="btn btn-primary search-btn" style="border-radius: 24px; margin-right: 8px;" aria-label="گەڕان">
-                                        <img src="../../assets/icons/search.svg" alt="گەڕان">
-                                    </button>
+                                   
                                 </div>
                                 <div class="search-suggestions" style="display: none;">
                                     <div class="suggestion-header">
@@ -134,7 +133,7 @@ require_once '../../process/products_logic.php';
                 <div class="card shadow-sm" style="border-radius: 24px; border: 1px solid #9ec5ff;">
                     <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0">لیستی کاڵاکان</h5>
-                        <a href="../../Views/admin/addProduct.php" class="btn btn-primary add-product-btn">
+                        <a href="../../views/admin/addProduct.php" class="btn btn-primary add-product-btn">
                            زیادکردنی کاڵای نوێ  <img src="../../assets/icons/add-square.svg" alt="">
                         </a>
                     </div>
