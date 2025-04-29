@@ -203,7 +203,12 @@ if (!empty($adminIds)) {
                                                             case 'deposit':
                                                                 echo '<span class="badge bg-success">پارەی زیادە</span>';
                                                                 break;
-                                            
+                                                            case 'withdrawal':
+                                                                echo '<span class="badge bg-danger">پارەی دەرکردن</span>';
+                                                                break;
+                                                            case 'adjustment':
+                                                                echo '<span class="badge bg-warning">گۆڕانکاری</span>';
+                                                                break;
                                                         }
                                                         ?>
                                                     </td>
@@ -244,7 +249,17 @@ if (!empty($adminIds)) {
                 language: {
                     url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/ku.json'
                 },
-                order: [[0, 'desc']]
+                order: [[0, 'desc']],
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "هەموو"]],
+                responsive: true,
+                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                     '<"row"<"col-sm-12"tr>>' +
+                     '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                columnDefs: [
+                    { targets: 0, type: 'date' },
+                    { targets: 2, type: 'num' }
+                ]
             });
 
             // Form validation
