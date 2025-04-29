@@ -2,6 +2,11 @@
 require_once '../../config/database.php';
 require_once '../../includes/auth.php';
 
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Check if user is authenticated
 if (!isAuthenticated()) {
     http_response_code(401);
@@ -29,7 +34,9 @@ try {
             $amount = floatval($data['amount']);
             $transaction_type = $data['transaction_type'];
             $notes = $data['notes'] ?? null;
-            $created_by = $_SESSION['user_id'] ?? 1; // Get from session or default to 1
+            
+            // Get user ID from session or default to 1
+            $created_by = getCurrentUserId() ?? 1;
             
             // Validate transaction type
             $valid_types = ['initial_balance', 'deposit', 'withdrawal', 'adjustment'];
@@ -92,6 +99,7 @@ try {
             break;
     }
 } catch (Exception $e) {
+    error_log("Cash Management Error: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'error' => $e->getMessage()

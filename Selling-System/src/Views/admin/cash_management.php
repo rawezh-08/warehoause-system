@@ -223,11 +223,18 @@ $totalBalance = $stmt->fetch(PDO::FETCH_ASSOC)['total_balance'];
                             // Reload page to show new transaction
                             location.reload();
                         } else {
-                            alert('هەڵەیەک ڕوویدا: ' + response.error);
+                            alert('هەڵەیەک ڕوویدا: ' + (response.error || 'هەڵەیەکی نەناسراو'));
                         }
                     },
                     error: function(xhr) {
-                        alert('هەڵەیەک ڕوویدا: ' + xhr.responseJSON.error);
+                        let errorMessage = 'هەڵەیەک ڕوویدا';
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            errorMessage = response.error || errorMessage;
+                        } catch (e) {
+                            console.error('Error parsing response:', e);
+                        }
+                        alert(errorMessage);
                     }
                 });
             });

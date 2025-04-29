@@ -2,7 +2,11 @@
 // Set session configuration
 ini_set('session.gc_maxlifetime', 28800); // 8 hours
 ini_set('session.cookie_lifetime', 28800); // 8 hours
-session_start();
+
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Check if the session has an admin_id
 if (!isset($_SESSION['admin_id']) || empty($_SESSION['admin_id'])) {
@@ -23,4 +27,31 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 
 
 // Update last activity time
 $_SESSION['last_activity'] = time();
+
+/**
+ * Check if user is authenticated
+ * @return bool
+ */
+function isAuthenticated() {
+    return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+}
+
+/**
+ * Get current user ID
+ * @return int|null
+ */
+function getCurrentUserId() {
+    return $_SESSION['user_id'] ?? null;
+}
+
+/**
+ * Require authentication
+ * Redirects to login page if not authenticated
+ */
+function requireAuth() {
+    if (!isAuthenticated()) {
+        header('Location: /login.php');
+        exit;
+    }
+}
 ?> 
