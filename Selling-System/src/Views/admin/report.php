@@ -1194,7 +1194,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="row mb-4">
                         <div class="col-md-8">
                             <div class="chart-container">
-                                <h5 class="card-title mb-4"> قازانج و زەرەر بەپێی مانگ</h5>
+                                <h5 class="card-title mb-4">قازانج و زەرەر بەپێی مانگ</h5>
                                 <div id="monthlyProfitChart" style="height: 350px;"></div>
                             </div>
                         </div>
@@ -1206,233 +1206,6 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </div>
                     </div>
 
-                    <!-- Export & Report Options -->
-                    <!-- <div class="row mb-4">
-                        <div class="col-lg-6 col-md-12 mb-4">
-                            <div class="report-card">
-                                <div class="card-body">
-                                    <h5 class="card-title mb-4">دەرهێنانی داتا</h5>
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <div class="d-grid">
-                                                <button class="btn btn-outline-primary">
-                                                    <i class="fas fa-file-excel me-2"></i> دەرهێنان بۆ Excel
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="d-grid">
-                                                <button class="btn btn-outline-primary">
-                                                    <i class="fas fa-file-pdf me-2"></i> دەرهێنان بۆ PDF
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="d-grid">
-                                                <button class="btn btn-outline-primary">
-                                                    <i class="fas fa-file-csv me-2"></i> دەرهێنان بۆ CSV
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="d-grid">
-                                                <button class="btn btn-outline-primary">
-                                                    <i class="fas fa-print me-2"></i> چاپکردن
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-6 col-md-12 mb-4">
-                            <div class="report-card">
-                                <div class="card-body">
-                                    <h5 class="card-title mb-4">ڕاپۆرتەکانی تر</h5>
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <div class="d-grid">
-                                                <button class="btn btn-outline-primary">
-                                                    <i class="fas fa-chart-line me-2"></i> قازانج و زیان
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="d-grid">
-                                                <button class="btn btn-outline-primary">
-                                                    <i class="fas fa-boxes me-2"></i> بارودۆخی کۆگا
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="d-grid">
-                                                <button class="btn btn-outline-primary">
-                                                    <i class="fas fa-users me-2"></i> چالاکی کارمەندان
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="d-grid">
-                                                <button class="btn btn-outline-primary">
-                                                    <i class="fas fa-coins me-2"></i> پوختەی دارایی
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div> -->
-
-                    <!-- New Report Sections -->
-
-                    <!-- Low Stock Alert -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="report-card">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center mb-4">
-                                        <h5 class="card-title">ئاگادارکردنەوەی کەمبوونی بەرهەمەکان</h5>
-                                        <span class="badge bg-danger"><?php echo $criticalStockCount; ?> بەرهەم لە خوار سنووری کەمترین بڕ</span>
-                                    </div>
-                                    <div class="table-responsive">
-                                        <table class="table table-hover report-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>ناو</th>
-                                                    <th>کۆد</th>
-                                                    <th>کاتەگۆری</th>
-                                                    <th>بڕی ئێستا</th>
-                                                    <th>کەمترین بڕ</th>
-                                                    <th>دۆخ</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php foreach ($lowStockAlert as $product): ?>
-                                                    <tr>
-                                                        <td>
-                                                            <div class="d-flex align-items-center">
-                                                                <?php if ($product['image']): ?>
-                                                                    <img src="../../<?php echo $product['image']; ?>" class="me-2" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">
-                                                                <?php else: ?>
-                                                                    <div class="me-2" style="width: 40px; height: 40px; background-color: #f8f9fa; border-radius: 5px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-box text-muted"></i></div>
-                                                                <?php endif; ?>
-                                                                <span><?php echo $product['name']; ?></span>
-                                                            </div>
-                                                        </td>
-                                                        <td><?php echo $product['code']; ?></td>
-                                                        <td><?php echo $product['category_name']; ?></td>
-                                                        <td><?php echo $product['current_quantity']; ?></td>
-                                                        <td><?php echo $product['min_quantity']; ?></td>
-                                                        <td>
-                                                            <div class="stock-indicator">
-                                                                <div class="stock-level <?php echo $product['stock_percentage'] < 50 ? 'critical' : ($product['stock_percentage'] < 100 ? 'warning' : 'good'); ?>" style="width: <?php echo min($product['stock_percentage'], 100); ?>%;"></div>
-                                                            </div>
-                                                            <div class="small mt-1 text-<?php echo $product['stock_percentage'] < 50 ? 'danger' : ($product['stock_percentage'] < 100 ? 'warning' : 'success'); ?>">
-                                                                <?php echo $product['stock_percentage']; ?>%
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div class="text-end mt-3">
-                                        <a href="products.php" class="btn btn-sm btn-outline-primary">بینینی هەموو بەرهەمەکان</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Best Selling Products and Customer Debt Analysis -->
-                    <div class="row mb-4">
-                        <!-- Best Selling Products -->
-                        <div class="col-md-7 mb-4 mb-md-0">
-                            <div class="report-card h-100">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center mb-4">
-                                        <h5 class="card-title">بەرهەمە باشفرۆشەکان</h5>
-                                  
-                                    </div>
-                                    <div class="table-responsive">
-                                        <table class="table table-hover report-table" id="bestSellingTable">
-                                            <thead>
-                                                <tr>
-                                                    <th>بەرهەم</th>
-                                                    <th>کۆد</th>
-                                                    <th>دانە</th>
-                                                    <th>کۆی فرۆشتن</th>
-                                                    <th>قازانج</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php foreach ($bestSellingProducts as $product): ?>
-                                                    <tr>
-                                                        <td>
-                                                            <div class="d-flex align-items-center">
-                                                                <?php if ($product['image']): ?>
-                                                                    <img src="../../<?php echo $product['image']; ?>" class="me-2" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;" alt="<?php echo htmlspecialchars($product['name']); ?>">
-                                                                <?php else: ?>
-                                                                    <div class="me-2" style="width: 40px; height: 40px; background-color: #f8f9fa; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
-                                                                        <i class="fas fa-box text-muted"></i>
-                                                                    </div>
-                                                                <?php endif; ?>
-                                                                <span><?php echo htmlspecialchars($product['name']); ?></span>
-                                                            </div>
-                                                        </td>
-                                                        <td><?php echo $product['code']; ?></td>
-                                                        <td><?php echo number_format($product['total_quantity']); ?></td>
-                                                        <td><?php echo number_format($product['total_sales']); ?> د.ع</td>
-                                                        <td><?php echo number_format($product['total_profit']); ?> د.ع</td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Customer Debt Analysis -->
-                        <div class="col-md-5">
-                            <div class="report-card h-100">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center mb-4">
-                                        <h5 class="card-title">شیکاری قەرز</h5>
-                                        <span class="badge bg-primary">کۆی قەرز: <?php echo number_format($totalCustomerDebt); ?> د.ع</span>
-                                    </div>
-                                    <div class="table-responsive">
-                                        <table class="table table-hover report-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>کڕیار</th>
-                                                    <th>ژمارە</th>
-                                                    <th>بڕی قەرز</th>
-                                                    <th>ڕۆژی دوایین</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php foreach ($topDebtCustomers as $customer): ?>
-                                                    <tr>
-                                                        <td><?php echo $customer['name']; ?></td>
-                                                        <td><?php echo $customer['phone1']; ?></td>
-                                                        <td><?php echo number_format($customer['debt_amount']); ?> د.ع</td>
-                                                        <td><?php echo isset($customer['days_since_last_purchase']) ? $customer['days_since_last_purchase'] : '-'; ?> ڕۆژ</td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div class="text-end mt-3">
-                                        <a href="#" class="btn btn-sm btn-outline-primary">هەموو قەرزەکان</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Monthly Profit/Loss Analysis and Category Sales -->
                     <div class="row mb-4">
                         <!-- Monthly Profit/Loss Analysis -->
@@ -1440,7 +1213,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <div class="report-card">
                                 <div class="card-body">
                                     <h5 class="card-title">شیکاری قازانج و زەرەر بەپێی مانگ</h5>
-                                    <div id="monthlyProfitChart" style="height: 350px;"></div>
+                                    <div id="monthlyProfitAnalysisChart" style="height: 350px;"></div>
                                 </div>
                             </div>
                         </div>
@@ -1450,7 +1223,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <div class="report-card">
                                 <div class="card-body">
                                     <h5 class="card-title">فرۆشتن بەپێی کاتەگۆری</h5>
-                                    <div id="categorySalesChart" style="height: 350px;"></div>
+                                    <div id="categorySalesAnalysisChart" style="height: 350px;"></div>
                                 </div>
                             </div>
                         </div>
@@ -1669,7 +1442,7 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
             const monthlySalesChart = new ApexCharts(document.querySelector("#monthlySalesChart"), monthlySalesOptions);
             monthlySalesChart.render();
 
-            // Monthly Profit/Loss Chart
+            // Monthly Profit Chart
             const monthlyProfitOptions = {
                 series: [{
                     name: 'داهات',
@@ -1825,8 +1598,11 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 }
             };
 
-            const monthlyProfitChart = new ApexCharts(document.querySelector("#monthlyProfitChart"), monthlyProfitOptions);
-            monthlyProfitChart.render();
+            // Initialize the monthly profit chart
+            if (document.querySelector("#monthlyProfitChart")) {
+                const monthlyProfitChart = new ApexCharts(document.querySelector("#monthlyProfitChart"), monthlyProfitOptions);
+                monthlyProfitChart.render();
+            }
 
             // Category Sales Chart
             const categorySalesOptions = {
@@ -1926,8 +1702,23 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 }
             };
 
-            const categorySalesChart = new ApexCharts(document.querySelector("#categorySalesChart"), categorySalesOptions);
-            categorySalesChart.render();
+            // Initialize the category sales chart
+            if (document.querySelector("#categorySalesChart")) {
+                const categorySalesChart = new ApexCharts(document.querySelector("#categorySalesChart"), categorySalesOptions);
+                categorySalesChart.render();
+            }
+
+            // Initialize the monthly profit analysis chart
+            if (document.querySelector("#monthlyProfitAnalysisChart")) {
+                const monthlyProfitAnalysisChart = new ApexCharts(document.querySelector("#monthlyProfitAnalysisChart"), monthlyProfitOptions);
+                monthlyProfitAnalysisChart.render();
+            }
+
+            // Initialize the category sales analysis chart
+            if (document.querySelector("#categorySalesAnalysisChart")) {
+                const categorySalesAnalysisChart = new ApexCharts(document.querySelector("#categorySalesAnalysisChart"), categorySalesOptions);
+                categorySalesAnalysisChart.render();
+            }
 
             // Sales Forecast Chart
             const salesForecastOptions = {
