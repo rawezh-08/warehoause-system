@@ -8,6 +8,38 @@ require_once '../../config/database.php';
 // Temporarily disable ONLY_FULL_GROUP_BY to fix SQL errors
 $conn->query("SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
 
+// Get date filter from request (default to all-time if not specified)
+$dateFilter = isset($_GET['date_filter']) ? $_GET['date_filter'] : 'all';
+
+// Prepare date condition based on filter
+$dateCondition = '';
+switch ($dateFilter) {
+    case 'today':
+        $dateCondition = "WHERE date = CURDATE()";
+        $expenseCondition = "WHERE expense_date = CURDATE()";
+        $employeePaymentCondition = "WHERE payment_date = CURDATE()";
+        break;
+    case 'this_week':
+        $dateCondition = "WHERE YEARWEEK(date, 1) = YEARWEEK(CURDATE(), 1)";
+        $expenseCondition = "WHERE YEARWEEK(expense_date, 1) = YEARWEEK(CURDATE(), 1)";
+        $employeePaymentCondition = "WHERE YEARWEEK(payment_date, 1) = YEARWEEK(CURDATE(), 1)";
+        break;
+    case 'this_month':
+        $dateCondition = "WHERE YEAR(date) = YEAR(CURDATE()) AND MONTH(date) = MONTH(CURDATE())";
+        $expenseCondition = "WHERE YEAR(expense_date) = YEAR(CURDATE()) AND MONTH(expense_date) = MONTH(CURDATE())";
+        $employeePaymentCondition = "WHERE YEAR(payment_date) = YEAR(CURDATE()) AND MONTH(payment_date) = MONTH(CURDATE())";
+        break;
+    case 'this_year':
+        $dateCondition = "WHERE YEAR(date) = YEAR(CURDATE())";
+        $expenseCondition = "WHERE YEAR(expense_date) = YEAR(CURDATE())";
+        $employeePaymentCondition = "WHERE YEAR(payment_date) = YEAR(CURDATE())";
+        break;
+    default:
+        $dateCondition = '';
+        $expenseCondition = '';
+        $employeePaymentCondition = '';
+}
+
 // Function to get total count from a table
 function getCount($table)
 {
@@ -41,6 +73,7 @@ $stmt = $conn->prepare("
         sales s
     JOIN 
         sale_items si ON s.id = si.sale_id
+    " . $dateCondition . "
 ");
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -56,7 +89,8 @@ $stmt = $conn->prepare("
         sale_items si ON s.id = si.sale_id
     WHERE 
         s.payment_type = 'cash'
-");
+    " . ($dateCondition ? ' AND ' . substr($dateCondition, 6) : '')
+);
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalCashSales = $result['total_cash_sales'];
@@ -70,7 +104,8 @@ $stmt = $conn->prepare("
         sale_items si ON s.id = si.sale_id
     WHERE 
         s.payment_type = 'credit'
-");
+    " . ($dateCondition ? ' AND ' . substr($dateCondition, 6) : '')
+);
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalCreditSales = $result['total_credit_sales'];
@@ -83,6 +118,7 @@ $stmt = $conn->prepare("
         purchases p
     JOIN 
         purchase_items pi ON p.id = pi.purchase_id
+    " . $dateCondition . "
 ");
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -98,7 +134,8 @@ $stmt = $conn->prepare("
         purchase_items pi ON p.id = pi.purchase_id
     WHERE 
         p.payment_type = 'cash'
-");
+    " . ($dateCondition ? ' AND ' . substr($dateCondition, 6) : '')
+);
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalCashPurchases = $result['total_cash_purchases'];
@@ -112,30 +149,31 @@ $stmt = $conn->prepare("
         purchase_items pi ON p.id = pi.purchase_id
     WHERE 
         p.payment_type = 'credit'
-");
+    " . ($dateCondition ? ' AND ' . substr($dateCondition, 6) : '')
+);
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalCreditPurchases = $result['total_credit_purchases'];
 
 // Calculate discounts, expenses, and other financial data
-$stmt = $conn->prepare("SELECT COALESCE(SUM(discount), 0) as total_sale_discounts FROM sales");
+$stmt = $conn->prepare("SELECT COALESCE(SUM(discount), 0) as total_sale_discounts FROM sales " . $dateCondition);
 $stmt->execute();
 $saleDiscounts = $stmt->fetch(PDO::FETCH_ASSOC)['total_sale_discounts'];
 
-$stmt = $conn->prepare("SELECT COALESCE(SUM(discount), 0) as total_purchase_discounts FROM purchases");
+$stmt = $conn->prepare("SELECT COALESCE(SUM(discount), 0) as total_purchase_discounts FROM purchases " . $dateCondition);
 $stmt->execute();
 $purchaseDiscounts = $stmt->fetch(PDO::FETCH_ASSOC)['total_purchase_discounts'];
 
 $totalDiscounts = $saleDiscounts + $purchaseDiscounts;
 
 // Get employee expenses
-$stmt = $conn->prepare("SELECT COALESCE(SUM(amount), 0) as total_employee_expenses FROM employee_payments");
+$stmt = $conn->prepare("SELECT COALESCE(SUM(amount), 0) as total_employee_expenses FROM employee_payments " . $employeePaymentCondition);
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $employeeExpenses = $result['total_employee_expenses'];
 
 // Get warehouse expenses (from expenses table)
-$stmt = $conn->prepare("SELECT COALESCE(SUM(amount), 0) as total_warehouse_expenses FROM expenses");
+$stmt = $conn->prepare("SELECT COALESCE(SUM(amount), 0) as total_warehouse_expenses FROM expenses " . $expenseCondition);
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $warehouseExpenses = $result['total_warehouse_expenses'];
@@ -672,6 +710,27 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     <link rel="stylesheet" href="../../test/main.css">
  
+    <style>
+        .date-filter-btn {
+            border-radius: 20px;
+            padding: 5px 15px;
+            font-size: 0.9rem;
+        }
+        
+        .date-filter-btn.active {
+            background-color: #4361ee;
+            color: white;
+            border-color: #4361ee;
+        }
+        
+        .filter-container {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+    </style>
 </head>
 
 <body>
@@ -694,7 +753,33 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </div>
                     </div>
 
-                    <!-- Filter Collapse Section -->
+                    <!-- Date Filter Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="filter-container">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i> فلتەر بە پێی بەروار</h5>
+                                    <div class="btn-group">
+                                        <a href="?date_filter=today" class="btn btn-outline-primary date-filter-btn <?php echo $dateFilter == 'today' ? 'active' : ''; ?>">
+                                            <i class="fas fa-calendar-day me-1"></i> ئەمڕۆ
+                                        </a>
+                                        <a href="?date_filter=this_week" class="btn btn-outline-primary date-filter-btn <?php echo $dateFilter == 'this_week' ? 'active' : ''; ?>">
+                                            <i class="fas fa-calendar-week me-1"></i> ئەم هەفتە
+                                        </a>
+                                        <a href="?date_filter=this_month" class="btn btn-outline-primary date-filter-btn <?php echo $dateFilter == 'this_month' ? 'active' : ''; ?>">
+                                            <i class="fas fa-calendar-alt me-1"></i> ئەم مانگە
+                                        </a>
+                                        <a href="?date_filter=this_year" class="btn btn-outline-primary date-filter-btn <?php echo $dateFilter == 'this_year' ? 'active' : ''; ?>">
+                                            <i class="fas fa-calendar me-1"></i> ئەم ساڵ
+                                        </a>
+                                        <a href="?date_filter=all" class="btn btn-outline-primary date-filter-btn <?php echo $dateFilter == 'all' || $dateFilter == '' ? 'active' : ''; ?>">
+                                            <i class="fas fa-infinity me-1"></i> هەموو کات
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     
                     <!-- Statistics Cards -->
                     <div class="row mb-4">
