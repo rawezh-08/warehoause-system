@@ -804,7 +804,7 @@ foreach ($payments as $payment) {
             </div>
 
             <h2 class="section-title"><?php echo $t['debt_return_history']; ?></h2>
-            <div class="table-responsive" <?php echo isset($_GET['show_debt_only']) ? 'style="display: none;"' : ''; ?>>
+            <div class="table-responsive">
                 <table class="items-table">
                     <thead>
                         <tr>
@@ -993,7 +993,7 @@ foreach ($payments as $payment) {
 
     <script>
     document.getElementById('show_debt_only').addEventListener('change', function() {
-        const sections = document.querySelectorAll('.table-responsive');
+        const sections = document.querySelectorAll('.items-section');
         sections.forEach(section => {
             section.style.display = this.checked ? 'none' : '';
         });
