@@ -100,6 +100,13 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
                                     <i class="fas fa-money-bill-wave me-2"></i> بەفیڕۆچوو
                                 </button>
                             </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="sales-tab" data-bs-toggle="tab"
+                                    data-bs-target="#sales-content" type="button" role="tab"
+                                    aria-controls="sales-content" aria-selected="false">
+                                    <i class="fas fa-file-invoice me-2"></i> پسووڵەکان
+                                </button>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -278,6 +285,168 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
                                                             </div>
                                                             <button id="withdrawalNextPageBtn"
                                                                 class="btn btn-sm btn-outline-primary rounded-circle">
+                                                                <i class="fas fa-chevron-left"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sales Receipts Tab -->
+                    <div class="tab-pane fade" id="sales-content" role="tabpanel" aria-labelledby="sales-tab">
+                        <!-- Date Filter for Sales -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card shadow-sm">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-4">فلتەر بەپێی بەروار</h5>
+                                        <form id="salesFilterForm" class="row g-3">
+                                            <div class="col-md-4">
+                                                <label for="salesStartDate" class="form-label">بەرواری دەستپێک</label>
+                                                <input type="date" class="form-control auto-filter" id="salesStartDate">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="salesEndDate" class="form-label">بەرواری کۆتایی</label>
+                                                <input type="date" class="form-control auto-filter" id="salesEndDate">
+                                            </div>
+                                            <div class="col-md-4 d-flex align-items-end">
+                                                <button type="button" class="btn btn-outline-secondary w-100" id="salesResetFilter">
+                                                    <i class="fas fa-redo me-2"></i> ڕیسێت
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sales History Table -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                                        <h5 class="card-title mb-0">مێژووی پسووڵەکان</h5>
+                                        <div>
+                                            <button class="btn btn-sm btn-outline-primary refresh-btn me-2">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-container">
+                                            <!-- Table Controls -->
+                                            <div class="table-controls mb-3">
+                                                <div class="row align-items-center">
+                                                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
+                                                        <div class="records-per-page">
+                                                            <label class="me-2">نیشاندان:</label>
+                                                            <div class="custom-select-wrapper">
+                                                                <select id="salesRecordsPerPage" class="form-select form-select-sm rounded-pill">
+                                                                    <option value="5">5</option>
+                                                                    <option value="10" selected>10</option>
+                                                                    <option value="25">25</option>
+                                                                    <option value="50">50</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-8 col-sm-6">
+                                                        <div class="search-container">
+                                                            <div class="input-group">
+                                                                <input type="text" id="salesTableSearch" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
+                                                                <span class="input-group-text rounded-pill-end bg-light">
+                                                                    <i class="fas fa-search"></i>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Table Content -->
+                                            <div class="table-responsive">
+                                                <table id="salesHistoryTable" class="table table-bordered custom-table table-hover">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>#</th>
+                                                            <th>ژمارەی پسووڵە</th>
+                                                            <th>بەروار</th>
+                                                            <th>کڕیار</th>
+                                                            <th>جۆری پارەدان</th>
+                                                            <th>جۆری نرخ</th>
+                                                            <th>بڕی پارەدراو</th>
+                                                            <th>بڕی ماوە</th>
+                                                            <th>کردارەکان</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <?php
+                                                        // Get sales data with customer information
+                                                        $stmt = $conn->query("
+                                                            SELECT s.*, c.name as customer_name,
+                                                                   (s.paid_amount + s.remaining_amount) as total_amount
+                                                            FROM sales s
+                                                            LEFT JOIN customers c ON s.customer_id = c.id
+                                                            WHERE s.is_draft = 0
+                                                            ORDER BY s.date DESC
+                                                        ");
+                                                        $sales = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                                                        if (count($sales) > 0) {
+                                                            foreach ($sales as $index => $sale) {
+                                                                echo '<tr data-id="' . $sale['id'] . '">';
+                                                                echo '<td>' . ($index + 1) . '</td>';
+                                                                echo '<td>' . htmlspecialchars($sale['invoice_number']) . '</td>';
+                                                                echo '<td>' . date('Y/m/d', strtotime($sale['date'])) . '</td>';
+                                                                echo '<td>' . htmlspecialchars($sale['customer_name']) . '</td>';
+                                                                echo '<td>' . ($sale['payment_type'] == 'cash' ? 'نقد' : 'قەرز') . '</td>';
+                                                                echo '<td>' . ($sale['price_type'] == 'single' ? 'تاک' : 'کۆمەڵ') . '</td>';
+                                                                echo '<td>' . number_format($sale['paid_amount']) . ' د.ع</td>';
+                                                                echo '<td>' . number_format($sale['remaining_amount']) . ' د.ع</td>';
+                                                                echo '<td>
+                                                                    <div class="action-buttons">
+                                                                        <button type="button" class="btn btn-sm btn-outline-info rounded-circle view-btn" data-id="' . $sale['id'] . '">
+                                                                            <i class="fas fa-eye"></i>
+                                                                        </button>
+                                                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-circle delete-btn" data-id="' . $sale['id'] . '">
+                                                                            <i class="fas fa-trash"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                </td>';
+                                                                echo '</tr>';
+                                                            }
+                                                        } else {
+                                                            echo '<tr><td colspan="9" class="text-center">هیچ پسووڵەیەک نەدۆزرایەوە</td></tr>';
+                                                        }
+                                                        ?>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            
+                                            <!-- Table Pagination -->
+                                            <div class="table-pagination mt-3">
+                                                <div class="row align-items-center">
+                                                    <div class="col-md-6 mb-2 mb-md-0">
+                                                        <div class="pagination-info">
+                                                            نیشاندانی <span id="salesStartRecord">1</span> تا <span id="salesEndRecord">3</span> لە کۆی <span id="salesTotalRecords">3</span> تۆمار
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="pagination-controls d-flex justify-content-md-end">
+                                                            <button id="salesPrevPageBtn" class="btn btn-sm btn-outline-primary rounded-circle me-2" disabled>
+                                                                <i class="fas fa-chevron-right"></i>
+                                                            </button>
+                                                            <div id="salesPaginationNumbers" class="pagination-numbers d-flex">
+                                                                <!-- Pagination numbers will be generated by JavaScript -->
+                                                                <button class="btn btn-sm btn-primary rounded-circle me-2 active">1</button>
+                                                            </div>
+                                                            <button id="salesNextPageBtn" class="btn btn-sm btn-outline-primary rounded-circle">
                                                                 <i class="fas fa-chevron-left"></i>
                                                             </button>
                                                         </div>
