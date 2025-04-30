@@ -130,74 +130,74 @@ try {
         // Always resize the image to ensure consistent size and quality
         try {
             log_debug('Image dimensions', $imageInfo);
-            list($width, $height) = $imageInfo;
-            
+        list($width, $height) = $imageInfo;
+        
             // More aggressive optimization for faster upload and smaller file size
             // Calculate new dimensions (max 600px width or height while maintaining aspect ratio)
             $maxDimension = 600; // Reduced from 800px to 600px
-            if ($width > $height) {
-                $newWidth = $maxDimension;
-                $newHeight = intval($height * $maxDimension / $width);
-            } else {
-                $newHeight = $maxDimension;
-                $newWidth = intval($width * $maxDimension / $height);
-            }
+        if ($width > $height) {
+            $newWidth = $maxDimension;
+            $newHeight = intval($height * $maxDimension / $width);
+        } else {
+            $newHeight = $maxDimension;
+            $newWidth = intval($width * $maxDimension / $height);
+        }
             
             log_debug('New dimensions', ['width' => $newWidth, 'height' => $newHeight]);
+        
+        // Create image resource based on file type
+        $sourceImage = null;
+        switch ($extension) {
+            case 'jpeg':
+            case 'jpg':
+                    $sourceImage = @imagecreatefromjpeg($image['tmp_name']);
+                break;
+            case 'png':
+                    $sourceImage = @imagecreatefrompng($image['tmp_name']);
+                break;
+            case 'gif':
+                    $sourceImage = @imagecreatefromgif($image['tmp_name']);
+                break;
+            default:
+                    log_debug('Unsupported image format, trying to move directly');
+                // For unsupported file types, try to move the file directly
+                if (!move_uploaded_file($image['tmp_name'], $filepath)) {
+                        log_debug('Failed to move uploaded file');
+                    throw new Exception('هەڵەیەک ڕوویدا لە کاتی هەڵگرتنی وێنەکە');
+                }
+                $imagePath = 'uploads/products/' . $filename;
+                    log_debug('File moved successfully', $imagePath);
+                break;
+        }
+        
+        if ($sourceImage) {
+                log_debug('Source image created successfully');
+            // Create a new true color image with new dimensions
+            $destinationImage = imagecreatetruecolor($newWidth, $newHeight);
             
-            // Create image resource based on file type
-            $sourceImage = null;
+            // Preserve transparency for PNG images
+            if ($extension == 'png') {
+                imagealphablending($destinationImage, false);
+                imagesavealpha($destinationImage, true);
+                $transparent = imagecolorallocatealpha($destinationImage, 255, 255, 255, 127);
+                imagefilledrectangle($destinationImage, 0, 0, $newWidth, $newHeight, $transparent);
+            }
+            
+            // Resize the image
+            imagecopyresampled(
+                $destinationImage, $sourceImage,
+                0, 0, 0, 0,
+                $newWidth, $newHeight, $width, $height
+            );
+            
+                // Save the resized image with lower quality for smaller file size
+                $saveResult = false;
             switch ($extension) {
                 case 'jpeg':
                 case 'jpg':
-                    $sourceImage = @imagecreatefromjpeg($image['tmp_name']);
+                        $saveResult = imagejpeg($destinationImage, $filepath, 60); // Reduced quality from 80% to 60%
                     break;
                 case 'png':
-                    $sourceImage = @imagecreatefrompng($image['tmp_name']);
-                    break;
-                case 'gif':
-                    $sourceImage = @imagecreatefromgif($image['tmp_name']);
-                    break;
-                default:
-                    log_debug('Unsupported image format, trying to move directly');
-                    // For unsupported file types, try to move the file directly
-                    if (!move_uploaded_file($image['tmp_name'], $filepath)) {
-                        log_debug('Failed to move uploaded file');
-                        throw new Exception('هەڵەیەک ڕوویدا لە کاتی هەڵگرتنی وێنەکە');
-                    }
-                    $imagePath = 'uploads/products/' . $filename;
-                    log_debug('File moved successfully', $imagePath);
-                    break;
-            }
-            
-            if ($sourceImage) {
-                log_debug('Source image created successfully');
-                // Create a new true color image with new dimensions
-                $destinationImage = imagecreatetruecolor($newWidth, $newHeight);
-                
-                // Preserve transparency for PNG images
-                if ($extension == 'png') {
-                    imagealphablending($destinationImage, false);
-                    imagesavealpha($destinationImage, true);
-                    $transparent = imagecolorallocatealpha($destinationImage, 255, 255, 255, 127);
-                    imagefilledrectangle($destinationImage, 0, 0, $newWidth, $newHeight, $transparent);
-                }
-                
-                // Resize the image
-                imagecopyresampled(
-                    $destinationImage, $sourceImage,
-                    0, 0, 0, 0,
-                    $newWidth, $newHeight, $width, $height
-                );
-                
-                // Save the resized image with lower quality for smaller file size
-                $saveResult = false;
-                switch ($extension) {
-                    case 'jpeg':
-                    case 'jpg':
-                        $saveResult = imagejpeg($destinationImage, $filepath, 60); // Reduced quality from 80% to 60%
-                        break;
-                    case 'png':
                         // Convert PNG to JPG for smaller file size if it's not transparent
                         $hasTransparency = false;
                         if (function_exists('imagecolortransparent') && function_exists('imagealpha')) {
@@ -225,8 +225,8 @@ try {
                             // Keep as PNG but with higher compression
                             $saveResult = imagepng($destinationImage, $filepath, 9); // Increased compression from 8 to 9 (max)
                         }
-                        break;
-                    case 'gif':
+                    break;
+                case 'gif':
                         // Convert GIF to JPG if not animated
                         $isAnimated = false;
                         if (function_exists('imagecreatefromgif')) {
@@ -246,15 +246,15 @@ try {
                         } else {
                             $saveResult = imagegif($destinationImage, $filepath);
                         }
-                        break;
-                }
+                    break;
+            }
                 
                 log_debug('Image save result', $saveResult);
-                
-                // Free up memory
-                imagedestroy($sourceImage);
-                imagedestroy($destinationImage);
-                
+            
+            // Free up memory
+            imagedestroy($sourceImage);
+            imagedestroy($destinationImage);
+            
                 // Check if the file size exceeds 2MB even after optimization
                 if (file_exists($filepath) && filesize($filepath) > 2 * 1024 * 1024) {
                     log_debug('File still too large after initial optimization, compressing further');
@@ -337,7 +337,7 @@ try {
             log_debug('Error in image processing', $e->getMessage());
             // If image processing fails, try direct upload as a last resort
             if (move_uploaded_file($image['tmp_name'], $filepath)) {
-                $imagePath = 'uploads/products/' . $filename;
+            $imagePath = 'uploads/products/' . $filename;
                 log_debug('Error recovery: Moved file directly', [
                     'path' => $imagePath,
                     'size' => filesize($filepath) / (1024 * 1024) . ' MB'
