@@ -1,7 +1,7 @@
 <?php
 // Include authentication check
-require_once 'includes/auth.php';
-require_once 'config/database.php';
+require_once '../../includes/auth.php';
+require_once '../../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
 
