@@ -101,7 +101,7 @@ require_once '../../process/products_logic.php';
                         </div>
                         <div class="col-md-3" >
                             <label for="category" class="form-label">جۆری کاڵا</label>
-                            <select class="form-select " id="category" name="category" style="border-radius: 24px;  display: flex; justify-content: center; align-items: center;" aria-label="هەڵبژاردنی جۆری کاڵا" title="جۆری کاڵا">
+                            <select class="form-select " id="category" name="category" aria-label="هەڵبژاردنی جۆری کاڵا" title="جۆری کاڵا">
                                 <option value="">هەموو جۆرەکان</option>
                                 <?php foreach ($categories as $cat): ?>
                                     <option value="<?php echo htmlspecialchars($cat['id']); ?>" <?php echo $category_id == $cat['id'] ? 'selected' : ''; ?>>
