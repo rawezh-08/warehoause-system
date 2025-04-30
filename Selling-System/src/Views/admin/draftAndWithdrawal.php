@@ -560,6 +560,55 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
             });
         }
 
+        // Function to delete a sale record
+        function handleDeleteSale(saleId) {
+            Swal.fire({
+                title: 'دڵنیای',
+                text: 'دڵنیای لە سڕینەوەی ئەم پسووڵەیە؟',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'بەڵێ',
+                cancelButtonText: 'نەخێر'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    logDebug('هەوڵی سڕینەوەی پسووڵە: ID=' + saleId);
+                    
+                    $.ajax({
+                        url: '../../api/receipts/delete_sale.php',
+                        method: 'POST',
+                        data: { sale_id: saleId },
+                        success: function(response) {
+                            logDebug('ئەنجامی سڕینەوە: ' + JSON.stringify(response));
+                            
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'سەرکەوتوو',
+                                    text: 'پسووڵەکە بە سەرکەوتوویی سڕایەوە'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'هەڵە',
+                                    text: response.message || 'هەڵەیەک ڕوویدا لە سڕینەوەی پسووڵە'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            logDebug('هەڵەی AJAX: ' + xhr.responseText);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'هەڵە',
+                                text: 'هەڵەیەک ڕوویدا لە پەیوەندی بە سێرڤەرەوە'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
         // Handle tab switching to load relevant data
         $('#expensesTabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
             const target = $(e.target).attr("data-bs-target");
@@ -568,6 +617,13 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
                 if ($('#withdrawalHistoryTable tbody tr').length <= 1) {
                     if (typeof loadWastingData === 'function') {
                         loadWastingData();
+                    }
+                }
+            } else if (target === '#sales-content') {
+                // Load sales data if not already loaded
+                if ($('#salesHistoryTable tbody tr').length <= 1) {
+                    if (typeof loadSalesData === 'function') {
+                        loadSalesData();
                     }
                 }
             }
@@ -580,6 +636,7 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
 
         // Remove any existing event handlers first
         $(document).off('click', '#withdrawal-content .delete-btn');
+        $(document).off('click', '#sales-content .delete-btn');
 
         // Assign specific click handlers for delete buttons in different tabs
         $(document).on('click', '#withdrawal-content .delete-btn', function(e) {
@@ -587,6 +644,55 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
             e.stopPropagation();
             const wastingId = $(this).data('id');
             handleDeleteWasting(wastingId);
+        });
+
+        $(document).on('click', '#sales-content .delete-btn', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const saleId = $(this).data('id');
+            handleDeleteSale(saleId);
+        });
+
+        // Initialize date filters
+        const today = new Date();
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        
+        // Format dates for input fields
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        // Set default dates for both tabs
+        $('#withdrawalStartDate').val(formatDate(startOfMonth));
+        $('#withdrawalEndDate').val(formatDate(today));
+        $('#salesStartDate').val(formatDate(startOfMonth));
+        $('#salesEndDate').val(formatDate(today));
+
+        // Handle date filter changes
+        $('.auto-filter').on('change', function() {
+            const tabId = $(this).closest('.tab-pane').attr('id');
+            if (tabId === 'withdrawal-content' && typeof loadWastingData === 'function') {
+                loadWastingData();
+            } else if (tabId === 'sales-content' && typeof loadSalesData === 'function') {
+                loadSalesData();
+            }
+        });
+
+        // Handle reset filter buttons
+        $('#withdrawalResetFilter').on('click', function() {
+            $('#withdrawalStartDate').val(formatDate(startOfMonth));
+            $('#withdrawalEndDate').val(formatDate(today));
+            if (typeof loadWastingData === 'function') {
+                loadWastingData();
+            }
+        });
+
+        $('#salesResetFilter').on('click', function() {
+            $('#salesStartDate').val(formatDate(startOfMonth));
+            $('#salesEndDate').val(formatDate(today));
+            if (typeof loadSalesData === 'function') {
+                loadSalesData();
+            }
         });
     });
     </script>
