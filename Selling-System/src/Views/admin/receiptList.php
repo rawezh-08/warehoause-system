@@ -42,21 +42,17 @@ function formatDate($date) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لیستی پسووڵەکان - سیستەمی بەڕێوەبردنی کۆگا</title>
     <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Select2 CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
-
-    <!-- Global CSS -->
     <link rel="stylesheet" href="../../assets/css/custom.css">
-    <!-- Page CSS -->
-    <link rel="stylesheet" href="../../css/dashboard.css">
     <link rel="stylesheet" href="../../css/global.css">
-    <link rel="stylesheet" href="../../css/employeePayment/style.css">
-    <link rel="stylesheet" href="../../css/products.css">
+    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="../../css/reports.css">
+
+    <link rel="stylesheet" href="../../test/main.css">
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
-    <link rel="stylesheet" href="../../test/main.css">
     <!-- Custom styles for this page -->
     <style>
         /* Transparent search input */
@@ -158,7 +154,7 @@ function formatDate($date) {
             padding: 5px 10px;
         }
 
-        .table-responsive {
+          .table-responsive {
             overflow-x: auto;
             max-height: 68vh;
         }
