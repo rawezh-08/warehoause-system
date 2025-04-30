@@ -178,21 +178,11 @@ require_once '../../includes/auth.php';
                                                     <label for="customerAddress" class="form-label">ناونیشان</label>
                                                     <textarea class="form-control" id="customerAddress" name="customerAddress" rows="2" placeholder="ناونیشانی کڕیار"></textarea>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <div class="form-check mb-3">
-                                                        <input class="form-check-input" type="checkbox" id="isBusinessPartner" name="isBusinessPartner">
-                                                        <label class="form-check-label" for="isBusinessPartner">
-                                                            ئایا پارتنەری بازرگانییە؟ (هەردووک لە کڕیار و دابینکەر)
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6" id="supplierLinkField" style="display: none;">
-                                                    <label for="linkedSupplier" class="form-label">دابینکەری پەیوەندیدار</label>
-                                                    <select class="form-select" id="linkedSupplier" name="linkedSupplier">
-                                                        <option value="">هیچ دابینکەرێک هەڵمەبژێرە</option>
-                                                        <?php /* Populate from suppliers table */ ?>
-                                                    </select>
-                                                </div>
+                                               
+                                            
+
+                                             
+                                                
                                                 <div class="col-6">
                                                     <label for="customerNotes" class="form-label">تێبینی</label>
                                                     <textarea class="form-control" id="customerNotes" name="customerNotes" rows="2" placeholder="تێبینی لەسەر کڕیار"></textarea>
@@ -261,21 +251,6 @@ require_once '../../includes/auth.php';
                                                     <label for="supplierNotes" class="form-label">تێبینی</label>
                                                     <textarea class="form-control" id="supplierNotes" name="supplierNotes" rows="2" placeholder="تێبینی لەسەر دابینکەر"></textarea>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <div class="form-check mb-3">
-                                                        <input class="form-check-input" type="checkbox" id="isBusinessPartnerSupplier" name="isBusinessPartner">
-                                                        <label class="form-check-label" for="isBusinessPartnerSupplier">
-                                                            ئایا پارتنەری بازرگانییە؟ (هەردووک لە کڕیار و دابینکەر)
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6" id="customerLinkField" style="display: none;">
-                                                    <label for="linkedCustomer" class="form-label">کڕیاری پەیوەندیدار</label>
-                                                    <select class="form-select" id="linkedCustomer" name="linkedCustomer">
-                                                        <option value="">هیچ کڕیارێک هەڵمەبژێرە</option>
-                                                        <?php /* Populate from customers table */ ?>
-                                                    </select>
-                                                </div>
                                                 <div class="col-12 text-end">
                                                     <button type="button" class="btn btn-outline-secondary me-2" id="resetSupplierForm">
                                                         <i class="fas fa-redo me-2"></i>ڕیسێت
@@ -326,21 +301,6 @@ require_once '../../includes/auth.php';
                 }
             }
         });
-
-        // Business partner logic
-        document.getElementById('isBusinessPartner').addEventListener('change', function() {
-            document.getElementById('supplierLinkField').style.display = this.checked ? 'block' : 'none';
-        });
-
-        document.getElementById('isBusinessPartnerSupplier').addEventListener('change', function() {
-            document.getElementById('customerLinkField').style.display = this.checked ? 'block' : 'none';
-        });
-
-        // Format number inputs
-        function formatNumber(input) {
-            input.value = input.value.replace(/\D/g, '')
-                .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        }
     </script>
    
 </body>
