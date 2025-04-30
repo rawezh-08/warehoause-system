@@ -112,11 +112,11 @@ try {
                             </tr>
                             <tr>
                                 <th>کڕیار</th>
-                                <td><?php echo htmlspecialchars($sale['customer_name']); ?></td>
+                                <td><?php echo $sale['customer_name'] ? htmlspecialchars($sale['customer_name']) : 'کڕیاری نەناسراو'; ?></td>
                             </tr>
                             <tr>
                                 <th>ژمارەی مۆبایل</th>
-                                <td><?php echo htmlspecialchars($sale['customer_phone']); ?></td>
+                                <td><?php echo $sale['customer_phone'] ? htmlspecialchars($sale['customer_phone']) : '-'; ?></td>
                             </tr>
                             <tr>
                                 <th>جۆری پارەدان</th>
