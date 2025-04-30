@@ -1,38 +1,53 @@
 <?php
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // Include authentication check
 require_once '../../includes/auth.php';
 
+// Debug connection
+echo "<pre>";
+echo "Database Connection Status: ";
+var_dump(isset($conn));
+echo "\n";
+
 // Get sale ID from URL parameter
 $sale_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+echo "Sale ID from URL: " . $sale_id . "\n";
 
-// Get sale details with customer information
-$stmt = $conn->prepare("
-    SELECT s.*, c.name as customer_name, c.phone1 as customer_phone
-    FROM sales s
-    LEFT JOIN customers c ON s.customer_id = c.id
-    WHERE s.id = ? AND s.is_draft = 0
-");
-$stmt->execute([$sale_id]);
-$sale = $stmt->fetch(PDO::FETCH_ASSOC);
+try {
+    // Get sale details with customer information
+    $stmt = $conn->prepare("
+        SELECT s.*, c.name as customer_name, c.phone1 as customer_phone
+        FROM sales s
+        LEFT JOIN customers c ON s.customer_id = c.id
+        WHERE s.id = ? AND s.is_draft = 0
+    ");
+    $stmt->execute([$sale_id]);
+    $sale = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    echo "Sale Query Result:\n";
+    var_dump($sale);
 
-// Get sale items with product information
-$stmt = $conn->prepare("
-    SELECT si.*, p.name as product_name, p.code as product_code
-    FROM sale_items si
-    LEFT JOIN products p ON si.product_id = p.id
-    WHERE si.sale_id = ?
-");
-$stmt->execute([$sale_id]);
-$sale_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // Get sale items with product information
+    $stmt = $conn->prepare("
+        SELECT si.*, p.name as product_name, p.code as product_code
+        FROM sale_items si
+        LEFT JOIN products p ON si.product_id = p.id
+        WHERE si.sale_id = ?
+    ");
+    $stmt->execute([$sale_id]);
+    $sale_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo "\nSale Items Query Result:\n";
+    var_dump($sale_items);
+    echo "</pre>";
 
-// Debug information
-echo "<pre>";
-echo "Sale ID: " . $sale_id . "\n";
-echo "Sale Data:\n";
-print_r($sale);
-echo "\nSale Items:\n";
-print_r($sale_items);
-echo "</pre>";
+} catch (PDOException $e) {
+    echo "<pre>Database Error: " . $e->getMessage() . "</pre>";
+    exit;
+}
 ?>
 
 <!DOCTYPE html>
