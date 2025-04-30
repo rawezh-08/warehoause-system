@@ -182,14 +182,12 @@ require_once '../../process/addProduct_logic.php';
                                             <!-- Added location fields here -->
                                             <div class="row mb-4">
                                                 <div class="col-md-4 mb-3">
-                                                    <label for="min_quantity" class="form-label">کەمترین بڕ (کارتۆن)</label>
-                                                    <input type="text" id="min_quantity" name="min_quantity" class="form-control" placeholder="کەمترین بڕ بە کارتۆن" required>
-                                                    <small class="text-muted">کەمترین بڕ بە دانە: <span id="minQuantityPieces">0</span> دانە</small>
+                                                    <label for="min_quantity" class="form-label">کەمترین بڕ</label>
+                                                    <input type="text" id="min_quantity" name="min_quantity" class="form-control" placeholder="کەمترین بڕ" required>
                                                 </div>
                                                 <div class="col-md-4 mb-3">
-                                                    <label for="current_quantity" class="form-label">بڕی بەردەست (کارتۆن)</label>
-                                                    <input type="text" id="current_quantity" name="current_quantity" class="form-control" placeholder="بڕی بەردەست بە کارتۆن" required>
-                                                    <small class="text-muted">بڕی بەردەست بە دانە: <span id="currentQuantityPieces">0</span> دانە</small>
+                                                    <label for="current_quantity" class="form-label">بڕی بەردەست</label>
+                                                    <input type="text" id="current_quantity" name="current_quantity" class="form-control" placeholder="بڕی بەردەست" required>
                                                 </div>
                                             </div>
                                             
@@ -418,36 +416,6 @@ require_once '../../process/addProduct_logic.php';
         $('#piecesPerBox').on('change', function() {
             if ($(this).val()) {
                 calculatePiecePrices();
-            }
-        });
-    });
-    </script>
-
-    <script>
-    // Add this to your existing JavaScript
-    $(document).ready(function() {
-        // Function to calculate piece quantities
-        function calculatePieceQuantities() {
-            const piecesPerBox = parseInt($('#piecesPerBox').val()) || 1;
-            const minQuantity = parseInt($('#min_quantity').val()) || 0;
-            const currentQuantity = parseInt($('#current_quantity').val()) || 0;
-
-            // Calculate piece quantities
-            const minQuantityPieces = minQuantity * piecesPerBox;
-            const currentQuantityPieces = currentQuantity * piecesPerBox;
-
-            // Update piece quantity displays
-            $('#minQuantityPieces').text(minQuantityPieces);
-            $('#currentQuantityPieces').text(currentQuantityPieces);
-        }
-
-        // Add event listeners for quantity inputs and pieces per box
-        $('#min_quantity, #current_quantity, #piecesPerBox').on('input', calculatePieceQuantities);
-
-        // Calculate initial piece quantities when pieces per box is entered
-        $('#piecesPerBox').on('change', function() {
-            if ($(this).val()) {
-                calculatePieceQuantities();
             }
         });
     });
