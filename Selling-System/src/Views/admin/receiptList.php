@@ -173,7 +173,7 @@ function formatDate($date) {
 </head>
 
 <body>
-    <div id="content">
+    <div id="main-container">
 <div id="navbar-container"></div>
 
 <!-- Sidebar container - populated by JavaScript -->
