@@ -723,19 +723,19 @@ document.addEventListener('DOMContentLoaded', function() {
         input.value = value;
     }
 
-    // Initialize when DOM is loaded
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize number formatting
-        const numberInputs = [
-            'buyingPrice',
-            'sellingPrice',
-            'selling_price_wholesale',
-            'piecesPerBox',
-            'boxesPerSet',
-            'min_quantity',
-            'current_quantity'
-        ];
+    // Initialize number formatting
+    const numberInputs = [
+        'buyingPrice',
+        'sellingPrice',
+        'selling_price_wholesale',
+        'piecesPerBox',
+        'boxesPerSet',
+        'min_quantity',
+        'current_quantity'
+    ];
 
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize format listeners
         numberInputs.forEach(inputId => {
             const input = document.getElementById(inputId);
             if (input) {
@@ -750,106 +750,114 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initialize by making sure we're on the correct tab and buttons are set up
         switchToTab('basic-info');
         
-        // Form submission handler
+        // Add form submission via the submit buttons
+        const submitBtn = document.getElementById('submitBtn');
+        const submitBtn2 = document.getElementById('submitBtn2');
         const addProductForm = document.getElementById('addProductForm');
-        if (addProductForm) {
-            let isSubmitting = false; // Flag to prevent double submission
+        
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                handleFormSubmit();
+            });
+        }
+        
+        if (submitBtn2) {
+            submitBtn2.addEventListener('click', function(e) {
+                e.preventDefault();
+                handleFormSubmit();
+            });
+        }
+        
+        // Function to handle form submission
+        function handleFormSubmit() {
+            if (!addProductForm) return;
             
-            addProductForm.addEventListener('submit', async function(e) {
-                e.preventDefault(); // Prevent the form from submitting normally
-                
-                // Prevent double submission
-                if (isSubmitting) {
-                    return;
-                }
-                
-                // Validate the form with browser's built-in validation
-                if (!this.checkValidity()) {
-                    // Show custom error message
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'هەڵە',
-                        text: 'تکایە هەموو خانەکان پڕ بکەوە',
-                        confirmButtonText: 'باشە'
-                    });
-                    return false;
-                }
-                
-                isSubmitting = true;
-                
-                // Disable submit buttons to prevent double submission
-                const submitButtons = this.querySelectorAll('button[type="submit"]');
-                submitButtons.forEach(button => {
-                    button.disabled = true;
+            // Prevent double submission
+            if (addProductForm.isSubmitting) {
+                return;
+            }
+            
+            // Validate the form with browser's built-in validation
+            if (!addProductForm.checkValidity()) {
+                // Show custom error message
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: 'تکایە هەموو خانەکان پڕ بکەوە',
+                    confirmButtonText: 'باشە'
                 });
-                
-                // Validate all tabs before submission
-                if (!validateAllTabs()) {
-                    isSubmitting = false;
-                    submitButtons.forEach(button => {
-                        button.disabled = false;
+                return;
+            }
+            
+            addProductForm.isSubmitting = true;
+            
+            // Disable submit buttons to prevent double submission
+            const buttons = [submitBtn, submitBtn2];
+            buttons.forEach(button => {
+                if (button) button.disabled = true;
+            });
+            
+            // Validate all tabs before submission
+            if (!validateAllTabs()) {
+                addProductForm.isSubmitting = false;
+                buttons.forEach(button => {
+                    if (button) button.disabled = false;
+                });
+                return;
+            }
+            
+            // Clean number inputs (remove commas)
+            cleanNumberInputs();
+            
+            // Create FormData object
+            const formData = new FormData(addProductForm);
+            
+            // Check if we have a compressed image and use it instead
+            const fileInput = document.getElementById('productImage');
+            if (fileInput && fileInput.files.length > 0 && fileInput.compressedImage) {
+                // Replace the file with the compressed version
+                formData.delete('image');
+                formData.append('image', fileInput.compressedImage);
+            }
+            
+            // Show loading indicator
+            Swal.fire({
+                title: 'تکایە چاوەڕێ بکە...',
+                text: 'زیادکردنی کاڵا بەردەوامە',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Submit form using fetch
+            fetch('../../process/add_product.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        console.error('Server response:', text);
+                        throw new Error('هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە سێرڤەرەوە');
                     });
-                    return;
                 }
-                
-                // Clean number inputs (remove commas)
-                cleanNumberInputs();
-                
-                // Create FormData object
-                const formData = new FormData(this);
-                
-                // Check if we have a compressed image and use it instead
-                const fileInput = document.getElementById('productImage');
-                if (fileInput && fileInput.files.length > 0 && fileInput.compressedImage) {
-                    // Replace the file with the compressed version
-                    formData.delete('image');
-                    formData.append('image', fileInput.compressedImage);
-                }
-                
-                try {
-                    // Show loading indicator
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
                     Swal.fire({
-                        title: 'تکایە چاوەڕێ بکە...',
-                        text: 'زیادکردنی کاڵا بەردەوامە',
-                        allowOutsideClick: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        }
-                    });
-                    
-                    // Submit form using fetch
-                    const response = await fetch('../../process/add_product.php', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('Server response:', errorText);
-                        throw new Error(`هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە سێرڤەرەوە`);
-                    }
-                    
-                    let data;
-                    try {
-                        data = await response.json();
-                    } catch (parseError) {
-                        console.error('Error parsing JSON response:', await response.text());
-                        throw new Error('هەڵەیەک ڕوویدا لە کاتی وەرگرتنی وەڵامەکە');
-                    }
-                    
-                    if (data.success) {
-                        await Swal.fire({
-                            icon: 'success',
-                            title: 'سەرکەوتوو',
-                            text: data.message || 'کاڵاکە بە سەرکەوتوویی زیاد کرا',
-                            confirmButtonText: 'باشە'
-                        });
-                        
+                        icon: 'success',
+                        title: 'سەرکەوتوو',
+                        text: data.message || 'کاڵاکە بە سەرکەوتوویی زیاد کرا',
+                        confirmButtonText: 'باشە'
+                    }).then(() => {
                         // Show success message
                         showSuccessMessage();
                         
                         // Reset form and image preview
-                        this.reset();
+                        addProductForm.reset();
                         resetImagePreview();
                         
                         // Reset to first tab
@@ -868,29 +876,30 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         
                         // Reset select elements
-                        const selects = this.querySelectorAll('select');
+                        const selects = addProductForm.querySelectorAll('select');
                         selects.forEach(select => {
                             select.value = '';
                         });
-                        
-                    } else {
-                        throw new Error(data.message || 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'هەڵە',
-                        text: error.message || 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا',
-                        confirmButtonText: 'باشە'
                     });
-                } finally {
-                    // Reset submission flag and enable buttons
-                    isSubmitting = false;
-                    submitButtons.forEach(button => {
-                        button.disabled = false;
-                    });
+                } else {
+                    throw new Error(data.message || 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا');
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: error.message || 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا',
+                    confirmButtonText: 'باشە'
+                });
+            })
+            .finally(() => {
+                // Reset submission flag and enable buttons
+                addProductForm.isSubmitting = false;
+                buttons.forEach(button => {
+                    if (button) button.disabled = false;
+                });
             });
         }
 
