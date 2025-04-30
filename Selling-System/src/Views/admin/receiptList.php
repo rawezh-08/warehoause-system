@@ -342,6 +342,7 @@ function formatDate($date) {
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <!-- Page Script -->
+    <script src="../../js/include-components.js"></script>
     <script src="../../js/receiptList.js"></script>
 </body>
 
