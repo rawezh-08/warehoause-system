@@ -32,6 +32,16 @@ $(document).ready(function() {
             return;
         }
 
+        // Show loading state
+        Swal.fire({
+            title: 'تکایە چاوەڕێ بکە...',
+            text: 'زیادکردنی هاوکار بەردەوامە',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
         // Get form data
         const formData = {
             partnerName: $('#partnerName').val(),

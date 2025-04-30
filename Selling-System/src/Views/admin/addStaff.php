@@ -281,7 +281,7 @@ require_once '../../includes/auth.php';
                                         <h5 class="card-title mb-0">زانیاری هاوکار</h5>
                                     </div>
                                     <div class="card-body">
-                                        <form id="partnerForm" action="../../process/add_partner.php" method="POST" class="needs-validation" novalidate>
+                                        <form id="partnerForm" class="needs-validation" novalidate>
                                             <div class="row g-3">
                                                 <div class="col-md-6">
                                                     <label for="partnerName" class="form-label">ناوی هاوکار</label>
