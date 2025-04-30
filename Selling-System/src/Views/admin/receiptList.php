@@ -49,181 +49,178 @@ function formatDate($date) {
     <link rel="stylesheet" href="../../css/global.css">
     <link rel="stylesheet" href="../../css/dashboard.css">
     <link rel="stylesheet" href="../../css/reports.css">
-
-    <link rel="stylesheet" href="../../test/main.css">
+    <link rel="stylesheet" href="../../css/receiptList.css">
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
-    <!-- Custom styles for this page -->
-    <style>
-        /* Transparent search input */
-       
-    </style>
 </head>
 
 <body>
     <div id="main-container">
-<div id="navbar-container"></div>
+        <!-- Navbar container - populated by JavaScript -->
+        <div id="navbar-container"></div>
 
-<!-- Sidebar container - populated by JavaScript -->
-<div id="sidebar-container"></div>
+        <!-- Sidebar container - populated by JavaScript -->
+        <div id="sidebar-container"></div>
 
-    <div class="container-fluid mt-3">
-        <h2 class="text-center mb-4"><i class="fas fa-receipt"></i> لیستی پسووڵەکان</h2>
+        <div class="content-wrapper">
+            <div class="container-fluid mt-3">
+                <h2 class="text-center mb-4"><i class="fas fa-receipt"></i> لیستی پسووڵەکان</h2>
 
-        <!-- Tabs Navigation -->
-        <ul class="nav nav-tabs custom-tabs mb-4" id="receiptTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="sales-tab" data-bs-toggle="tab" data-bs-target="#sales" type="button" role="tab" aria-controls="sales" aria-selected="true">
-                    <i class="fas fa-shopping-cart"></i> پسووڵەکانی فرۆشتن
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="purchases-tab" data-bs-toggle="tab" data-bs-target="#purchases" type="button" role="tab" aria-controls="purchases" aria-selected="false">
-                    <i class="fas fa-truck"></i> پسووڵەکانی کڕین
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="returns-tab" data-bs-toggle="tab" data-bs-target="#returns" type="button" role="tab" aria-controls="returns" aria-selected="false">
-                    <i class="fas fa-undo"></i> پسووڵەکانی گەڕانەوە
-                </button>
-            </li>
-        </ul>
+                <!-- Tabs Navigation -->
+                <ul class="nav nav-tabs custom-tabs mb-4" id="receiptTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="sales-tab" data-bs-toggle="tab" data-bs-target="#sales" type="button" role="tab" aria-controls="sales" aria-selected="true">
+                            <i class="fas fa-shopping-cart"></i> پسووڵەکانی فرۆشتن
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="purchases-tab" data-bs-toggle="tab" data-bs-target="#purchases" type="button" role="tab" aria-controls="purchases" aria-selected="false">
+                            <i class="fas fa-truck"></i> پسووڵەکانی کڕین
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="returns-tab" data-bs-toggle="tab" data-bs-target="#returns" type="button" role="tab" aria-controls="returns" aria-selected="false">
+                            <i class="fas fa-undo"></i> پسووڵەکانی گەڕانەوە
+                        </button>
+                    </li>
+                </ul>
 
-        <!-- Tab Content -->
-        <div class="tab-content" id="receiptTabsContent">
-            <!-- Sales Tab -->
-            <div class="tab-pane fade show active" id="sales" role="tabpanel" aria-labelledby="sales-tab">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-light">
-                        <div class="row align-items-center">
-                            <div class="col-md-6 mb-2 mb-md-0">
-                                <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> پسووڵەکانی فرۆشتن</h5>
+                <!-- Tab Content -->
+                <div class="tab-content" id="receiptTabsContent">
+                    <!-- Sales Tab -->
+                    <div class="tab-pane fade show active" id="sales" role="tabpanel" aria-labelledby="sales-tab">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-light">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6 mb-2 mb-md-0">
+                                        <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> پسووڵەکانی فرۆشتن</h5>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <input type="text" id="salesSearchInput" class="form-control table-search-input" placeholder="گەڕان بۆ پسووڵە...">
+                                            <span class="input-group-text bg-primary text-white">
+                                                <i class="fas fa-search"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="input-group">
-                                    <input type="text" id="salesSearchInput" class="form-control table-search-input" placeholder="گەڕان بۆ پسووڵە...">
-                                    <span class="input-group-text bg-primary text-white">
-                                        <i class="fas fa-search"></i>
-                                    </span>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table custom-table table-hover mb-0" id="salesTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>ژمارەی پسووڵە</th>
+                                                <th>ناوی کڕیار</th>
+                                                <th>ژمارەی پەیوەندی</th>
+                                                <th>بەروار</th>
+                                                <th>جۆری پارەدان</th>
+                                                <th>کۆی گشتی</th>
+                                                <th>دۆخ</th>
+                                                <th>کردارەکان</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if(empty($sales)): ?>
+                                            <tr>
+                                                <td colspan="9" class="text-center py-4">هیچ پسووڵەیەک نەدۆزرایەوە</td>
+                                            </tr>
+                                            <?php else: ?>
+                                                <?php foreach($sales as $index => $sale): ?>
+                                                    <?php 
+                                                        $total = $sale['total_amount'] ?? 0;
+                                                        $paymentStatus = 'unpaid';
+                                                        if ($sale['payment_type'] == 'cash' || $sale['paid_amount'] >= $total) {
+                                                            $paymentStatus = 'paid';
+                                                        } elseif ($sale['paid_amount'] > 0) {
+                                                            $paymentStatus = 'partial';
+                                                        }
+                                                    ?>
+                                                    <tr>
+                                                        <td><?= $index + 1 ?></td>
+                                                        <td><?= htmlspecialchars($sale['invoice_number']) ?></td>
+                                                        <td><?= htmlspecialchars($sale['customer_name'] ?? 'N/A') ?></td>
+                                                        <td><?= htmlspecialchars($sale['customer_phone'] ?? 'N/A') ?></td>
+                                                        <td><?= formatDate($sale['date']) ?></td>
+                                                        <td>
+                                                            <?php if($sale['payment_type'] == 'cash'): ?>
+                                                                <span class="badge badge-cash">نەقد</span>
+                                                            <?php else: ?>
+                                                                <span class="badge badge-credit">قەرز</span>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td><?= number_format($total, 0, '.', ',') ?> IQD</td>
+                                                        <td>
+                                                            <?php if($paymentStatus == 'paid'): ?>
+                                                                <span class="badge badge-paid">پارەدراوە</span>
+                                                            <?php elseif($paymentStatus == 'partial'): ?>
+                                                                <span class="badge badge-partial">بەشێکی دراوە</span>
+                                                            <?php else: ?>
+                                                                <span class="badge badge-unpaid">پارە نەدراوە</span>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td>
+                                                            <div class="d-flex justify-content-center gap-2">
+                                                                <a href="saleDetails.php?id=<?= $sale['id'] ?>" class="btn btn-sm btn-info action-btn view-receipt-btn" data-receipt-id="<?= $sale['id'] ?>" data-receipt-type="sale" title="بینینی وردەکاری">
+                                                                    <i class="fas fa-eye"></i>
+                                                                </a>
+                                                                <a href="../../Views/receipt/printReceipt.php?id=<?= $sale['id'] ?>&type=sale" class="btn btn-sm btn-primary action-btn print-receipt-btn" target="_blank" data-receipt-id="<?= $sale['id'] ?>" data-receipt-type="sale" title="چاپکردن">
+                                                                    <i class="fas fa-print"></i>
+                                                                </a>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-light">
+                                <div class="pagination-wrapper">
+                                    <div class="pagination-info">
+                                        <span id="salesShowing">نیشاندانی <span id="salesFrom">1</span> بۆ <span id="salesTo">10</span> لە <span id="salesTotalItems">0</span> پسووڵە</span>
+                                    </div>
+                                    <div class="pagination-controls">
+                                        <button class="btn btn-sm btn-outline-secondary" id="salesPrevPage" disabled>
+                                            <i class="fas fa-chevron-right"></i> پێشوو
+                                        </button>
+                                        <div class="pagination-numbers" id="salesPagination"></div>
+                                        <button class="btn btn-sm btn-outline-secondary" id="salesNextPage">
+                                            دواتر <i class="fas fa-chevron-left"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table custom-table table-hover mb-0" id="salesTable">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>#</th>
-                                        <th>ژمارەی پسووڵە</th>
-                                        <th>ناوی کڕیار</th>
-                                        <th>ژمارەی پەیوەندی</th>
-                                        <th>بەروار</th>
-                                        <th>جۆری پارەدان</th>
-                                        <th>کۆی گشتی</th>
-                                        <th>دۆخ</th>
-                                        <th>کردارەکان</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php if(empty($sales)): ?>
-                                    <tr>
-                                        <td colspan="9" class="text-center py-4">هیچ پسووڵەیەک نەدۆزرایەوە</td>
-                                    </tr>
-                                    <?php else: ?>
-                                        <?php foreach($sales as $index => $sale): ?>
-                                            <?php 
-                                                $total = $sale['total_amount'] ?? 0;
-                                                $paymentStatus = 'unpaid';
-                                                if ($sale['payment_type'] == 'cash' || $sale['paid_amount'] >= $total) {
-                                                    $paymentStatus = 'paid';
-                                                } elseif ($sale['paid_amount'] > 0) {
-                                                    $paymentStatus = 'partial';
-                                                }
-                                            ?>
-                                            <tr>
-                                                <td><?= $index + 1 ?></td>
-                                                <td><?= htmlspecialchars($sale['invoice_number']) ?></td>
-                                                <td><?= htmlspecialchars($sale['customer_name'] ?? 'N/A') ?></td>
-                                                <td><?= htmlspecialchars($sale['customer_phone'] ?? 'N/A') ?></td>
-                                                <td><?= formatDate($sale['date']) ?></td>
-                                                <td>
-                                                    <?php if($sale['payment_type'] == 'cash'): ?>
-                                                        <span class="badge bg-success">نەقد</span>
-                                                    <?php else: ?>
-                                                        <span class="badge bg-warning">قەرز</span>
-                                                    <?php endif; ?>
-                                                </td>
-                                                <td><?= number_format($total, 0, '.', ',') ?> IQD</td>
-                                                <td>
-                                                    <?php if($paymentStatus == 'paid'): ?>
-                                                        <span class="badge bg-success">پارەدراوە</span>
-                                                    <?php elseif($paymentStatus == 'partial'): ?>
-                                                        <span class="badge bg-warning">بەشێکی دراوە</span>
-                                                    <?php else: ?>
-                                                        <span class="badge bg-danger">پارە نەدراوە</span>
-                                                    <?php endif; ?>
-                                                </td>
-                                                <td>
-                                                    <div class="d-flex justify-content-center gap-2">
-                                                        <a href="saleDetails.php?id=<?= $sale['id'] ?>" class="btn btn-sm btn-info view-receipt-btn" data-receipt-id="<?= $sale['id'] ?>" data-receipt-type="sale">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                        <a href="../../ Views/receipt/printReceipt.php?id=<?= $sale['id'] ?>&type=sale" class="btn btn-sm btn-primary print-receipt-btn" target="_blank" data-receipt-id="<?= $sale['id'] ?>" data-receipt-type="sale">
-                                                            <i class="fas fa-print"></i>
-                                                        </a>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="card-footer bg-light">
-                        <div class="pagination-wrapper">
-                            <div class="pagination-info">
-                                <span id="salesShowing">نیشاندانی <span id="salesFrom">1</span> بۆ <span id="salesTo">10</span> لە <span id="salesTotalItems">0</span> پسووڵە</span>
-                            </div>
-                            <div class="pagination-controls">
-                                <button class="btn btn-sm btn-outline-secondary" id="salesPrevPage" disabled>
-                                    <i class="fas fa-chevron-right"></i> پێشوو
-                                </button>
-                                <div class="pagination-numbers" id="salesPagination"></div>
-                                <button class="btn btn-sm btn-outline-secondary" id="salesNextPage">
-                                    دواتر <i class="fas fa-chevron-left"></i>
-                                </button>
+
+                    <!-- Purchases Tab (Placeholder for future implementation) -->
+                    <div class="tab-pane fade" id="purchases" role="tabpanel" aria-labelledby="purchases-tab">
+                        <div class="card shadow-sm">
+                            <div class="card-body text-center py-5">
+                                <h4 class="text-muted"><i class="fas fa-truck mb-3 fa-3x"></i></h4>
+                                <h5>پسووڵەکانی کڕین</h5>
+                                <p class="text-muted">ئەم بەشە بەمزوانە چالاک دەکرێت</p>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Purchases Tab (Placeholder for future implementation) -->
-            <div class="tab-pane fade" id="purchases" role="tabpanel" aria-labelledby="purchases-tab">
-                <div class="card shadow-sm">
-                    <div class="card-body text-center py-5">
-                        <h4 class="text-muted"><i class="fas fa-truck mb-3 fa-3x"></i></h4>
-                        <h5>پسووڵەکانی کڕین</h5>
-                        <p class="text-muted">ئەم بەشە بەمزوانە چالاک دەکرێت</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Returns Tab (Placeholder for future implementation) -->
-            <div class="tab-pane fade" id="returns" role="tabpanel" aria-labelledby="returns-tab">
-                <div class="card shadow-sm">
-                    <div class="card-body text-center py-5">
-                        <h4 class="text-muted"><i class="fas fa-undo mb-3 fa-3x"></i></h4>
-                        <h5>پسووڵەکانی گەڕانەوە</h5>
-                        <p class="text-muted">ئەم بەشە بەمزوانە چالاک دەکرێت</p>
+                    <!-- Returns Tab (Placeholder for future implementation) -->
+                    <div class="tab-pane fade" id="returns" role="tabpanel" aria-labelledby="returns-tab">
+                        <div class="card shadow-sm">
+                            <div class="card-body text-center py-5">
+                                <h4 class="text-muted"><i class="fas fa-undo mb-3 fa-3x"></i></h4>
+                                <h5>پسووڵەکانی گەڕانەوە</h5>
+                                <p class="text-muted">ئەم بەشە بەمزوانە چالاک دەکرێت</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
