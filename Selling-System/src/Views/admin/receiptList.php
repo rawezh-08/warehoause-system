@@ -526,13 +526,14 @@ function translateUnitType($unitType) {
             updateSalesPagination();
         });
         
-        // Show invoice items when clicking the info button
-        $('.show-invoice-items').on('click', function () {
+        // Use delegated event handler for show-invoice-items buttons
+        $(document).on('click', '.show-invoice-items', function(e) {
+            e.preventDefault();
             const invoiceNumber = $(this).data('invoice');
             
             $.ajax({
-                url: '../../ajax/sales/get_invoice_items.php',
-                type: 'GET',
+                url: '../../includes/get_invoice_items.php',
+                type: 'POST',
                 data: { invoice_number: invoiceNumber },
                 dataType: 'json',
                 success: function (response) {
@@ -553,10 +554,10 @@ function translateUnitType($unitType) {
                                     </thead>
                                     <tbody>`;
                         
-                        if (response.data.length === 0) {
+                        if (response.items.length === 0) {
                             itemsHtml += `<tr><td colspan="6" class="text-center">هیچ کاڵایەک نەدۆزرایەوە</td></tr>`;
                         } else {
-                            response.data.forEach((item, index) => {
+                            response.items.forEach((item, index) => {
                                 let unitName = '-';
                                 switch (item.unit_type) {
                                     case 'piece': unitName = 'دانە'; break;
@@ -584,12 +585,7 @@ function translateUnitType($unitType) {
                             title: `ناوەرۆکی پسووڵەی <strong dir="ltr">#${invoiceNumber}</strong>`,
                             html: itemsHtml,
                             width: '80%',
-                            confirmButtonText: 'داخستن',
-                            showCloseButton: true,
-                            customClass: {
-                                container: 'swal-rtl',
-                                popup: 'swal-wide'
-                            }
+                            confirmButtonText: 'داخستن'
                         });
                     } else {
                         Swal.fire({
