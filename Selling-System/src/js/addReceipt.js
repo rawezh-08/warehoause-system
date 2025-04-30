@@ -503,7 +503,7 @@ $(document).ready(function() {
             const tabType = tabPane.attr('data-receipt-type');
             const priceType = tabPane.find('.price-type').val();
             
-            // Get base price based on price type (single unit price)
+            // Get base price based on price type (box price)
             let basePrice;
             if (tabType === RECEIPT_TYPES.SELLING) {
                 basePrice = priceType === PRICE_TYPES.WHOLESALE ? 
@@ -524,11 +524,13 @@ $(document).ready(function() {
             console.log(`Boxes per set: ${data.boxes_per_set}`);
             console.log(`Current unit type: ${unitType}`);
             
-            if (unitType === 'box' && data.pieces_per_box) {
-                basePrice = Math.round(basePrice * parseInt(data.pieces_per_box || 0));
-                console.log(`Box price calculated: ${basePrice}`);
+            if (unitType === 'piece' && data.pieces_per_box) {
+                // If unit type is piece, divide box price by pieces per box
+                basePrice = Math.round(basePrice / parseInt(data.pieces_per_box || 0));
+                console.log(`Piece price calculated: ${basePrice}`);
             } else if (unitType === 'set' && data.pieces_per_box && data.boxes_per_set) {
-                basePrice = Math.round(basePrice * parseInt(data.pieces_per_box || 0) * parseInt(data.boxes_per_set || 0));
+                // If unit type is set, multiply box price by boxes per set
+                basePrice = Math.round(basePrice * parseInt(data.boxes_per_set || 0));
                 console.log(`Set price calculated: ${basePrice}`);
             }
             
@@ -537,6 +539,18 @@ $(document).ready(function() {
                 row.find('.price').val(basePrice);
             } else {
                 row.find('.unit-price').val(basePrice);
+            }
+            
+            // Add small text below price input to show piece price
+            const priceCell = row.find('.unit-price').closest('td');
+            if (!priceCell.find('.piece-price-text').length) {
+                priceCell.append('<div class="piece-price-text small text-muted"></div>');
+            }
+            
+            // Calculate and display piece price
+            if (data.pieces_per_box) {
+                const piecePrice = Math.round(basePrice / parseInt(data.pieces_per_box));
+                priceCell.find('.piece-price-text').text(`نرخی دانە: ${piecePrice.toLocaleString()} د.ع`);
             }
             
             // Update totals
@@ -768,7 +782,7 @@ $(document).ready(function() {
             const tabType = tabPane.attr('data-receipt-type');
             const priceType = tabPane.find('.price-type').val();
             
-            // Get base price based on price type (single unit price)
+            // Get base price based on price type (box price)
             let basePrice;
             if (tabType === RECEIPT_TYPES.SELLING) {
                 basePrice = priceType === PRICE_TYPES.WHOLESALE ? 
@@ -789,11 +803,13 @@ $(document).ready(function() {
             console.log(`Boxes per set: ${data.boxes_per_set}`);
             console.log(`Current unit type: ${unitType}`);
             
-            if (unitType === 'box' && data.pieces_per_box) {
-                basePrice = Math.round(basePrice * parseInt(data.pieces_per_box || 0));
-                console.log(`Box price calculated: ${basePrice}`);
+            if (unitType === 'piece' && data.pieces_per_box) {
+                // If unit type is piece, divide box price by pieces per box
+                basePrice = Math.round(basePrice / parseInt(data.pieces_per_box || 0));
+                console.log(`Piece price calculated: ${basePrice}`);
             } else if (unitType === 'set' && data.pieces_per_box && data.boxes_per_set) {
-                basePrice = Math.round(basePrice * parseInt(data.pieces_per_box || 0) * parseInt(data.boxes_per_set || 0));
+                // If unit type is set, multiply box price by boxes per set
+                basePrice = Math.round(basePrice * parseInt(data.boxes_per_set || 0));
                 console.log(`Set price calculated: ${basePrice}`);
             }
             
@@ -802,6 +818,18 @@ $(document).ready(function() {
                 row.find('.price').val(basePrice);
             } else {
                 row.find('.unit-price').val(basePrice);
+            }
+            
+            // Add small text below price input to show piece price
+            const priceCell = row.find('.unit-price').closest('td');
+            if (!priceCell.find('.piece-price-text').length) {
+                priceCell.append('<div class="piece-price-text small text-muted"></div>');
+            }
+            
+            // Calculate and display piece price
+            if (data.pieces_per_box) {
+                const piecePrice = Math.round(basePrice / parseInt(data.pieces_per_box));
+                priceCell.find('.piece-price-text').text(`نرخی دانە: ${piecePrice.toLocaleString()} د.ع`);
             }
             
             // Update totals
@@ -2292,5 +2320,63 @@ $(document).ready(function() {
             $(input).val(availableQuantity);
             calculateRowTotal(row);
         }
+    }
+
+    // Function to calculate piece price
+    function calculatePiecePrice(row) {
+        const priceInput = row.querySelector('.price');
+        const quantityInput = row.querySelector('.quantity');
+        const piecePriceSpan = row.querySelector('.piece-price');
+        const productSelect = row.querySelector('.product-select');
+        
+        if (priceInput && quantityInput && piecePriceSpan && productSelect) {
+            const price = parseFloat(priceInput.value) || 0;
+            const quantity = parseInt(quantityInput.value) || 0;
+            const piecesPerBox = parseInt(productSelect.selectedOptions[0].dataset.piecesPerBox) || 1;
+            
+            if (price > 0 && quantity > 0) {
+                const piecePrice = price / piecesPerBox;
+                piecePriceSpan.textContent = piecePrice.toFixed(2) + ' د.ع';
+            } else {
+                piecePriceSpan.textContent = '0.00 د.ع';
+            }
+        }
+    }
+
+    // Add event listeners for price and quantity changes
+    document.addEventListener('DOMContentLoaded', function() {
+        const itemsTable = document.getElementById('itemsTable');
+        if (itemsTable) {
+            itemsTable.addEventListener('input', function(e) {
+                if (e.target.classList.contains('price') || e.target.classList.contains('quantity')) {
+                    const row = e.target.closest('tr');
+                    calculatePiecePrice(row);
+                    calculateTotal();
+                }
+            });
+        }
+    });
+
+    // Update calculateTotal function
+    function calculateTotal() {
+        let total = 0;
+        const rows = document.querySelectorAll('#itemsTable tbody tr');
+        
+        rows.forEach(row => {
+            const priceInput = row.querySelector('.price');
+            const quantityInput = row.querySelector('.quantity');
+            const totalPriceSpan = row.querySelector('.total-price');
+            
+            if (priceInput && quantityInput && totalPriceSpan) {
+                const price = parseFloat(priceInput.value) || 0;
+                const quantity = parseInt(quantityInput.value) || 0;
+                const rowTotal = price * quantity;
+                
+                totalPriceSpan.textContent = rowTotal.toFixed(2) + ' د.ع';
+                total += rowTotal;
+            }
+        });
+        
+        document.getElementById('totalAmount').textContent = total.toFixed(2) + ' د.ع';
     }
 });

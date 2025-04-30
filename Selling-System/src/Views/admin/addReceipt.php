@@ -99,49 +99,36 @@ require_once '../../config/database.php';
 
                     <!-- Items Table - Moved to top -->
                     <div class="table-responsive mb-4">
-                        <table class="table table-bordered">
+                        <table id="itemsTable" class="table">
                             <thead>
                                 <tr>
-                                    <th style="width: 50px" class="tbl-header">#</th>
-                                    <th class="tbl-header">کاڵا</th>
-                                    <th class="tbl-header">وێنە</th>
-                                    <th class="tbl-header">جۆری یەکە</th>
-                                    <th class="tbl-header">نرخی یەکە</th>
-                                    <th class="tbl-header">بڕی یەکە</th>
-                                    <th class="tbl-header">کۆی گشتی</th>
-                                    <th class="tbl-header" style="width: 100px">کردار</th>
+                                    <th>بەرهەم</th>
+                                    <th>نرخی کارتۆن</th>
+                                    <th>بڕ</th>
+                                    <th>نرخی دانە</th>
+                                    <th>کۆی نرخ</th>
+                                    <th>کردار</th>
                                 </tr>
                             </thead>
-                            <tbody class="items-list">
+                            <tbody>
                                 <tr>
-                                    <td>1</td>
                                     <td>
-                                        <div class="d-flex">
-                                            <select class="form-control product-select" style="width: 100%"></select>
-                                            <button type="button" class="btn btn-sm btn-primary ms-2 quick-add-product" title="زیادکردنی کاڵای نوێ">
-                                                <i class="fas fa-plus"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                    <td class="product-image-cell"></td>
-                                    <td>
-                                        <select class="form-control unit-type">
-                                            <option value="piece">دانە</option>
-                                            <option value="box">کارتۆن</option>
-                                            <option value="set">سێت</option>
+                                        <select name="product_id[]" class="form-control product-select" required>
+                                            <option value="">-- هەڵبژاردنی بەرهەم --</option>
+                                            <?php foreach ($products as $product): ?>
+                                            <option value="<?php echo $product['id']; ?>" 
+                                                    data-price="<?php echo $product['selling_price_wholesale']; ?>"
+                                                    data-pieces-per-box="<?php echo $product['pieces_per_box']; ?>">
+                                                <?php echo $product['name']; ?>
+                                            </option>
+                                            <?php endforeach; ?>
                                         </select>
                                     </td>
-                                    <td><input type="number" class="form-control unit-price" step="1"></td>
-                                    <td><input type="number" class="form-control quantity" min="1" step="1" data-check-stock="true"></td>
-                                    <td><input type="number" class="form-control total" step="1" readonly></td>
-                                    <td>
-                                        <button type="button" class="btn btn-danger btn-sm remove-row">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-danger btn-sm show-inventory-info" title="زانیاری کۆگا">
-                                            <i class="fas fa-boxes"></i>
-                                        </button>
-                                    </td>
+                                    <td><input type="number" name="price[]" class="form-control price" step="0.01" required></td>
+                                    <td><input type="number" name="quantity[]" class="form-control quantity" required></td>
+                                    <td><span class="piece-price"></span></td>
+                                    <td><span class="total-price">0.00 د.ع</span></td>
+                                    <td><button type="button" class="btn btn-danger remove-row">سڕینەوە</button></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -293,7 +280,13 @@ require_once '../../config/database.php';
                                     <option value="set">سێت</option>
                                 </select>
                             </td>
-                            <td><input type="number" class="form-control unit-price" min="0" step="1"></td>
+                            <td>
+                                <div class="form-group">
+                                    <label for="unit_price">نرخی کارتۆن</label>
+                                    <input type="number" class="form-control unit-price" name="unit_price[]" step="0.01" required>
+                                    <small class="form-text text-muted piece-price-text">نرخی دانە: 0.00 د.ع</small>
+                                </div>
+                            </td>
                             <td><input type="number" class="form-control quantity" min="0" step="1"></td>
                             <td><input type="number" class="form-control total" step="1" readonly></td>
                             <td>
@@ -417,7 +410,13 @@ require_once '../../config/database.php';
                             </td>
                             <td><input type="number" class="form-control current-quantity" step="1" readonly></td>
                             <td><input type="number" class="form-control adjusted-quantity" step="1"></td>
-                            <td><input type="number" class="form-control price" step="1"></td>
+                            <td>
+                                <div class="form-group">
+                                    <label for="price">نرخی کارتۆن</label>
+                                    <input type="number" class="form-control price" name="price[]" step="0.01" required>
+                                    <small class="form-text text-muted piece-price-text">نرخی دانە: 0.00 د.ع</small>
+                                </div>
+                            </td>
                             <td><input type="number" class="form-control total" step="1" readonly></td>
                             <td>
                                 <button type="button" class="btn btn-danger btn-sm remove-row">
@@ -524,7 +523,13 @@ require_once '../../config/database.php';
                                     <option value="set">سێت</option>
                                 </select>
                             </td>
-                            <td><input type="number" class="form-control unit-price" step="1"></td>
+                            <td>
+                                <div class="form-group">
+                                    <label for="unit_price">نرخی کارتۆن</label>
+                                    <input type="number" class="form-control unit-price" name="unit_price[]" step="0.01" required>
+                                    <small class="form-text text-muted piece-price-text">نرخی دانە: 0.00 د.ع</small>
+                                </div>
+                            </td>
                             <td><input type="number" class="form-control quantity" min="1" step="1" data-check-stock="true"></td>
                             <td><input type="number" class="form-control total" step="1" readonly></td>
                             <td>
@@ -1340,6 +1345,89 @@ require_once '../../config/database.php';
                     });
                 }
             });
+
+            // Function to calculate total price based on unit type and quantity
+            function calculateTotal(row) {
+                const unitType = row.find('.unit-type').val();
+                const unitPrice = parseFloat(row.find('.unit-price').val()) || 0;
+                const quantity = parseFloat(row.find('.quantity').val()) || 0;
+                const piecesPerBox = parseInt(row.find('.product-select').find(':selected').data('pieces-per-box')) || 1;
+                
+                let total = 0;
+                
+                if (unitType === 'piece') {
+                    // If unit type is piece, divide box price by pieces per box
+                    total = (unitPrice / piecesPerBox) * quantity;
+                } else if (unitType === 'box') {
+                    // If unit type is box, use box price directly
+                    total = unitPrice * quantity;
+                } else if (unitType === 'set') {
+                    // If unit type is set, multiply box price by boxes per set
+                    const boxesPerSet = parseInt(row.find('.product-select').find(':selected').data('boxes-per-set')) || 1;
+                    total = unitPrice * quantity * boxesPerSet;
+                }
+                
+                row.find('.total').val(total.toFixed(0));
+                calculateReceiptTotal();
+            }
+
+            // Function to update unit price when product is selected
+            function updateUnitPrice(row) {
+                const productId = row.find('.product-select').val();
+                const priceType = $('.price-type').val();
+                const piecesPerBox = parseInt(row.find('.product-select').find(':selected').data('pieces-per-box')) || 1;
+                
+                if (productId) {
+                    $.ajax({
+                        url: '../../api/get_product_prices.php',
+                        type: 'GET',
+                        data: { product_id: productId },
+                        success: function(response) {
+                            if (response.success) {
+                                let price = 0;
+                                if (priceType === 'wholesale') {
+                                    price = response.data.selling_price_wholesale;
+                                } else {
+                                    price = response.data.selling_price_single;
+                                }
+                                row.find('.unit-price').val(price);
+                                calculateTotal(row);
+                            }
+                        }
+                    });
+                }
+            }
+
+            // Add event listeners
+            $(document).on('change', '.unit-type, .quantity, .unit-price', function() {
+                calculateTotal($(this).closest('tr'));
+            });
+
+            $(document).on('change', '.product-select', function() {
+                const row = $(this).closest('tr');
+                updateUnitPrice(row);
+            });
+
+            // Function to calculate receipt total
+            function calculateReceiptTotal() {
+                let subtotal = 0;
+                $('.items-list tr').each(function() {
+                    subtotal += parseFloat($(this).find('.total').val()) || 0;
+                });
+                
+                const discount = parseFloat($('.discount').val()) || 0;
+                const shippingCost = parseFloat($('.shipping-cost').val()) || 0;
+                const otherCost = parseFloat($('.other-cost').val()) || 0;
+                
+                $('.subtotal').val(subtotal.toFixed(0));
+                $('.shipping-cost-total').val(shippingCost.toFixed(0));
+                
+                const grandTotal = subtotal - discount + shippingCost + otherCost;
+                $('.grand-total').val(grandTotal.toFixed(0));
+            }
+
+            // Add event listeners for total calculations
+            $('.discount, .shipping-cost, .other-cost').on('input', calculateReceiptTotal);
         });
     </script>
 
