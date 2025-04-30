@@ -719,20 +719,3 @@ function addEmployeeActionListeners() {
 function formatNumberWithCommas(number) {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
-
-// Reset forms
-document.getElementById('resetEmployeeForm').addEventListener('click', function() {
-    document.getElementById('employeeForm').reset();
-});
-
-document.getElementById('resetCustomerForm').addEventListener('click', function() {
-    document.getElementById('customerForm').reset();
-});
-
-document.getElementById('resetSupplierForm').addEventListener('click', function() {
-    document.getElementById('supplierForm').reset();
-});
-
-document.getElementById('resetPartnerForm').addEventListener('click', function() {
-    document.getElementById('partnerForm').reset();
-});
