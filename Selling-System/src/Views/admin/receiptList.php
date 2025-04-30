@@ -75,7 +75,6 @@ function formatDate($date) {
             overflow: hidden;
             text-overflow: ellipsis;
         }
-
         .custom-table th {
             text-align: center;
             white-space: nowrap;
@@ -83,13 +82,18 @@ function formatDate($date) {
             text-overflow: ellipsis;
         }
 
-        /* Adjust pagination display for many pages */
+        /* Adjust pagination display */
+        .pagination-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+        }
+
         .pagination-numbers {
             display: flex;
             flex-wrap: wrap;
             gap: 5px;
-            max-width: 300px;
-            overflow: hidden;
         }
 
         .pagination-numbers .btn {
@@ -101,7 +105,6 @@ function formatDate($date) {
             justify-content: center;
             font-size: 0.875rem;
         }
-
         .pagination-controls {
             display: flex;
             align-items: center;
@@ -111,89 +114,6 @@ function formatDate($date) {
         .pagination-info {
             font-size: 0.875rem;
             color: #6c757d;
-        }
-
-        /* RTL Toast Container Styles */
-        .toast-container-rtl {
-            right: 0 !important;
-            left: auto !important;
-        }
-
-        .toast-container-rtl .swal2-toast {
-            margin-right: 1em !important;
-            margin-left: 0 !important;
-        }
-
-        .toast-container-rtl .swal2-toast .swal2-title {
-            text-align: right !important;
-        }
-
-        .toast-container-rtl .swal2-toast .swal2-icon {
-            margin-right: 0 !important;
-            margin-left: 0.5em !important;
-        }
-
-        /* Customer info card */
-        .customer-info-card {
-            background-color: #f8f9fa;
-            border-radius: 10px;
-        }
-
-        .customer-info-item {
-            margin-bottom: 10px;
-        }
-
-        .customer-info-label {
-            font-weight: bold;
-            color: #6c757d;
-        }
-
-        .customer-info-value {
-            font-weight: normal;
-        }
-
-        .debt-badge {
-            font-size: 1.2rem;
-            padding: 8px 15px;
-        }
-
-        /* Summary Cards Styles */
-        .summary-card {
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-            cursor: default;
-        }
-
-        .summary-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .summary-card .card-body {
-            padding: 1.5rem;
-        }
-
-        .summary-card .card-title {
-            font-size: 0.9rem;
-            color: #6c757d;
-        }
-
-        .summary-card .card-value {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .summary-card .icon-bg {
-            width: 48px;
-            height: 48px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            color: white;
-            margin-right: 1rem;
         }
 
         /* Custom Tabs Styling */
@@ -206,128 +126,43 @@ function formatDate($date) {
         .custom-tabs .nav-item {
             margin-bottom: -1px;
         }
-
-        .custom-tabs .nav-link {
-            border: none;
+        border: 1px solid transparent;
+            border-top-left-radius: 0.25rem;
+            border-top-right-radius: 0.25rem;
+            padding: 0.5rem 1rem;
             color: #6c757d;
             font-weight: 500;
-            background-color: transparent;
-            transition: all 0.2s ease;
-            position: relative;
-            margin-right: 5px;
-            border-radius: 0;
-            padding: 0.75rem 1.25rem;
         }
 
         .custom-tabs .nav-link:hover {
-            color: #0d6efd;
-            background-color: rgba(13, 110, 253, 0.04);
-            border: none;
+            border-color: #e9ecef #e9ecef #dee2e6;
+            color: #495057;
         }
 
         .custom-tabs .nav-link.active {
-            color: #0d6efd;
+            color: #495057;
             background-color: #fff;
-            font-weight: 600;
-            border: none;
-            box-shadow: none;
+            border-color: #dee2e6 #dee2e6 #fff;
         }
 
-        .custom-tabs .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background-color: #0d6efd;
+        .custom-tabs .nav-item .nav-link i {
+            margin-left: 0.5rem;
         }
 
-        .custom-tabs .nav-link i {
-            width: 20px;
-            text-align: center;
-            margin-right: 5px;
-        }
-
-        /* Tab Content Styling */
-        .tab-content {
-            background-color: transparent;
-        }
-
-        .tab-pane {
-            padding: 0;
-        }
-
-        .card-header.bg-transparent {
-            background-color: #fff !important;
-        }
-
-        /* Remove any translucency/blurriness */
-        .nav-tabs .nav-link {
-            -webkit-backdrop-filter: none;
-            backdrop-filter: none;
-        }
-
-        .card {
-            -webkit-backdrop-filter: none;
-            backdrop-filter: none;
-        }
-
-        /* Improve the card header containing tabs */
-        .card-header {
-            padding: 0;
-            background-color: #fff;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        /* Add consistent shadow */
-        .card {
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
-        }
-
-        /* Reset button animation */
-        .fa-spin {
-            animation: fa-spin 0.5s linear;
-        }
-
-        #resetFilters:hover {
-            background-color: #e2e6ea;
-        }
-
-        #resetFilters:active {
-            transform: scale(0.95);
-        }
-
-        /* Draft Receipts Styles */
-        .draft-badge {
-            background-color: #FFC107;
-            color: #333;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
+        .status-badge {
             font-size: 0.8rem;
-            margin-right: 0.5rem;
+            padding: 5px 10px;
         }
 
-        .action-buttons .btn {
-            margin: 0 2px;
+        .table-responsive {
+            overflow-x: auto;
+            max-height: 68vh;
         }
 
-        .action-buttons .btn i {
-            font-size: 0.875rem;
-        }
-
-        .table td {
-            vertical-align: middle;
-        }
-
-        /* Responsive Pagination */
         @media (max-width: 768px) {
-            .pagination-numbers {
-                max-width: 200px;
-            }
-
-            .pagination-info {
-                font-size: 0.75rem;
+            .custom-table td,
+            .custom-table th {
+                min-width: 120px;
             }
         }
     </style>
