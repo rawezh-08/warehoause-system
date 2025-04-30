@@ -108,45 +108,6 @@ function translateUnitType($unitType) {
             border-bottom: 2px solid #dee2e6;
         }
 
-        /* Invoice items modal styling */
-        .invoice-items-modal .swal2-popup {
-            padding-bottom: 1.5rem;
-        }
-        
-        .invoice-items-modal .swal2-html-container {
-            margin: 0;
-            padding: 1rem;
-        }
-        
-        .invoice-items-modal .table {
-            margin-bottom: 0;
-        }
-        
-        .invoice-items-modal .table th {
-            background-color: #f8f9fa;
-            font-weight: 600;
-        }
-        
-        .invoice-items-modal .table-responsive {
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-        
-        /* Custom rounded pill */
-        .rounded-pill-start {
-            border-top-right-radius: 50rem !important;
-            border-bottom-right-radius: 50rem !important;
-            border-top-left-radius: 0 !important;
-            border-bottom-left-radius: 0 !important;
-        }
-        
-        .rounded-pill-end {
-            border-top-left-radius: 50rem !important;
-            border-bottom-left-radius: 50rem !important;
-            border-top-right-radius: 0 !important;
-            border-bottom-right-radius: 0 !important;
-        }
-
         /* Adjust pagination display */
         .pagination-wrapper {
             display: flex;
@@ -614,14 +575,6 @@ function translateUnitType($unitType) {
                                         <td>${Number(item.total_price).toLocaleString()} د.ع</td>
                                     </tr>`;
                             });
-                            
-                            // Add total row
-                            const totalAmount = response.items.reduce((sum, item) => sum + parseFloat(item.total_price), 0);
-                            itemsHtml += `
-                                <tr class="table-secondary">
-                                    <td colspan="5" class="text-start fw-bold">کۆی گشتی</td>
-                                    <td class="fw-bold">${Number(totalAmount).toLocaleString()} د.ع</td>
-                                </tr>`;
                         }
                         
                         itemsHtml += `</tbody></table></div>`;
@@ -631,14 +584,7 @@ function translateUnitType($unitType) {
                             title: `ناوەرۆکی پسووڵەی <strong dir="ltr">#${invoiceNumber}</strong>`,
                             html: itemsHtml,
                             width: '80%',
-                            confirmButtonText: 'داخستن',
-                            confirmButtonColor: '#3085d6',
-                            customClass: {
-                                container: 'invoice-items-modal',
-                                popup: 'border-0 shadow',
-                                header: 'border-bottom pb-3',
-                                content: 'p-0'
-                            }
+                            confirmButtonText: 'داخستن'
                         });
                     } else {
                         Swal.fire({
