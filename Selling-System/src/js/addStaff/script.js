@@ -6,6 +6,7 @@ $(document).ready(function() {
     initializeEmployeeForm();
     initializeCustomerForm();
     initializeSupplierForm();
+    initializeBusinessPartnerForm();
     
     // Setup tab click handlers
     setupTabHandlers();
@@ -13,6 +14,44 @@ $(document).ready(function() {
     // Fetch employees if on staff page
     if (window.location.pathname.includes('staff.php')) {
         fetchEmployees();
+    }
+
+    // Check if tab parameter exists in URL
+    var tabParam = getUrlParameter('tab');
+    
+    // If tab parameter exists, activate the corresponding tab
+    if (tabParam) {
+        // Find the tab button and activate it
+        $('#' + tabParam + '-tab').tab('show');
+    }
+    
+    // Apply formatting to number inputs
+    const debitOnBusinessInput = document.getElementById('debitOnBusiness');
+    if (debitOnBusinessInput) {
+        debitOnBusinessInput.addEventListener('input', function() {
+            formatNumber(this);
+        });
+    }
+    
+    const debtOnCustomerInput = document.getElementById('debt_on_customer');
+    if (debtOnCustomerInput) {
+        debtOnCustomerInput.addEventListener('input', function() {
+            formatNumber(this);
+        });
+    }
+    
+    const debtOnMyselfInput = document.getElementById('debt_on_myself');
+    if (debtOnMyselfInput) {
+        debtOnMyselfInput.addEventListener('input', function() {
+            formatNumber(this);
+        });
+    }
+    
+    const debtOnSupplierInput = document.getElementById('debt_on_supplier');
+    if (debtOnSupplierInput) {
+        debtOnSupplierInput.addEventListener('input', function() {
+            formatNumber(this);
+        });
     }
 });
 
@@ -91,6 +130,14 @@ function setupTabHandlers() {
     $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
         const tabId = $(e.target).attr('id');
         activeTab = tabId.replace('-tab', '');
+        
+        // If the business partner tab is activated, focus the first input
+        if (tabId === 'business-partner-tab') {
+            setTimeout(() => {
+                const firstInput = document.getElementById('partnerName');
+                if (firstInput) firstInput.focus();
+            }, 200);
+        }
     });
 }
 
@@ -434,6 +481,122 @@ function initializeSupplierForm() {
     }
 }
 
+/**
+ * Initialize business partner form
+ */
+function initializeBusinessPartnerForm() {
+    // Get form elements
+    const businessPartnerForm = document.getElementById('businessPartnerForm');
+    const resetBusinessPartnerForm = document.getElementById('resetBusinessPartnerForm');
+    
+    // Initialize form validation
+    if (businessPartnerForm) {
+        // Phone number validation
+        const partnerPhone = document.getElementById('partnerPhone');
+        if (partnerPhone) {
+            partnerPhone.addEventListener('blur', function() {
+                if (this.value && !validatePhoneNumber(this.value)) {
+                    this.classList.add('is-invalid');
+                    this.nextElementSibling.textContent = 'ژمارە مۆبایل دەبێت بە 07 دەست پێبکات و 11 ژمارە بێت';
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        }
+        
+        businessPartnerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!businessPartnerForm.checkValidity()) {
+                e.stopPropagation();
+                businessPartnerForm.classList.add('was-validated');
+                return;
+            }
+            
+            // Show loading state
+            Swal.fire({
+                title: 'تکایە چاوەڕێ بکە...',
+                text: 'زیادکردنی کەسی دووفاقە بەردەوامە',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Clean number inputs (remove commas)
+            const debitOnBusinessInput = document.getElementById('debitOnBusiness');
+            if (debitOnBusinessInput && debitOnBusinessInput.value) {
+                debitOnBusinessInput.value = debitOnBusinessInput.value.replace(/,/g, '');
+            }
+            
+            const debtOnCustomerInput = document.getElementById('debt_on_customer');
+            if (debtOnCustomerInput && debtOnCustomerInput.value) {
+                debtOnCustomerInput.value = debtOnCustomerInput.value.replace(/,/g, '');
+            }
+            
+            const debtOnMyselfInput = document.getElementById('debt_on_myself');
+            if (debtOnMyselfInput && debtOnMyselfInput.value) {
+                debtOnMyselfInput.value = debtOnMyselfInput.value.replace(/,/g, '');
+            }
+            
+            const debtOnSupplierInput = document.getElementById('debt_on_supplier');
+            if (debtOnSupplierInput && debtOnSupplierInput.value) {
+                debtOnSupplierInput.value = debtOnSupplierInput.value.replace(/,/g, '');
+            }
+            
+            // Create FormData object
+            const formData = new FormData(businessPartnerForm);
+            
+            // Send form data using fetch API
+            fetch(businessPartnerForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'سەرکەوتوو',
+                        text: data.message,
+                        confirmButtonText: 'باشە'
+                    }).then(() => {
+                        businessPartnerForm.reset();
+                        businessPartnerForm.classList.remove('was-validated');
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: data.message,
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە',
+                    confirmButtonText: 'باشە'
+                });
+            });
+        });
+    }
+    
+    // Reset form button
+    if (resetBusinessPartnerForm) {
+        resetBusinessPartnerForm.addEventListener('click', function() {
+            businessPartnerForm.reset();
+            businessPartnerForm.classList.remove('was-validated');
+        });
+    }
+}
+
 // Function to format numbers with commas
 function formatNumber(input) {
     // Store cursor position
@@ -497,62 +660,6 @@ function getUrlParameter(name) {
     var results = regex.exec(location.search);
     return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 }
-
-$(document).ready(function() {
-    // Check if tab parameter exists in URL
-    var tabParam = getUrlParameter('tab');
-    
-    // If tab parameter exists, activate the corresponding tab
-    if (tabParam) {
-        // Find the tab button and activate it
-        $('#' + tabParam + '-tab').tab('show');
-    }
-    
-    // Apply formatting to number inputs
-    const debitOnBusinessInput = document.getElementById('debitOnBusiness');
-    if (debitOnBusinessInput) {
-        debitOnBusinessInput.addEventListener('input', function() {
-            formatNumber(this);
-        });
-    }
-    
-    const debtOnMyselfInput = document.getElementById('debt_on_myself');
-    if (debtOnMyselfInput) {
-        debtOnMyselfInput.addEventListener('input', function() {
-            formatNumber(this);
-        });
-    }
-});
-
-// Format number with commas
-function formatNumber(input) {
-    // Remove all non-digit characters
-    let value = input.value.replace(/[^\d]/g, '');
-    
-    // Add commas for thousands
-    value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    
-    // Update the input value
-    input.value = value;
-}
-
-       // Select the appropriate tab based on URL parameter
-       document.addEventListener('DOMContentLoaded', function() {
-        // Get tab parameter from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const tabParam = urlParams.get('tab');
-        
-        // If tab parameter exists, activate the corresponding tab
-        if (tabParam) {
-            // Find the tab button
-            const tabButton = document.getElementById(tabParam + '-tab');
-            if (tabButton) {
-                // Create a new Bootstrap Tab instance and show it
-                const tab = new bootstrap.Tab(tabButton);
-                tab.show();
-            }
-        }
-    });
 
 // Function to fetch and display employees
 function fetchEmployees() {
