@@ -55,61 +55,51 @@ function formatDate($date) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <!-- Custom styles for this page -->
     <style>
-        /* Transparent search input */
+        /* Table styles */
         .table-search-input {
             background-color: transparent !important;
             border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+        }
+
+        .custom-table {
+            margin-bottom: 0;
         }
 
         .custom-table td,
-        th {
-            white-space: normal;
-            word-wrap: break-word;
-            vertical-align: middle;
-            padding: 0.75rem;
-            border: 1px solid #dee2e6;
-        }
-
-        .custom-table td {
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
         .custom-table th {
-            text-align: center;
+            padding: 0.75rem;
+            vertical-align: middle;
+            border: 1px solid #dee2e6;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-size: 0.9rem;
+        }
+
+        .custom-table thead th {
             background-color: #f8f9fa;
+            font-weight: 500;
+            text-align: center;
             border-bottom: 2px solid #dee2e6;
         }
 
-        /* Adjust pagination display */
-        .pagination-wrapper {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 1rem;
+        .custom-table tbody td {
+            text-align: center;
         }
 
-        .pagination-numbers {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
+        .table-responsive {
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            margin-bottom: 1rem;
         }
 
-        .pagination-numbers .btn {
-            min-width: 35px;
-            height: 35px;
+        /* Action buttons */
+        .action-buttons .btn {
+            width: 32px;
+            height: 32px;
             padding: 0;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.875rem;
-        }
-        .action-buttons .btn {
             margin: 0 2px;
         }
 
@@ -117,77 +107,73 @@ function formatDate($date) {
             font-size: 0.875rem;
         }
 
-        .pagination-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .pagination-info {
-            font-size: 0.875rem;
-            color: #6c757d;
-        }
-
-        /* Custom Tabs Styling */
-        .custom-tabs {
-            border-bottom: 1px solid #dee2e6;
-            background-color: #fff;
-            padding: 0 1rem;
-        }
-
-        .custom-tabs .nav-item {
-            margin-bottom: -1px;
-        }
-
-        .custom-tabs .nav-link {
-            border: none;
-            color: #6c757d;
+        /* Status badges */
+        .badge {
+            padding: 0.4em 0.8em;
+            font-size: 0.75rem;
             font-weight: 500;
-            background-color: transparent;
-            transition: all 0.2s ease;
-            position: relative;
-            margin-right: 5px;
-            border-radius: 0;
-            padding: 0.75rem 1.25rem;
-        }
-
-        .custom-tabs .nav-link:hover {
-            border-color: #e9ecef #e9ecef #dee2e6;
-            color: #495057;
-        }
-
-        .custom-tabs .nav-link.active {
-            color: #495057;
-            background-color: #fff;
-            border-color: #dee2e6 #dee2e6 #fff;
-        }
-
-        .custom-tabs .nav-item .nav-link i {
-            margin-left: 0.5rem;
-        }
-
-        .status-badge {
-            font-size: 0.8rem;
-            padding: 5px 10px;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-            max-height: 68vh;
-            border: 1px solid #dee2e6;
             border-radius: 0.25rem;
         }
 
-        /* Main content margin fix */
+        /* Card styles */
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            background-color: #fff;
+            border-bottom: 1px solid #dee2e6;
+            padding: 1rem;
+        }
+
+        /* Search input group */
+        .input-group .input-group-text {
+            border-radius: 0 0.25rem 0.25rem 0;
+        }
+
+        .input-group .form-control {
+            border-radius: 0.25rem 0 0 0.25rem;
+        }
+
+        /* Pagination styles */
+        .pagination-wrapper {
+            padding: 0.75rem 1rem;
+            background-color: #fff;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .pagination-controls .btn {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .pagination-numbers .btn {
+            min-width: 32px;
+            height: 32px;
+            padding: 0;
+            margin: 0 2px;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Main content spacing */
         .main-content {
             margin-top: 60px !important;
-            padding: 20px;
+            padding: 1.5rem;
         }
 
         @media (max-width: 768px) {
-            .custom-table td,
-            .custom-table th {
-                min-width: 120px;
+            .card-header .row {
+                flex-direction: column;
+            }
+            
+            .card-header .col-md-6 {
+                width: 100%;
+                margin-bottom: 1rem;
             }
         }
     </style>
