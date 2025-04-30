@@ -406,6 +406,106 @@ function translateUnitType($unitType) {
     <!-- Page Script -->
     <script src="../../js/include-components.js"></script>
     <script src="../../js/ajax-config.js"></script>
+    <script>
+    $(document).ready(function() {
+        // Table pagination and filtering
+        const salesTable = $('#salesHistoryTable');
+        const salesTableBody = salesTable.find('tbody');
+        const salesRows = salesTableBody.find('tr');
+        const salesItemsPerPage = 10;
+        let salesCurrentPage = 1;
+        const salesTotalItems = salesRows.length;
+        const salesTotalPages = Math.ceil(salesTotalItems / salesItemsPerPage);
+
+        // Initial pagination setup
+        updateSalesPagination();
+        showSalesPage(1);
+
+        // Update pagination info and buttons
+        function updateSalesPagination() {
+            // Update pagination text
+            const from = ((salesCurrentPage - 1) * salesItemsPerPage) + 1;
+            const to = Math.min(salesCurrentPage * salesItemsPerPage, salesTotalItems);
+            $('#salesFrom').text(from);
+            $('#salesTo').text(to);
+            $('#salesTotalItems').text(salesTotalItems);
+
+            // Clear pagination
+            const pagination = $('#salesPagination');
+            pagination.empty();
+
+            // Add page numbers
+            const maxPagesToShow = 5;
+            let startPage = Math.max(1, salesCurrentPage - Math.floor(maxPagesToShow / 2));
+            let endPage = Math.min(salesTotalPages, startPage + maxPagesToShow - 1);
+
+            if (endPage - startPage + 1 < maxPagesToShow) {
+                startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageButton = $('<button class="btn btn-sm ' + (i === salesCurrentPage ? 'btn-primary' : 'btn-outline-secondary') + '">' + i + '</button>');
+                pageButton.on('click', function () {
+                    salesCurrentPage = i;
+                    showSalesPage(i);
+                    updateSalesPagination();
+                });
+                pagination.append(pageButton);
+            }
+
+            // Update prev/next buttons
+            $('#salesPrevPage').prop('disabled', salesCurrentPage === 1);
+            $('#salesNextPage').prop('disabled', salesCurrentPage === salesTotalPages || salesTotalPages === 0);
+        }
+
+        // Show specific page
+        function showSalesPage(page) {
+            salesRows.hide();
+            salesRows.slice((page - 1) * salesItemsPerPage, page * salesItemsPerPage).show();
+        }
+
+        // Previous page button
+        $('#salesPrevPage').on('click', function () {
+            if (salesCurrentPage > 1) {
+                salesCurrentPage--;
+                showSalesPage(salesCurrentPage);
+                updateSalesPagination();
+            }
+        });
+
+        // Next page button
+        $('#salesNextPage').on('click', function () {
+            if (salesCurrentPage < salesTotalPages) {
+                salesCurrentPage++;
+                showSalesPage(salesCurrentPage);
+                updateSalesPagination();
+            }
+        });
+
+        // Search functionality
+        $('#salesSearchInput').on('keyup', function () {
+            const searchTerm = $(this).val().toLowerCase();
+            let matchCount = 0;
+
+            salesRows.each(function () {
+                const rowText = $(this).text().toLowerCase();
+                const showRow = rowText.indexOf(searchTerm) > -1;
+                $(this).toggle(showRow);
+                if (showRow) {
+                    matchCount++;
+                }
+            });
+
+            // Update pagination after search
+            $('#salesTotalItems').text(matchCount);
+            
+            // Reset to first page on search
+            salesCurrentPage = 1;
+            showSalesPage(1);
+            updateSalesPagination();
+        });
+    });
+    </script>
     <script src="../../js/receiptList.js"></script>
     <script src="../../js/debtTransactions.js"></script>
 </body>
