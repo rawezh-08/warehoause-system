@@ -303,53 +303,24 @@ function initializeEventHandlers() {
         new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
-    // Edit product button click handler
+    // Initialize edit product buttons
     $('.edit-product').on('click', function() {
-        const productId = $(this).data('id');
-        const productName = $(this).data('name');
-        const productCode = $(this).data('code');
-        const productBarcode = $(this).data('barcode');
-        const categoryId = $(this).data('category');
-        const unitId = $(this).data('unit');
-        const piecesPerBox = $(this).data('pieces-per-box');
-        const boxesPerSet = $(this).data('boxes-per-set');
-        const purchasePrice = $(this).data('purchase');
-        const sellingPriceSingle = $(this).data('selling-single');
-        const sellingPriceWholesale = $(this).data('selling-wholesale');
-        const minQty = $(this).data('min-qty');
-        const notes = $(this).data('notes');
-
-        // Set values in the modal
-        $('#edit_product_id').val(productId);
-        $('#edit_name').val(productName);
-        $('#edit_code').val(productCode);
-        $('#edit_barcode').val(productBarcode);
-        $('#edit_category').val(categoryId);
-        $('#edit_unit').val(unitId);
-        $('#edit_pieces_per_box').val(piecesPerBox);
-        $('#edit_boxes_per_set').val(boxesPerSet);
-        $('#edit_purchase_price').val(purchasePrice);
-        $('#edit_selling_price_single').val(sellingPriceSingle);
-        $('#edit_selling_price_wholesale').val(sellingPriceWholesale);
-        $('#edit_min_quantity').val(minQty);
-        $('#edit_notes').val(notes);
-
-        // Add input event listeners for number formatting
-        const numberInputs = [
-            'edit_purchase_price',
-            'edit_selling_price_single',
-            'edit_selling_price_wholesale'
-        ];
-
-        numberInputs.forEach(inputId => {
-            const input = document.getElementById(inputId);
-            if (input) {
-                // Remove any existing event listeners
-                input.removeEventListener('input', handleNumberInput);
-                // Add new event listener
-                input.addEventListener('input', handleNumberInput);
-            }
-        });
+        const data = $(this).data();
+        
+        // Fill the form with product data
+        $('#edit_product_id').val(data.id);
+        $('#edit_name').val(data.name);
+        $('#edit_code').val(data.code);
+        $('#edit_barcode').val(data.barcode);
+        $('#edit_category').val(data.category);
+        $('#edit_unit').val(data.unit);
+        $('#edit_pieces_per_box').val(data.piecesPerBox);
+        $('#edit_boxes_per_set').val(data.boxesPerSet);
+        $('#edit_purchase_price').val(data.purchase);
+        $('#edit_selling_price_single').val(data.sellingSingle);
+        $('#edit_selling_price_wholesale').val(data.sellingWholesale);
+        $('#edit_min_quantity').val(data.minQty);
+        $('#edit_notes').val(data.notes);
 
         // Handle image preview
         const productImage = $(this).closest('tr').find('.product-image');
@@ -543,101 +514,6 @@ function initializeEventHandlers() {
             }
         });
     });
-
-    // Save product changes button click handler
-    $('#saveProductChanges').on('click', function() {
-        // Get form data
-        const formData = new FormData($('#editProductForm')[0]);
-
-        // Clean number inputs before submission
-        const numberInputs = [
-            'edit_purchase_price',
-            'edit_selling_price_single',
-            'edit_selling_price_wholesale'
-        ];
-
-        numberInputs.forEach(inputId => {
-            const input = document.getElementById(inputId);
-            if (input && input.value) {
-                // Remove commas and keep decimal point
-                formData.set(input.name, input.value.replace(/,/g, ''));
-            }
-        });
-
-        // Show loading
-        Swal.fire({
-            title: 'تکایە چاوەڕێ بکە...',
-            text: 'گۆڕانکارییەکان پاشەکەوت دەکرێن',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        // Send AJAX request
-        $.ajax({
-            url: '../../process/updateProduct.php',
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(response) {
-                try {
-                    const data = JSON.parse(response);
-                    if (data.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'سەرکەوتوو',
-                            text: data.message,
-                            confirmButtonText: 'باشە'
-                        }).then(() => {
-                            location.reload();
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'هەڵە',
-                            text: data.message,
-                            confirmButtonText: 'باشە'
-                        });
-                    }
-                } catch (e) {
-                    console.error('Error parsing response:', e);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'هەڵە',
-                        text: 'هەڵەیەک ڕوویدا لە پاشەکەوتکردنی گۆڕانکارییەکان',
-                        confirmButtonText: 'باشە'
-                    });
-                }
-            },
-            error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'هەڵە',
-                    text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە',
-                    confirmButtonText: 'باشە'
-                });
-            }
-        });
-    });
-
-    // Function to handle number input formatting
-    function handleNumberInput(e) {
-        let value = e.target.value;
-        
-        // Remove any non-numeric characters except dots
-        value = value.replace(/[^\d.]/g, '');
-        
-        // Ensure only one decimal point
-        const parts = value.split('.');
-        if (parts.length > 2) {
-            value = parts[0] + '.' + parts.slice(1).join('');
-        }
-        
-        // Update the input value
-        e.target.value = value;
-    }
 }
 
 // Update the table row generation to include the image cell class
@@ -747,6 +623,90 @@ $(document).ready(function() {
     // Initialize event handlers
     initializeEventHandlers();
 
+    // Handle save product changes
+    $('#saveProductChanges').on('click', function() {
+        const form = $('#editProductForm');
+        
+        // Validate form
+        if (!form[0].checkValidity()) {
+            form[0].reportValidity();
+            return;
+        }
+        
+        // Get form data
+        const formData = new FormData(form[0]);
+        
+        // Handle empty values for boxes_per_set and pieces_per_box
+        const boxesPerSet = $('#edit_boxes_per_set').val();
+        const piecesPerBox = $('#edit_pieces_per_box').val();
+        
+        if (boxesPerSet === '') {
+            formData.set('boxes_per_set', '0');
+        }
+        if (piecesPerBox === '') {
+            formData.set('pieces_per_box', '0');
+        }
+
+        // Remove commas from number fields before sending
+        const numberFields = ['purchase_price', 'selling_price_single', 'selling_price_wholesale', 'min_quantity'];
+        numberFields.forEach(field => {
+            const value = formData.get(field);
+            if (value) {
+                formData.set(field, value.replace(/,/g, ''));
+            }
+        });
+        
+        // Show loading state
+        const saveButton = $(this);
+        saveButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> چاوەڕێ بکە...');
+        
+        // Send AJAX request
+        $.ajax({
+            url: '../../process/updateProduct.php',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    // Show success message
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'سەرکەوتوو',
+                        text: 'زانیاریەکانی کاڵا بە سەرکەوتوویی گۆڕدرا',
+                        confirmButtonText: 'باشە'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Reload the page to show updated data
+                            window.location.reload();
+                        }
+                    });
+                } else {
+                    // Show error message
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: response.message || 'هەڵەیەک ڕوویدا لە کاتی گۆڕینی زانیاریەکانی کاڵا',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە سێرڤەرەوە',
+                    confirmButtonText: 'باشە'
+                });
+            },
+            complete: function() {
+                // Reset button state
+                saveButton.prop('disabled', false).html('پاشەکەوتکردن');
+            }
+        });
+    });
+
     // Handle filter form submission
     $('#filterForm').on('submit', function(e) {
         e.preventDefault();
@@ -804,11 +764,30 @@ $(document).ready(function() {
 
     // Initialize number formatting for edit form
     $(document).on('input', '#edit_purchase_price, #edit_selling_price_single, #edit_selling_price_wholesale', function() {
-        let value = $(this).val().replace(/[^\d]/g, '');
+        let value = $(this).val().replace(/[^\d.]/g, '');
+        
+        // Ensure only one decimal point
+        const parts = value.split('.');
+        if (parts.length > 2) {
+            value = parts[0] + '.' + parts.slice(1).join('');
+        }
+        
+        // Only format the part before the decimal
         if (value) {
-            // Convert to number and format with commas
-            value = parseInt(value).toLocaleString('en-US');
-            $(this).val(value);
+            if (value.includes('.')) {
+                const [integerPart, decimalPart] = value.split('.');
+                if (integerPart) {
+                    // Format integer part with commas
+                    const formattedInteger = parseInt(integerPart).toLocaleString('en-US');
+                    $(this).val(formattedInteger + '.' + decimalPart);
+                } else {
+                    $(this).val(value); // Keep the original if just starting with a decimal
+                }
+            } else {
+                // No decimal, just format the integer
+                value = parseInt(value).toLocaleString('en-US');
+                $(this).val(value);
+            }
         }
     });
 });
