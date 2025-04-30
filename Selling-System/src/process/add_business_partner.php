@@ -26,6 +26,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $debtOnSupplier = isset($_POST['debt_on_supplier']) && !empty($_POST['debt_on_supplier']) ? 
                      (float) str_replace(',', '', $_POST['debt_on_supplier']) : 0;
 
+    $success = false;
+    $message = '';
+
     try {
         // Start transaction
         $conn->beginTransaction();
@@ -97,10 +100,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // If we got here, commit the transaction
         $conn->commit();
         
-        // Return success JSON response
-        header('Content-Type: application/json');
-        echo json_encode(['success' => true, 'message' => 'کەسی دووفاقە بە سەرکەوتوویی زیادکرا']);
-        exit();
+        $success = true;
+        $message = 'کەسی دووفاقە بە سەرکەوتوویی زیادکرا';
         
     } catch (Exception $e) {
         // An error occurred, rollback the transaction
@@ -108,11 +109,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conn->rollBack();
         }
         
-        // Return error JSON response
-        header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-        exit();
+        $success = false;
+        $message = $e->getMessage();
     }
+    
+    // Check if the request is AJAX
+    $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+              strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+              
+    if ($isAjax) {
+        // Return JSON response for AJAX requests
+        header('Content-Type: application/json');
+        echo json_encode(['success' => $success, 'message' => $message]);
+    } else {
+        // Redirect for regular form submission
+        if ($success) {
+            header("Location: ../views/admin/addStaff.php?tab=business-partner&status=success&message=" . urlencode($message));
+        } else {
+            header("Location: ../views/admin/addStaff.php?tab=business-partner&status=error&message=" . urlencode($message));
+        }
+    }
+    exit();
 } else {
     // If not a POST request, redirect back to the form
     header("Location: ../views/admin/addStaff.php?tab=business-partner");
