@@ -173,6 +173,7 @@ function formatDate($date) {
 </head>
 
 <body>
+    <div id="main-container">
 <div id="navbar-container"></div>
 
 <!-- Sidebar container - populated by JavaScript -->
@@ -334,6 +335,7 @@ function formatDate($date) {
             </div>
         </div>
     </div>
+</div>
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
