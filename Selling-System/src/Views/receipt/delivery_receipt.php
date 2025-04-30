@@ -92,6 +92,7 @@ $total = $subtotal + $receipt['shipping_cost'] + $receipt['other_costs'] - $rece
             color: var(--text-color);
             line-height: 1.6;
             padding: 0;
+            font-size: 14px;
         }
 
         /* سایزی A5 ئاسۆیی */
@@ -111,7 +112,7 @@ $total = $subtotal + $receipt['shipping_cost'] + $receipt['other_costs'] - $rece
         .receipt-header {
             background: #7380ec;
             color: white;
-            padding: 8px 15px;
+            padding: 10px 15px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -119,7 +120,7 @@ $total = $subtotal + $receipt['shipping_cost'] + $receipt['other_costs'] - $rece
         
         .header-left {
             text-align: left;
-            font-size: 11px;
+            font-size: 13px;
         }
         
         .header-center {
@@ -128,13 +129,13 @@ $total = $subtotal + $receipt['shipping_cost'] + $receipt['other_costs'] - $rece
         }
         
         .store-name {
-            font-size: 18px;
+            font-size: 22px;
             font-weight: 700;
             margin-bottom: 2px;
         }
         
         .receipt-body {
-            padding: 10px 15px;
+            padding: 15px 20px;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
@@ -142,18 +143,18 @@ $total = $subtotal + $receipt['shipping_cost'] + $receipt['other_costs'] - $rece
         
         .section-title {
             border-bottom: 1px solid #3a6ea5;
-            padding-bottom: 4px;
-            margin-bottom: 8px;
+            padding-bottom: 6px;
+            margin-bottom: 10px;
             color: #2c3e50;
             font-weight: 600;
-            font-size: 13px;
+            font-size: 16px;
         }
         
         .info-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 4px;
-            font-size: 11px;
+            margin-bottom: 6px;
+            font-size: 14px;
         }
         
         .info-label {
@@ -166,12 +167,13 @@ $total = $subtotal + $receipt['shipping_cost'] + $receipt['other_costs'] - $rece
         }
         
         .table {
-            margin: 8px 0;
-            font-size: 11px;
+            margin: 10px 0;
+            font-size: 14px;
         }
         
         .table th, .table td {
-            padding: 4px 6px;
+            padding: 8px 10px;
+            vertical-align: middle;
         }
         
         .table th {
@@ -181,18 +183,18 @@ $total = $subtotal + $receipt['shipping_cost'] + $receipt['other_costs'] - $rece
         
         .receipt-footer {
             background-color: #f0f4f8;
-            padding: 8px 15px;
+            padding: 10px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-top: 1px dashed #ccc;
-            font-size: 11px;
+            font-size: 14px;
             margin-top: auto;
         }
         
         .logo {
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             background-color: white;
             border-radius: 50%;
             padding: 5px;
@@ -203,26 +205,27 @@ $total = $subtotal + $receipt['shipping_cost'] + $receipt['other_costs'] - $rece
         
         .info-boxes {
             display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
+            gap: 15px;
+            margin-bottom: 15px;
         }
         
         .info-box {
             background-color: #e8f4fd;
-            padding: 8px;
+            padding: 15px;
             border-radius: 5px;
             flex: 1;
+            min-height: 120px;
         }
         
         .contact-info {
             display: flex;
-            gap: 10px;
+            gap: 15px;
         }
         
         .contact-item {
             display: flex;
             align-items: center;
-            gap: 3px;
+            gap: 5px;
         }
         
         .products-table {
@@ -250,9 +253,15 @@ $total = $subtotal + $receipt['shipping_cost'] + $receipt['other_costs'] - $rece
                 height: 297mm;
                 page-break-after: avoid;
                 page-break-inside: avoid;
-                position: fixed;
+                position: absolute;
                 top: 0;
                 left: 0;
+            }
+            
+            .receipt-footer {
+                position: relative;
+                bottom: 0;
+                width: 100%;
             }
             
             .no-print {
