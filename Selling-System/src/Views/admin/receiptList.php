@@ -430,7 +430,7 @@ function translateUnitType($unitType) {
         const salesTable = $('#salesHistoryTable');
         const salesTableBody = salesTable.find('tbody');
         const salesRows = salesTableBody.find('tr');
-        let salesItemsPerPage = parseInt($('#salesRecordsPerPage').val());
+        let salesItemsPerPage = parseInt($('#salesRecordsPerPage').val()) || 10;
         let salesCurrentPage = 1;
         let salesTotalItems = salesRows.length;
         let salesTotalPages = Math.ceil(salesTotalItems / salesItemsPerPage);
@@ -529,14 +529,28 @@ function translateUnitType($unitType) {
         // Use delegated event handler for show-invoice-items buttons
         $(document).on('click', '.show-invoice-items', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             const invoiceNumber = $(this).data('invoice');
             
             $.ajax({
-                url: '../../includes/get_invoice_items.php',
+                url: '../../ajax/sales/get_invoice_items.php',
                 type: 'POST',
                 data: { invoice_number: invoiceNumber },
                 dataType: 'json',
-                success: function (response) {
+                beforeSend: function() {
+                    // Show loading indicator
+                    Swal.fire({
+                        title: 'تکایە چاوەڕێبە...',
+                        text: 'زانیاریەکان دەهێنرێن',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                },
+                success: function(response) {
                     if (response.status === 'success') {
                         // Create table with items
                         let itemsHtml = `
@@ -554,7 +568,7 @@ function translateUnitType($unitType) {
                                     </thead>
                                     <tbody>`;
                         
-                        if (response.items.length === 0) {
+                        if (!response.items || response.items.length === 0) {
                             itemsHtml += `<tr><td colspan="6" class="text-center">هیچ کاڵایەک نەدۆزرایەوە</td></tr>`;
                         } else {
                             response.items.forEach((item, index) => {
@@ -569,11 +583,11 @@ function translateUnitType($unitType) {
                                 itemsHtml += `
                                     <tr>
                                         <td>${index + 1}</td>
-                                        <td>${item.product_name}</td>
-                                        <td>${item.quantity}</td>
+                                        <td>${item.product_name || '-'}</td>
+                                        <td>${item.quantity || '-'}</td>
                                         <td>${unitName}</td>
-                                        <td>${Number(item.unit_price).toLocaleString()} د.ع</td>
-                                        <td>${Number(item.total_price).toLocaleString()} د.ع</td>
+                                        <td>${Number(item.unit_price || 0).toLocaleString()} د.ع</td>
+                                        <td>${Number(item.total_price || 0).toLocaleString()} د.ع</td>
                                     </tr>`;
                             });
                         }
@@ -585,29 +599,34 @@ function translateUnitType($unitType) {
                             title: `ناوەرۆکی پسووڵەی <strong dir="ltr">#${invoiceNumber}</strong>`,
                             html: itemsHtml,
                             width: '80%',
-                            confirmButtonText: 'داخستن'
+                            confirmButtonText: 'داخستن',
+                            allowOutsideClick: false,
+                            showCloseButton: true
                         });
                     } else {
                         Swal.fire({
                             icon: 'error',
                             title: 'هەڵە ڕوویدا!',
-                            text: response.message || 'نەتوانرا زانیاریەکان بهێنرێت، تکایە دووبارە هەوڵبدەوە.'
+                            text: response.message || 'نەتوانرا زانیاریەکان بهێنرێت، تکایە دووبارە هەوڵبدەوە.',
+                            confirmButtonText: 'داخستن'
                         });
                     }
                 },
-                error: function () {
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', xhr, status, error);
                     Swal.fire({
                         icon: 'error',
                         title: 'هەڵە ڕوویدا!',
-                        text: 'کێشەیەک لە پەیوەندی کردن بە سێرڤەرەوە ڕوویدا، تکایە دواتر هەوڵبدەوە.'
+                        text: 'کێشەیەک لە پەیوەندی کردن بە سێرڤەرەوە ڕوویدا، تکایە دواتر هەوڵبدەوە.',
+                        confirmButtonText: 'داخستن'
                     });
                 }
             });
+            
+            return false;
         });
     });
     </script>
-    <script src="../../js/receiptList.js"></script>
-    <script src="../../js/debtTransactions.js"></script>
 </body>
 
 </html> 
