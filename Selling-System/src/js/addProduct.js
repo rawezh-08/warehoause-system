@@ -702,32 +702,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // زیادکردنی فانکشن بۆ پاککردنەوەی کۆماکان لە ژمارەکان
-    function cleanNumberInputs() {
-        // پاککردنەوەی داتای ژمارەکان لە کۆما
-        const numberFields = [
-            'buyingPrice',
-            'sellingPrice',
-            'selling_price_wholesale',
-            'piecesPerBox',
-            'boxesPerSet',
-            'min_quantity',
-            'current_quantity'
-        ];
-        
-        numberFields.forEach(field => {
-            const input = document.getElementById(field);
-            if (input && input.value) {
-                // لابردنی کۆماکان
-                input.value = input.value.replace(/,/g, '');
-                console.log(`Cleaned ${field}: ${input.value}`);
-            }
-        });
-        
-        // زیادکردنی پشتڕاستکردنەوە بۆ لەبار هەموو بەهاکان
-        return true;
-    }
-    
     // Format numbers with commas
     function formatNumber(input) {
         // Remove all non-digit characters except period
@@ -775,6 +749,150 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Initialize by making sure we're on the correct tab and buttons are set up
         switchToTab('basic-info');
+        
+        // Form submission handler
+        const addProductForm = document.getElementById('addProductForm');
+        if (addProductForm) {
+            let isSubmitting = false; // Flag to prevent double submission
+            
+            addProductForm.addEventListener('submit', async function(e) {
+                e.preventDefault(); // Prevent the form from submitting normally
+                
+                // Prevent double submission
+                if (isSubmitting) {
+                    return;
+                }
+                
+                // Validate the form with browser's built-in validation
+                if (!this.checkValidity()) {
+                    // Show custom error message
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: 'تکایە هەموو خانەکان پڕ بکەوە',
+                        confirmButtonText: 'باشە'
+                    });
+                    return false;
+                }
+                
+                isSubmitting = true;
+                
+                // Disable submit buttons to prevent double submission
+                const submitButtons = this.querySelectorAll('button[type="submit"]');
+                submitButtons.forEach(button => {
+                    button.disabled = true;
+                });
+                
+                // Validate all tabs before submission
+                if (!validateAllTabs()) {
+                    isSubmitting = false;
+                    submitButtons.forEach(button => {
+                        button.disabled = false;
+                    });
+                    return;
+                }
+                
+                // Clean number inputs (remove commas)
+                cleanNumberInputs();
+                
+                // Create FormData object
+                const formData = new FormData(this);
+                
+                // Check if we have a compressed image and use it instead
+                const fileInput = document.getElementById('productImage');
+                if (fileInput && fileInput.files.length > 0 && fileInput.compressedImage) {
+                    // Replace the file with the compressed version
+                    formData.delete('image');
+                    formData.append('image', fileInput.compressedImage);
+                }
+                
+                try {
+                    // Show loading indicator
+                    Swal.fire({
+                        title: 'تکایە چاوەڕێ بکە...',
+                        text: 'زیادکردنی کاڵا بەردەوامە',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    // Submit form using fetch
+                    const response = await fetch('../../process/add_product.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('Server response:', errorText);
+                        throw new Error(`هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە سێرڤەرەوە`);
+                    }
+                    
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (parseError) {
+                        console.error('Error parsing JSON response:', await response.text());
+                        throw new Error('هەڵەیەک ڕوویدا لە کاتی وەرگرتنی وەڵامەکە');
+                    }
+                    
+                    if (data.success) {
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'سەرکەوتوو',
+                            text: data.message || 'کاڵاکە بە سەرکەوتوویی زیاد کرا',
+                            confirmButtonText: 'باشە'
+                        });
+                        
+                        // Show success message
+                        showSuccessMessage();
+                        
+                        // Reset form and image preview
+                        this.reset();
+                        resetImagePreview();
+                        
+                        // Reset to first tab
+                        switchToTab('basic-info');
+                        
+                        // Refresh the latest products list
+                        updateLatestProducts();
+                        
+                        // Clear any validation errors
+                        clearAllValidationErrors();
+                        
+                        // Reset unit quantity fields
+                        const unitQuantityContainer = document.getElementById('unitQuantityContainer');
+                        if (unitQuantityContainer) {
+                            unitQuantityContainer.style.display = 'none';
+                        }
+                        
+                        // Reset select elements
+                        const selects = this.querySelectorAll('select');
+                        selects.forEach(select => {
+                            select.value = '';
+                        });
+                        
+                    } else {
+                        throw new Error(data.message || 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: error.message || 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا',
+                        confirmButtonText: 'باشە'
+                    });
+                } finally {
+                    // Reset submission flag and enable buttons
+                    isSubmitting = false;
+                    submitButtons.forEach(button => {
+                        button.disabled = false;
+                    });
+                }
+            });
+        }
 
         // Initialize unit type handling
         const unitSelect = document.getElementById('unit_id');
@@ -951,6 +1069,44 @@ document.addEventListener('DOMContentLoaded', function() {
             // Read the file as a data URL (base64 encoded string)
             reader.readAsDataURL(file);
         });
+    }
+
+    // Function to clear all validation errors
+    function clearAllValidationErrors() {
+        const invalidFields = document.querySelectorAll('.is-invalid');
+        invalidFields.forEach(field => {
+            field.classList.remove('is-invalid');
+            const errorElement = field.nextElementSibling;
+            if (errorElement && errorElement.classList.contains('invalid-feedback')) {
+                errorElement.remove();
+            }
+        });
+    }
+
+    // زیادکردنی فانکشن بۆ پاککردنەوەی کۆماکان لە ژمارەکان
+    function cleanNumberInputs() {
+        // پاککردنەوەی داتای ژمارەکان لە کۆما
+        const numberFields = [
+            'buyingPrice',
+            'sellingPrice',
+            'selling_price_wholesale',
+            'piecesPerBox',
+            'boxesPerSet',
+            'min_quantity',
+            'current_quantity'
+        ];
+        
+        numberFields.forEach(field => {
+            const input = document.getElementById(field);
+            if (input && input.value) {
+                // لابردنی کۆماکان
+                input.value = input.value.replace(/,/g, '');
+                console.log(`Cleaned ${field}: ${input.value}`);
+            }
+        });
+        
+        // زیادکردنی پشتڕاستکردنەوە بۆ لەبار هەموو بەهاکان
+        return true;
     }
 });
 
