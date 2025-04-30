@@ -193,7 +193,7 @@ function formatDate($date) {
 <!-- Sidebar container - populated by JavaScript -->
 <div id="sidebar-container"></div>
 
-    <div class="container-fluid mt-3">
+    <div class="container-fluid mt-5">
         <div class="main-content">
             <h2 class="text-center mb-4"><i class="fas fa-receipt"></i> لیستی پسووڵەکان</h2>
 
