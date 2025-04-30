@@ -108,6 +108,45 @@ function translateUnitType($unitType) {
             border-bottom: 2px solid #dee2e6;
         }
 
+        /* Invoice items modal styling */
+        .invoice-items-modal .swal2-popup {
+            padding-bottom: 1.5rem;
+        }
+        
+        .invoice-items-modal .swal2-html-container {
+            margin: 0;
+            padding: 1rem;
+        }
+        
+        .invoice-items-modal .table {
+            margin-bottom: 0;
+        }
+        
+        .invoice-items-modal .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .invoice-items-modal .table-responsive {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        /* Custom rounded pill */
+        .rounded-pill-start {
+            border-top-right-radius: 50rem !important;
+            border-bottom-right-radius: 50rem !important;
+            border-top-left-radius: 0 !important;
+            border-bottom-left-radius: 0 !important;
+        }
+        
+        .rounded-pill-end {
+            border-top-left-radius: 50rem !important;
+            border-bottom-left-radius: 50rem !important;
+            border-top-right-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+        }
+
         /* Adjust pagination display */
         .pagination-wrapper {
             display: flex;
@@ -430,7 +469,7 @@ function translateUnitType($unitType) {
         const salesTable = $('#salesHistoryTable');
         const salesTableBody = salesTable.find('tbody');
         const salesRows = salesTableBody.find('tr');
-        let salesItemsPerPage = parseInt($('#salesRecordsPerPage').val()) || 10;
+        let salesItemsPerPage = parseInt($('#salesRecordsPerPage').val());
         let salesCurrentPage = 1;
         let salesTotalItems = salesRows.length;
         let salesTotalPages = Math.ceil(salesTotalItems / salesItemsPerPage);
@@ -526,31 +565,16 @@ function translateUnitType($unitType) {
             updateSalesPagination();
         });
         
-        // Use delegated event handler for show-invoice-items buttons
-        $(document).on('click', '.show-invoice-items', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
+        // Show invoice items when clicking the info button
+        $('.show-invoice-items').on('click', function () {
             const invoiceNumber = $(this).data('invoice');
             
             $.ajax({
-                url: '../../ajax/sales/get_invoice_items.php',
+                url: '../../includes/get_invoice_items.php',
                 type: 'POST',
                 data: { invoice_number: invoiceNumber },
                 dataType: 'json',
-                beforeSend: function() {
-                    // Show loading indicator
-                    Swal.fire({
-                        title: 'تکایە چاوەڕێبە...',
-                        text: 'زانیاریەکان دەهێنرێن',
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        showConfirmButton: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        }
-                    });
-                },
-                success: function(response) {
+                success: function (response) {
                     if (response.status === 'success') {
                         // Create table with items
                         let itemsHtml = `
@@ -568,7 +592,7 @@ function translateUnitType($unitType) {
                                     </thead>
                                     <tbody>`;
                         
-                        if (!response.items || response.items.length === 0) {
+                        if (response.items.length === 0) {
                             itemsHtml += `<tr><td colspan="6" class="text-center">هیچ کاڵایەک نەدۆزرایەوە</td></tr>`;
                         } else {
                             response.items.forEach((item, index) => {
@@ -583,13 +607,21 @@ function translateUnitType($unitType) {
                                 itemsHtml += `
                                     <tr>
                                         <td>${index + 1}</td>
-                                        <td>${item.product_name || '-'}</td>
-                                        <td>${item.quantity || '-'}</td>
+                                        <td>${item.product_name}</td>
+                                        <td>${item.quantity}</td>
                                         <td>${unitName}</td>
-                                        <td>${Number(item.unit_price || 0).toLocaleString()} د.ع</td>
-                                        <td>${Number(item.total_price || 0).toLocaleString()} د.ع</td>
+                                        <td>${Number(item.unit_price).toLocaleString()} د.ع</td>
+                                        <td>${Number(item.total_price).toLocaleString()} د.ع</td>
                                     </tr>`;
                             });
+                            
+                            // Add total row
+                            const totalAmount = response.items.reduce((sum, item) => sum + parseFloat(item.total_price), 0);
+                            itemsHtml += `
+                                <tr class="table-secondary">
+                                    <td colspan="5" class="text-start fw-bold">کۆی گشتی</td>
+                                    <td class="fw-bold">${Number(totalAmount).toLocaleString()} د.ع</td>
+                                </tr>`;
                         }
                         
                         itemsHtml += `</tbody></table></div>`;
@@ -600,33 +632,35 @@ function translateUnitType($unitType) {
                             html: itemsHtml,
                             width: '80%',
                             confirmButtonText: 'داخستن',
-                            allowOutsideClick: false,
-                            showCloseButton: true
+                            confirmButtonColor: '#3085d6',
+                            customClass: {
+                                container: 'invoice-items-modal',
+                                popup: 'border-0 shadow',
+                                header: 'border-bottom pb-3',
+                                content: 'p-0'
+                            }
                         });
                     } else {
                         Swal.fire({
                             icon: 'error',
                             title: 'هەڵە ڕوویدا!',
-                            text: response.message || 'نەتوانرا زانیاریەکان بهێنرێت، تکایە دووبارە هەوڵبدەوە.',
-                            confirmButtonText: 'داخستن'
+                            text: response.message || 'نەتوانرا زانیاریەکان بهێنرێت، تکایە دووبارە هەوڵبدەوە.'
                         });
                     }
                 },
-                error: function(xhr, status, error) {
-                    console.error('AJAX Error:', xhr, status, error);
+                error: function () {
                     Swal.fire({
                         icon: 'error',
                         title: 'هەڵە ڕوویدا!',
-                        text: 'کێشەیەک لە پەیوەندی کردن بە سێرڤەرەوە ڕوویدا، تکایە دواتر هەوڵبدەوە.',
-                        confirmButtonText: 'داخستن'
+                        text: 'کێشەیەک لە پەیوەندی کردن بە سێرڤەرەوە ڕوویدا، تکایە دواتر هەوڵبدەوە.'
                     });
                 }
             });
-            
-            return false;
         });
     });
     </script>
+    <script src="../../js/receiptList.js"></script>
+    <script src="../../js/debtTransactions.js"></script>
 </body>
 
 </html> 
