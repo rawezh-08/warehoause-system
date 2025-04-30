@@ -723,13 +723,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Allow decimal numbers for price inputs
                 if (['buyingPrice', 'sellingPrice', 'selling_price_wholesale'].includes(inputId)) {
-                    // Remove any characters that aren't numbers or decimal point
+                    // Remove any non-numeric characters except decimal point
                     value = value.replace(/[^\d.]/g, '');
                     
                     // Ensure only one decimal point
-                    const decimalCount = (value.match(/\./g) || []).length;
-                    if (decimalCount > 1) {
-                        value = value.replace(/\.+$/, '');
+                    const parts = value.split('.');
+                    if (parts.length > 2) {
+                        value = parts[0] + '.' + parts.slice(1).join('');
                     }
                     
                     // Limit to 2 decimal places
@@ -739,12 +739,47 @@ document.addEventListener('DOMContentLoaded', function() {
                             value = parts[0] + '.' + parts[1].slice(0, 2);
                         }
                     }
+
+                    // Remove leading zeros
+                    if (value.startsWith('0') && value.length > 1 && value[1] !== '.') {
+                        value = value.replace(/^0+/, '');
+                    }
                 } else {
                     // For quantity inputs, only allow whole numbers
                     value = value.replace(/\D/g, '');
+                    // Remove leading zeros
+                    if (value.startsWith('0') && value.length > 1) {
+                        value = value.replace(/^0+/, '');
+                    }
                 }
                 
                 this.value = value;
+            });
+
+            // Handle paste event
+            input.addEventListener('paste', function(e) {
+                e.preventDefault();
+                let pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                
+                if (['buyingPrice', 'sellingPrice', 'selling_price_wholesale'].includes(inputId)) {
+                    // For price inputs, allow decimal numbers
+                    pastedText = pastedText.replace(/[^\d.]/g, '');
+                    const parts = pastedText.split('.');
+                    if (parts.length > 2) {
+                        pastedText = parts[0] + '.' + parts.slice(1).join('');
+                    }
+                    if (pastedText.includes('.')) {
+                        const parts = pastedText.split('.');
+                        if (parts[1].length > 2) {
+                            pastedText = parts[0] + '.' + parts[1].slice(0, 2);
+                        }
+                    }
+                } else {
+                    // For quantity inputs, only allow whole numbers
+                    pastedText = pastedText.replace(/\D/g, '');
+                }
+                
+                this.value = pastedText;
             });
         });
     }
