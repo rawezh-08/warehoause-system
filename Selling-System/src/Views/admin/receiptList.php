@@ -16,10 +16,12 @@ $salesQuery = "SELECT s.*,
                s.shipping_cost,
                s.other_costs,
                s.discount,
-               s.payment_type
+               s.payment_type,
+               c.name as customer_name
                FROM sales s 
                LEFT JOIN sale_items si ON s.id = si.sale_id
                LEFT JOIN products p ON si.product_id = p.id
+               LEFT JOIN customers c ON s.customer_id = c.id
                ORDER BY s.date DESC";
 $salesStmt = $conn->prepare($salesQuery);
 $salesStmt->execute();
@@ -271,6 +273,7 @@ function translateUnitType($unitType) {
                                             <th>#</th>
                                             <th>ژمارەی پسووڵە</th>
                                             <th>بەروار</th>
+                                            <th>ناوی کڕیار</th>
                                             <th>ناوی کاڵا</th>
                                             <th>کۆدی کاڵا</th>
                                             <th>بڕ</th>
@@ -287,7 +290,7 @@ function translateUnitType($unitType) {
                                     <tbody>
                                         <?php if(empty($sales)): ?>
                                         <tr>
-                                            <td colspan="14" class="text-center py-4">هیچ پسووڵەیەک نەدۆزرایەوە</td>
+                                            <td colspan="15" class="text-center py-4">هیچ پسووڵەیەک نەدۆزرایەوە</td>
                                         </tr>
                                         <?php else: ?>
                                             <?php foreach($sales as $index => $sale): ?>
@@ -304,6 +307,7 @@ function translateUnitType($unitType) {
                                                     <td><?= $index + 1 ?></td>
                                                     <td><?= htmlspecialchars($sale['invoice_number']) ?></td>
                                                     <td><?= formatDate($sale['date']) ?></td>
+                                                    <td><?= htmlspecialchars($sale['customer_name'] ?? '-') ?></td>
                                                     <td><?= htmlspecialchars($sale['product_name'] ?? '-') ?></td>
                                                     <td><?= htmlspecialchars($sale['product_code'] ?? '-') ?></td>
                                                     <td><?= htmlspecialchars($sale['quantity'] ?? '-') ?></td>
