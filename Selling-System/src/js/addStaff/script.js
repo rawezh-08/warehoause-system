@@ -43,24 +43,24 @@ $(document).ready(function() {
         });
 
         // Get form data
-        const formData = {
-            partnerName: $('#partnerName').val(),
-            partnerPhone1: $('#partnerPhone1').val(),
-            partnerPhone2: $('#partnerPhone2').val(),
-            partnerAddress: $('#partnerAddress').val(),
-            partnerDebitOnBusiness: $('#partnerDebitOnBusiness').val().replace(/,/g, ''),
-            partnerDebtOnCustomer: $('#partnerDebtOnCustomer').val().replace(/,/g, ''),
-            partnerDebtOnMyself: $('#partnerDebtOnMyself').val().replace(/,/g, ''),
-            partnerDebtOnSupplier: $('#partnerDebtOnSupplier').val().replace(/,/g, ''),
-            partnerNotes: $('#partnerNotes').val()
-        };
+        const formData = new FormData();
+        formData.append('partnerName', $('#partnerName').val());
+        formData.append('partnerPhone1', $('#partnerPhone1').val());
+        formData.append('partnerPhone2', $('#partnerPhone2').val());
+        formData.append('partnerAddress', $('#partnerAddress').val());
+        formData.append('partnerDebitOnBusiness', $('#partnerDebitOnBusiness').val().replace(/,/g, ''));
+        formData.append('partnerDebtOnCustomer', $('#partnerDebtOnCustomer').val().replace(/,/g, ''));
+        formData.append('partnerDebtOnMyself', $('#partnerDebtOnMyself').val().replace(/,/g, ''));
+        formData.append('partnerDebtOnSupplier', $('#partnerDebtOnSupplier').val().replace(/,/g, ''));
+        formData.append('partnerNotes', $('#partnerNotes').val());
 
         // Send AJAX request
         $.ajax({
             url: '../../process/add_partner.php',
             type: 'POST',
             data: formData,
-            dataType: 'json',
+            processData: false,
+            contentType: false,
             success: function(response) {
                 if (response.status === 'success') {
                     // Show success message
@@ -87,6 +87,7 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr, status, error) {
+                console.error('Error:', error);
                 // Show error message
                 Swal.fire({
                     title: 'هەڵە',

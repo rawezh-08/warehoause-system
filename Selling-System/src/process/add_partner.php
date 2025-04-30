@@ -2,6 +2,8 @@
 require_once '../../includes/auth.php';
 require_once '../../includes/db.php';
 
+header('Content-Type: application/json');
+
 try {
     // Start transaction
     $conn->beginTransaction();
@@ -24,8 +26,8 @@ try {
         $_POST['partnerPhone1'],
         $_POST['partnerPhone2'],
         $_POST['partnerAddress'],
-        $_POST['partnerDebitOnBusiness'],
-        $_POST['partnerDebtOnCustomer'],
+        floatval(str_replace(',', '', $_POST['partnerDebitOnBusiness'])),
+        floatval(str_replace(',', '', $_POST['partnerDebtOnCustomer'])),
         $_POST['partnerNotes']
     ]);
     $customer_id = $conn->lastInsertId();
@@ -47,8 +49,8 @@ try {
         $_POST['partnerName'],
         $_POST['partnerPhone1'],
         $_POST['partnerPhone2'],
-        $_POST['partnerDebtOnMyself'],
-        $_POST['partnerDebtOnSupplier'],
+        floatval(str_replace(',', '', $_POST['partnerDebtOnMyself'])),
+        floatval(str_replace(',', '', $_POST['partnerDebtOnSupplier'])),
         $_POST['partnerNotes'],
         $customer_id
     ]);
