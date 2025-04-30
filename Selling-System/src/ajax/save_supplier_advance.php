@@ -2,7 +2,7 @@
 
 // Include database connection
 require_once '../config/database.php';
-require_once '../../includes/auth.php';
+require_once '../includes/auth.php';
 
 // Check if request is POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
