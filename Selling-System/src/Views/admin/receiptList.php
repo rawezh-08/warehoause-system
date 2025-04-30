@@ -39,6 +39,20 @@ function calculateSaleTotal($saleId, $conn) {
 function formatDate($date) {
     return date('Y-m-d H:i', strtotime($date));
 }
+
+// Function to translate unit type to Kurdish
+function translateUnitType($unitType) {
+    switch ($unitType) {
+        case 'piece':
+            return 'دانە';
+        case 'box':
+            return 'کارتۆن';
+        case 'set':
+            return 'سێت';
+        default:
+            return '-';
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
@@ -293,24 +307,7 @@ function formatDate($date) {
                                                     <td><?= htmlspecialchars($sale['product_name'] ?? '-') ?></td>
                                                     <td><?= htmlspecialchars($sale['product_code'] ?? '-') ?></td>
                                                     <td><?= htmlspecialchars($sale['quantity'] ?? '-') ?></td>
-                                                    <td>
-                                                        <?php 
-                                                            $unitType = $sale['unit_type'] ?? '';
-                                                            switch($unitType) {
-                                                                case 'piece':
-                                                                    echo 'دانە';
-                                                                    break;
-                                                                case 'box':
-                                                                    echo 'کارتۆن';
-                                                                    break;
-                                                                case 'set':
-                                                                    echo 'سێت';
-                                                                    break;
-                                                                default:
-                                                                    echo '-';
-                                                            }
-                                                        ?>
-                                                    </td>
+                                                    <td><?= translateUnitType($sale['unit_type']) ?></td>
                                                     <td><?= number_format($sale['unit_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
                                                     <td><?= number_format($sale['total_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
                                                     <td><?= number_format($sale['shipping_cost'] ?? 0, 0, '.', ',') ?> د.ع</td>
@@ -324,71 +321,25 @@ function formatDate($date) {
                                                         <?php endif; ?>
                                                     </td>
                                                     <td>
-                                                        <div class="action-buttons">
-                                                            <a href="<?php echo (isset($sale['is_delivery']) && $sale['is_delivery'] == 1) ? 
-                                                                '../../Views/receipt/delivery_receipt.php?sale_id=' . $sale['id'] : 
-                                                                '../../Views/receipt/print_receipt.php?sale_id=' . $sale['id']; ?>"
-                                                                class="btn btn-sm btn-outline-success rounded-circle"
-                                                                title="چاپکردن"
-                                                                target="_blank">
-                                                                <i class="fas fa-print"></i>
-                                                            </a>
-                                                            <button type="button" 
-                                                                class="btn btn-sm btn-outline-primary rounded-circle edit-btn"
-                                                                data-id="<?php echo $sale['id']; ?>"
-                                                                title="دەستکاری پسووڵە">
-                                                                <i class="fas fa-edit"></i>
-                                                            </button>
-                                                            <button type="button" 
-                                                                class="btn btn-sm btn-outline-info rounded-circle show-invoice-items"
-                                                                data-invoice="<?php echo $sale['invoice_number']; ?>"
-                                                                title="بینینی هەموو کاڵاکان">
-                                                                <i class="fas fa-list"></i>
-                                                            </button>
-                                                            <button type="button" 
-                                                                class="btn btn-sm btn-outline-warning rounded-circle return-products-btn"
-                                                                data-id="<?php echo $sale['id']; ?>"
-                                                                data-invoice="<?php echo $sale['invoice_number']; ?>"
-                                                                title="گەڕاندنەوەی کاڵا">
-                                                                <i class="fas fa-undo"></i>
-                                                            </button>
-                                                            <?php
-                                                            // Check if sale can be returned (no payments made)
-                                                            $canReturn = true;
-                                                            $canDelete = true;
-                                                            
-                                                            // Check for debt transactions
-                                                            foreach ($debtTransactions as $transaction) {
-                                                                if ($transaction['reference_id'] == $sale['id'] && 
-                                                                    ($transaction['transaction_type'] == 'collection' || 
-                                                                     $transaction['transaction_type'] == 'payment')) {
-                                                                    $canReturn = false;
-                                                                    $canDelete = false;
-                                                                    break;
-                                                                }
-                                                            }
-                                                            
-                                                            // Check for product returns
-                                                            $returnQuery = "SELECT COUNT(*) as count FROM product_returns WHERE receipt_id = :sale_id AND receipt_type = 'selling'";
-                                                            $returnStmt = $conn->prepare($returnQuery);
-                                                            $returnStmt->bindParam(':sale_id', $sale['id']);
-                                                            $returnStmt->execute();
-                                                            $returnCount = $returnStmt->fetch(PDO::FETCH_ASSOC)['count'];
-                                                            
-                                                            if ($returnCount > 0) {
-                                                                $canDelete = false;
-                                                            }
-                                                            
-                                                            if ($canDelete): ?>
-                                                            <button type="button" 
-                                                                class="btn btn-sm btn-outline-danger rounded-circle delete-sale"
-                                                                data-id="<?php echo $sale['id']; ?>"
-                                                                data-invoice="<?php echo $sale['invoice_number']; ?>"
-                                                                title="سڕینەوە">
-                                                                <i class="fas fa-trash"></i>
-                                                            </button>
-                                                            <?php endif; ?>
-                                                        </div>
+                                                    <div class="action-buttons">
+                                                                <a href="<?php echo (isset($sale['is_delivery']) && $sale['is_delivery'] == 1) ? 
+                                                                    '../../Views/receipt/delivery_receipt.php?sale_id=' . $sale['id'] : 
+                                                                    '../../Views/receipt/print_receipt.php?sale_id=' . $sale['id']; ?>"
+                                                                    class="btn btn-sm btn-outline-success rounded-circle"
+                                                                    title="چاپکردن">
+                                                                    <i class="fas fa-print"></i>
+                                                                </a>
+                                                           
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-info rounded-circle show-invoice-items"
+                                                                    data-invoice="<?php echo $sale['invoice_number']; ?>"
+                                                                    title="بینینی هەموو کاڵاکان">
+                                                                    <i class="fas fa-list"></i>
+                                                                </button>
+                                                                <!-- Add Return Button -->
+                                                                
+                                                                
+                                                            </div>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
