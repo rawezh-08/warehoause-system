@@ -154,28 +154,28 @@ require_once '../../process/addProduct_logic.php';
                                         <div class="tab-content" id="price-info-content" style="display: none;">
                                             <div class="row mb-4">
                                                 <div class="col-md-4 mb-3" style="direction: rtl;">
-                                                    <label for="buyingPrice" class="form-label">نرخی کڕین</label>
+                                                    <label for="buyingPrice" class="form-label">نرخی کڕینی کارتۆن</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="buyingPrice" name="purchase_price" class="form-control" placeholder="نرخی کڕین" step="0.01" required>
+                                                        <input type="number" id="buyingPrice" name="purchase_price" class="form-control" placeholder="نرخی کڕینی کارتۆن" step="0.01" required>
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
+                                                    <small class="text-muted">نرخی دانە: <span id="pieceBuyingPrice">0</span> د.ع</small>
                                                 </div>
                                                 <div class="col-md-4 mb-3">
-                                                    <label for="sellingPrice" class="form-label">نرخی فرۆشتن</label>
+                                                    <label for="sellingPrice" class="form-label">نرخی فرۆشتنی کارتۆن</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="sellingPrice" name="selling_price_single" class="form-control" placeholder="نرخی فرۆشتن" step="0.01" required>
+                                                        <input type="number" id="sellingPrice" name="selling_price_single" class="form-control" placeholder="نرخی فرۆشتنی کارتۆن" step="0.01" required>
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
+                                                    <small class="text-muted">نرخی دانە: <span id="pieceSellingPrice">0</span> د.ع</small>
                                                 </div>
                                                 <div class="col-md-4 mb-3">
-                                                    <label for="selling_price_wholesale" class="form-label">نرخی فرۆشتن (کۆمەڵ)</label>
+                                                    <label for="selling_price_wholesale" class="form-label">نرخی فرۆشتنی کارتۆن (کۆمەڵ)</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="selling_price_wholesale" name="selling_price_wholesale" class="form-control" placeholder="نرخی فرۆشتن (کۆمەڵ)" step="0.01" required>
+                                                        <input type="number" id="selling_price_wholesale" name="selling_price_wholesale" class="form-control" placeholder="نرخی فرۆشتنی کارتۆن (کۆمەڵ)" step="0.01" required>
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
-                                                    <div class="invalid-feedback">
-                                                        تکایە نرخی فرۆشتن (کۆمەڵ) بنووسە
-                                                    </div>
+                                                    <small class="text-muted">نرخی دانە: <span id="pieceWholesalePrice">0</span> د.ع</small>
                                                 </div>
                                             </div>
                                             
@@ -386,6 +386,39 @@ require_once '../../process/addProduct_logic.php';
                 $('#addCategoryForm')[0].reset();
             });
         });
+    </script>
+
+    <script>
+    // Add this to your existing JavaScript
+    $(document).ready(function() {
+        // Function to calculate piece prices
+        function calculatePiecePrices() {
+            const piecesPerBox = parseInt($('#piecesPerBox').val()) || 1;
+            const buyingPrice = parseFloat($('#buyingPrice').val()) || 0;
+            const sellingPrice = parseFloat($('#sellingPrice').val()) || 0;
+            const wholesalePrice = parseFloat($('#selling_price_wholesale').val()) || 0;
+
+            // Calculate piece prices
+            const pieceBuyingPrice = (buyingPrice / piecesPerBox).toFixed(2);
+            const pieceSellingPrice = (sellingPrice / piecesPerBox).toFixed(2);
+            const pieceWholesalePrice = (wholesalePrice / piecesPerBox).toFixed(2);
+
+            // Update piece price displays
+            $('#pieceBuyingPrice').text(pieceBuyingPrice);
+            $('#pieceSellingPrice').text(pieceSellingPrice);
+            $('#pieceWholesalePrice').text(pieceWholesalePrice);
+        }
+
+        // Add event listeners for price inputs and pieces per box
+        $('#buyingPrice, #sellingPrice, #selling_price_wholesale, #piecesPerBox').on('input', calculatePiecePrices);
+
+        // Calculate initial piece prices when pieces per box is entered
+        $('#piecesPerBox').on('change', function() {
+            if ($(this).val()) {
+                calculatePiecePrices();
+            }
+        });
+    });
     </script>
 </body>
 </html> 
