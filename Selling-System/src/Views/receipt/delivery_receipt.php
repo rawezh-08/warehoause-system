@@ -96,8 +96,8 @@ $total = $subtotal + $receipt['shipping_cost'] + $receipt['other_costs'] - $rece
 
         /* سایزی A5 ئاسۆیی */
         .receipt-container {
-            width: 210mm; /* عەرزی A5 */
-            height: 148mm; /* بەرزی A5 */
+            width: 210mm; /* عەرزی A4 */
+            height: 297mm; /* بەرزی A4 */
             margin: 10px auto;
             background: white;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -247,7 +247,7 @@ $total = $subtotal + $receipt['shipping_cost'] + $receipt['other_costs'] - $rece
                 margin: 0;
                 padding: 0;
                 width: 210mm;
-                height: 148mm;
+                height: 297mm;
                 page-break-after: avoid;
                 page-break-inside: avoid;
                 position: fixed;
@@ -260,7 +260,7 @@ $total = $subtotal + $receipt['shipping_cost'] + $receipt['other_costs'] - $rece
             }
             
             @page {
-                size: A5 landscape;
+                size: A4 portrait;
                 margin: 0;
             }
         }
