@@ -764,30 +764,18 @@ $(document).ready(function() {
 
     // Initialize number formatting for edit form
     $(document).on('input', '#edit_purchase_price, #edit_selling_price_single, #edit_selling_price_wholesale', function() {
-        let value = $(this).val().replace(/[^\d.]/g, '');
-        
-        // Ensure only one decimal point
+        let value = $(this).val().replace(/,/g, '');
+        // Allow only numbers and one dot
+        value = value.replace(/[^\d.]/g, '');
         const parts = value.split('.');
         if (parts.length > 2) {
             value = parts[0] + '.' + parts.slice(1).join('');
         }
-        
-        // Only format the part before the decimal
-        if (value) {
-            if (value.includes('.')) {
-                const [integerPart, decimalPart] = value.split('.');
-                if (integerPart) {
-                    // Format integer part with commas
-                    const formattedInteger = parseInt(integerPart).toLocaleString('en-US');
-                    $(this).val(formattedInteger + '.' + decimalPart);
-                } else {
-                    $(this).val(value); // Keep the original if just starting with a decimal
-                }
-            } else {
-                // No decimal, just format the integer
-                value = parseInt(value).toLocaleString('en-US');
-                $(this).val(value);
-            }
+        // Format integer part with commas
+        let [integerPart, decimalPart] = value.split('.');
+        if (integerPart) {
+            integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         }
+        $(this).val(decimalPart !== undefined ? `${integerPart}.${decimalPart}` : integerPart);
     });
 });

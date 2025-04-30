@@ -383,15 +383,15 @@ require_once '../../process/products_logic.php';
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label for="edit_purchase_price" class="form-label">نرخی کڕین</label>
-                                <input type="number" class="form-control" id="edit_purchase_price" name="purchase_price" step="0.01" required autocomplete="off">
+                                <input type="number" class="form-control" id="edit_purchase_price" name="purchase_price" required autocomplete="off">
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="edit_selling_price_single" class="form-label">نرخی فرۆشتن (دانە)</label>
-                                <input type="number" class="form-control" id="edit_selling_price_single" name="selling_price_single" step="0.01" required autocomplete="off">
+                                <input type="number" class="form-control" id="edit_selling_price_single" name="selling_price_single" required autocomplete="off">
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="edit_selling_price_wholesale" class="form-label">نرخی فرۆشتن (کۆمەڵ)</label>
-                                <input type="number" class="form-control" id="edit_selling_price_wholesale" name="selling_price_wholesale" step="0.01" autocomplete="off">
+                                <input type="number" class="form-control" id="edit_selling_price_wholesale" name="selling_price_wholesale" autocomplete="off">
                             </div>
                         </div>
                         <div class="row">
