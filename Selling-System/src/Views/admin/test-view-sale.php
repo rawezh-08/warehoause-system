@@ -3,6 +3,9 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Include database connection
+require_once '../../includes/db.php';
+
 // Include authentication check
 require_once '../../includes/auth.php';
 
@@ -17,6 +20,10 @@ $sale_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 echo "Sale ID from URL: " . $sale_id . "\n";
 
 try {
+    if (!isset($conn)) {
+        throw new Exception("Database connection not established");
+    }
+
     // Get sale details with customer information
     $stmt = $conn->prepare("
         SELECT s.*, c.name as customer_name, c.phone1 as customer_phone
@@ -44,8 +51,8 @@ try {
     var_dump($sale_items);
     echo "</pre>";
 
-} catch (PDOException $e) {
-    echo "<pre>Database Error: " . $e->getMessage() . "</pre>";
+} catch (Exception $e) {
+    echo "<pre>Error: " . $e->getMessage() . "</pre>";
     exit;
 }
 ?>
