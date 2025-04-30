@@ -653,6 +653,20 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
             handleDeleteSale(saleId);
         });
 
+        // Handle view button clicks
+        $(document).on('click', '.view-btn', function() {
+            const id = $(this).data('id');
+            const tabId = $(this).closest('.tab-pane').attr('id');
+            
+            if (tabId === 'withdrawal-content') {
+                // Handle withdrawal view
+                window.location.href = `viewWasting.php?id=${id}`;
+            } else if (tabId === 'sales-content') {
+                // Handle sales view
+                window.location.href = `test-view-sale.php?id=${id}`;
+            }
+        });
+
         // Initialize date filters
         const today = new Date();
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
