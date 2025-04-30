@@ -702,30 +702,51 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // زیادکردنی فانکشن بۆ پاککردنەوەی کۆماکان لە ژمارەکان
+    // Clean number inputs to allow only valid numbers
     function cleanNumberInputs() {
-        // پاککردنەوەی داتای ژمارەکان لە کۆما
-        const numberFields = [
+        const numberInputs = [
             'buyingPrice',
             'sellingPrice',
             'selling_price_wholesale',
-            'piecesPerBox',
-            'boxesPerSet',
             'min_quantity',
-            'current_quantity'
+            'current_quantity',
+            'piecesPerBox',
+            'boxesPerSet'
         ];
-        
-        numberFields.forEach(field => {
-            const input = document.getElementById(field);
-            if (input && input.value) {
-                // لابردنی کۆماکان
-                input.value = input.value.replace(/,/g, '');
-                console.log(`Cleaned ${field}: ${input.value}`);
-            }
+
+        numberInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+
+            input.addEventListener('input', function(e) {
+                let value = this.value;
+                
+                // Allow decimal numbers for price inputs
+                if (['buyingPrice', 'sellingPrice', 'selling_price_wholesale'].includes(inputId)) {
+                    // Remove any characters that aren't numbers or decimal point
+                    value = value.replace(/[^\d.]/g, '');
+                    
+                    // Ensure only one decimal point
+                    const decimalCount = (value.match(/\./g) || []).length;
+                    if (decimalCount > 1) {
+                        value = value.replace(/\.+$/, '');
+                    }
+                    
+                    // Limit to 2 decimal places
+                    if (value.includes('.')) {
+                        const parts = value.split('.');
+                        if (parts[1].length > 2) {
+                            value = parts[0] + '.' + parts[1].slice(0, 2);
+                        }
+                    }
+                } else {
+                    // For quantity inputs, only allow whole numbers
+                    value = value.replace(/\D/g, '');
+                }
+                
+                this.value = value;
+            });
         });
-        
-        // زیادکردنی پشتڕاستکردنەوە بۆ لەبار هەموو بەهاکان
-        return true;
     }
     
     // Initialize by making sure we're on the correct tab and buttons are set up
