@@ -698,6 +698,10 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
                             
                             itemsHtml += '</tbody></table></div>';
                             
+                            // Format date
+                            const saleDate = new Date(sale.date.replace(' ', 'T'));
+                            const formattedDate = saleDate.toLocaleDateString('ku-IQ');
+                            
                             // Show sale details in SweetAlert2
                             Swal.fire({
                                 title: 'زانیاری پسووڵە',
@@ -706,7 +710,7 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
                                         <div class="row mb-3">
                                             <div class="col-md-6">
                                                 <p><strong>ژمارەی پسووڵە:</strong> ${sale.invoice_number}</p>
-                                                <p><strong>بەروار:</strong> ${formatDate(sale.date)}</p>
+                                                <p><strong>بەروار:</strong> ${formattedDate}</p>
                                                 <p><strong>کڕیار:</strong> ${sale.customer_name || 'کڕیاری نەناسراو'}</p>
                                                 <p><strong>ژمارەی مۆبایل:</strong> ${sale.customer_phone || '-'}</p>
                                             </div>
