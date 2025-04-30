@@ -253,12 +253,10 @@ function translateUnitType($unitType) {
                 <div class="tab-pane fade show active" id="sales" role="tabpanel" aria-labelledby="sales-tab">
                     <div class="card shadow-sm">
                         <div class="card-header bg-white">
-                            <div class="row align-items-center">
-                                <div class="col-md-6 mb-2 mb-md-0">
-                                    <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> پسووڵەکانی فرۆشتن</h5>
-                                </div>
+                            <div class="row">
                                 <div class="col-md-6">
-                                    <div class="input-group">
+                                    <h5 class="mb-2"><i class="fas fa-shopping-cart"></i> پسووڵەکانی فرۆشتن</h5>
+                                    <div class="input-group" style="max-width: 300px;">
                                         <input type="text" id="salesSearchInput" class="form-control table-search-input" placeholder="گەڕان بۆ پسووڵە...">
                                         <span class="input-group-text bg-primary text-white">
                                             <i class="fas fa-search"></i>
