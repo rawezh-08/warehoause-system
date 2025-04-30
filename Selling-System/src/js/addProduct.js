@@ -963,14 +963,32 @@ async function updateLatestProducts() {
 
 // Format numbers with commas
 function formatNumber(input) {
-    // Remove all non-digit characters and commas
-    let value = input.value.replace(/[^\d]/g, '');
+    // Remove commas first
+    let value = input.value.replace(/,/g, '');
     
-    // Add comma every three digits
-    value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    
-    // Update input value
-    input.value = value;
+    // Match decimal patterns: keep only one decimal point and digits
+    let parts = value.split('.');
+    if (parts.length > 1) {
+        // Keep only one decimal part, and remove non-digits
+        let integerPart = parts[0].replace(/[^\d]/g, '');
+        let decimalPart = parts[1].replace(/[^\d]/g, '');
+        
+        // Add comma every three digits in integer part
+        integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        
+        // Update input value with decimal point
+        input.value = integerPart + '.' + decimalPart;
+    } else {
+        // No decimal point, just format the integer part
+        // Remove non-digits
+        value = value.replace(/[^\d]/g, '');
+        
+        // Add comma every three digits
+        value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        
+        // Update input value
+        input.value = value;
+    }
 }
 
 // Function to handle unit type changes
@@ -1056,7 +1074,8 @@ document.addEventListener('DOMContentLoaded', function() {
     numberInputs.forEach(inputId => {
         const input = document.getElementById(inputId);
         if (input) {
-            input.setAttribute('type', 'text');
+            // Don't change the input type - keep it as "number" for price inputs
+            // Only attach the input formatting event
             input.addEventListener('input', function() {
                 formatNumber(this);
             });
