@@ -702,83 +702,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Clean number inputs to allow only valid numbers
+    // زیادکردنی فانکشن بۆ پاککردنەوەی کۆماکان لە ژمارەکان
     function cleanNumberInputs() {
-        const priceInputs = ['buyingPrice', 'sellingPrice', 'selling_price_wholesale'];
-        const quantityInputs = ['min_quantity', 'current_quantity', 'piecesPerBox', 'boxesPerSet'];
-
-        // Handle price inputs (allow decimals)
-        priceInputs.forEach(inputId => {
-            const input = document.getElementById(inputId);
-            if (!input) return;
-
-            input.addEventListener('keydown', function(e) {
-                // Allow: backspace, delete, tab, escape, enter, decimal point
-                if ([46, 8, 9, 27, 13, 110, 190].indexOf(e.keyCode) !== -1 ||
-                    // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
-                    (e.keyCode === 65 && e.ctrlKey === true) ||
-                    (e.keyCode === 67 && e.ctrlKey === true) ||
-                    (e.keyCode === 86 && e.ctrlKey === true) ||
-                    (e.keyCode === 88 && e.ctrlKey === true) ||
-                    // Allow: home, end, left, right
-                    (e.keyCode >= 35 && e.keyCode <= 39)) {
-                    // Let it happen
-                    return;
-                }
-                // Ensure that it is a number or stop the keypress
-                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
-                    e.preventDefault();
-                }
-            });
-
-            input.addEventListener('input', function(e) {
-                let value = this.value;
-                
-                // Remove all non-numeric characters except decimal point
-                value = value.replace(/[^\d.]/g, '');
-                
-                // Ensure only one decimal point
-                const parts = value.split('.');
-                if (parts.length > 2) {
-                    value = parts[0] + '.' + parts.slice(1).join('');
-                }
-                
-                // Limit to 2 decimal places
-                if (parts.length === 2 && parts[1].length > 2) {
-                    value = parts[0] + '.' + parts[1].substring(0, 2);
-                }
-
-                this.value = value;
-            });
+        // پاککردنەوەی داتای ژمارەکان لە کۆما
+        const numberFields = [
+            'buyingPrice',
+            'sellingPrice',
+            'selling_price_wholesale',
+            'piecesPerBox',
+            'boxesPerSet',
+            'min_quantity',
+            'current_quantity'
+        ];
+        
+        numberFields.forEach(field => {
+            const input = document.getElementById(field);
+            if (input && input.value) {
+                // لابردنی کۆماکان
+                input.value = input.value.replace(/,/g, '');
+                console.log(`Cleaned ${field}: ${input.value}`);
+            }
         });
-
-        // Handle quantity inputs (whole numbers only)
-        quantityInputs.forEach(inputId => {
-            const input = document.getElementById(inputId);
-            if (!input) return;
-
-            input.addEventListener('keydown', function(e) {
-                // Allow: backspace, delete, tab, escape, enter
-                if ([46, 8, 9, 27, 13].indexOf(e.keyCode) !== -1 ||
-                    // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
-                    (e.keyCode === 65 && e.ctrlKey === true) ||
-                    (e.keyCode === 67 && e.ctrlKey === true) ||
-                    (e.keyCode === 86 && e.ctrlKey === true) ||
-                    (e.keyCode === 88 && e.ctrlKey === true) ||
-                    // Allow: home, end, left, right
-                    (e.keyCode >= 35 && e.keyCode <= 39)) {
-                    return;
-                }
-                // Ensure that it is a number or stop the keypress
-                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
-                    e.preventDefault();
-                }
-            });
-
-            input.addEventListener('input', function(e) {
-                this.value = this.value.replace(/\D/g, '');
-            });
-        });
+        
+        // زیادکردنی پشتڕاستکردنەوە بۆ لەبار هەموو بەهاکان
+        return true;
     }
     
     // Initialize by making sure we're on the correct tab and buttons are set up
@@ -1014,43 +961,16 @@ async function updateLatestProducts() {
     }
 }
 
-// Format numbers with commas and allow decimals
+// Format numbers with commas
 function formatNumber(input) {
-    // Get the input value and remove any commas
-    let value = input.value.replace(/,/g, '');
+    // Remove all non-digit characters and commas
+    let value = input.value.replace(/[^\d]/g, '');
     
-    // Check if this is a price input
-    const isPriceInput = ['buyingPrice', 'sellingPrice', 'selling_price_wholesale'].includes(input.id);
-    
-    if (isPriceInput) {
-        // For price inputs, allow decimals
-        // Remove any characters that aren't numbers or decimal point
-        value = value.replace(/[^\d.]/g, '');
-        
-        // Ensure only one decimal point
-        const decimalCount = (value.match(/\./g) || []).length;
-        if (decimalCount > 1) {
-            value = value.replace(/\.+$/, '');
-        }
-        
-        // Limit to 2 decimal places
-        if (value.includes('.')) {
-            const parts = value.split('.');
-            if (parts[1].length > 2) {
-                value = parts[0] + '.' + parts[1].slice(0, 2);
-            }
-        }
-    } else {
-        // For non-price inputs, only allow whole numbers
-        value = value.replace(/\D/g, '');
-    }
-    
-    // Format with commas for thousands
-    const parts = value.split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    // Add comma every three digits
+    value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     
     // Update input value
-    input.value = parts.join('.');
+    input.value = value;
 }
 
 // Function to handle unit type changes
@@ -1136,13 +1056,7 @@ document.addEventListener('DOMContentLoaded', function() {
     numberInputs.forEach(inputId => {
         const input = document.getElementById(inputId);
         if (input) {
-            // Set input type based on whether it's a price input or not
-            const isPriceInput = ['buyingPrice', 'sellingPrice', 'selling_price_wholesale'].includes(inputId);
-            input.setAttribute('type', isPriceInput ? 'number' : 'text');
-            if (isPriceInput) {
-                input.setAttribute('step', '0.01');
-            }
-            
+            input.setAttribute('type', 'text');
             input.addEventListener('input', function() {
                 formatNumber(this);
             });
