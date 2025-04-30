@@ -248,276 +248,308 @@ function changePage(page) {
 
 // Function to update pagination buttons
 function updatePaginationButtons(pagination) {
-    const totalPages = pagination.total_pages;
-    const currentPage = pagination.current_page;
-    const paginationNumbers = $('#paginationNumbers');
+    let paginationHtml = '';
     
-    paginationNumbers.empty();
-    
-    // Prev button
-    $('#prevPageBtn').prop('disabled', currentPage <= 1);
-    
-    // Always show first page
-    if (currentPage > 3) {
-        paginationNumbers.append(`<button class="btn btn-sm btn-outline-primary rounded-circle me-2" onclick="changePage(1)">1</button>`);
-        if (currentPage > 4) {
-            paginationNumbers.append('<span class="btn btn-sm rounded-circle me-2 disabled">...</span>');
+    // First page
+    if (pagination.current_page > 3) {
+        paginationHtml += `<button class="btn btn-sm btn-outline-primary rounded-circle me-2" onclick="changePage(1)">1</button>`;
+        if (pagination.current_page > 4) {
+            paginationHtml += `<span class="btn btn-sm rounded-circle me-2 disabled">...</span>`;
         }
     }
     
-    // Show pages around current page
-    for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
-        paginationNumbers.append(`<button class="btn btn-sm ${currentPage == i ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2" onclick="changePage(${i})">${i}</button>`);
+    // Pages around current page
+    for (let i = Math.max(1, pagination.current_page - 2); i <= Math.min(pagination.total_pages, pagination.current_page + 2); i++) {
+        paginationHtml += `<button class="btn btn-sm ${pagination.current_page == i ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2" onclick="changePage(${i})">${i}</button>`;
     }
     
-    // Show last page
-    if (currentPage < totalPages - 2) {
-        if (currentPage < totalPages - 3) {
-            paginationNumbers.append('<span class="btn btn-sm rounded-circle me-2 disabled">...</span>');
+    // Last page
+    if (pagination.current_page < pagination.total_pages - 2) {
+        if (pagination.current_page < pagination.total_pages - 3) {
+            paginationHtml += `<span class="btn btn-sm rounded-circle me-2 disabled">...</span>`;
         }
-        paginationNumbers.append(`<button class="btn btn-sm btn-outline-primary rounded-circle me-2" onclick="changePage(${totalPages})">${totalPages}</button>`);
+        paginationHtml += `<button class="btn btn-sm btn-outline-primary rounded-circle me-2" onclick="changePage(${pagination.total_pages})">${pagination.total_pages}</button>`;
     }
     
-    // Next button
-    $('#nextPageBtn').prop('disabled', currentPage >= totalPages);
+    $('#paginationNumbers').html(paginationHtml);
+    
+    // Update prev/next buttons
+    $('#prevPageBtn').prop('disabled', pagination.current_page <= 1);
+    $('#nextPageBtn').prop('disabled', pagination.current_page >= pagination.total_pages);
 }
 
-// Function to get basename of a path
+// Helper functions
 function basename(path) {
-    return path.split('/').reverse()[0];
+    return path.split('/').pop();
 }
 
-// Function to format numbers
-function numberFormat(number, decimals = 0) {
-    number = parseFloat(String(number).replace(/,/g, '')); // Remove existing commas
-    if (isNaN(number)) {
-        return '0';
-    }
-    // Use toLocaleString for better number formatting, handle decimals
-    return number.toLocaleString('en-US', { 
-        minimumFractionDigits: decimals, 
-        maximumFractionDigits: decimals 
-    });
+function numberFormat(number) {
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-// Utility functions
-function min(a, b) { return a < b ? a : b; }
-function max(a, b) { return a > b ? a : b; }
-
-// Function to format numbers with commas for thousands, allowing decimals
-function formatDecimalNumberInput(input) {
-    let value = input.value;
-    // Remove any non-numeric characters except dots
-    value = value.replace(/[^\d.]/g, '');
-    
-    // Ensure only one decimal point
-    const parts = value.split('.');
-    if (parts.length > 2) {
-        value = parts[0] + '.' + parts.slice(1).join('');
-    }
-    
-    // Format the integer part with commas
-    let [integerPart, decimalPart] = value.split('.');
-    integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    
-    // Reconstruct the value
-    input.value = decimalPart !== undefined ? `${integerPart}.${decimalPart}` : integerPart;
+function min(a, b) {
+    return a < b ? a : b;
 }
 
-// Function to clean number inputs before submitting the form
-function cleanNumberForSubmission(value) {
-    return String(value).replace(/,/g, '');
+function max(a, b) {
+    return a > b ? a : b;
 }
 
-
-// Initialize event handlers on load and after AJAX updates
+// Function to initialize event handlers
 function initializeEventHandlers() {
-    // Delete product handler
-    $('.delete-product').off('click').on('click', function() {
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Initialize edit product buttons
+    $('.edit-product').on('click', function() {
+        const data = $(this).data();
+        
+        // Fill the form with product data
+        $('#edit_product_id').val(data.id);
+        $('#edit_name').val(data.name);
+        $('#edit_code').val(data.code);
+        $('#edit_barcode').val(data.barcode);
+        $('#edit_category').val(data.category);
+        $('#edit_unit').val(data.unit);
+        $('#edit_pieces_per_box').val(data.piecesPerBox);
+        $('#edit_boxes_per_set').val(data.boxesPerSet);
+        $('#edit_purchase_price').val(data.purchase);
+        $('#edit_selling_price_single').val(data.sellingSingle);
+        $('#edit_selling_price_wholesale').val(data.sellingWholesale);
+        $('#edit_min_quantity').val(data.minQty);
+        $('#edit_notes').val(data.notes);
+
+        // Handle image preview
+        const productImage = $(this).closest('tr').find('.product-image');
+        if (productImage.length > 0 && productImage.attr('src')) {
+            $('#current_product_image')
+                .attr('src', productImage.attr('src'))
+                .css('display', 'block');
+        } else {
+            $('#current_product_image').css('display', 'none');
+        }
+        
+        // Reset file input
+        $('#edit_image').val('');
+        
+        // Show/hide unit-specific inputs based on selected unit
+        toggleUnitInputs($('#edit_unit').val());
+        
+        // Show the modal
+        const editModal = new bootstrap.Modal(document.getElementById('editProductModal'));
+        editModal.show();
+    });
+
+    // Handle image preview when a new file is selected
+    $('#edit_image').on('change', function() {
+        const file = this.files[0];
+        if (file) {
+            // Check if file is actually an image
+            if (!file.type.startsWith('image/')) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: 'تەنها فایلی وێنە قبوڵ دەکرێت'
+                });
+                this.value = '';
+                return;
+            }
+            
+            // // Check file size (allow up to 20MB since we resize on server)
+            // if (file.size > 5 * 1024 * 1024) {
+            //     Swal.fire({
+            //         icon: 'error',
+            //         title: 'هەڵە',
+            //         text: 'قەبارەی وێنە دەبێت کەمتر بێت لە 5 مێگابایت'
+            //     });
+            //     this.value = '';
+            //     return;
+            // }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#current_product_image')
+                    .attr('src', e.target.result)
+                    .css('display', 'block')
+                    .after('<p class="text-muted small mt-2">وێنەکە بەشێوەیەکی ئۆتۆماتیکی بچووک دەکرێتەوە ئەگەر پێویست بێت</p>');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Handle unit change in edit modal
+    $('#edit_unit').on('change', function() {
+        toggleUnitInputs($(this).val());
+    });
+
+    // Function to toggle unit-specific inputs
+    function toggleUnitInputs(unitId) {
+        const piecesPerBoxInput = $('#edit_pieces_per_box').closest('.col-md-4');
+        const boxesPerSetInput = $('#edit_boxes_per_set').closest('.col-md-4');
+
+        // Hide both inputs by default
+        piecesPerBoxInput.hide();
+        boxesPerSetInput.hide();
+
+        // Show relevant inputs based on unit type
+        switch(unitId) {
+            case '1': // دانە
+                break;
+            case '2': // دانە و کارتۆن
+                piecesPerBoxInput.show();
+                break;
+            case '3': // دانە و کارتۆن و سێت
+                piecesPerBoxInput.show();
+                boxesPerSetInput.show();
+                break;
+        }
+    }
+
+    // Initialize view notes buttons
+    $('.view-notes').on('click', function() {
+        const data = $(this).data();
+        Swal.fire({
+            title: 'تێبینیەکانی ' + data.name,
+            text: data.notes,
+            icon: 'info',
+            confirmButtonText: 'باشە'
+        });
+    });
+
+    // Initialize delete product buttons
+    $('.delete-product').on('click', function() {
         const productId = $(this).data('id');
-        const productName = $(this).closest('tr').find('td:nth-child(5)').text();
+        const productRow = $(this).closest('tr');
+        const productName = productRow.find('td:nth-child(5)').text();
         
         Swal.fire({
-            title: 'دڵنیای؟',
-            text: `ئایا دڵنیای لە سڕینەوەی کاڵای (${productName})؟`,
+            title: 'دڵنیای لە سڕینەوەی ئەم کاڵایە؟',
+            html: `<div>کاڵای <strong>${productName}</strong> دەسڕدرێتەوە</div>
+                  <div class="text-danger mt-2">
+                    <small>ئاگاداری: ئەگەر ئەم کاڵایە لە پسووڵەی کڕین یان فرۆشتن بەکارهاتبێت، ناتوانرێت بسڕدرێتەوە.</small>
+                  </div>`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
-            confirmButtonText: 'بەڵێ، بیسڕەوە',
-            cancelButtonText: 'نەخێر'
+            confirmButtonText: 'بەڵێ، بسڕەوە',
+            cancelButtonText: 'پاشگەزبوونەوە'
         }).then((result) => {
             if (result.isConfirmed) {
+                // Show loading state
                 Swal.fire({
-                    title: 'تکایە چاوەڕێ بکە...',
-                    text: 'سڕینەوەی کاڵاکە...',
+                    title: 'چاوەڕوان بە...',
+                    text: 'سڕینەوەی کاڵا',
                     allowOutsideClick: false,
                     didOpen: () => {
                         Swal.showLoading();
                     }
                 });
                 
-                deleteProduct(productId)
-                    .then(data => {
-                        if (data.success) {
+                // Send delete request
+                fetch('../../process/deleteProduct.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'id=' + productId
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remove the row from the table with animation
+                        productRow.fadeOut(400, function() {
+                            // After fadeOut completes, remove the row
+                            $(this).remove();
+                            
+                            // Update row numbers for all remaining rows
+                            $('#productsTableBody tr').each(function(index) {
+                                $(this).find('td:first').text(index + 1);
+                            });
+                            
+                            // Update pagination info - decrease total count by 1
+                            const totalRecords = parseInt($('#totalRecords').text()) - 1;
+                            $('#totalRecords').text(totalRecords);
+                            
+                            // Recalculate end record
+                            const startRecord = parseInt($('#startRecord').text());
+                            const endRecord = Math.min(parseInt($('#endRecord').text()), totalRecords);
+                            $('#endRecord').text(endRecord);
+                            
+                            // Show success message
                             Swal.fire({
                                 title: 'سڕایەوە!',
-                                text: data.message || 'کاڵاکە بە سەرکەوتوویی سڕایەوە.',
+                                text: 'کاڵاکە بە سەرکەوتوویی سڕایەوە.',
                                 icon: 'success',
-                                timer: 1500,
-                                showConfirmButton: false
-                            }).then(() => {
-                                // Reload the page or update table
-                                changePage(1); // Reload first page
-                            });
-                        } else {
-                            Swal.fire({
-                                title: 'هەڵە!',
-                                text: data.message || 'کێشەیەک ڕوویدا لە کاتی سڕینەوە.',
-                                icon: 'error',
                                 confirmButtonText: 'باشە'
                             });
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
+                            
+                            // If table is now empty and we're not on first page, go to previous page
+                            if ($('#productsTableBody tr').length === 0 && new URLSearchParams(window.location.search).get('page') > 1) {
+                                const currentPage = parseInt(new URLSearchParams(window.location.search).get('page'));
+                                changePage(currentPage - 1);
+                            }
+                        });
+                    } else {
                         Swal.fire({
-                            title: 'هەڵە!',
-                            text: error.message || 'هەڵەیەک ڕوویدا لە سڕینەوەی کاڵا.',
+                            title: 'نەتوانرا کاڵاکە بسڕدرێتەوە',
+                            html: `<div class="alert alert-danger">${data.message || 'کێشەیەک ڕوویدا لە سڕینەوەی کاڵاکە.'}</div>`,
                             icon: 'error',
                             confirmButtonText: 'باشە'
                         });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: error.message || 'کێشەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە.',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
                     });
+                });
             }
         });
     });
-    
-    // Edit product handler
-    $('.edit-product').off('click').on('click', function() {
-        const productData = $(this).data();
-        
-        // Populate modal fields - format numbers correctly
-        $('#edit_product_id').val(productData.id);
-        $('#edit_name').val(productData.name);
-        $('#edit_code').val(productData.code);
-        $('#edit_barcode').val(productData.barcode);
-        $('#edit_category').val(productData.category);
-        $('#edit_unit').val(productData.unit);
-        $('#edit_pieces_per_box').val(productData.piecesPerBox);
-        $('#edit_boxes_per_set').val(productData.boxesPerSet);
-        $('#edit_purchase_price').val(productData.purchase); // Keep as number for step
-        $('#edit_selling_price_single').val(productData.sellingSingle); // Keep as number for step
-        $('#edit_selling_price_wholesale').val(productData.sellingWholesale); // Keep as number for step
-        $('#edit_min_quantity').val(productData.minQty);
-        $('#edit_notes').val(productData.notes);
-
-        // Format the number fields displayed in the modal
-        formatDecimalNumberInput(document.getElementById('edit_purchase_price'));
-        formatDecimalNumberInput(document.getElementById('edit_selling_price_single'));
-        formatDecimalNumberInput(document.getElementById('edit_selling_price_wholesale'));
-        
-        // Handle image display
-        const currentImage = $('#current_product_image');
-        const imageCell = $(this).closest('tr').find('td:nth-child(2) img');
-        if (imageCell.length > 0) {
-            currentImage.attr('src', imageCell.attr('src')).show();
-        } else {
-            currentImage.hide();
-        }
-        
-        // Show/hide unit inputs based on unit type
-        toggleUnitInputs(productData.unit);
-        
-        // Show modal
-        $('#editProductModal').modal('show');
-    });
-    
-    // Show notes handler
-    $('.view-notes').off('click').on('click', function() {
-        const productName = $(this).data('name');
-        const notes = $(this).data('notes');
-        
-        Swal.fire({
-            title: `تێبینی بۆ (${productName})`,
-            text: notes || 'هیچ تێبینیەک نییە',
-            icon: 'info',
-            confirmButtonText: 'داخستن'
-        });
-    });
-    
-    // Add tooltip initialization
-    $('[data-bs-toggle="tooltip"]').tooltip();
 }
 
-// Function to show/hide unit specific inputs in the edit modal
-function toggleUnitInputs(unitId) {
-    const piecesPerBoxGroup = $('#edit_pieces_per_box').closest('.mb-3');
-    const boxesPerSetGroup = $('#edit_boxes_per_set').closest('.mb-3');
-    
-    piecesPerBoxGroup.hide();
-    boxesPerSetGroup.hide();
-    
-    // Use == for type coercion as unitId might be string
-    if (unitId == '2') { // دانە و کارتۆن
-        piecesPerBoxGroup.show();
-    } else if (unitId == '3') { // دانە و کارتۆن و سێت
-        piecesPerBoxGroup.show();
-        boxesPerSetGroup.show();
-    }
-}
-
-// Update table content after AJAX call
+// Update the table row generation to include the image cell class
 function updateTableContent(data) {
-    const tableBody = $('#productsTableBody');
-    tableBody.empty();
-    
-    if (data.products.length === 0) {
-        const colCount = $('#productsTableBody').closest('table').find('thead th').length;
-        tableBody.append(`<tr><td colspan="${colCount}" class="text-center">هیچ کاڵایەک نەدۆزرایەوە</td></tr>`);
-        return;
-    }
-    
+    let tableHtml = '';
     data.products.forEach((product, index) => {
         const rowNumber = (data.pagination.current_page - 1) * data.pagination.records_per_page + index + 1;
+        const current_quantity = parseInt(product.current_quantity) || 0;
+        let statusBadge = '';
         
-        // Handle image path
-        let imageUrl = '';
-        let imageHtml = `
-            <div class="no-image-placeholder" data-bs-toggle="tooltip" data-bs-placement="top" title="وێنە نییە">
-                <i class="fas fa-image"></i>
-            </div>
-        `;
-        if (product.image) {
-            const filename = basename(product.image);
-            imageUrl = `../../api/product_image.php?filename=${encodeURIComponent(filename)}`;
-            imageHtml = `
-                <img src="${imageUrl}" 
-                     alt="${product.name}" 
-                     class="product-image"
-                     style="cursor: pointer;"
-                     onclick="showLargeImage(this.src, '${product.name}')"
-                     data-bs-toggle="tooltip"
-                     data-bs-placement="top"
-                     title="${product.name}">
-            `;
-        }
-        
-        // Determine stock status
-        let stockStatusHtml = '';
-        const currentQty = parseInt(product.current_quantity) || 0;
-        if (currentQty < 10) {
-            stockStatusHtml = `<span class="badge bg-danger rounded-pill">مەترسیدارە (${currentQty})</span>`;
-        } else if (currentQty >= 10 && currentQty <= 50) {
-            stockStatusHtml = `<span class="badge bg-warning rounded-pill">بڕێکی کەم بەردەستە (${currentQty})</span>`;
+        if (current_quantity < 10) {
+            statusBadge = `<span class="badge bg-danger rounded-pill">مەترسیدارە (${current_quantity})</span>`;
+        } else if (current_quantity >= 10 && current_quantity <= 50) {
+            statusBadge = `<span class="badge bg-warning rounded-pill">بڕێکی کەم بەردەستە (${current_quantity})</span>`;
         } else {
-            stockStatusHtml = `<span class="badge bg-success rounded-pill">کۆنتڕۆڵ (${currentQty})</span>`;
+            statusBadge = `<span class="badge bg-success rounded-pill">کۆنتڕۆڵ (${current_quantity})</span>`;
         }
-        
-        // Build table row
-        const rowHtml = `
+
+        tableHtml += `
             <tr>
                 <td>${rowNumber}</td>
-                <td class="image-cell">${imageHtml}</td>
+                <td class="image-cell">
+                    ${product.image ? 
+                        `<img src="../../api/product_image.php?filename=${encodeURIComponent(product.image.split('/').pop())}" 
+                              alt="${product.name}" 
+                              class="product-image"
+                              style="cursor: pointer;"
+                              onclick="showLargeImage(this.src, '${product.name}')"
+                              data-bs-toggle="tooltip"
+                              data-bs-placement="top"
+                              title="${product.name}">` :
+                        `<div class="no-image-placeholder">
+                            <i class="fas fa-image"></i>
+                        </div>`
+                    }
+                </td>
                 <td>${product.code}</td>
                 <td>${product.barcode || '-'}</td>
                 <td>${product.name}</td>
@@ -525,11 +557,11 @@ function updateTableContent(data) {
                 <td>${product.unit_name}</td>
                 <td>${product.pieces_per_box || '-'}</td>
                 <td>${product.boxes_per_set || '-'}</td>
-                <td>${numberFormat(product.purchase_price, 2)} د.ع</td>
-                <td>${numberFormat(product.selling_price_single, 2)} د.ع</td>
-                <td>${numberFormat(product.selling_price_wholesale, 2)} د.ع</td>
+                <td>${numberFormat(product.purchase_price)} د.ع</td>
+                <td>${numberFormat(product.selling_price_single)} د.ع</td>
+                <td>${numberFormat(product.selling_price_wholesale)} د.ع</td>
                 <td>${product.min_quantity}</td>
-                <td>${stockStatusHtml}</td>
+                <td>${statusBadge}</td>
                 <td>
                     <div class="btn-group">
                         <button class="btn btn-sm btn-outline-primary rounded-circle edit-product" 
@@ -567,183 +599,94 @@ function updateTableContent(data) {
                 </td>
             </tr>
         `;
-        tableBody.append(rowHtml);
     });
+    $('#productsTableBody').html(tableHtml);
+    
+    // Reinitialize tooltips after updating table content
+    $('[data-bs-toggle="tooltip"]').tooltip();
 }
 
-// Main document ready function
 $(document).ready(function() {
-    // Initialize Select2 for category and unit dropdowns
+    // Initialize Select2 dropdowns
     $('#category, #unit').select2({
         theme: 'bootstrap-5',
-        width: $(this).data('width') ? $(this).data('width') : $(this).hasClass('w-100') ? '100%' : 'style',
-        placeholder: $(this).data('placeholder') || 'هەڵبژێرە...',
+        width: '100%',
+        placeholder: 'هەڵبژاردن بکە',
         allowClear: true,
-        dir: 'rtl', // Ensure RTL support
-        language: "ku" // Set language if available
+        language: {
+            noResults: function() {
+                return "هیچ ئەنجامێک نەدۆزرایەوە";
+            }
+        }
     });
-    
-    // Debounce search input
-    let searchTimeout;
-    const searchInput = $('#search');
-    const suggestionsContainer = $('.search-suggestions');
-    
-    // Fetch latest products for suggestions
-    function fetchLatestProducts() {
-        $.ajax({
-            url: '../../process/get_latest_products.php',
-            type: 'GET',
-            dataType: 'json',
-            success: function(data) {
-                if (data && data.length > 0) {
-                    const suggestionsList = suggestionsContainer.find('.suggestions-list');
-                    suggestionsList.empty();
-                    data.slice(0, 5).forEach(product => {
-                        suggestionsList.append(`
-                            <div class="suggestion-item" data-name="${product.name}">
-                                ${product.name} (${product.code})
-                            </div>
-                        `);
-                    });
-                }
-            },
-            error: function() {
-                console.error('Failed to fetch latest products for suggestions.');
+
+    // Initialize event handlers
+    initializeEventHandlers();
+
+    // Handle save product changes
+    $('#saveProductChanges').on('click', function() {
+        const form = $('#editProductForm');
+        
+        // Validate form
+        if (!form[0].checkValidity()) {
+            form[0].reportValidity();
+            return;
+        }
+        
+        // Get form data
+        const formData = new FormData(form[0]);
+        
+        // Handle empty values for boxes_per_set and pieces_per_box
+        const boxesPerSet = $('#edit_boxes_per_set').val();
+        const piecesPerBox = $('#edit_pieces_per_box').val();
+        
+        if (boxesPerSet === '') {
+            formData.set('boxes_per_set', '0');
+        }
+        if (piecesPerBox === '') {
+            formData.set('pieces_per_box', '0');
+        }
+
+        // Remove commas from number fields before sending
+        const numberFields = ['purchase_price', 'selling_price_single', 'selling_price_wholesale', 'min_quantity'];
+        numberFields.forEach(field => {
+            const value = formData.get(field);
+            if (value) {
+                formData.set(field, value.replace(/,/g, ''));
             }
         });
-    }
-    
-    searchInput.on('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            performSearch();
-        }, 300); // Wait 300ms after user stops typing
-    });
-    
-    searchInput.on('focus', function() {
-        fetchLatestProducts();
-        suggestionsContainer.show();
-    });
-    
-    // Hide suggestions when clicking outside
-    $(document).on('click', function(event) {
-        if (!$(event.target).closest('.search-wrapper').length) {
-            suggestionsContainer.hide();
-        }
-    });
-    
-    // Handle suggestion click
-    $(document).on('click', '.suggestion-item', function() {
-        searchInput.val($(this).data('name'));
-        suggestionsContainer.hide();
-        performSearch();
-    });
-    
-    // Initial form submission handler for filters
-    $('#filterForm').on('submit', function(e) {
-        e.preventDefault();
-        performSearch();
-    });
-    
-    // Records per page change handler
-    $('#recordsPerPage').on('change', function() {
-        changePage(1); // Go back to page 1 when changing records per page
-    });
-    
-    // Reset filter handler
-    $('#resetFilter').on('click', function() {
-        $('#filterForm')[0].reset();
-        $('#category').val('').trigger('change');
-        $('#unit').val('').trigger('change');
-        performSearch();
-    });
-    
-    // Pagination button handlers
-    $('#prevPageBtn').on('click', function() {
-        const currentPage = parseInt($('#paginationNumbers button.btn-primary').text());
-        if (currentPage > 1) {
-            changePage(currentPage - 1);
-        }
-    });
-    
-    $('#nextPageBtn').on('click', function() {
-        const currentPage = parseInt($('#paginationNumbers button.btn-primary').text());
-        // Need to get total pages dynamically if possible, otherwise use a placeholder
-        // Assuming total_pages is available globally or fetched somehow
-        // const totalPages = getTotalPages(); // Replace with actual logic
-        // if (currentPage < totalPages) { changePage(currentPage + 1); }
         
-        // Temporary fix: Check if next button is disabled (more reliable)
-        if (!$(this).prop('disabled')) {
-             changePage(currentPage + 1);
-        }
-    });
-    
-    // Apply decimal number formatting to price inputs in the edit modal
-    const priceInputs = ['edit_purchase_price', 'edit_selling_price_single', 'edit_selling_price_wholesale'];
-    priceInputs.forEach(inputId => {
-        const inputElement = document.getElementById(inputId);
-        if (inputElement) {
-            // Keep type="number" for step functionality but format on input
-            // Change type to text temporarily to allow formatting
-            // inputElement.setAttribute('type', 'text'); 
-            inputElement.addEventListener('input', function() {
-                formatDecimalNumberInput(this);
-            });
-            // Optionally format on blur as well
-            inputElement.addEventListener('blur', function() {
-                formatDecimalNumberInput(this);
-            });
-        }
-    });
-
-    // Save changes from edit modal
-    $('#saveProductChanges').on('click', function() {
-        // Show loading state on the button
+        // Show loading state
         const saveButton = $(this);
-        saveButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> پاشەکەوتکردن...');
+        saveButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> چاوەڕێ بکە...');
         
-        // Clean number inputs (remove commas) before submitting
-        const purchasePriceInput = $('#edit_purchase_price');
-        const sellingSingleInput = $('#edit_selling_price_single');
-        const sellingWholesaleInput = $('#edit_selling_price_wholesale');
-
-        const cleanedPurchasePrice = cleanNumberForSubmission(purchasePriceInput.val());
-        const cleanedSellingSingle = cleanNumberForSubmission(sellingSingleInput.val());
-        const cleanedSellingWholesale = cleanNumberForSubmission(sellingWholesaleInput.val());
-
-        // Create FormData and append cleaned values
-        const formData = new FormData($('#editProductForm')[0]);
-        formData.set('purchase_price', cleanedPurchasePrice);
-        formData.set('selling_price_single', cleanedSellingSingle);
-        formData.set('selling_price_wholesale', cleanedSellingWholesale);
-        
-        // AJAX request to update product
+        // Send AJAX request
         $.ajax({
-            url: '../../process/editProduct.php',
+            url: '../../process/updateProduct.php',
             type: 'POST',
             data: formData,
             processData: false,
             contentType: false,
-            dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    $('#editProductModal').modal('hide');
+                    // Show success message
                     Swal.fire({
-                        title: 'سەرکەوتوو!',
-                        text: response.message || 'زانیاری کاڵا بە سەرکەوتوویی گۆڕدرا.',
                         icon: 'success',
-                        timer: 1500,
-                        showConfirmButton: false
-                    }).then(() => {
-                        const currentPage = parseInt($('#paginationNumbers button.btn-primary').text()) || 1;
-                        changePage(currentPage); // Reload current page
+                        title: 'سەرکەوتوو',
+                        text: 'زانیاریەکانی کاڵا بە سەرکەوتوویی گۆڕدرا',
+                        confirmButtonText: 'باشە'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Reload the page to show updated data
+                            window.location.reload();
+                        }
                     });
                 } else {
+                    // Show error message
                     Swal.fire({
-                        title: 'هەڵە!',
-                        text: response.message || 'کێشەیەک ڕوویدا لە کاتی گۆڕینی زانیاری.',
                         icon: 'error',
+                        title: 'هەڵە',
+                        text: response.message || 'هەڵەیەک ڕوویدا لە کاتی گۆڕینی زانیاریەکانی کاڵا',
                         confirmButtonText: 'باشە'
                     });
                 }
@@ -751,30 +694,81 @@ $(document).ready(function() {
             error: function(xhr, status, error) {
                 console.error('Error:', error);
                 Swal.fire({
-                    title: 'هەڵە!',
-                    text: 'کێشەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە.',
                     icon: 'error',
+                    title: 'هەڵە',
+                    text: 'هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە سێرڤەرەوە',
                     confirmButtonText: 'باشە'
                 });
             },
             complete: function() {
-                // Restore button state
+                // Reset button state
                 saveButton.prop('disabled', false).html('پاشەکەوتکردن');
             }
         });
     });
-    
-    // Handle unit selection change in the edit modal
-    $('#edit_unit').on('change', function() {
-        toggleUnitInputs($(this).val());
-    });
-    
-    // Initialize event handlers on initial page load
-    initializeEventHandlers();
-    
-    // Function to perform search and update table
-    function performSearch() {
-        // Reset to page 1 for new search/filter
+
+    // Handle filter form submission
+    $('#filterForm').on('submit', function(e) {
+        e.preventDefault();
         changePage(1);
+    });
+
+    // Add debounce function for live search
+    let searchTimeout;
+    function performSearch() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(function() {
+            changePage(1);
+        }, 300); // 300ms delay
     }
+
+    // Handle live search
+    $('#search').on('input', function() {
+        performSearch();
+    });
+
+    // Handle search button click
+    $('.search-btn').on('click', function() {
+        changePage(1);
+    });
+
+    // Handle search input when pressing Enter
+    $('#search').on('keypress', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            changePage(1);
+        }
+    });
+
+    // Handle category and unit dropdown changes
+    $('#category, #unit').on('change', function() {
+        changePage(1);
+    });
+
+    // Handle records per page change
+    $('#recordsPerPage').on('change', function() {
+        changePage(1);
+    });
+
+    // Handle reset filter button
+    $('#resetFilter').on('click', function() {
+        // Clear all filter inputs
+        $('#search').val('');
+        $('#category').val('').trigger('change');
+        $('#unit').val('').trigger('change');
+        $('#recordsPerPage').val('10');
+        
+        // Reset the page
+        changePage(1);
+    });
+
+    // Initialize number formatting for edit form
+    $(document).on('input', '#edit_purchase_price, #edit_selling_price_single, #edit_selling_price_wholesale', function() {
+        let value = $(this).val().replace(/[^\d]/g, '');
+        if (value) {
+            // Convert to number and format with commas
+            value = parseInt(value).toLocaleString('en-US');
+            $(this).val(value);
+        }
+    });
 });
