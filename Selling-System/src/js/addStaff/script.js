@@ -719,3 +719,25 @@ function addEmployeeActionListeners() {
 function formatNumberWithCommas(number) {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
+
+// Reset Business Partner Form
+document.getElementById('resetBusinessPartnerForm')?.addEventListener('click', function() {
+    document.getElementById('businessPartnerForm').reset();
+});
+
+// Form validation for Business Partner
+(function() {
+    // Fetch the form we want to validate
+    const businessPartnerForm = document.getElementById('businessPartnerForm');
+    
+    if (businessPartnerForm) {
+        businessPartnerForm.addEventListener('submit', function(event) {
+            if (!businessPartnerForm.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            businessPartnerForm.classList.add('was-validated');
+        });
+    }
+})();

@@ -59,6 +59,11 @@ require_once '../../includes/auth.php';
                                     <i class="fas fa-truck me-2"></i>زیادکردنی دابینکەر
                                 </button>
                             </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="business-partner-tab" data-bs-toggle="tab" data-bs-target="#business-partner-content" type="button" role="tab" aria-controls="business-partner-content" aria-selected="false">
+                                    <i class="fas fa-handshake me-2"></i>زیادکردنی کەسی دووفاقە
+                                </button>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -257,6 +262,112 @@ require_once '../../includes/auth.php';
                                                     </button>
                                                     <button type="submit" class="btn btn-primary cta-btn">
                                                     پاشەکەوتکردن  <i class="fas fa-save me-2"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Business Partner Tab -->
+                    <div class="tab-pane fade" id="business-partner-content" role="tabpanel" aria-labelledby="business-partner-tab">
+                        <div class="row">
+                            <div class="col-md-10 mx-auto">
+                                <div class="card shadow-sm" style="border: 1px solid var(--blue-border-color); border-radius: 18px;">
+                                    <div class="card-header bg-transparent">
+                                        <h5 class="card-title mb-0">زانیاری کەسی دووفاقە (کڕیار و دابینکەر)</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="businessPartnerForm" action="../../process/add_business_partner.php" method="POST" class="needs-validation" novalidate>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label for="partnerName" class="form-label">ناو</label>
+                                                    <input type="text" class="form-control" id="partnerName" name="partnerName" placeholder="ناوی کەس" required>
+                                                    <div class="invalid-feedback">
+                                                        تکایە ناو داخل بکە
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="partnerPhone" class="form-label">ژمارەی مۆبایلی یەکەم</label>
+                                                    <input type="tel" class="form-control" id="partnerPhone" name="partnerPhone" placeholder="07xxxxxxxxx" pattern="07[0-9]{9}" required>
+                                                    <div class="invalid-feedback">
+                                                        ژمارەی مۆبایل دەبێت بە 07 دەست پێبکات و 11 ژمارە بێت
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="partnerPhone2" class="form-label">ژمارەی مۆبایلی دووەم</label>
+                                                    <input type="tel" class="form-control" id="partnerPhone2" name="partnerPhone2" placeholder="07xxxxxxxxx" pattern="07[0-9]{9}">
+                                                </div>
+                                                
+                                                <!-- Customer Section -->
+                                                <div class="col-12 mt-4">
+                                                    <h5>بەشی کڕیار</h5>
+                                                    <hr>
+                                                </div>
+                                                
+                                                <div class="col-md-6">
+                                                    <label for="guarantorName" class="form-label">ناوی کەفیل</label>
+                                                    <input type="text" class="form-control" id="guarantorName" name="guarantorName" placeholder="ناوی کەفیل">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="guarantorPhone" class="form-label">ژمارەی مۆبایلی کەفیل</label>
+                                                    <input type="tel" class="form-control" id="guarantorPhone" placeholder="07xxxxxxxxx" name="guarantorPhone" pattern="07[0-9]{9}">
+                                                </div>
+                                                <div class="col-md-6 mb-4">
+                                                    <label for="debitOnBusiness" class="form-label">بڕی قەرز لەسەر ئەو (وەک کڕیار)</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="debitOnBusiness" name="debitOnBusiness" class="form-control" placeholder="بڕی قەرز لە سەر کڕیار" oninput="formatNumber(this)">
+                                                        <span class="input-group-text">د.ع</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 mb-4">
+                                                    <label for="debt_on_customer" class="form-label">بڕی پێشەکی کە وەک کڕیار بە ئێمەی داوە</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="debt_on_customer" name="debt_on_customer" class="form-control" placeholder="بڕی پێشەکی" oninput="formatNumber(this)">
+                                                        <span class="input-group-text">د.ع</span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Supplier Section -->
+                                                <div class="col-12 mt-4">
+                                                    <h5>بەشی دابینکەر</h5>
+                                                    <hr>
+                                                </div>
+                                                
+                                                <div class="col-md-6 mb-4">
+                                                    <label for="debt_on_myself" class="form-label">بڕی قەرز کە من دەیدەم (وەک دابینکەر)</label>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" id="debt_on_myself" name="debt_on_myself" placeholder="بڕ بنووسە" oninput="formatNumber(this)">
+                                                        <span class="input-group-text">د.ع</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 mb-4">
+                                                    <label for="debt_on_supplier" class="form-label">بڕی پێشەکی کە وەک دابینکەر پێمانداوە</label>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" id="debt_on_supplier" name="debt_on_supplier" placeholder="بڕی پێشەکی" oninput="formatNumber(this)">
+                                                        <span class="input-group-text">د.ع</span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-12">
+                                                    <label for="partnerAddress" class="form-label">ناونیشان</label>
+                                                    <textarea class="form-control" id="partnerAddress" name="partnerAddress" rows="2" placeholder="ناونیشان"></textarea>
+                                                </div>
+                                                
+                                                <div class="col-12">
+                                                    <label for="partnerNotes" class="form-label">تێبینی</label>
+                                                    <textarea class="form-control" id="partnerNotes" name="partnerNotes" rows="2" placeholder="تێبینی"></textarea>
+                                                </div>
+                                                
+                                                <div class="col-12 text-end">
+                                                    <button type="button" class="btn btn-outline-secondary me-2" id="resetBusinessPartnerForm">
+                                                        <i class="fas fa-redo me-2"></i>ڕیسێت
+                                                    </button>
+                                                    <button type="submit" class="btn btn-primary cta-btn">
+                                                        <i class="fas fa-save me-2"></i>پاشەکەوتکردن
                                                     </button>
                                                 </div>
                                             </div>
