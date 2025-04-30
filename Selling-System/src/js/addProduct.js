@@ -704,82 +704,79 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Clean number inputs to allow only valid numbers
     function cleanNumberInputs() {
-        const numberInputs = [
-            'buyingPrice',
-            'sellingPrice',
-            'selling_price_wholesale',
-            'min_quantity',
-            'current_quantity',
-            'piecesPerBox',
-            'boxesPerSet'
-        ];
+        const priceInputs = ['buyingPrice', 'sellingPrice', 'selling_price_wholesale'];
+        const quantityInputs = ['min_quantity', 'current_quantity', 'piecesPerBox', 'boxesPerSet'];
 
-        numberInputs.forEach(inputId => {
+        // Handle price inputs (allow decimals)
+        priceInputs.forEach(inputId => {
             const input = document.getElementById(inputId);
             if (!input) return;
+
+            input.addEventListener('keydown', function(e) {
+                // Allow: backspace, delete, tab, escape, enter, decimal point
+                if ([46, 8, 9, 27, 13, 110, 190].indexOf(e.keyCode) !== -1 ||
+                    // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                    (e.keyCode === 65 && e.ctrlKey === true) ||
+                    (e.keyCode === 67 && e.ctrlKey === true) ||
+                    (e.keyCode === 86 && e.ctrlKey === true) ||
+                    (e.keyCode === 88 && e.ctrlKey === true) ||
+                    // Allow: home, end, left, right
+                    (e.keyCode >= 35 && e.keyCode <= 39)) {
+                    // Let it happen
+                    return;
+                }
+                // Ensure that it is a number or stop the keypress
+                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                    e.preventDefault();
+                }
+            });
 
             input.addEventListener('input', function(e) {
                 let value = this.value;
                 
-                // Allow decimal numbers for price inputs
-                if (['buyingPrice', 'sellingPrice', 'selling_price_wholesale'].includes(inputId)) {
-                    // Remove any non-numeric characters except decimal point
-                    value = value.replace(/[^\d.]/g, '');
-                    
-                    // Ensure only one decimal point
-                    const parts = value.split('.');
-                    if (parts.length > 2) {
-                        value = parts[0] + '.' + parts.slice(1).join('');
-                    }
-                    
-                    // Limit to 2 decimal places
-                    if (value.includes('.')) {
-                        const parts = value.split('.');
-                        if (parts[1].length > 2) {
-                            value = parts[0] + '.' + parts[1].slice(0, 2);
-                        }
-                    }
-
-                    // Remove leading zeros
-                    if (value.startsWith('0') && value.length > 1 && value[1] !== '.') {
-                        value = value.replace(/^0+/, '');
-                    }
-                } else {
-                    // For quantity inputs, only allow whole numbers
-                    value = value.replace(/\D/g, '');
-                    // Remove leading zeros
-                    if (value.startsWith('0') && value.length > 1) {
-                        value = value.replace(/^0+/, '');
-                    }
+                // Remove all non-numeric characters except decimal point
+                value = value.replace(/[^\d.]/g, '');
+                
+                // Ensure only one decimal point
+                const parts = value.split('.');
+                if (parts.length > 2) {
+                    value = parts[0] + '.' + parts.slice(1).join('');
                 }
                 
+                // Limit to 2 decimal places
+                if (parts.length === 2 && parts[1].length > 2) {
+                    value = parts[0] + '.' + parts[1].substring(0, 2);
+                }
+
                 this.value = value;
             });
+        });
 
-            // Handle paste event
-            input.addEventListener('paste', function(e) {
-                e.preventDefault();
-                let pastedText = (e.clipboardData || window.clipboardData).getData('text');
-                
-                if (['buyingPrice', 'sellingPrice', 'selling_price_wholesale'].includes(inputId)) {
-                    // For price inputs, allow decimal numbers
-                    pastedText = pastedText.replace(/[^\d.]/g, '');
-                    const parts = pastedText.split('.');
-                    if (parts.length > 2) {
-                        pastedText = parts[0] + '.' + parts.slice(1).join('');
-                    }
-                    if (pastedText.includes('.')) {
-                        const parts = pastedText.split('.');
-                        if (parts[1].length > 2) {
-                            pastedText = parts[0] + '.' + parts[1].slice(0, 2);
-                        }
-                    }
-                } else {
-                    // For quantity inputs, only allow whole numbers
-                    pastedText = pastedText.replace(/\D/g, '');
+        // Handle quantity inputs (whole numbers only)
+        quantityInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+
+            input.addEventListener('keydown', function(e) {
+                // Allow: backspace, delete, tab, escape, enter
+                if ([46, 8, 9, 27, 13].indexOf(e.keyCode) !== -1 ||
+                    // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                    (e.keyCode === 65 && e.ctrlKey === true) ||
+                    (e.keyCode === 67 && e.ctrlKey === true) ||
+                    (e.keyCode === 86 && e.ctrlKey === true) ||
+                    (e.keyCode === 88 && e.ctrlKey === true) ||
+                    // Allow: home, end, left, right
+                    (e.keyCode >= 35 && e.keyCode <= 39)) {
+                    return;
                 }
-                
-                this.value = pastedText;
+                // Ensure that it is a number or stop the keypress
+                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                    e.preventDefault();
+                }
+            });
+
+            input.addEventListener('input', function(e) {
+                this.value = this.value.replace(/\D/g, '');
             });
         });
     }
