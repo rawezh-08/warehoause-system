@@ -175,6 +175,14 @@ require_once '../../includes/auth.php';
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
+                                                    <div class="form-check mb-3">
+                                                        <input class="form-check-input" type="checkbox" id="isBusinessPartner" name="isBusinessPartner">
+                                                        <label class="form-check-label" for="isBusinessPartner">
+                                                            ئەم کڕیارە دابینکەریشە
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
                                                     <label for="customerAddress" class="form-label">ناونیشان</label>
                                                     <textarea class="form-control" id="customerAddress" name="customerAddress" rows="2" placeholder="ناونیشانی کڕیار"></textarea>
                                                 </div>
@@ -246,6 +254,14 @@ require_once '../../includes/auth.php';
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-check mb-3">
+                                                        <input class="form-check-input" type="checkbox" id="isBusinessPartnerSupplier" name="isBusinessPartnerSupplier">
+                                                        <label class="form-check-label" for="isBusinessPartnerSupplier">
+                                                            ئەم دابینکەرە کڕیاریشە
+                                                        </label>
+                                                    </div>
+                                                </div>
                                               
                                                 <div class="col-12">
                                                     <label for="supplierNotes" class="form-label">تێبینی</label>
@@ -300,6 +316,54 @@ require_once '../../includes/auth.php';
                     tab.show();
                 }
             }
+
+            // Handle business partner relationship
+            const isBusinessPartnerCheckbox = document.getElementById('isBusinessPartner');
+            const isBusinessPartnerSupplierCheckbox = document.getElementById('isBusinessPartnerSupplier');
+
+            // When customer is marked as business partner
+            isBusinessPartnerCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    // Show supplier tab
+                    const supplierTab = document.getElementById('supplier-tab');
+                    const supplierTabInstance = new bootstrap.Tab(supplierTab);
+                    supplierTabInstance.show();
+                    
+                    // Pre-fill supplier form with customer data
+                    const customerName = document.getElementById('businessMan').value;
+                    const customerPhone = document.getElementById('phone1').value;
+                    const customerPhone2 = document.getElementById('phone2').value;
+                    
+                    document.getElementById('supplierName').value = customerName;
+                    document.getElementById('supplierPhone').value = customerPhone;
+                    document.getElementById('supplierPhone2').value = customerPhone2;
+                    
+                    // Mark supplier as business partner
+                    isBusinessPartnerSupplierCheckbox.checked = true;
+                }
+            });
+
+            // When supplier is marked as business partner
+            isBusinessPartnerSupplierCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    // Show customer tab
+                    const customerTab = document.getElementById('customer-tab');
+                    const customerTabInstance = new bootstrap.Tab(customerTab);
+                    customerTabInstance.show();
+                    
+                    // Pre-fill customer form with supplier data
+                    const supplierName = document.getElementById('supplierName').value;
+                    const supplierPhone = document.getElementById('supplierPhone').value;
+                    const supplierPhone2 = document.getElementById('supplierPhone2').value;
+                    
+                    document.getElementById('businessMan').value = supplierName;
+                    document.getElementById('phone1').value = supplierPhone;
+                    document.getElementById('phone2').value = supplierPhone2;
+                    
+                    // Mark customer as business partner
+                    isBusinessPartnerCheckbox.checked = true;
+                }
+            });
         });
     </script>
    
