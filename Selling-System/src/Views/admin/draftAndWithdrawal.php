@@ -662,10 +662,94 @@ $withdrawalData = $wastingReceiptsController->getWastingData(0, 0, $defaultFilte
                 // Handle withdrawal view
                 window.location.href = `viewWasting.php?id=${id}`;
             } else if (tabId === 'sales-content') {
-                // Handle sales view
-                window.location.href = `test-view-sale.php?id=${id}`;
+                // Handle sales view with SweetAlert2
+                $.ajax({
+                    url: '../../api/receipts/get_sale_details.php',
+                    method: 'POST',
+                    data: { sale_id: id },
+                    success: function(response) {
+                        if (response.success) {
+                            const sale = response.data;
+                            const items = response.items;
+                            
+                            // Format items list
+                            let itemsHtml = '<div class="table-responsive"><table class="table table-bordered">';
+                            itemsHtml += '<thead><tr><th>#</th><th>کۆدی کاڵا</th><th>ناوی کاڵا</th><th>بڕ</th><th>جۆری یەکە</th><th>نرخی تاک</th><th>کۆی گشتی</th></tr></thead><tbody>';
+                            
+                            items.forEach((item, index) => {
+                                const unitType = {
+                                    'piece': 'دانە',
+                                    'box': 'کارتۆن',
+                                    'set': 'سێت'
+                                }[item.unit_type] || item.unit_type;
+                                
+                                itemsHtml += `
+                                    <tr>
+                                        <td>${index + 1}</td>
+                                        <td>${item.product_code}</td>
+                                        <td>${item.product_name}</td>
+                                        <td>${item.quantity}</td>
+                                        <td>${unitType}</td>
+                                        <td>${numberFormat(item.unit_price)}</td>
+                                        <td>${numberFormat(item.total_price)}</td>
+                                    </tr>
+                                `;
+                            });
+                            
+                            itemsHtml += '</tbody></table></div>';
+                            
+                            // Show sale details in SweetAlert2
+                            Swal.fire({
+                                title: 'زانیاری پسووڵە',
+                                html: `
+                                    <div class="text-start">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <p><strong>ژمارەی پسووڵە:</strong> ${sale.invoice_number}</p>
+                                                <p><strong>بەروار:</strong> ${formatDate(sale.date)}</p>
+                                                <p><strong>کڕیار:</strong> ${sale.customer_name || 'کڕیاری نەناسراو'}</p>
+                                                <p><strong>ژمارەی مۆبایل:</strong> ${sale.customer_phone || '-'}</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p><strong>جۆری پارەدان:</strong> ${sale.payment_type === 'cash' ? 'نقد' : 'قەرز'}</p>
+                                                <p><strong>جۆری نرخ:</strong> ${sale.price_type === 'single' ? 'تاک' : 'کۆمەڵ'}</p>
+                                                <p><strong>بڕی پارەدراو:</strong> ${numberFormat(sale.paid_amount)}</p>
+                                                <p><strong>بڕی ماوە:</strong> ${numberFormat(sale.remaining_amount)}</p>
+                                            </div>
+                                        </div>
+                                        <h5 class="mb-3">کاڵاکان</h5>
+                                        ${itemsHtml}
+                                    </div>
+                                `,
+                                width: '80%',
+                                customClass: {
+                                    container: 'sale-details-modal'
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'هەڵە',
+                                text: response.message || 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیاری پسووڵە'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'هەڵە',
+                            text: 'هەڵەیەک ڕوویدا لە پەیوەندی بە سێرڤەرەوە'
+                        });
+                    }
+                });
             }
         });
+
+        // Helper function to format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ku-IQ');
+        }
 
         // Initialize date filters
         const today = new Date();
