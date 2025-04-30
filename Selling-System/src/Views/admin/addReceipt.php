@@ -1277,6 +1277,70 @@ require_once '../../config/database.php';
                     window.location.reload();
                 };
             });
+
+            // Function to round amount to nearest 50, 100, or 1000
+            function roundAmount(amount) {
+                // First try to round to nearest 50
+                const remainder50 = amount % 50;
+                if (remainder50 <= 25) {
+                    return amount - remainder50;
+                } else {
+                    return amount + (50 - remainder50);
+                }
+            }
+
+            // Function to calculate and apply rounded discount
+            function applyRoundedDiscount() {
+                const subtotal = parseFloat($('.subtotal').val()) || 0;
+                const shippingCost = parseFloat($('.shipping-cost').val()) || 0;
+                const otherCost = parseFloat($('.other-cost').val()) || 0;
+                const currentDiscount = parseFloat($('.discount').val()) || 0;
+
+                // Calculate total before rounding
+                const totalBeforeRounding = subtotal + shippingCost + otherCost - currentDiscount;
+
+                // Round the total
+                const roundedTotal = roundAmount(totalBeforeRounding);
+
+                // Calculate the difference to apply as discount
+                const discountDifference = totalBeforeRounding - roundedTotal;
+
+                // Update the discount field
+                const newDiscount = currentDiscount + discountDifference;
+                $('.discount').val(newDiscount.toFixed(0));
+
+                // Update the grand total
+                $('.grand-total').val(roundedTotal.toFixed(0));
+
+                // Show a notification about the automatic discount
+                if (discountDifference !== 0) {
+                    Swal.fire({
+                        title: 'داشکاندنی ئۆتۆماتیکی',
+                        text: `بڕی ${Math.abs(discountDifference).toFixed(0)} دینار بە شێوەیەکی ئۆتۆماتیکی وەک داشکاندن زیادکرا`,
+                        icon: 'info',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            }
+
+            // Add event listeners for relevant fields
+            $('.subtotal, .shipping-cost, .other-cost').on('change', function() {
+                applyRoundedDiscount();
+            });
+
+            // Add a button to manually apply rounding
+            $('.total-section .row').append(`
+                <div class="col-12 mt-3">
+                    <button type="button" class="btn btn-outline-primary" id="roundAmountBtn">
+                        <i class="fas fa-calculator"></i> ڕێکخستنی بڕی پارە
+                    </button>
+                </div>
+            `);
+
+            // Handle round amount button click
+            $(document).on('click', '#roundAmountBtn', function() {
+                applyRoundedDiscount();
+            });
         });
     </script>
 
