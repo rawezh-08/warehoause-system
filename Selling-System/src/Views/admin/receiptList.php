@@ -130,6 +130,8 @@ function translateUnitType($unitType) {
             align-items: center;
             justify-content: center;
             font-size: 0.875rem;
+            border-radius: 50%;
+            margin: 0 2px;
         }
         .action-buttons .btn {
             margin: 0 2px;
@@ -240,7 +242,7 @@ function translateUnitType($unitType) {
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="returns-tab" data-bs-toggle="tab" data-bs-target="#returns" type="button" role="tab" aria-controls="returns" aria-selected="false">
-                        <i class="fas fa-undo"></i> پسووڵەکانی گەڕانەوە
+                        <i class="fas fa-undo"></i> بەفیڕۆچوو
                     </button>
                 </li>
             </ul>
@@ -354,16 +356,25 @@ function translateUnitType($unitType) {
                         </div>
                         <div class="card-footer bg-white">
                             <div class="pagination-wrapper">
-                                <div class="pagination-info">
+                                <div class="pagination-info d-flex align-items-center">
                                     <span id="salesShowing">نیشاندانی <span id="salesFrom">1</span> بۆ <span id="salesTo">10</span> لە <span id="salesTotalItems">0</span> پسووڵە</span>
+                                    <div class="records-per-page ms-3">
+                                        <select id="salesRecordsPerPage" class="form-select form-select-sm">
+                                            <option value="5">5</option>
+                                            <option value="10" selected>10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <div class="pagination-controls">
-                                    <button class="btn btn-sm btn-outline-secondary" id="salesPrevPage" disabled>
-                                        <i class="fas fa-chevron-right"></i> پێشوو
+                                    <button class="btn btn-sm btn-outline-secondary rounded-circle" id="salesPrevPage" disabled>
+                                        <i class="fas fa-chevron-right"></i>
                                     </button>
                                     <div class="pagination-numbers" id="salesPagination"></div>
-                                    <button class="btn btn-sm btn-outline-secondary" id="salesNextPage">
-                                        دواتر <i class="fas fa-chevron-left"></i>
+                                    <button class="btn btn-sm btn-outline-secondary rounded-circle" id="salesNextPage">
+                                        <i class="fas fa-chevron-left"></i>
                                     </button>
                                 </div>
                             </div>
@@ -412,19 +423,28 @@ function translateUnitType($unitType) {
         const salesTable = $('#salesHistoryTable');
         const salesTableBody = salesTable.find('tbody');
         const salesRows = salesTableBody.find('tr');
-        const salesItemsPerPage = 10;
+        let salesItemsPerPage = 10;
         let salesCurrentPage = 1;
-        const salesTotalItems = salesRows.length;
-        const salesTotalPages = Math.ceil(salesTotalItems / salesItemsPerPage);
+        let salesTotalItems = salesRows.length;
+        let salesTotalPages = Math.ceil(salesTotalItems / salesItemsPerPage);
 
         // Initial pagination setup
         updateSalesPagination();
         showSalesPage(1);
 
+        // Handle records per page change
+        $('#salesRecordsPerPage').on('change', function() {
+            salesItemsPerPage = parseInt($(this).val());
+            salesCurrentPage = 1; // Reset to first page
+            salesTotalPages = Math.ceil(salesTotalItems / salesItemsPerPage);
+            showSalesPage(1);
+            updateSalesPagination();
+        });
+
         // Update pagination info and buttons
         function updateSalesPagination() {
             // Update pagination text
-            const from = ((salesCurrentPage - 1) * salesItemsPerPage) + 1;
+            const from = salesTotalItems === 0 ? 0 : ((salesCurrentPage - 1) * salesItemsPerPage) + 1;
             const to = Math.min(salesCurrentPage * salesItemsPerPage, salesTotalItems);
             $('#salesFrom').text(from);
             $('#salesTo').text(to);
@@ -444,7 +464,7 @@ function translateUnitType($unitType) {
             }
 
             for (let i = startPage; i <= endPage; i++) {
-                const pageButton = $('<button class="btn btn-sm ' + (i === salesCurrentPage ? 'btn-primary' : 'btn-outline-secondary') + '">' + i + '</button>');
+                const pageButton = $('<button class="btn btn-sm ' + (i === salesCurrentPage ? 'btn-primary' : 'btn-outline-secondary') + ' rounded-circle">' + i + '</button>');
                 pageButton.on('click', function () {
                     salesCurrentPage = i;
                     showSalesPage(i);
@@ -497,12 +517,92 @@ function translateUnitType($unitType) {
             });
 
             // Update pagination after search
+            salesTotalItems = matchCount;
+            salesTotalPages = Math.ceil(salesTotalItems / salesItemsPerPage);
             $('#salesTotalItems').text(matchCount);
             
             // Reset to first page on search
             salesCurrentPage = 1;
             showSalesPage(1);
             updateSalesPagination();
+        });
+        
+        // Show invoice items when clicking the info button
+        $('.show-invoice-items').on('click', function () {
+            const invoiceNumber = $(this).data('invoice');
+            
+            $.ajax({
+                url: '../../includes/get_invoice_items.php',
+                type: 'POST',
+                data: { invoice_number: invoiceNumber },
+                dataType: 'json',
+                success: function (response) {
+                    if (response.status === 'success') {
+                        // Create table with items
+                        let itemsHtml = `
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>ناوی کاڵا</th>
+                                            <th>بڕ</th>
+                                            <th>یەکە</th>
+                                            <th>نرخی تاک</th>
+                                            <th>کۆی گشتی</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+                        
+                        if (response.items.length === 0) {
+                            itemsHtml += `<tr><td colspan="6" class="text-center">هیچ کاڵایەک نەدۆزرایەوە</td></tr>`;
+                        } else {
+                            response.items.forEach((item, index) => {
+                                let unitName = '-';
+                                switch (item.unit_type) {
+                                    case 'piece': unitName = 'دانە'; break;
+                                    case 'box': unitName = 'کارتۆن'; break;
+                                    case 'set': unitName = 'سێت'; break;
+                                    default: unitName = item.unit_type || '-';
+                                }
+                                
+                                itemsHtml += `
+                                    <tr>
+                                        <td>${index + 1}</td>
+                                        <td>${item.product_name}</td>
+                                        <td>${item.quantity}</td>
+                                        <td>${unitName}</td>
+                                        <td>${Number(item.unit_price).toLocaleString()} د.ع</td>
+                                        <td>${Number(item.total_price).toLocaleString()} د.ع</td>
+                                    </tr>`;
+                            });
+                        }
+                        
+                        itemsHtml += `</tbody></table></div>`;
+                        
+                        // Show modal with items
+                        Swal.fire({
+                            title: `ناوەرۆکی پسووڵەی <strong dir="ltr">#${invoiceNumber}</strong>`,
+                            html: itemsHtml,
+                            width: '80%',
+                            confirmButtonText: 'داخستن'
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'هەڵە ڕوویدا!',
+                            text: response.message || 'نەتوانرا زانیاریەکان بهێنرێت، تکایە دووبارە هەوڵبدەوە.'
+                        });
+                    }
+                },
+                error: function () {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە ڕوویدا!',
+                        text: 'کێشەیەک لە پەیوەندی کردن بە سێرڤەرەوە ڕوویدا، تکایە دواتر هەوڵبدەوە.'
+                    });
+                }
+            });
         });
     });
     </script>
