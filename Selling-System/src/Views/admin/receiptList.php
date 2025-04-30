@@ -374,15 +374,7 @@ function translateUnitType($unitType) {
                         </div>
                         <div class="card-footer bg-white">
                             <div class="pagination-wrapper">
-                                <div class="pagination-info">
-                                    <select id="salesRecordsPerPage" class="form-select form-select-sm" style="width: auto;">
-                                        <option value="5">5 ڕیکۆرد</option>
-                                        <option value="10" selected>10 ڕیکۆرد</option>
-                                        <option value="25">25 ڕیکۆرد</option>
-                                        <option value="50">50 ڕیکۆرد</option>
-                                        <option value="100">100 ڕیکۆرد</option>
-                                    </select>
-                                </div>
+                               
                                 <div class="pagination-controls">
                                     <button class="btn btn-sm btn-outline-secondary rounded-circle" id="salesPrevPage" disabled>
                                         <i class="fas fa-chevron-right"></i>
@@ -539,8 +531,8 @@ function translateUnitType($unitType) {
             const invoiceNumber = $(this).data('invoice');
             
             $.ajax({
-                url: '../../includes/get_invoice_items.php',
-                type: 'POST',
+                url: '../../ajax/sales/get_invoice_items.php',
+                type: 'GET',
                 data: { invoice_number: invoiceNumber },
                 dataType: 'json',
                 success: function (response) {
@@ -561,10 +553,10 @@ function translateUnitType($unitType) {
                                     </thead>
                                     <tbody>`;
                         
-                        if (response.items.length === 0) {
+                        if (response.data.length === 0) {
                             itemsHtml += `<tr><td colspan="6" class="text-center">هیچ کاڵایەک نەدۆزرایەوە</td></tr>`;
                         } else {
-                            response.items.forEach((item, index) => {
+                            response.data.forEach((item, index) => {
                                 let unitName = '-';
                                 switch (item.unit_type) {
                                     case 'piece': unitName = 'دانە'; break;
@@ -592,7 +584,12 @@ function translateUnitType($unitType) {
                             title: `ناوەرۆکی پسووڵەی <strong dir="ltr">#${invoiceNumber}</strong>`,
                             html: itemsHtml,
                             width: '80%',
-                            confirmButtonText: 'داخستن'
+                            confirmButtonText: 'داخستن',
+                            showCloseButton: true,
+                            customClass: {
+                                container: 'swal-rtl',
+                                popup: 'swal-wide'
+                            }
                         });
                     } else {
                         Swal.fire({
