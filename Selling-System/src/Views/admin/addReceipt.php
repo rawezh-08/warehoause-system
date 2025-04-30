@@ -215,7 +215,12 @@ require_once '../../config/database.php';
                             </div>
                             <div class="col-md-3">
                                 <label class="total-label">کۆی گشتی</label>
-                                <input type="number" class="form-control grand-total" step="1" readonly>
+                                <div class="input-group">
+                                    <input type="number" class="form-control grand-total" step="1" readonly>
+                                    <button type="button" class="btn btn-outline-primary round-total" title="خڕکردنەوەی بڕی پارە">
+                                        <i class="fas fa-calculator"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1278,68 +1283,47 @@ require_once '../../config/database.php';
                 };
             });
 
-            // Function to round amount to nearest 50, 100, or 1000
-            function roundAmount(amount) {
-                // First try to round to nearest 50
-                const remainder50 = amount % 50;
-                if (remainder50 <= 25) {
-                    return amount - remainder50;
+            // Function to round down to nearest appropriate value
+            function roundDownToNearest(number) {
+                if (number >= 10000) {
+                    // Round down to nearest 250 for amounts >= 10000
+                    return Math.floor(number / 250) * 250;
+                } else if (number >= 1000) {
+                    // Round down to nearest 100 for amounts >= 1000
+                    return Math.floor(number / 100) * 100;
                 } else {
-                    return amount + (50 - remainder50);
+                    // Round down to nearest 50 for amounts < 1000
+                    return Math.floor(number / 50) * 50;
                 }
             }
 
-            // Function to calculate and apply rounded discount
-            function applyRoundedDiscount() {
-                const subtotal = parseFloat($('.subtotal').val()) || 0;
-                const shippingCost = parseFloat($('.shipping-cost').val()) || 0;
-                const otherCost = parseFloat($('.other-cost').val()) || 0;
-                const currentDiscount = parseFloat($('.discount').val()) || 0;
-
-                // Calculate total before rounding
-                const totalBeforeRounding = subtotal + shippingCost + otherCost - currentDiscount;
-
-                // Round the total
-                const roundedTotal = roundAmount(totalBeforeRounding);
-
-                // Calculate the difference to apply as discount
-                const discountDifference = totalBeforeRounding - roundedTotal;
-
-                // Update the discount field
-                const newDiscount = currentDiscount + discountDifference;
-                $('.discount').val(newDiscount.toFixed(0));
-
-                // Update the grand total
-                $('.grand-total').val(roundedTotal.toFixed(0));
-
-                // Show a notification about the automatic discount
-                if (discountDifference !== 0) {
+            // Handle round total button click
+            $(document).on('click', '.round-total', function() {
+                const $container = $(this).closest('.receipt-container');
+                const currentTotal = parseFloat($container.find('.grand-total').val()) || 0;
+                const roundedTotal = roundDownToNearest(currentTotal);
+                const difference = currentTotal - roundedTotal;
+                
+                if (difference > 0) {
+                    // Get current discount
+                    const currentDiscount = parseFloat($container.find('.discount').val()) || 0;
+                    
+                    // Update discount with rounded difference
+                    const newDiscount = currentDiscount + difference;
+                    $container.find('.discount').val(newDiscount.toFixed(0)).trigger('change');
+                    
+                    // Show notification
                     Swal.fire({
-                        title: 'داشکاندنی ئۆتۆماتیکی',
-                        text: `بڕی ${Math.abs(discountDifference).toFixed(0)} دینار بە شێوەیەکی ئۆتۆماتیکی وەک داشکاندن زیادکرا`,
-                        icon: 'info',
+                        title: 'خڕکردنەوەی بڕی پارە',
+                        html: `
+                            <p>بڕی پارە: ${currentTotal.toFixed(0)} دینار</p>
+                            <p>بڕی خڕکراوە: ${roundedTotal.toFixed(0)} دینار</p>
+                            <p>بڕی داشکاندن: ${difference.toFixed(0)} دینار</p>
+                        `,
+                        icon: 'success',
                         confirmButtonText: 'باشە'
                     });
                 }
-            }
-
-            // Add event listeners for relevant fields
-            $('.subtotal, .shipping-cost, .other-cost').on('change', function() {
-                applyRoundedDiscount();
-            });
-
-            // Add a button to manually apply rounding
-            $('.total-section .row').append(`
-                <div class="col-12 mt-3">
-                    <button type="button" class="btn btn-outline-primary" id="roundAmountBtn">
-                        <i class="fas fa-calculator"></i> ڕێکخستنی بڕی پارە
-                    </button>
-                </div>
-            `);
-
-            // Handle round amount button click
-            $(document).on('click', '#roundAmountBtn', function() {
-                applyRoundedDiscount();
             });
         });
     </script>
