@@ -241,11 +241,97 @@ $(document).ready(function() {
                 templateResult: formatProductOption,
                 templateSelection: formatProductSelection
             }).on('select2:open', function() {
+                // Trigger a 'input' event after a short delay to position the search field correctly
                 setTimeout(function() {
-                    $('.select2-search__field:visible').focus();
-                    // Trigger search to show initial results
                     $('.select2-search__field:visible').trigger('input');
                 }, 100);
+            }).on('select2:select', function(e) {
+                const data = e.params.data;
+                const row = $(this).closest('tr');
+                
+                // Set product image
+                if (data.image) {
+                    row.find('.product-image-cell').html(`
+                        <div class="product-image-container">
+                            <img src="${data.image}" alt="${data.text}" class="product-table-image">
+                        </div>
+                    `);
+                } else {
+                    row.find('.product-image-cell').html(`
+                        <div class="product-image-container">
+                            <div class="no-image-placeholder">
+                                <i class="fas fa-box"></i>
+                            </div>
+                        </div>
+                    `);
+                }
+                
+                // Update unit type dropdown based on product data
+                const unitTypeSelect = row.find('.unit-type');
+                unitTypeSelect.empty(); // Clear existing options
+                
+                // Always add piece/unit option
+                unitTypeSelect.append(`<option value="piece">دانە</option>`);
+                
+                // Add box option if pieces_per_box exists and greater than 0
+                if (data.pieces_per_box && parseInt(data.pieces_per_box) > 0) {
+                    unitTypeSelect.append(`<option value="box">کارتۆن</option>`);
+                    
+                    // Add set option if boxes_per_set exists and greater than 0
+                    if (data.boxes_per_set && parseInt(data.boxes_per_set) > 0) {
+                        unitTypeSelect.append(`<option value="set">سێت</option>`);
+                    }
+                }
+                
+                // Set default unit type to piece
+                unitTypeSelect.val('piece');
+                
+                // Set product price based on price type and unit type
+                const tabPane = row.closest('.tab-pane');
+                const tabType = tabPane.attr('data-receipt-type');
+                const priceType = tabPane.find('.price-type').val();
+                
+                // Get base price based on price type (box price from database)
+                let basePrice;
+                if (tabType === RECEIPT_TYPES.SELLING) {
+                    basePrice = priceType === PRICE_TYPES.WHOLESALE ? 
+                        parseFloat(data.wholesale_price || 0) : 
+                        parseFloat(data.retail_price || 0);
+                } else if (tabType === RECEIPT_TYPES.BUYING) {
+                    basePrice = parseFloat(data.purchase_price || 0);
+                } else if (tabType === RECEIPT_TYPES.WASTING) {
+                    basePrice = parseFloat(data.purchase_price || 0);
+                }
+                
+                // Adjust price based on unit type - since database stores box prices
+                const unitType = unitTypeSelect.val();
+                
+                console.log(`Product selected: ${data.text}`);
+                console.log(`Base price (${priceType}): ${basePrice}`);
+                console.log(`Pieces per box: ${data.pieces_per_box}`);
+                console.log(`Boxes per set: ${data.boxes_per_set}`);
+                console.log(`Current unit type: ${unitType}`);
+                
+                if (unitType === 'piece' && data.pieces_per_box) {
+                    // For piece, divide the box price by pieces per box
+                    basePrice = Math.round(basePrice / parseInt(data.pieces_per_box || 1));
+                    console.log(`Piece price calculated: ${basePrice}`);
+                } else if (unitType === 'set' && data.pieces_per_box && data.boxes_per_set) {
+                    // For set, multiply the box price by boxes per set
+                    basePrice = Math.round(basePrice * parseInt(data.boxes_per_set || 1));
+                    console.log(`Set price calculated: ${basePrice}`);
+                }
+                // For box, keep the original price since database stores box prices
+                
+                // Update the appropriate price field based on tab type
+                if (tabType === RECEIPT_TYPES.WASTING) {
+                    row.find('.price').val(basePrice);
+                } else {
+                    row.find('.unit-price').val(basePrice);
+                }
+                
+                // Update totals
+                calculateRowTotal(row);
             });
         });
     }
@@ -383,8 +469,8 @@ $(document).ready(function() {
         // Price type change handler (selling only)
         if (tabType === RECEIPT_TYPES.SELLING) {
             $(`#${tabId} .price-type`).on('change', function() {
-                const priceType = $(this).val();
                 const tabPane = $(this).closest('.tab-pane');
+                const priceType = $(this).val();
                 
                 // Update prices for all existing products
                 tabPane.find('.items-list tr').each(function() {
@@ -394,20 +480,23 @@ $(document).ready(function() {
                     if (productSelect.val()) {
                         const productData = productSelect.select2('data')[0];
                         if (productData) {
-                            // Get base price based on price type
+                            // Get base price based on price type (box price from database)
                             const basePrice = priceType === PRICE_TYPES.WHOLESALE ? 
                                 parseFloat(productData.wholesale_price || 0) : 
                                 parseFloat(productData.retail_price || 0);
                             
-                            // Adjust price based on unit type
+                            // Adjust price based on unit type - since database stores box prices
                             const unitType = row.find('.unit-type').val();
                             let finalPrice = basePrice;
                             
-                            if (unitType === 'box' && productData.pieces_per_box) {
-                                finalPrice = Math.round(basePrice * parseInt(productData.pieces_per_box || 0));
-                            } else if (unitType === 'set' && productData.pieces_per_box && productData.boxes_per_set) {
-                                finalPrice = Math.round(basePrice * parseInt(productData.pieces_per_box || 0) * parseInt(productData.boxes_per_set || 0));
+                            if (unitType === 'piece' && productData.pieces_per_box) {
+                                // For piece, divide the box price by pieces per box
+                                finalPrice = Math.round(basePrice / parseInt(productData.pieces_per_box || 1));
+                            } else if (unitType === 'set' && productData.boxes_per_set) {
+                                // For set, multiply the box price by boxes per set
+                                finalPrice = Math.round(basePrice * parseInt(productData.boxes_per_set || 1));
                             }
+                            // For box, keep the original price since database stores box prices
                             
                             // Update the unit price
                             row.find('.unit-price').val(finalPrice);
@@ -503,7 +592,7 @@ $(document).ready(function() {
             const tabType = tabPane.attr('data-receipt-type');
             const priceType = tabPane.find('.price-type').val();
             
-            // Get base price based on price type (single unit price)
+            // Get base price based on price type (box price from database)
             let basePrice;
             if (tabType === RECEIPT_TYPES.SELLING) {
                 basePrice = priceType === PRICE_TYPES.WHOLESALE ? 
@@ -515,7 +604,7 @@ $(document).ready(function() {
                 basePrice = parseFloat(data.purchase_price || 0);
             }
             
-            // Adjust price based on unit type
+            // Adjust price based on unit type - since database stores box prices
             const unitType = unitTypeSelect.val();
             
             console.log(`Product selected: ${data.text}`);
@@ -524,13 +613,16 @@ $(document).ready(function() {
             console.log(`Boxes per set: ${data.boxes_per_set}`);
             console.log(`Current unit type: ${unitType}`);
             
-            if (unitType === 'box' && data.pieces_per_box) {
-                basePrice = Math.round(basePrice * parseInt(data.pieces_per_box || 0));
-                console.log(`Box price calculated: ${basePrice}`);
+            if (unitType === 'piece' && data.pieces_per_box) {
+                // For piece, divide the box price by pieces per box
+                basePrice = Math.round(basePrice / parseInt(data.pieces_per_box || 1));
+                console.log(`Piece price calculated: ${basePrice}`);
             } else if (unitType === 'set' && data.pieces_per_box && data.boxes_per_set) {
-                basePrice = Math.round(basePrice * parseInt(data.pieces_per_box || 0) * parseInt(data.boxes_per_set || 0));
+                // For set, multiply the box price by boxes per set
+                basePrice = Math.round(basePrice * parseInt(data.boxes_per_set || 1));
                 console.log(`Set price calculated: ${basePrice}`);
             }
+            // For box, keep the original price since database stores box prices
             
             // Update the appropriate price field based on tab type
             if (tabType === RECEIPT_TYPES.WASTING) {
@@ -573,13 +665,16 @@ $(document).ready(function() {
                 basePrice = parseFloat(productData.purchase_price || 0);
             }
             
-            // Adjust price based on unit type
-            if (unitType === 'piece') {
+            // Adjust price based on unit type - since database stores box prices
+            if (unitType === 'piece' && productData.pieces_per_box) {
+                // For piece, divide the box price by pieces per box
+                newPrice = Math.round(basePrice / parseInt(productData.pieces_per_box || 1));
+            } else if (unitType === 'box') {
+                // For box, use the price directly from database
                 newPrice = basePrice;
-            } else if (unitType === 'box' && productData.pieces_per_box) {
-                newPrice = Math.round(basePrice * parseInt(productData.pieces_per_box));
-            } else if (unitType === 'set' && productData.pieces_per_box && productData.boxes_per_set) {
-                newPrice = Math.round(basePrice * parseInt(productData.pieces_per_box) * parseInt(productData.boxes_per_set));
+            } else if (unitType === 'set' && productData.boxes_per_set) {
+                // For set, multiply the box price by boxes per set
+                newPrice = Math.round(basePrice * parseInt(productData.boxes_per_set || 1));
             }
             
             // Update the appropriate price field based on tab type
@@ -719,8 +814,9 @@ $(document).ready(function() {
             templateResult: formatProductOption,
             templateSelection: formatProductSelection
         }).on('select2:open', function() {
+            // Trigger a 'input' event after a short delay to position the search field correctly
             setTimeout(function() {
-                $('.select2-search__field:visible').focus();
+                $('.select2-search__field:visible').trigger('input');
             }, 100);
         }).on('select2:select', function(e) {
             const data = e.params.data;
@@ -768,7 +864,7 @@ $(document).ready(function() {
             const tabType = tabPane.attr('data-receipt-type');
             const priceType = tabPane.find('.price-type').val();
             
-            // Get base price based on price type (single unit price)
+            // Get base price based on price type (box price from database)
             let basePrice;
             if (tabType === RECEIPT_TYPES.SELLING) {
                 basePrice = priceType === PRICE_TYPES.WHOLESALE ? 
@@ -780,7 +876,7 @@ $(document).ready(function() {
                 basePrice = parseFloat(data.purchase_price || 0);
             }
             
-            // Adjust price based on unit type
+            // Adjust price based on unit type - since database stores box prices
             const unitType = unitTypeSelect.val();
             
             console.log(`Product selected: ${data.text}`);
@@ -789,13 +885,16 @@ $(document).ready(function() {
             console.log(`Boxes per set: ${data.boxes_per_set}`);
             console.log(`Current unit type: ${unitType}`);
             
-            if (unitType === 'box' && data.pieces_per_box) {
-                basePrice = Math.round(basePrice * parseInt(data.pieces_per_box || 0));
-                console.log(`Box price calculated: ${basePrice}`);
+            if (unitType === 'piece' && data.pieces_per_box) {
+                // For piece, divide the box price by pieces per box
+                basePrice = Math.round(basePrice / parseInt(data.pieces_per_box || 1));
+                console.log(`Piece price calculated: ${basePrice}`);
             } else if (unitType === 'set' && data.pieces_per_box && data.boxes_per_set) {
-                basePrice = Math.round(basePrice * parseInt(data.pieces_per_box || 0) * parseInt(data.boxes_per_set || 0));
+                // For set, multiply the box price by boxes per set
+                basePrice = Math.round(basePrice * parseInt(data.boxes_per_set || 1));
                 console.log(`Set price calculated: ${basePrice}`);
             }
+            // For box, keep the original price since database stores box prices
             
             // Update the appropriate price field based on tab type
             if (tabType === RECEIPT_TYPES.WASTING) {
@@ -1122,13 +1221,16 @@ $(document).ready(function() {
                     const currentQuantity = parseInt(productData.current_quantity) || 0;
                     let requiredQuantity = quantity;
 
-                    // Convert quantity based on unit type
-                    if (unitType === 'box' && productData.pieces_per_box) {
-                        requiredQuantity *= parseInt(productData.pieces_per_box);
-                    } else if (unitType === 'set' && productData.pieces_per_box && productData.boxes_per_set) {
-                        requiredQuantity *= parseInt(productData.pieces_per_box) * parseInt(productData.boxes_per_set);
+                    // Convert quantity based on unit type - since database stores box quantities
+                    if (unitType === 'piece' && productData.pieces_per_box) {
+                        // For piece, calculate how many boxes are needed
+                        requiredQuantity = Math.ceil(requiredQuantity / parseInt(productData.pieces_per_box || 1));
+                    } else if (unitType === 'set' && productData.boxes_per_set) {
+                        // For set, multiply by boxes per set
+                        requiredQuantity *= parseInt(productData.boxes_per_set || 1);
                     }
-
+                    // For box, keep the value as is
+                    
                     if (requiredQuantity > currentQuantity) {
                         insufficientProducts.push({
                             name: productData.text,
