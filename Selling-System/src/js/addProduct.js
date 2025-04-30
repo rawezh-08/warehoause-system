@@ -702,30 +702,45 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // زیادکردنی فانکشن بۆ پاککردنەوەی کۆماکان لە ژمارەکان
+    // Function to clean and format number inputs
     function cleanNumberInputs() {
-        // پاککردنەوەی داتای ژمارەکان لە کۆما
-        const numberFields = [
-            'buyingPrice',
-            'sellingPrice',
-            'selling_price_wholesale',
-            'piecesPerBox',
-            'boxesPerSet',
-            'min_quantity',
-            'current_quantity'
-        ];
-        
-        numberFields.forEach(field => {
-            const input = document.getElementById(field);
-            if (input && input.value) {
-                // لابردنی کۆماکان
-                input.value = input.value.replace(/,/g, '');
-                console.log(`Cleaned ${field}: ${input.value}`);
-            }
+        const numberInputs = document.querySelectorAll('input[type="number"]');
+        numberInputs.forEach(input => {
+            // Add input event listener for formatting
+            input.addEventListener('input', function(e) {
+                let value = e.target.value;
+                
+                // Remove any non-numeric characters except dots
+                value = value.replace(/[^\d.]/g, '');
+                
+                // Ensure only one decimal point
+                const parts = value.split('.');
+                if (parts.length > 2) {
+                    value = parts[0] + '.' + parts.slice(1).join('');
+                }
+                
+                // Update the input value
+                e.target.value = value;
+            });
         });
+    }
+
+    // Function to format numbers with commas for thousands
+    function formatNumber(input) {
+        // Remove existing commas and get the value
+        let value = input.value.replace(/,/g, '');
         
-        // زیادکردنی پشتڕاستکردنەوە بۆ لەبار هەموو بەهاکان
-        return true;
+        // Check if it's a valid number (including decimals)
+        if (!isNaN(value) && value.trim() !== '') {
+            // Split number into integer and decimal parts
+            let [integerPart, decimalPart] = value.split('.');
+            
+            // Format integer part with commas
+            integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            
+            // Combine with decimal part if it exists
+            input.value = decimalPart ? `${integerPart}.${decimalPart}` : integerPart;
+        }
     }
     
     // Initialize by making sure we're on the correct tab and buttons are set up
@@ -961,36 +976,6 @@ async function updateLatestProducts() {
     }
 }
 
-// Format numbers with commas
-function formatNumber(input) {
-    // Remove commas first
-    let value = input.value.replace(/,/g, '');
-    
-    // Match decimal patterns: keep only one decimal point and digits
-    let parts = value.split('.');
-    if (parts.length > 1) {
-        // Keep only one decimal part, and remove non-digits
-        let integerPart = parts[0].replace(/[^\d]/g, '');
-        let decimalPart = parts[1].replace(/[^\d]/g, '');
-        
-        // Add comma every three digits in integer part
-        integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        
-        // Update input value with decimal point
-        input.value = integerPart + '.' + decimalPart;
-    } else {
-        // No decimal point, just format the integer part
-        // Remove non-digits
-        value = value.replace(/[^\d]/g, '');
-        
-        // Add comma every three digits
-        value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        
-        // Update input value
-        input.value = value;
-    }
-}
-
 // Function to handle unit type changes
 function handleUnitTypeChange() {
     const unitSelect = document.getElementById('unit_id');
@@ -1074,8 +1059,7 @@ document.addEventListener('DOMContentLoaded', function() {
     numberInputs.forEach(inputId => {
         const input = document.getElementById(inputId);
         if (input) {
-            // Don't change the input type - keep it as "number" for price inputs
-            // Only attach the input formatting event
+            input.setAttribute('type', 'text');
             input.addEventListener('input', function() {
                 formatNumber(this);
             });
