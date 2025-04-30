@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 25, 2025 at 01:03 PM
+-- Generation Time: Apr 30, 2025 at 12:17 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -665,8 +665,8 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_supplier_return` (IN `p_supplie
     DECLARE v_boxes_per_set INT;
     DECLARE v_pieces_count INT;
     DECLARE total_return_amount DECIMAL(10,2) DEFAULT 0;
-    
-    SET item_count = JSON_LENGTH(p_return_items);
+    DECLARE v_purchase_id INT;
+    DECLARE v_payment_type VARCHAR(10);
     
     -- Start transaction
     START TRANSACTION;
@@ -678,6 +678,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_supplier_return` (IN `p_supplie
         SET v_quantity = JSON_EXTRACT(p_return_items, CONCAT('$[', i, '].quantity'));
         SET v_unit_price = JSON_EXTRACT(p_return_items, CONCAT('$[', i, '].unit_price'));
         SET v_unit_type = JSON_UNQUOTE(JSON_EXTRACT(p_return_items, CONCAT('$[', i, '].unit_type')));
+        SET v_purchase_id = JSON_EXTRACT(p_return_items, CONCAT('$[', i, '].purchase_id'));
         
         -- Get product details for unit conversion
         SELECT pieces_per_box, boxes_per_set 
@@ -749,6 +750,18 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_supplier_return` (IN `p_supplie
         AND pi.product_id = v_product_id
         AND pi.unit_type = v_unit_type
         LIMIT 1;
+        
+        -- Get payment type of the purchase
+        SELECT payment_type INTO v_payment_type
+        FROM purchases
+        WHERE id = v_purchase_id;
+        
+        -- Update remaining_amount in purchases table if it's a credit purchase
+        IF v_payment_type = 'credit' THEN
+            UPDATE purchases 
+            SET remaining_amount = remaining_amount - (v_quantity * v_unit_price)
+            WHERE id = v_purchase_id;
+        END IF;
         
         -- Record in inventory table
         INSERT INTO inventory (
@@ -1552,27 +1565,6 @@ CREATE TABLE `categories` (
   `description` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `cash_management` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `amount` decimal(10,2) NOT NULL COMMENT 'Positive for deposits, negative for withdrawals',
-  `transaction_type` enum('initial_balance','deposit','withdrawal','adjustment') NOT NULL,
-  `notes` text DEFAULT NULL,
-  `created_by` int(11) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `categories`
---
-
-INSERT INTO `categories` (`id`, `name`, `description`) VALUES
-(1, 'ناوماڵ', 'کاڵا ناوماڵەکان'),
-(4, 'شووشەوات', ''),
-(5, 'قوماش', ''),
-(6, 'شتومەک', ''),
-(7, 'n', '');
-
 -- --------------------------------------------------------
 
 --
@@ -1591,17 +1583,10 @@ CREATE TABLE `customers` (
   `notes` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `debt_on_customer` decimal(10,0) DEFAULT 0 COMMENT 'Amount customer owes to us'
+  `debt_on_customer` decimal(10,0) DEFAULT 0 COMMENT 'Amount customer owes to us',
+  `is_business_partner` tinyint(1) DEFAULT 0,
+  `supplier_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `customers`
---
-
-INSERT INTO `customers` (`id`, `name`, `phone1`, `phone2`, `guarantor_name`, `guarantor_phone`, `address`, `debit_on_business`, `notes`, `created_at`, `updated_at`, `debt_on_customer`) VALUES
-(23, 'ڕاوێژ2', '07709240894', '', '', '', '', 910500, '', '2025-04-20 09:26:03', '2025-04-25 07:21:48', 0),
-(24, 'کاروان', '07709240897', '', '', '', 'سلێمانی بەکرەجۆی تازە', 76000, '', '2025-04-21 06:29:43', '2025-04-24 18:07:05', 0),
-(25, 'موسا', '07709240895', '', '', '', '', 44000, '', '2025-04-22 13:46:52', '2025-04-24 21:20:02', 0);
 
 -- --------------------------------------------------------
 
@@ -1620,24 +1605,6 @@ CREATE TABLE `debt_transactions` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `debt_transactions`
---
-
-INSERT INTO `debt_transactions` (`id`, `customer_id`, `amount`, `transaction_type`, `reference_id`, `notes`, `created_by`, `created_at`) VALUES
-(225, 23, 900000, 'sale', 194, '', 1, '2025-04-24 17:34:59'),
-(226, 23, -50000, '', 109, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-24 17:36:16'),
-(227, 23, 40000, 'sale', 196, '', 1, '2025-04-24 18:04:51'),
-(228, 23, -4000, '', 114, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-24 18:04:59'),
-(229, 24, 80000, 'sale', 197, '', 1, '2025-04-24 18:06:54'),
-(230, 24, -4000, '', 115, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-24 18:07:05'),
-(231, 23, 16000, 'sale', 199, '', 1, '2025-04-24 18:09:39'),
-(233, 23, 1000, 'sale', NULL, 'Test debt transaction', 1, '2025-04-24 19:10:49'),
-(234, 25, 16000, 'sale', 221, NULL, 1, '2025-04-24 20:53:01'),
-(236, 23, -2500, '', 118, 'گەڕاندنەوەی کاڵا - ', NULL, '2025-04-24 21:11:09'),
-(237, 25, 28000, 'sale', 225, '', NULL, '2025-04-24 21:20:02'),
-(238, 23, 10000, 'sale', 229, '', 1, '2025-04-25 07:21:48');
-
 -- --------------------------------------------------------
 
 --
@@ -1653,14 +1620,6 @@ CREATE TABLE `employees` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `employees`
---
-
-INSERT INTO `employees` (`id`, `name`, `phone`, `salary`, `notes`, `created_at`, `updated_at`) VALUES
-(13, 'ڕامیار', '07709240854', 750000, '', '2025-04-22 14:44:06', '2025-04-22 14:44:14'),
-(14, 'd', '07502656656', 5000, '', '2025-04-22 17:19:57', '2025-04-22 17:20:38');
 
 -- --------------------------------------------------------
 
@@ -1709,51 +1668,6 @@ CREATE TABLE `inventory` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `notes` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `inventory`
---
-
-INSERT INTO `inventory` (`id`, `product_id`, `quantity`, `reference_type`, `reference_id`, `created_at`, `notes`) VALUES
-(434, 69, -100, 'sale', 304, '2025-04-24 17:34:59', NULL),
-(435, 68, -200, 'sale', 305, '2025-04-24 17:34:59', NULL),
-(436, 68, 100, 'purchase', 139, '2025-04-24 17:35:30', NULL),
-(437, 69, 200, 'purchase', 140, '2025-04-24 17:35:30', NULL),
-(438, 68, 1, 'return', 109, '2025-04-24 17:36:16', 'گەڕاندنەوە: 1 box (ئەسڵی: 1 box)'),
-(439, 68, -1, 'return', 110, '2025-04-24 17:42:59', 'گەڕاندنەوە: 1 piece (ئەسڵی: 1 piece)'),
-(440, 68, -1, 'return', 111, '2025-04-24 17:44:08', 'گەڕاندنەوە: 1 piece (ئەسڵی: 1 piece)'),
-(441, 69, -1, 'return', 112, '2025-04-24 17:44:50', 'گەڕاندنەوە: 1 box (ئەسڵی: 1 box)'),
-(442, 68, -1, 'return', 113, '2025-04-24 17:46:20', 'گەڕاندنەوە: 1 piece (ئەسڵی: 1 piece)'),
-(443, 69, -10, 'adjustment', 11, '2025-04-24 17:51:15', NULL),
-(444, 69, -10, 'sale', 307, '2025-04-24 18:04:51', NULL),
-(445, 69, 1, 'return', 114, '2025-04-24 18:04:59', 'گەڕاندنەوە: 1 piece (ئەسڵی: 1 piece)'),
-(446, 69, -20, 'sale', 308, '2025-04-24 18:06:54', NULL),
-(447, 69, 1, 'return', 115, '2025-04-24 18:07:05', 'گەڕاندنەوە: 1 piece (ئەسڵی: 1 piece)'),
-(448, 69, -4, 'sale', 310, '2025-04-24 18:09:39', NULL),
-(449, 69, 1, 'purchase', 141, '2025-04-24 18:15:49', NULL),
-(450, 69, 2, 'purchase', 142, '2025-04-24 18:16:02', NULL),
-(451, 77, 1, 'purchase', 143, '2025-04-24 18:16:27', NULL),
-(452, 69, -1, 'return', 116, '2025-04-24 18:17:06', 'گەڕاندنەوە: 1 piece (ئەسڵی: 1 piece)'),
-(453, 69, -1, 'return', 117, '2025-04-24 18:17:28', 'گەڕاندنەوە: 1 piece (ئەسڵی: 1 piece)'),
-(455, 68, -1, 'sale', 318, '2025-04-24 19:10:24', NULL),
-(456, 69, -2, 'adjustment', 12, '2025-04-24 19:46:58', NULL),
-(457, 69, -4, 'adjustment', 13, '2025-04-24 19:49:41', NULL),
-(458, 69, -40, 'adjustment', 14, '2025-04-24 20:26:55', NULL),
-(460, 69, -4, 'adjustment', 15, '2025-04-24 20:50:06', NULL),
-(461, 69, -4, 'adjustment', 16, '2025-04-24 20:50:12', NULL),
-(462, 69, -2, 'sale', 335, '2025-04-24 21:08:58', NULL),
-(463, 68, 1, 'return', 118, '2025-04-24 21:11:09', 'گەڕاندنەوە: 1 piece (ئەسڵی: 1 piece)'),
-(464, 69, 4, 'purchase', 144, '2025-04-24 21:17:15', NULL),
-(465, 69, -7, 'sale', 336, '2025-04-24 21:19:20', NULL),
-(466, 69, 2, 'return', 119, '2025-04-24 21:19:46', 'گەڕاندنەوە: 2 piece (ئەسڵی: 2 piece)'),
-(467, 69, -5, 'sale', 337, '2025-04-24 22:01:37', NULL),
-(468, 77, -4, 'sale', 338, '2025-04-24 22:01:37', NULL),
-(469, 69, -40, 'sale', 339, '2025-04-25 07:19:20', NULL),
-(470, 69, -4, 'sale', 340, '2025-04-25 07:20:33', NULL),
-(471, 68, -4, 'sale', 341, '2025-04-25 07:21:48', NULL),
-(472, 68, -4, 'sale', 342, '2025-04-25 07:22:20', NULL),
-(473, 69, -1, 'return', 120, '2025-04-25 10:45:49', 'گەڕاندنەوە: 1 piece (ئەسڵی: 1 piece)'),
-(474, 69, -1, 'return', 121, '2025-04-25 11:02:56', 'گەڕاندنەوە: 1 piece (ئەسڵی: 1 piece)');
 
 -- --------------------------------------------------------
 
@@ -1810,15 +1724,6 @@ CREATE TABLE `products` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `products`
---
-
-INSERT INTO `products` (`id`, `name`, `code`, `barcode`, `image`, `notes`, `category_id`, `unit_id`, `pieces_per_box`, `boxes_per_set`, `purchase_price`, `selling_price_single`, `selling_price_wholesale`, `min_quantity`, `current_quantity`, `created_at`, `updated_at`) VALUES
-(68, 'پیاڵە', 'A018', '1745142214785', 'uploads/products/6804c1f59ca92_1745142261.jpg', '', 4, 3, 20, 10, 1500, 2500, 2000, 10, 540, '2025-04-20 09:44:21', '2025-04-25 07:22:20'),
-(69, 'کەوچک ', 'A474', '1745225304356', 'uploads/products/68060675a6e60_1745225333.png', '', 4, 3, 10, 20, 3000, 4000, 3500, 5, 57, '2025-04-21 08:48:53', '2025-04-25 11:02:56'),
-(77, 'حاجی فاروق', 'A458', '1745342209677', 'uploads/products/6807cf0c79fc7_1745342220.jpg', '', 6, 1, 0, 0, 1000, 1500, 1250, 10, 0, '2025-04-22 17:17:00', '2025-04-24 22:01:37');
-
 -- --------------------------------------------------------
 
 --
@@ -1830,31 +1735,11 @@ CREATE TABLE `product_returns` (
   `receipt_id` int(11) NOT NULL,
   `receipt_type` enum('selling','buying') NOT NULL,
   `return_date` datetime NOT NULL,
-  `total_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
   `reason` enum('damaged','wrong_product','customer_request','other') DEFAULT 'other',
   `notes` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `product_returns`
---
-
-INSERT INTO `product_returns` (`id`, `receipt_id`, `receipt_type`, `return_date`, `total_amount`, `reason`, `notes`, `created_at`, `updated_at`) VALUES
-(109, 194, '', '2025-04-24 20:36:16', 0.00, 'damaged', '', '2025-04-24 17:36:16', '2025-04-24 17:36:16'),
-(110, 131, '', '2025-04-24 20:42:59', 0.00, 'damaged', '', '2025-04-24 17:42:59', '2025-04-24 17:42:59'),
-(111, 131, '', '2025-04-24 20:44:08', 0.00, 'damaged', '', '2025-04-24 17:44:08', '2025-04-24 17:44:08'),
-(112, 131, '', '2025-04-24 20:44:50', 0.00, 'damaged', '', '2025-04-24 17:44:50', '2025-04-24 17:44:50'),
-(113, 131, '', '2025-04-24 20:46:20', 0.00, 'damaged', '', '2025-04-24 17:46:20', '2025-04-24 17:46:20'),
-(114, 196, '', '2025-04-24 21:04:59', 0.00, 'damaged', '', '2025-04-24 18:04:59', '2025-04-24 18:04:59'),
-(115, 197, '', '2025-04-24 21:07:05', 0.00, 'damaged', '', '2025-04-24 18:07:05', '2025-04-24 18:07:05'),
-(116, 132, '', '2025-04-24 21:17:06', 0.00, 'damaged', '', '2025-04-24 18:17:06', '2025-04-24 18:17:06'),
-(117, 133, '', '2025-04-24 21:17:28', 0.00, 'damaged', '', '2025-04-24 18:17:28', '2025-04-24 18:17:28'),
-(118, 207, '', '2025-04-25 00:11:09', 0.00, 'damaged', '', '2025-04-24 21:11:09', '2025-04-24 21:11:09'),
-(119, 225, '', '2025-04-25 00:19:46', 0.00, 'damaged', '', '2025-04-24 21:19:46', '2025-04-24 21:19:46'),
-(120, 135, '', '2025-04-25 13:45:49', 0.00, 'damaged', '', '2025-04-25 10:45:49', '2025-04-25 10:45:49'),
-(121, 135, '', '2025-04-25 14:02:56', 0.00, 'damaged', '', '2025-04-25 11:02:56', '2025-04-25 11:02:56');
 
 -- --------------------------------------------------------
 
@@ -1879,13 +1764,6 @@ CREATE TABLE `purchases` (
   `remaining_amount` decimal(10,0) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `purchases`
---
-
-INSERT INTO `purchases` (`id`, `invoice_number`, `supplier_id`, `date`, `payment_type`, `discount`, `shipping_cost`, `other_cost`, `notes`, `created_by`, `created_at`, `updated_at`, `paid_amount`, `remaining_amount`) VALUES
-(135, 'B-0001', 9, '2025-04-22 21:00:00', 'credit', 0, 0, 0, '', 1, '2025-04-24 21:17:15', '2025-04-24 21:17:32', 0, 12000);
-
 -- --------------------------------------------------------
 
 --
@@ -1902,13 +1780,6 @@ CREATE TABLE `purchase_items` (
   `total_price` decimal(10,0) NOT NULL,
   `returned_quantity` int(11) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `purchase_items`
---
-
-INSERT INTO `purchase_items` (`id`, `purchase_id`, `product_id`, `quantity`, `unit_type`, `unit_price`, `total_price`, `returned_quantity`) VALUES
-(144, 135, 69, 4, 'piece', 3000, 12000, 2);
 
 -- --------------------------------------------------------
 
@@ -1931,25 +1802,6 @@ CREATE TABLE `return_items` (
   `total_price` decimal(10,2) DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `return_items`
---
-
-INSERT INTO `return_items` (`id`, `return_id`, `product_id`, `quantity`, `unit_price`, `unit_type`, `original_unit_type`, `original_quantity`, `reason`, `notes`, `created_at`, `total_price`) VALUES
-(113, 109, 68, 1.00, 50000.00, 'box', 'box', 1.00, 'damaged', NULL, '2025-04-24 17:36:16', 50000.00),
-(114, 110, 68, 1.00, 1500.00, 'piece', 'piece', 1.00, 'damaged', NULL, '2025-04-24 17:42:59', 1500.00),
-(115, 111, 68, 1.00, 1500.00, 'piece', 'piece', 1.00, 'damaged', NULL, '2025-04-24 17:44:08', 1500.00),
-(116, 112, 69, 1.00, 30000.00, 'box', 'box', 1.00, 'damaged', NULL, '2025-04-24 17:44:50', 30000.00),
-(117, 113, 68, 1.00, 1500.00, 'piece', 'piece', 1.00, 'damaged', NULL, '2025-04-24 17:46:20', 1500.00),
-(118, 114, 69, 1.00, 4000.00, 'piece', 'piece', 1.00, 'damaged', NULL, '2025-04-24 18:04:59', 4000.00),
-(119, 115, 69, 1.00, 4000.00, 'piece', 'piece', 1.00, 'damaged', NULL, '2025-04-24 18:07:05', 4000.00),
-(120, 116, 69, 1.00, 3000.00, 'piece', 'piece', 1.00, 'damaged', NULL, '2025-04-24 18:17:06', 3000.00),
-(121, 117, 69, 1.00, 3000.00, 'piece', 'piece', 1.00, 'damaged', NULL, '2025-04-24 18:17:28', 3000.00),
-(122, 118, 68, 1.00, 2500.00, 'piece', 'piece', 1.00, 'damaged', NULL, '2025-04-24 21:11:09', 2500.00),
-(123, 119, 69, 2.00, 4000.00, 'piece', 'piece', 2.00, 'damaged', NULL, '2025-04-24 21:19:46', 8000.00),
-(124, 120, 69, 1.00, 3000.00, 'piece', 'piece', 1.00, 'damaged', NULL, '2025-04-25 10:45:49', 3000.00),
-(125, 121, 69, 1.00, 3000.00, 'piece', 'piece', 1.00, 'damaged', NULL, '2025-04-25 11:02:56', 3000.00);
-
 -- --------------------------------------------------------
 
 --
@@ -1959,7 +1811,7 @@ INSERT INTO `return_items` (`id`, `return_id`, `product_id`, `quantity`, `unit_p
 CREATE TABLE `sales` (
   `id` int(11) NOT NULL,
   `invoice_number` varchar(50) NOT NULL,
-  `customer_id` int(11) DEFAULT NULL,
+  `customer_id` int(11) NOT NULL,
   `date` timestamp NOT NULL DEFAULT current_timestamp(),
   `payment_type` enum('cash','credit') NOT NULL,
   `discount` decimal(10,0) DEFAULT 0,
@@ -1976,30 +1828,6 @@ CREATE TABLE `sales` (
   `is_delivery` tinyint(1) DEFAULT 0,
   `delivery_address` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `sales`
---
-
-INSERT INTO `sales` (`id`, `invoice_number`, `customer_id`, `date`, `payment_type`, `discount`, `price_type`, `shipping_cost`, `other_costs`, `notes`, `created_by`, `created_at`, `updated_at`, `paid_amount`, `remaining_amount`, `is_draft`, `is_delivery`, `delivery_address`) VALUES
-(198, 'A-0004', 23, '2025-04-23 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-24 18:09:22', '2025-04-24 18:25:11', 0, 16000, 0, 0, NULL),
-(199, 'A-0005', 23, '2025-04-23 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-24 18:09:39', '2025-04-24 18:09:39', 0, 16000, 0, 0, NULL),
-(205, 'A-0011', 24, '2025-04-23 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-24 19:06:25', '2025-04-24 19:06:38', 0, 16000, 0, 0, NULL),
-(206, 'A-0012', 23, '2025-04-23 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-24 19:07:59', '2025-04-24 19:12:32', 0, 25000, 0, 0, NULL),
-(209, 'A-0002', 25, '2025-04-23 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-24 19:23:00', '2025-04-24 19:23:25', 0, 25000, 0, 0, NULL),
-(210, 'A-0003', 25, '2025-04-23 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-24 19:24:45', '2025-04-24 19:24:52', 0, 25000, 0, 0, NULL),
-(211, 'A-0004', 25, '2025-04-23 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-24 19:27:50', '2025-04-24 19:27:59', 0, 16000, 0, 0, NULL),
-(212, 'A-0005', 25, '2025-04-23 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-24 19:31:31', '2025-04-24 19:31:46', 0, 180000, 0, 0, NULL),
-(213, 'A-0006', 25, '2025-04-23 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-24 19:38:48', '2025-04-24 19:38:56', 0, 16000, 0, 0, NULL),
-(220, 'A-0007', 25, '2025-04-23 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-24 20:37:03', '2025-04-24 20:49:01', 0, 40000, 0, 0, NULL),
-(221, 'A-0008', 25, '2025-04-23 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-24 20:49:59', '2025-04-24 20:53:01', 0, 16000, 0, 0, NULL),
-(224, 'A-0010', 25, '2025-04-21 21:00:00', 'cash', 0, 'single', 0, 0, '', 1, '2025-04-24 21:08:58', '2025-04-24 21:10:33', 8000, 0, 0, 0, NULL),
-(225, 'A-0011', 25, '2025-04-22 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-24 21:19:20', '2025-04-24 21:20:02', 0, 28000, 0, 0, NULL),
-(226, 'A-0012', 23, '2025-04-23 21:00:00', 'cash', 0, 'single', 0, 0, '', 1, '2025-04-24 22:01:37', '2025-04-24 22:01:37', 26000, 0, 0, 0, NULL),
-(227, 'A-0013', 23, '2025-04-24 21:00:00', 'cash', 0, 'single', 0, 0, '', 1, '2025-04-25 07:19:20', '2025-04-25 07:19:20', 160000, 0, 0, 0, NULL),
-(228, 'A-0014', 23, '2025-04-24 21:00:00', 'cash', 0, 'single', 0, 0, '', 1, '2025-04-25 07:20:33', '2025-04-25 07:20:33', 16000, 0, 0, 1, 'هەولێر'),
-(229, 'A-0014', 23, '2025-04-24 21:00:00', 'credit', 0, 'single', 0, 0, '', 1, '2025-04-25 07:21:48', '2025-04-25 07:21:48', 0, 10000, 0, 0, NULL),
-(230, 'A-0015', 24, '2025-04-24 21:00:00', 'cash', 0, 'single', 0, 0, '', 1, '2025-04-25 07:22:20', '2025-04-25 07:22:20', 10000, 0, 0, 1, 'هەولێڕ');
 
 -- --------------------------------------------------------
 
@@ -2019,31 +1847,6 @@ CREATE TABLE `sale_items` (
   `returned_quantity` int(11) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `sale_items`
---
-
-INSERT INTO `sale_items` (`id`, `sale_id`, `product_id`, `quantity`, `unit_type`, `pieces_count`, `unit_price`, `total_price`, `returned_quantity`) VALUES
-(309, 198, 69, 4, 'piece', 4, 4000, 16000, 0),
-(310, 199, 69, 4, 'piece', 4, 4000, 16000, 0),
-(316, 205, 69, 4, 'piece', 4, 4000, 16000, 0),
-(317, 206, 68, 10, 'piece', 10, 2500, 25000, 0),
-(320, 209, 68, 10, 'piece', 10, 2500, 25000, 0),
-(321, 210, 68, 10, 'piece', 10, 2500, 25000, 0),
-(322, 211, 69, 4, 'piece', 4, 4000, 16000, 0),
-(323, 212, 69, 45, 'piece', 45, 4000, 180000, 0),
-(324, 213, 69, 4, 'piece', 4, 4000, 16000, 0),
-(331, 220, 69, 10, 'piece', 10, 4000, 40000, 0),
-(332, 221, 69, 4, 'piece', 4, 4000, 16000, 0),
-(335, 224, 69, 2, 'piece', 2, 4000, 8000, 0),
-(336, 225, 69, 7, 'piece', 7, 4000, 28000, 2),
-(337, 226, 69, 5, 'piece', 5, 4000, 20000, 0),
-(338, 226, 77, 4, 'piece', 4, 1500, 6000, 0),
-(339, 227, 69, 4, 'box', 40, 40000, 160000, 0),
-(340, 228, 69, 4, 'piece', 4, 4000, 16000, 0),
-(341, 229, 68, 4, 'piece', 4, 2500, 10000, 0),
-(342, 230, 68, 4, 'piece', 4, 2500, 10000, 0);
-
 -- --------------------------------------------------------
 
 --
@@ -2059,16 +1862,10 @@ CREATE TABLE `suppliers` (
   `debt_on_supplier` decimal(10,0) NOT NULL DEFAULT 0,
   `notes` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `is_business_partner` tinyint(1) DEFAULT 0,
+  `customer_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `suppliers`
---
-
-INSERT INTO `suppliers` (`id`, `name`, `phone1`, `phone2`, `debt_on_myself`, `debt_on_supplier`, `notes`, `created_at`, `updated_at`) VALUES
-(8, 'دارا ', '07709240894', '', 735000, 0, '', '2025-04-20 09:26:09', '2025-04-24 17:38:53'),
-(9, 'قەیوان', '07708540838', '', 13000, 0, '', '2025-04-22 17:17:43', '2025-04-24 21:17:32');
 
 -- --------------------------------------------------------
 
@@ -2080,22 +1877,12 @@ CREATE TABLE `supplier_debt_transactions` (
   `id` int(11) NOT NULL,
   `supplier_id` int(11) NOT NULL,
   `amount` decimal(10,0) NOT NULL DEFAULT 0 COMMENT 'Positive: debt to supplier increased, Negative: debt to supplier decreased',
-  `transaction_type` enum('purchase','payment','return','supplier_payment','manual_adjustment','supplier_return','supplier_advance','advance_used') NOT NULL,
+  `transaction_type` enum('purchase','payment','return','supplier_payment','manual_adjustment','supplier_return') NOT NULL,
   `reference_id` int(11) DEFAULT NULL COMMENT 'ID from purchases or manual entry',
   `notes` text DEFAULT NULL,
   `created_by` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `supplier_debt_transactions`
---
-
-INSERT INTO `supplier_debt_transactions` (`id`, `supplier_id`, `amount`, `transaction_type`, `reference_id`, `notes`, `created_by`, `created_at`) VALUES
-(100, 8, 750000, 'purchase', 131, '', 1, '2025-04-24 17:35:30'),
-(101, 8, -15000, 'return', 1, 'Test return - Test return', NULL, '2025-04-24 17:38:53'),
-(102, 9, 1000, 'purchase', 134, '', 1, '2025-04-24 18:16:27'),
-(103, 9, 12000, 'purchase', 135, '', NULL, '2025-04-24 21:17:32');
 
 -- --------------------------------------------------------
 
@@ -2135,13 +1922,6 @@ CREATE TABLE `wastings` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `wastings`
---
-
-INSERT INTO `wastings` (`id`, `date`, `notes`, `created_by`, `created_at`, `updated_at`) VALUES
-(16, '2025-04-23 21:00:00', '', 1, '2025-04-24 20:50:12', '2025-04-24 20:50:12');
-
 -- --------------------------------------------------------
 
 --
@@ -2158,13 +1938,6 @@ CREATE TABLE `wasting_items` (
   `unit_price` decimal(10,0) NOT NULL,
   `total_price` decimal(10,0) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `wasting_items`
---
-
-INSERT INTO `wasting_items` (`id`, `wasting_id`, `product_id`, `quantity`, `unit_type`, `pieces_count`, `unit_price`, `total_price`) VALUES
-(16, 16, 69, 4, 'piece', 4, 3000, 12000);
 
 --
 -- Indexes for dumped tables
@@ -2187,7 +1960,9 @@ ALTER TABLE `categories`
 -- Indexes for table `customers`
 --
 ALTER TABLE `customers`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_customer_supplier` (`supplier_id`),
+  ADD KEY `idx_customers_business_partner` (`is_business_partner`);
 
 --
 -- Indexes for table `debt_transactions`
@@ -2294,7 +2069,9 @@ ALTER TABLE `sale_items`
 -- Indexes for table `suppliers`
 --
 ALTER TABLE `suppliers`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_supplier_customer` (`customer_id`),
+  ADD KEY `idx_suppliers_business_partner` (`is_business_partner`);
 
 --
 -- Indexes for table `supplier_debt_transactions`
@@ -2337,43 +2114,43 @@ ALTER TABLE `admin_accounts`
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `debt_transactions`
 --
 ALTER TABLE `debt_transactions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=239;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `employees`
 --
 ALTER TABLE `employees`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `employee_payments`
 --
 ALTER TABLE `employee_payments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `expenses`
 --
 ALTER TABLE `expenses`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `inventory`
 --
 ALTER TABLE `inventory`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=475;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `inventory_count`
@@ -2391,55 +2168,55 @@ ALTER TABLE `inventory_count_items`
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `product_returns`
 --
 ALTER TABLE `product_returns`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=122;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `purchases`
 --
 ALTER TABLE `purchases`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=136;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `purchase_items`
 --
 ALTER TABLE `purchase_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=145;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `return_items`
 --
 ALTER TABLE `return_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=126;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=231;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `sale_items`
 --
 ALTER TABLE `sale_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=343;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `suppliers`
 --
 ALTER TABLE `suppliers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `supplier_debt_transactions`
 --
 ALTER TABLE `supplier_debt_transactions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `units`
@@ -2451,17 +2228,23 @@ ALTER TABLE `units`
 -- AUTO_INCREMENT for table `wastings`
 --
 ALTER TABLE `wastings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `wasting_items`
 --
 ALTER TABLE `wasting_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `customers`
+--
+ALTER TABLE `customers`
+  ADD CONSTRAINT `fk_customer_supplier` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `debt_transactions`
@@ -2521,6 +2304,12 @@ ALTER TABLE `sales`
 ALTER TABLE `sale_items`
   ADD CONSTRAINT `sale_items_ibfk_1` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`),
   ADD CONSTRAINT `sale_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
+
+--
+-- Constraints for table `suppliers`
+--
+ALTER TABLE `suppliers`
+  ADD CONSTRAINT `fk_supplier_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `supplier_debt_transactions`
