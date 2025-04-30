@@ -30,39 +30,42 @@ $(document).ready(function() {
     function initializeTable(tableId, searchInputId, paginationId, prevPageId, nextPageId, fromId, toId, totalItemsId) {
         const itemsPerPage = 10;
         let currentPage = 1;
-        let tableData = [];
+        let totalItems = 0;
+        let filteredItems = [];
         
         // Get all table rows and store them in tableData
         $(tableId + ' tbody tr').each(function() {
-            tableData.push($(this));
+            filteredItems.push($(this));
         });
         
+        totalItems = filteredItems.length;
+        
         // Function to display the current page
-        function displayPage(page) {
+        function showPage(page) {
             // Clear the table
             $(tableId + ' tbody').empty();
             
             // Calculate start and end indices
             const start = (page - 1) * itemsPerPage;
-            const end = Math.min(start + itemsPerPage, tableData.length);
+            const end = Math.min(start + itemsPerPage, totalItems);
             
             // Display rows for the current page
             for (let i = start; i < end; i++) {
-                $(tableId + ' tbody').append(tableData[i]);
+                $(tableId + ' tbody').append(filteredItems[i]);
             }
             
             // Update pagination info
-            $(fromId).text(tableData.length > 0 ? start + 1 : 0);
+            $(fromId).text(start + 1);
             $(toId).text(end);
-            $(totalItemsId).text(tableData.length);
+            $(totalItemsId).text(totalItems);
             
             // Update pagination controls
-            updatePagination(page);
+            updatePaginationButtons();
         }
         
         // Function to update pagination controls
-        function updatePagination(page) {
-            const totalPages = Math.ceil(tableData.length / itemsPerPage);
+        function updatePaginationButtons() {
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
             
             // Clear pagination
             $(paginationId).empty();
@@ -70,68 +73,53 @@ $(document).ready(function() {
             // Generate pagination buttons
             for (let i = 1; i <= totalPages; i++) {
                 $(paginationId).append(`
-                    <button class="btn btn-sm ${i === page ? 'btn-primary' : 'btn-outline-secondary'}" 
+                    <button class="btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} page-number" 
                             data-page="${i}">${i}</button>
                 `);
             }
             
             // Enable/disable prev/next buttons
-            $(prevPageId).prop('disabled', page === 1);
-            $(nextPageId).prop('disabled', page >= totalPages);
-            
-            // Update current page
-            currentPage = page;
+            $(prevPageId).prop('disabled', currentPage === 1);
+            $(nextPageId).prop('disabled', currentPage === totalPages);
         }
         
         // Event listeners for pagination
-        $(paginationId).on('click', 'button', function() {
-            const page = parseInt($(this).data('page'));
-            displayPage(page);
+        $(paginationId).on('click', '.page-number', function() {
+            currentPage = parseInt($(this).data('page'));
+            showPage(currentPage);
         });
         
         $(prevPageId).click(function() {
             if (currentPage > 1) {
-                displayPage(currentPage - 1);
+                currentPage--;
+                showPage(currentPage);
             }
         });
         
         $(nextPageId).click(function() {
-            const totalPages = Math.ceil(tableData.length / itemsPerPage);
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
             if (currentPage < totalPages) {
-                displayPage(currentPage + 1);
+                currentPage++;
+                showPage(currentPage);
             }
         });
         
         // Search functionality
         $(searchInputId).on('keyup', function() {
-            const searchTerm = $(this).val().toLowerCase();
+            const searchText = $(this).val().toLowerCase();
             
-            // Collect all original rows if needed
-            const originalRows = [];
-            $(tableId + ' tbody tr').each(function() {
-                originalRows.push($(this));
-            });
+            filteredItems = $(tableId + ' tbody tr').filter(function() {
+                return $(this).text().toLowerCase().includes(searchText);
+            }).toArray();
             
-            // If search term is empty, restore original data
-            if (searchTerm.trim() === '') {
-                tableData = [...originalRows];
-            } else {
-                // Filter data based on search term
-                tableData = [];
-                originalRows.forEach(row => {
-                    const rowText = row.text().toLowerCase();
-                    if (rowText.includes(searchTerm)) {
-                        tableData.push(row.clone());
-                    }
-                });
-            }
+            totalItems = filteredItems.length;
+            currentPage = 1;
             
-            // Display first page of filtered results
-            displayPage(1);
+            showPage(currentPage);
         });
         
         // Initialize the first page
-        displayPage(1);
+        showPage(1);
     }
 
     // Initialize the sales table on page load
