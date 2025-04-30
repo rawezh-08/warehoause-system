@@ -156,21 +156,21 @@ require_once '../../process/addProduct_logic.php';
                                                 <div class="col-md-4 mb-3" style="direction: rtl;">
                                                     <label for="buyingPrice" class="form-label">نرخی کڕین</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="buyingPrice" name="purchase_price" class="form-control" placeholder="نرخی کڕین" required>
+                                                        <input type="number" step="0.01" id="buyingPrice" name="purchase_price" class="form-control" placeholder="نرخی کڕین" required>
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label for="sellingPrice" class="form-label">نرخی فرۆشتن</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="sellingPrice" name="selling_price_single" class="form-control" placeholder="نرخی فرۆشتن" required>
+                                                        <input type="number" step="0.01" id="sellingPrice" name="selling_price_single" class="form-control" placeholder="نرخی فرۆشتن" required>
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-4 mb-3">
                                                     <label for="selling_price_wholesale" class="form-label">نرخی فرۆشتن (کۆمەڵ)</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="selling_price_wholesale" name="selling_price_wholesale" class="form-control" placeholder="نرخی فرۆشتن (کۆمەڵ)" required>
+                                                        <input type="number" step="0.01" id="selling_price_wholesale" name="selling_price_wholesale" class="form-control" placeholder="نرخی فرۆشتن (کۆمەڵ)" required>
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                     <div class="invalid-feedback">
