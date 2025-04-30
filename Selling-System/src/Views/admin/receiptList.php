@@ -356,7 +356,15 @@ function translateUnitType($unitType) {
                         </div>
                         <div class="card-footer bg-white">
                             <div class="pagination-wrapper">
-                                
+                                <div class="pagination-info">
+                                    <select id="salesRecordsPerPage" class="form-select form-select-sm" style="width: auto;">
+                                        <option value="5">5 ڕیکۆرد</option>
+                                        <option value="10" selected>10 ڕیکۆرد</option>
+                                        <option value="25">25 ڕیکۆرد</option>
+                                        <option value="50">50 ڕیکۆرد</option>
+                                        <option value="100">100 ڕیکۆرد</option>
+                                    </select>
+                                </div>
                                 <div class="pagination-controls">
                                     <button class="btn btn-sm btn-outline-secondary rounded-circle" id="salesPrevPage" disabled>
                                         <i class="fas fa-chevron-right"></i>
@@ -412,7 +420,7 @@ function translateUnitType($unitType) {
         const salesTable = $('#salesHistoryTable');
         const salesTableBody = salesTable.find('tbody');
         const salesRows = salesTableBody.find('tr');
-        let salesItemsPerPage = 10;
+        let salesItemsPerPage = parseInt($('#salesRecordsPerPage').val());
         let salesCurrentPage = 1;
         let salesTotalItems = salesRows.length;
         let salesTotalPages = Math.ceil(salesTotalItems / salesItemsPerPage);
@@ -432,13 +440,6 @@ function translateUnitType($unitType) {
 
         // Update pagination info and buttons
         function updateSalesPagination() {
-            // Update pagination text
-            const from = salesTotalItems === 0 ? 0 : ((salesCurrentPage - 1) * salesItemsPerPage) + 1;
-            const to = Math.min(salesCurrentPage * salesItemsPerPage, salesTotalItems);
-            $('#salesFrom').text(from);
-            $('#salesTo').text(to);
-            $('#salesTotalItems').text(salesTotalItems);
-
             // Clear pagination
             const pagination = $('#salesPagination');
             pagination.empty();
@@ -508,7 +509,6 @@ function translateUnitType($unitType) {
             // Update pagination after search
             salesTotalItems = matchCount;
             salesTotalPages = Math.ceil(salesTotalItems / salesItemsPerPage);
-            $('#salesTotalItems').text(matchCount);
             
             // Reset to first page on search
             salesCurrentPage = 1;
