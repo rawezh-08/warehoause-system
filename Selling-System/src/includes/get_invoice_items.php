@@ -6,31 +6,39 @@ require_once '../config/database.php';
 // Set content type to JSON
 header('Content-Type: application/json');
 
+// Check if request method is POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode(['status' => 'error', 'message' => 'Invalid request method']);
+    exit;
+}
+
+// Check if invoice number is provided
+if (!isset($_POST['invoice_number']) || empty($_POST['invoice_number'])) {
+    echo json_encode(['status' => 'error', 'message' => 'Invoice number is required']);
+    exit;
+}
+
+$invoiceNumber = $_POST['invoice_number'];
+
+// Connect to database
+$db = new Database();
+$conn = $db->getConnection();
+
 try {
-    // Validate input
-    if (!isset($_POST['invoice_number']) || empty($_POST['invoice_number'])) {
-        throw new Exception('Invoice number is required');
-    }
-
-    $invoiceNumber = $_POST['invoice_number'];
-
-    // Connect to database
-    $db = new Database();
-    $conn = $db->getConnection();
-
     // Get sale ID from invoice number
     $saleQuery = "SELECT id FROM sales WHERE invoice_number = :invoice_number";
     $saleStmt = $conn->prepare($saleQuery);
     $saleStmt->bindParam(':invoice_number', $invoiceNumber);
     $saleStmt->execute();
     $sale = $saleStmt->fetch(PDO::FETCH_ASSOC);
-
+    
     if (!$sale) {
-        throw new Exception('Invoice not found');
+        echo json_encode(['status' => 'error', 'message' => 'Invoice not found']);
+        exit;
     }
-
+    
     $saleId = $sale['id'];
-
+    
     // Get sale items
     $itemsQuery = "SELECT si.*, p.name as product_name, p.code as product_code 
                   FROM sale_items si 
@@ -40,24 +48,18 @@ try {
     $itemsStmt->bindParam(':sale_id', $saleId);
     $itemsStmt->execute();
     $items = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Format the response
-    $response = [
-        'success' => true,
-        'data' => [
-            'invoice_number' => $invoiceNumber,
-            'sale_id' => $saleId,
-            'items' => $items
-        ]
-    ];
-
-    echo json_encode($response);
-
-} catch (Exception $e) {
-    http_response_code(400);
+    
+    // Return success response with items
     echo json_encode([
-        'success' => false,
-        'error' => $e->getMessage()
+        'status' => 'success',
+        'items' => $items
+    ]);
+    
+} catch (PDOException $e) {
+    // Return error response
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Database error: ' . $e->getMessage()
     ]);
 }
 ?> 
