@@ -144,7 +144,7 @@ require_once '../../process/addProduct_logic.php';
                                                 <button type="button" id="nextTabBtn" class="btn btn-outline-primary mb-2">
                                                     دواتر <i class="fas fa-arrow-left ms-2"></i>
                                                 </button>
-                                                <button type="button" id="submitBtn" class="btn btn-primary mb-2" style="display: none;">
+                                                <button type="submit" id="submitBtn" class="btn btn-primary mb-2" style="display: none;">
                                                     <i class="fas fa-save me-2"></i> زیادکردنی کاڵا
                                                 </button>
                                             </div>
@@ -204,7 +204,7 @@ require_once '../../process/addProduct_logic.php';
                                                 <button type="button" id="prevTabBtn2" class="btn btn-outline-primary mb-2">
                                                     <i class="fas fa-arrow-right me-2"></i> پێشوو
                                                 </button>
-                                                <button type="button" id="submitBtn2" class="btn btn-primary mb-2">
+                                                <button type="submit" id="submitBtn2" class="btn btn-primary mb-2">
                                                     <i class="fas fa-save me-2"></i> زیادکردنی کاڵا
                                                 </button>
                                             </div>

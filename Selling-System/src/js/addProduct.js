@@ -702,396 +702,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Format numbers with commas
-    function formatNumber(input) {
-        // Remove all non-digit characters except period
-        let value = input.value.replace(/[^\d.]/g, '');
-        
-        // Ensure only one decimal point exists
-        const parts = value.split('.');
-        if (parts.length > 2) {
-            value = parts[0] + '.' + parts.slice(1).join('');
-        }
-        
-        // Format the whole number part with commas
-        if (parts.length > 0) {
-            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            value = parts.join('.');
-        }
-        
-        // Update input value
-        input.value = value;
-    }
-
-    // Initialize number formatting
-    const numberInputs = [
-        'buyingPrice',
-        'sellingPrice',
-        'selling_price_wholesale',
-        'piecesPerBox',
-        'boxesPerSet',
-        'min_quantity',
-        'current_quantity'
-    ];
-
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize format listeners
-        numberInputs.forEach(inputId => {
-            const input = document.getElementById(inputId);
-            if (input) {
-                // Keep the input as number type for better mobile keyboard and validation
-                // Just add the event listener for formatting
-                input.addEventListener('input', function() {
-                    formatNumber(this);
-                });
-            }
-        });
-
-        // Initialize by making sure we're on the correct tab and buttons are set up
-        switchToTab('basic-info');
-        
-        // Add form submission via the submit buttons
-        const submitBtn = document.getElementById('submitBtn');
-        const submitBtn2 = document.getElementById('submitBtn2');
-        const addProductForm = document.getElementById('addProductForm');
-        
-        if (submitBtn) {
-            submitBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                handleFormSubmit();
-            });
-        }
-        
-        if (submitBtn2) {
-            submitBtn2.addEventListener('click', function(e) {
-                e.preventDefault();
-                handleFormSubmit();
-            });
-        }
-        
-        // Function to handle form submission
-        function handleFormSubmit() {
-            if (!addProductForm) return;
-            
-            // Prevent double submission
-            if (addProductForm.isSubmitting) {
-                return;
-            }
-            
-            // Validate the form with browser's built-in validation
-            if (!addProductForm.checkValidity()) {
-                // Show custom error message
-                Swal.fire({
-                    icon: 'error',
-                    title: 'هەڵە',
-                    text: 'تکایە هەموو خانەکان پڕ بکەوە',
-                    confirmButtonText: 'باشە'
-                });
-                return;
-            }
-            
-            addProductForm.isSubmitting = true;
-            
-            // Disable submit buttons to prevent double submission
-            const buttons = [submitBtn, submitBtn2];
-            buttons.forEach(button => {
-                if (button) button.disabled = true;
-            });
-            
-            // Validate all tabs before submission
-            if (!validateAllTabs()) {
-                addProductForm.isSubmitting = false;
-                buttons.forEach(button => {
-                    if (button) button.disabled = false;
-                });
-                return;
-            }
-            
-            // Clean number inputs (remove commas)
-            cleanNumberInputs();
-            
-            // Create FormData object
-            const formData = new FormData(addProductForm);
-            
-            // Check if we have a compressed image and use it instead
-            const fileInput = document.getElementById('productImage');
-            if (fileInput && fileInput.files.length > 0 && fileInput.compressedImage) {
-                // Replace the file with the compressed version
-                formData.delete('image');
-                formData.append('image', fileInput.compressedImage);
-            }
-            
-            // Show loading indicator
-            Swal.fire({
-                title: 'تکایە چاوەڕێ بکە...',
-                text: 'زیادکردنی کاڵا بەردەوامە',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-            
-            // Submit form using fetch
-            fetch('../../process/add_product.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        console.error('Server response:', text);
-                        throw new Error('هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە سێرڤەرەوە');
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'سەرکەوتوو',
-                        text: data.message || 'کاڵاکە بە سەرکەوتوویی زیاد کرا',
-                        confirmButtonText: 'باشە'
-                    }).then(() => {
-                        // Show success message
-                        showSuccessMessage();
-                        
-                        // Reset form and image preview
-                        addProductForm.reset();
-                        resetImagePreview();
-                        
-                        // Reset to first tab
-                        switchToTab('basic-info');
-                        
-                        // Refresh the latest products list
-                        updateLatestProducts();
-                        
-                        // Clear any validation errors
-                        clearAllValidationErrors();
-                        
-                        // Reset unit quantity fields
-                        const unitQuantityContainer = document.getElementById('unitQuantityContainer');
-                        if (unitQuantityContainer) {
-                            unitQuantityContainer.style.display = 'none';
-                        }
-                        
-                        // Reset select elements
-                        const selects = addProductForm.querySelectorAll('select');
-                        selects.forEach(select => {
-                            select.value = '';
-                        });
-                    });
-                } else {
-                    throw new Error(data.message || 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'هەڵە',
-                    text: error.message || 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا',
-                    confirmButtonText: 'باشە'
-                });
-            })
-            .finally(() => {
-                // Reset submission flag and enable buttons
-                addProductForm.isSubmitting = false;
-                buttons.forEach(button => {
-                    if (button) button.disabled = false;
-                });
-            });
-        }
-
-        // Initialize unit type handling
-        const unitSelect = document.getElementById('unit_id');
-        if (unitSelect) {
-            unitSelect.addEventListener('change', handleUnitTypeChange);
-            // Call once on page load to set initial state
-            handleUnitTypeChange();
-        }
-
-        // Initialize tab navigation
-        handleTabNavigation();
-
-        // DO NOT initialize form submission here - it's already handled in the main code
-        // handleFormSubmission();
-
-        // Initialize refresh button
-        const refreshButton = document.querySelector('.refresh-products');
-        if (refreshButton) {
-            refreshButton.addEventListener('click', updateLatestProducts);
-        }
-    });
-
-    // Function to handle unit type changes
-    function handleUnitTypeChange() {
-        const unitSelect = document.getElementById('unit_id');
-        const unitQuantityContainer = document.getElementById('unitQuantityContainer');
-        const piecesPerBoxContainer = document.getElementById('piecesPerBoxContainer');
-        const boxesPerSetContainer = document.getElementById('boxesPerSetContainer');
-
-        if (unitSelect && unitQuantityContainer && piecesPerBoxContainer && boxesPerSetContainer) {
-            const selectedUnit = unitSelect.value;
-            
-            // Hide all containers first
-            unitQuantityContainer.style.display = 'none';
-            piecesPerBoxContainer.style.display = 'none';
-            boxesPerSetContainer.style.display = 'none';
-            
-            // Show relevant containers based on unit type
-            if (selectedUnit === '2') { // کارتۆن
-                unitQuantityContainer.style.display = 'flex';
-                piecesPerBoxContainer.style.display = 'block';
-            } else if (selectedUnit === '3') { // سێت
-                unitQuantityContainer.style.display = 'flex';
-                piecesPerBoxContainer.style.display = 'block';
-                boxesPerSetContainer.style.display = 'block';
-            }
-        }
-    }
-
-    // Function to handle tab navigation
-    function handleTabNavigation() {
-        const basicInfoTab = document.querySelector('[data-tab="basic-info"]');
-        const priceInfoTab = document.querySelector('[data-tab="price-info"]');
-        const basicInfoContent = document.getElementById('basic-info-content');
-        const priceInfoContent = document.getElementById('price-info-content');
-        const prevTabBtn = document.getElementById('prevTabBtn');
-        const nextTabBtn = document.getElementById('nextTabBtn');
-        const submitBtn = document.getElementById('submitBtn');
-
-        if (basicInfoTab && priceInfoTab && basicInfoContent && priceInfoContent) {
-            basicInfoTab.addEventListener('click', function() {
-                basicInfoTab.classList.add('active');
-                priceInfoTab.classList.remove('active');
-                basicInfoContent.style.display = 'block';
-                priceInfoContent.style.display = 'none';
-                prevTabBtn.style.display = 'none';
-                nextTabBtn.style.display = 'block';
-                submitBtn.style.display = 'none';
-            });
-
-            priceInfoTab.addEventListener('click', function() {
-                priceInfoTab.classList.add('active');
-                basicInfoTab.classList.remove('active');
-                priceInfoContent.style.display = 'block';
-                basicInfoContent.style.display = 'none';
-                prevTabBtn.style.display = 'block';
-                nextTabBtn.style.display = 'none';
-                submitBtn.style.display = 'block';
-            });
-        }
-    }
-
-    // Function to handle form submission
-    function handleFormSubmission() {
-        console.log("Form submission handler initialization is disabled to prevent double submission");
-        // This function is not used anymore to prevent double submission
-        // We're keeping it empty as a placeholder in case other code references it
-    }
-
-    // Add this function for client-side image compression
-    function compressImage(file, maxSizeMB, maxDimension) {
-        return new Promise((resolve, reject) => {
-            // Create a FileReader to read the file
-            const reader = new FileReader();
-            
-            // Set up FileReader onload handler
-            reader.onload = function(readerEvent) {
-                // Create an HTMLImageElement to get image dimensions
-                const img = new Image();
-                
-                img.onload = function() {
-                    // Calculate new dimensions while maintaining aspect ratio
-                    let width = img.width;
-                    let height = img.height;
-                    
-                    if (width > height && width > maxDimension) {
-                        height = Math.round(height * maxDimension / width);
-                        width = maxDimension;
-                    } else if (height > maxDimension) {
-                        width = Math.round(width * maxDimension / height);
-                        height = maxDimension;
-                    }
-                    
-                    // Create a canvas element to compress the image
-                    const canvas = document.createElement('canvas');
-                    canvas.width = width;
-                    canvas.height = height;
-                    
-                    // Draw the image on the canvas
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // Start with high quality
-                    let quality = 0.8;
-                    let compressedDataUrl;
-                    let compressedBlob;
-                    
-                    // Function to check if we've reached target size
-                    const checkSize = (dataUrl) => {
-                        // Convert data URL to Blob
-                        const byteString = atob(dataUrl.split(',')[1]);
-                        const mimeType = dataUrl.split(',')[0].split(':')[1].split(';')[0];
-                        const ab = new ArrayBuffer(byteString.length);
-                        const ia = new Uint8Array(ab);
-                        for (let i = 0; i < byteString.length; i++) {
-                            ia[i] = byteString.charCodeAt(i);
-                        }
-                        const blob = new Blob([ab], { type: mimeType });
-                        
-                        // Check size and proceed accordingly
-                        if (blob.size <= maxSizeMB * 1024 * 1024) {
-                            // Size is good, create a File object from the blob
-                            compressedBlob = blob;
-                            const fileName = file.name.split('.')[0] + '.jpg';
-                            const compressedFile = new File([blob], fileName, { type: 'image/jpeg' });
-                            resolve(compressedFile);
-                        } else if (quality > 0.1) {
-                            // If file is still too large, reduce quality and try again
-                            quality -= 0.1;
-                            compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-                            checkSize(compressedDataUrl);
-                        } else {
-                            // Can't compress enough, return the best we can do
-                            const fileName = file.name.split('.')[0] + '.jpg';
-                            const compressedFile = new File([compressedBlob], fileName, { type: 'image/jpeg' });
-                            resolve(compressedFile);
-                        }
-                    };
-                    
-                    // Start compression
-                    compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-                    checkSize(compressedDataUrl);
-                };
-                
-                // Set the HTMLImageElement source to FileReader result
-                img.src = readerEvent.target.result;
-            };
-            
-            // Handle FileReader errors
-            reader.onerror = function() {
-                reject(new Error('Failed to read file'));
-            };
-            
-            // Read the file as a data URL (base64 encoded string)
-            reader.readAsDataURL(file);
-        });
-    }
-
-    // Function to clear all validation errors
-    function clearAllValidationErrors() {
-        const invalidFields = document.querySelectorAll('.is-invalid');
-        invalidFields.forEach(field => {
-            field.classList.remove('is-invalid');
-            const errorElement = field.nextElementSibling;
-            if (errorElement && errorElement.classList.contains('invalid-feedback')) {
-                errorElement.remove();
-            }
-        });
-    }
-
     // زیادکردنی فانکشن بۆ پاککردنەوەی کۆماکان لە ژمارەکان
     function cleanNumberInputs() {
         // پاککردنەوەی داتای ژمارەکان لە کۆما
@@ -1116,6 +726,170 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // زیادکردنی پشتڕاستکردنەوە بۆ لەبار هەموو بەهاکان
         return true;
+    }
+    
+    // Initialize by making sure we're on the correct tab and buttons are set up
+    switchToTab('basic-info');
+
+    // Form submission handler
+    if (addProductForm) {
+        let isSubmitting = false; // Flag to prevent double submission
+        
+        addProductForm.addEventListener('submit', async function(e) {
+            e.preventDefault(); // Prevent the form from submitting normally
+            
+            // Prevent double submission
+            if (isSubmitting) {
+                return;
+            }
+            
+            // Validate the form with browser's built-in validation
+            if (!this.checkValidity()) {
+                // Show custom error message
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: 'تکایە هەموو خانەکان پڕ بکەوە',
+                    confirmButtonText: 'باشە'
+                });
+                return false;
+            }
+            
+            isSubmitting = true;
+            
+            // Disable submit buttons to prevent double submission
+            const submitButtons = this.querySelectorAll('button[type="submit"]');
+            submitButtons.forEach(button => {
+                button.disabled = true;
+            });
+            
+            // Validate all tabs before submission
+            if (!validateAllTabs()) {
+                isSubmitting = false;
+                submitButtons.forEach(button => {
+                    button.disabled = false;
+                });
+                return;
+            }
+            
+            // Clean number inputs (remove commas)
+            cleanNumberInputs();
+            
+            // Set selling_price_wholesale to selling_price_single if empty
+            const sellingPriceWholesale = document.getElementById('selling_price_wholesale');
+            if (sellingPriceWholesale && !sellingPriceWholesale.value) {
+                sellingPriceWholesale.value = document.getElementById('sellingPrice').value;
+            }
+            
+            // Create FormData object
+            const formData = new FormData(this);
+            
+            // Check if we have a compressed image and use it instead
+            const fileInput = document.getElementById('productImage');
+            if (fileInput && fileInput.files.length > 0 && fileInput.compressedImage) {
+                // Replace the file with the compressed version
+                formData.delete('image');
+                formData.append('image', fileInput.compressedImage);
+            }
+            
+            try {
+                // Show loading indicator
+                Swal.fire({
+                    title: 'تکایە چاوەڕێ بکە...',
+                    text: 'زیادکردنی کاڵا بەردەوامە',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Submit form using fetch
+                const response = await fetch('../../process/add_product.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Server response:', errorText);
+                    throw new Error(`هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە سێرڤەرەوە`);
+                }
+                
+                let data;
+                try {
+                    data = await response.json();
+                } catch (parseError) {
+                    console.error('Error parsing JSON response:', await response.text());
+                    throw new Error('هەڵەیەک ڕوویدا لە کاتی وەرگرتنی وەڵامەکە');
+                }
+                
+                if (data.success) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'سەرکەوتوو',
+                        text: data.message || 'کاڵاکە بە سەرکەوتوویی زیاد کرا',
+                        confirmButtonText: 'باشە'
+                    });
+                    
+                    // Show success message
+                    showSuccessMessage();
+                    
+                    // Reset form and image preview
+                    this.reset();
+                    resetImagePreview();
+                    
+                    // Reset to first tab
+                    switchToTab('basic-info');
+                    
+                    // Refresh the latest products list
+                    updateLatestProducts();
+                    
+                    // Clear any validation errors
+                    clearAllValidationErrors();
+                    
+                    // Reset unit quantity fields
+                    const unitQuantityContainer = document.getElementById('unitQuantityContainer');
+                    if (unitQuantityContainer) {
+                        unitQuantityContainer.style.display = 'none';
+                    }
+                    
+                    // Reset select elements
+                    const selects = this.querySelectorAll('select');
+                    selects.forEach(select => {
+                        select.value = '';
+                    });
+                    
+                } else {
+                    throw new Error(data.message || 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە',
+                    text: error.message || 'هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا',
+                    confirmButtonText: 'باشە'
+                });
+            } finally {
+                // Reset submission flag and enable buttons
+                isSubmitting = false;
+                submitButtons.forEach(button => {
+                    button.disabled = false;
+                });
+            }
+        });
+    }
+
+    // Function to clear all validation errors
+    function clearAllValidationErrors() {
+        const invalidFields = document.querySelectorAll('.is-invalid');
+        invalidFields.forEach(field => {
+            field.classList.remove('is-invalid');
+            const errorElement = field.nextElementSibling;
+            if (errorElement && errorElement.classList.contains('invalid-feedback')) {
+                errorElement.remove();
+            }
+        });
     }
 });
 
@@ -1185,4 +959,216 @@ async function updateLatestProducts() {
             `;
         }
     }
+}
+
+// Format numbers with commas
+function formatNumber(input) {
+    // Remove all non-digit characters and commas
+    let value = input.value.replace(/[^\d]/g, '');
+    
+    // Add comma every three digits
+    value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    
+    // Update input value
+    input.value = value;
+}
+
+// Function to handle unit type changes
+function handleUnitTypeChange() {
+    const unitSelect = document.getElementById('unit_id');
+    const unitQuantityContainer = document.getElementById('unitQuantityContainer');
+    const piecesPerBoxContainer = document.getElementById('piecesPerBoxContainer');
+    const boxesPerSetContainer = document.getElementById('boxesPerSetContainer');
+
+    if (unitSelect && unitQuantityContainer && piecesPerBoxContainer && boxesPerSetContainer) {
+        const selectedUnit = unitSelect.value;
+        
+        // Hide all containers first
+        unitQuantityContainer.style.display = 'none';
+        piecesPerBoxContainer.style.display = 'none';
+        boxesPerSetContainer.style.display = 'none';
+        
+        // Show relevant containers based on unit type
+        if (selectedUnit === '2') { // کارتۆن
+            unitQuantityContainer.style.display = 'flex';
+            piecesPerBoxContainer.style.display = 'block';
+        } else if (selectedUnit === '3') { // سێت
+            unitQuantityContainer.style.display = 'flex';
+            piecesPerBoxContainer.style.display = 'block';
+            boxesPerSetContainer.style.display = 'block';
+        }
+    }
+}
+
+// Function to handle tab navigation
+function handleTabNavigation() {
+    const basicInfoTab = document.querySelector('[data-tab="basic-info"]');
+    const priceInfoTab = document.querySelector('[data-tab="price-info"]');
+    const basicInfoContent = document.getElementById('basic-info-content');
+    const priceInfoContent = document.getElementById('price-info-content');
+    const prevTabBtn = document.getElementById('prevTabBtn');
+    const nextTabBtn = document.getElementById('nextTabBtn');
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (basicInfoTab && priceInfoTab && basicInfoContent && priceInfoContent) {
+        basicInfoTab.addEventListener('click', function() {
+            basicInfoTab.classList.add('active');
+            priceInfoTab.classList.remove('active');
+            basicInfoContent.style.display = 'block';
+            priceInfoContent.style.display = 'none';
+            prevTabBtn.style.display = 'none';
+            nextTabBtn.style.display = 'block';
+            submitBtn.style.display = 'none';
+        });
+
+        priceInfoTab.addEventListener('click', function() {
+            priceInfoTab.classList.add('active');
+            basicInfoTab.classList.remove('active');
+            priceInfoContent.style.display = 'block';
+            basicInfoContent.style.display = 'none';
+            prevTabBtn.style.display = 'block';
+            nextTabBtn.style.display = 'none';
+            submitBtn.style.display = 'block';
+        });
+    }
+}
+
+// Function to handle form submission
+function handleFormSubmission() {
+    console.log("Form submission handler initialization is disabled to prevent double submission");
+    // This function is not used anymore to prevent double submission
+    // We're keeping it empty as a placeholder in case other code references it
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize number formatting
+    const numberInputs = [
+        'buyingPrice',
+        'sellingPrice',
+        'selling_price_wholesale',
+        'piecesPerBox',
+        'boxesPerSet',
+        'min_quantity',
+        'current_quantity'
+    ];
+
+    numberInputs.forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.setAttribute('type', 'text');
+            input.addEventListener('input', function() {
+                formatNumber(this);
+            });
+        }
+    });
+
+    // Initialize unit type handling
+    const unitSelect = document.getElementById('unit_id');
+    if (unitSelect) {
+        unitSelect.addEventListener('change', handleUnitTypeChange);
+        // Call once on page load to set initial state
+        handleUnitTypeChange();
+    }
+
+    // Initialize tab navigation
+    handleTabNavigation();
+
+    // DO NOT initialize form submission here - it's already handled in the main code
+    // handleFormSubmission();
+
+    // Initialize refresh button
+    const refreshButton = document.querySelector('.refresh-products');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', updateLatestProducts);
+    }
+});
+
+// Add this function for client-side image compression
+function compressImage(file, maxSizeMB, maxDimension) {
+    return new Promise((resolve, reject) => {
+        // Create a FileReader to read the file
+        const reader = new FileReader();
+        
+        // Set up FileReader onload handler
+        reader.onload = function(readerEvent) {
+            // Create an HTMLImageElement to get image dimensions
+            const img = new Image();
+            
+            img.onload = function() {
+                // Calculate new dimensions while maintaining aspect ratio
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > height && width > maxDimension) {
+                    height = Math.round(height * maxDimension / width);
+                    width = maxDimension;
+                } else if (height > maxDimension) {
+                    width = Math.round(width * maxDimension / height);
+                    height = maxDimension;
+                }
+                
+                // Create a canvas element to compress the image
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                
+                // Draw the image on the canvas
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Start with high quality
+                let quality = 0.8;
+                let compressedDataUrl;
+                let compressedBlob;
+                
+                // Function to check if we've reached target size
+                const checkSize = (dataUrl) => {
+                    // Convert data URL to Blob
+                    const byteString = atob(dataUrl.split(',')[1]);
+                    const mimeType = dataUrl.split(',')[0].split(':')[1].split(';')[0];
+                    const ab = new ArrayBuffer(byteString.length);
+                    const ia = new Uint8Array(ab);
+                    for (let i = 0; i < byteString.length; i++) {
+                        ia[i] = byteString.charCodeAt(i);
+                    }
+                    const blob = new Blob([ab], { type: mimeType });
+                    
+                    // Check size and proceed accordingly
+                    if (blob.size <= maxSizeMB * 1024 * 1024) {
+                        // Size is good, create a File object from the blob
+                        compressedBlob = blob;
+                        const fileName = file.name.split('.')[0] + '.jpg';
+                        const compressedFile = new File([blob], fileName, { type: 'image/jpeg' });
+                        resolve(compressedFile);
+                    } else if (quality > 0.1) {
+                        // If file is still too large, reduce quality and try again
+                        quality -= 0.1;
+                        compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                        checkSize(compressedDataUrl);
+                    } else {
+                        // Can't compress enough, return the best we can do
+                        const fileName = file.name.split('.')[0] + '.jpg';
+                        const compressedFile = new File([compressedBlob], fileName, { type: 'image/jpeg' });
+                        resolve(compressedFile);
+                    }
+                };
+                
+                // Start compression
+                compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                checkSize(compressedDataUrl);
+            };
+            
+            // Set the HTMLImageElement source to FileReader result
+            img.src = readerEvent.target.result;
+        };
+        
+        // Handle FileReader errors
+        reader.onerror = function() {
+            reject(new Error('Failed to read file'));
+        };
+        
+        // Read the file as a data URL (base64 encoded string)
+        reader.readAsDataURL(file);
+    });
 } 
