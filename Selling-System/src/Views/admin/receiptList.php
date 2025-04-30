@@ -280,7 +280,7 @@ function formatDate($date) {
                                                         <a href="saleDetails.php?id=<?= $sale['id'] ?>" class="btn btn-sm btn-info view-receipt-btn" data-receipt-id="<?= $sale['id'] ?>" data-receipt-type="sale">
                                                             <i class="fas fa-eye"></i>
                                                         </a>
-                                                        <a href="printReceipt.php?id=<?= $sale['id'] ?>&type=sale" class="btn btn-sm btn-primary print-receipt-btn" target="_blank" data-receipt-id="<?= $sale['id'] ?>" data-receipt-type="sale">
+                                                        <a href="../../views/receipt/printReceipt.php?id=<?= $sale['id'] ?>&type=sale" class="btn btn-sm btn-primary print-receipt-btn" target="_blank" data-receipt-id="<?= $sale['id'] ?>" data-receipt-type="sale">
                                                             <i class="fas fa-print"></i>
                                                         </a>
                                                     </div>
