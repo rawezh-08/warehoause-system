@@ -14,95 +14,6 @@ $(document).ready(function() {
     if (window.location.pathname.includes('staff.php')) {
         fetchEmployees();
     }
-
-    // Reset partner form
-    $('#resetPartnerForm').click(function() {
-        $('#partnerForm')[0].reset();
-        $('#partnerForm').removeClass('was-validated');
-    });
-
-    // Handle partner form submission
-    $('#partnerForm').submit(function(e) {
-        e.preventDefault();
-        
-        // Validate form
-        if (!this.checkValidity()) {
-            e.stopPropagation();
-            $(this).addClass('was-validated');
-            return;
-        }
-
-        // Show loading state
-        Swal.fire({
-            title: 'تکایە چاوەڕێ بکە...',
-            text: 'زیادکردنی هاوکار بەردەوامە',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        // Get form data
-        const formData = new FormData();
-        formData.append('partnerName', $('#partnerName').val());
-        formData.append('partnerPhone1', $('#partnerPhone1').val());
-        formData.append('partnerPhone2', $('#partnerPhone2').val());
-        formData.append('partnerAddress', $('#partnerAddress').val());
-        formData.append('partnerDebitOnBusiness', $('#partnerDebitOnBusiness').val().replace(/,/g, ''));
-        formData.append('partnerDebtOnCustomer', $('#partnerDebtOnCustomer').val().replace(/,/g, ''));
-        formData.append('partnerDebtOnMyself', $('#partnerDebtOnMyself').val().replace(/,/g, ''));
-        formData.append('partnerDebtOnSupplier', $('#partnerDebtOnSupplier').val().replace(/,/g, ''));
-        formData.append('partnerNotes', $('#partnerNotes').val());
-
-        // Send AJAX request
-        $.ajax({
-            url: '../../process/add_partner.php',
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(response) {
-                if (response.status === 'success') {
-                    // Show success message
-                    Swal.fire({
-                        title: 'سەرکەوتوو',
-                        text: response.message,
-                        icon: 'success',
-                        confirmButtonText: 'باشە'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            // Reset form
-                            $('#partnerForm')[0].reset();
-                            $('#partnerForm').removeClass('was-validated');
-                        }
-                    });
-                } else {
-                    // Show error message
-                    Swal.fire({
-                        title: 'هەڵە',
-                        text: response.message,
-                        icon: 'error',
-                        confirmButtonText: 'باشە'
-                    });
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('Error:', error);
-                // Show error message
-                Swal.fire({
-                    title: 'هەڵە',
-                    text: 'هەڵەیەک ڕوویدا لە کاتی ناردنی زانیارییەکان',
-                    icon: 'error',
-                    confirmButtonText: 'باشە'
-                });
-            }
-        });
-    });
-
-    // Format number inputs for partner form
-    $('#partnerDebitOnBusiness, #partnerDebtOnCustomer, #partnerDebtOnMyself, #partnerDebtOnSupplier').on('input', function() {
-        formatNumber(this);
-    });
 });
 
 /**
@@ -808,3 +719,20 @@ function addEmployeeActionListeners() {
 function formatNumberWithCommas(number) {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
+
+// Reset forms
+document.getElementById('resetEmployeeForm').addEventListener('click', function() {
+    document.getElementById('employeeForm').reset();
+});
+
+document.getElementById('resetCustomerForm').addEventListener('click', function() {
+    document.getElementById('customerForm').reset();
+});
+
+document.getElementById('resetSupplierForm').addEventListener('click', function() {
+    document.getElementById('supplierForm').reset();
+});
+
+document.getElementById('resetPartnerForm').addEventListener('click', function() {
+    document.getElementById('partnerForm').reset();
+});
