@@ -1285,16 +1285,31 @@ require_once '../../config/database.php';
 
             // Function to round down to nearest appropriate value
             function roundDownToNearest(number) {
-                if (number >= 10000) {
-                    // Round down to nearest 250 for amounts >= 10000
-                    return Math.floor(number / 250) * 250;
-                } else if (number >= 1000) {
-                    // Round down to nearest 100 for amounts >= 1000
-                    return Math.floor(number / 100) * 100;
-                } else {
-                    // Round down to nearest 50 for amounts < 1000
-                    return Math.floor(number / 50) * 50;
+                // Define valid Iraqi Dinar denominations
+                const denominations = [250, 500, 750, 1000];
+                
+                // Find the largest denomination that's less than or equal to the number
+                let result = 0;
+                for (let i = denominations.length - 1; i >= 0; i--) {
+                    const quotient = Math.floor(number / denominations[i]);
+                    if (quotient > 0) {
+                        result = quotient * denominations[i];
+                        const remainder = number - result;
+                        
+                        // If there's a remainder, check if we can add smaller denominations
+                        if (remainder > 0) {
+                            for (let j = i - 1; j >= 0; j--) {
+                                if (remainder >= denominations[j]) {
+                                    result += denominations[j];
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
                 }
+                
+                return result;
             }
 
             // Handle round total button click
