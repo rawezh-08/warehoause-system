@@ -982,16 +982,43 @@ async function updateLatestProducts() {
     }
 }
 
-// Format numbers with commas
+// Format numbers with commas and allow decimals
 function formatNumber(input) {
-    // Remove all non-digit characters and commas
-    let value = input.value.replace(/[^\d]/g, '');
+    // Get the input value and remove any commas
+    let value = input.value.replace(/,/g, '');
     
-    // Add comma every three digits
-    value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    // Check if this is a price input
+    const isPriceInput = ['buyingPrice', 'sellingPrice', 'selling_price_wholesale'].includes(input.id);
+    
+    if (isPriceInput) {
+        // For price inputs, allow decimals
+        // Remove any characters that aren't numbers or decimal point
+        value = value.replace(/[^\d.]/g, '');
+        
+        // Ensure only one decimal point
+        const decimalCount = (value.match(/\./g) || []).length;
+        if (decimalCount > 1) {
+            value = value.replace(/\.+$/, '');
+        }
+        
+        // Limit to 2 decimal places
+        if (value.includes('.')) {
+            const parts = value.split('.');
+            if (parts[1].length > 2) {
+                value = parts[0] + '.' + parts[1].slice(0, 2);
+            }
+        }
+    } else {
+        // For non-price inputs, only allow whole numbers
+        value = value.replace(/\D/g, '');
+    }
+    
+    // Format with commas for thousands
+    const parts = value.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     
     // Update input value
-    input.value = value;
+    input.value = parts.join('.');
 }
 
 // Function to handle unit type changes
@@ -1077,7 +1104,13 @@ document.addEventListener('DOMContentLoaded', function() {
     numberInputs.forEach(inputId => {
         const input = document.getElementById(inputId);
         if (input) {
-            input.setAttribute('type', 'text');
+            // Set input type based on whether it's a price input or not
+            const isPriceInput = ['buyingPrice', 'sellingPrice', 'selling_price_wholesale'].includes(inputId);
+            input.setAttribute('type', isPriceInput ? 'number' : 'text');
+            if (isPriceInput) {
+                input.setAttribute('step', '0.01');
+            }
+            
             input.addEventListener('input', function() {
                 formatNumber(this);
             });
