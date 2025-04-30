@@ -59,6 +59,11 @@ require_once '../../includes/auth.php';
                                     <i class="fas fa-truck me-2"></i>زیادکردنی دابینکەر
                                 </button>
                             </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="business-partner-tab" data-bs-toggle="tab" data-bs-target="#business-partner-content" type="button" role="tab" aria-controls="business-partner-content" aria-selected="false">
+                                    <i class="fas fa-handshake me-2"></i>زیادکردنی هاوکار
+                                </button>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -175,6 +180,14 @@ require_once '../../includes/auth.php';
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
+                                                    <div class="form-check mb-3">
+                                                        <input class="form-check-input" type="checkbox" id="isBusinessPartner" name="isBusinessPartner">
+                                                        <label class="form-check-label" for="isBusinessPartner">
+                                                            ئەم کڕیارە دابینکەریشە
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
                                                     <label for="customerAddress" class="form-label">ناونیشان</label>
                                                     <textarea class="form-control" id="customerAddress" name="customerAddress" rows="2" placeholder="ناونیشانی کڕیار"></textarea>
                                                 </div>
@@ -246,6 +259,14 @@ require_once '../../includes/auth.php';
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-check mb-3">
+                                                        <input class="form-check-input" type="checkbox" id="isBusinessPartnerSupplier" name="isBusinessPartnerSupplier">
+                                                        <label class="form-check-label" for="isBusinessPartnerSupplier">
+                                                            ئەم دابینکەرە کڕیاریشە
+                                                        </label>
+                                                    </div>
+                                                </div>
                                               
                                                 <div class="col-12">
                                                     <label for="supplierNotes" class="form-label">تێبینی</label>
@@ -253,6 +274,98 @@ require_once '../../includes/auth.php';
                                                 </div>
                                                 <div class="col-12 text-end">
                                                     <button type="button" class="btn btn-outline-secondary me-2" id="resetSupplierForm">
+                                                        <i class="fas fa-redo me-2"></i>ڕیسێت
+                                                    </button>
+                                                    <button type="submit" class="btn btn-primary cta-btn">
+                                                    پاشەکەوتکردن  <i class="fas fa-save me-2"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Business Partner Tab -->
+                    <div class="tab-pane fade" id="business-partner-content" role="tabpanel" aria-labelledby="business-partner-tab">
+                        <div class="row">
+                            <div class="col-md-10 mx-auto">
+                                <div class="card shadow-sm" style="border: 1px solid var(--blue-border-color); border-radius: 18px;">
+                                    <div class="card-header bg-transparent">
+                                        <h5 class="card-title mb-0">زانیاری هاوکار</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="businessPartnerForm" action="../../process/add_business_partner.php" method="POST" class="needs-validation" novalidate>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label for="partnerName" class="form-label">ناوی هاوکار</label>
+                                                    <input type="text" class="form-control" id="partnerName" name="partnerName" required>
+                                                    <div class="invalid-feedback">
+                                                        تکایە ناوی هاوکار داخل بکە
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="partnerPhone" class="form-label">ژمارەی مۆبایلی یەکەم</label>
+                                                    <input type="tel" class="form-control" id="partnerPhone" name="partnerPhone" placeholder="07xxxxxxxxx" pattern="07[0-9]{9}" required>
+                                                    <div class="invalid-feedback">
+                                                        ژمارەی مۆبایل دەبێت بە 07 دەست پێبکات و 11 ژمارە بێت
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="partnerPhone2" class="form-label">ژمارەی مۆبایلی دووەم</label>
+                                                    <input type="tel" class="form-control" id="partnerPhone2" name="partnerPhone2" placeholder="07xxxxxxxxx" pattern="07[0-9]{9}">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="guarantorName" class="form-label">ناوی کەفیل</label>
+                                                    <input type="text" class="form-control" id="guarantorName" name="guarantorName" placeholder="ناوی کەفیل">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="guarantorPhone" class="form-label">ژمارەی مۆبایلی کەفیل</label>
+                                                    <input type="tel" class="form-control" id="guarantorPhone" name="guarantorPhone" placeholder="07xxxxxxxxx" pattern="07[0-9]{9}">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="partnerAddress" class="form-label">ناونیشان</label>
+                                                    <textarea class="form-control" id="partnerAddress" name="partnerAddress" rows="2" placeholder="ناونیشانی هاوکار"></textarea>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="partnerNotes" class="form-label">تێبینی</label>
+                                                    <textarea class="form-control" id="partnerNotes" name="partnerNotes" rows="2" placeholder="تێبینی لەسەر هاوکار"></textarea>
+                                                </div>
+                                                <div class="col-12">
+                                                    <h6 class="mb-3">زانیاری قەرز</h6>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="debitOnBusiness" class="form-label">ئەو بڕەی هاوکار قەرزارە (وەک کڕیار)</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="debitOnBusiness" name="debitOnBusiness" class="form-control" placeholder="بڕی قەرز لە سەر هاوکار" oninput="formatNumber(this)">
+                                                        <span class="input-group-text">د.ع</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="debt_on_customer" class="form-label">پارەی پێشەکی کە هاوکار بە ئێمەی داوە (وەک کڕیار)</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="debt_on_customer" name="debt_on_customer" class="form-control" placeholder="بڕی پێشەکی" oninput="formatNumber(this)">
+                                                        <span class="input-group-text">د.ع</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="debt_on_myself" class="form-label">ئەو بڕە پارەی قەرزارم (وەک دابینکەر)</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="debt_on_myself" name="debt_on_myself" class="form-control" placeholder="بڕی قەرز" oninput="formatNumber(this)">
+                                                        <span class="input-group-text">د.ع</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="debt_on_supplier" class="form-label">پارەی پێشەکی لە ئێمە داومانە (وەک دابینکەر)</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="debt_on_supplier" name="debt_on_supplier" class="form-control" placeholder="بڕی پێشەکی" oninput="formatNumber(this)">
+                                                        <span class="input-group-text">د.ع</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12 text-end">
+                                                    <button type="button" class="btn btn-outline-secondary me-2" id="resetBusinessPartnerForm">
                                                         <i class="fas fa-redo me-2"></i>ڕیسێت
                                                     </button>
                                                     <button type="submit" class="btn btn-primary cta-btn">
@@ -300,6 +413,59 @@ require_once '../../includes/auth.php';
                     tab.show();
                 }
             }
+
+            // Handle form resets
+            document.getElementById('resetBusinessPartnerForm').addEventListener('click', function() {
+                document.getElementById('businessPartnerForm').reset();
+            });
+
+            // Handle business partner relationship
+            const isBusinessPartnerCheckbox = document.getElementById('isBusinessPartner');
+            const isBusinessPartnerSupplierCheckbox = document.getElementById('isBusinessPartnerSupplier');
+
+            // When customer is marked as business partner
+            isBusinessPartnerCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    // Show business partner tab
+                    const businessPartnerTab = document.getElementById('business-partner-tab');
+                    const businessPartnerTabInstance = new bootstrap.Tab(businessPartnerTab);
+                    businessPartnerTabInstance.show();
+                    
+                    // Pre-fill business partner form with customer data
+                    const customerName = document.getElementById('businessMan').value;
+                    const customerPhone = document.getElementById('phone1').value;
+                    const customerPhone2 = document.getElementById('phone2').value;
+                    const customerAddress = document.getElementById('customerAddress').value;
+                    const customerNotes = document.getElementById('customerNotes').value;
+                    
+                    document.getElementById('partnerName').value = customerName;
+                    document.getElementById('partnerPhone').value = customerPhone;
+                    document.getElementById('partnerPhone2').value = customerPhone2;
+                    document.getElementById('partnerAddress').value = customerAddress;
+                    document.getElementById('partnerNotes').value = customerNotes;
+                }
+            });
+
+            // When supplier is marked as business partner
+            isBusinessPartnerSupplierCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    // Show business partner tab
+                    const businessPartnerTab = document.getElementById('business-partner-tab');
+                    const businessPartnerTabInstance = new bootstrap.Tab(businessPartnerTab);
+                    businessPartnerTabInstance.show();
+                    
+                    // Pre-fill business partner form with supplier data
+                    const supplierName = document.getElementById('supplierName').value;
+                    const supplierPhone = document.getElementById('supplierPhone').value;
+                    const supplierPhone2 = document.getElementById('supplierPhone2').value;
+                    const supplierNotes = document.getElementById('supplierNotes').value;
+                    
+                    document.getElementById('partnerName').value = supplierName;
+                    document.getElementById('partnerPhone').value = supplierPhone;
+                    document.getElementById('partnerPhone2').value = supplierPhone2;
+                    document.getElementById('partnerNotes').value = supplierNotes;
+                }
+            });
         });
     </script>
    
