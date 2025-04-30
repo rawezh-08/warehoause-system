@@ -219,7 +219,7 @@ function formatDate($date) {
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table custom-table table-hover mb-0" id="salesTable">
+                            <table class="table custom-table table-hover mb-0" id="salesTableSearch">
                                 <thead class="table-light">
                                     <tr>
                                         <th>#</th>
