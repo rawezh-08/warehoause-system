@@ -7,13 +7,19 @@ $conn = $db->getConnection();
 
 // Get all sales with details
 $salesQuery = "SELECT s.*, 
-               c.name as customer_name, 
-               c.phone1 as customer_phone,
-               SUM(si.total_price) as total_amount
+               p.name as product_name,
+               p.code as product_code,
+               si.quantity,
+               si.unit_type,
+               si.unit_price,
+               si.total_price,
+               s.shipping_cost,
+               s.other_costs,
+               s.discount,
+               s.payment_type
                FROM sales s 
-               LEFT JOIN customers c ON s.customer_id = c.id
-               LEFT JOIN sale_items si ON s.id = si.sale_id 
-               GROUP BY s.id
+               LEFT JOIN sale_items si ON s.id = si.sale_id
+               LEFT JOIN products p ON si.product_id = p.id
                ORDER BY s.date DESC";
 $salesStmt = $conn->prepare($salesQuery);
 $salesStmt->execute();
@@ -250,24 +256,29 @@ function formatDate($date) {
                                         <tr>
                                             <th>#</th>
                                             <th>ژمارەی پسووڵە</th>
-                                            <th>ناوی کڕیار</th>
-                                            <th>ژمارەی پەیوەندی</th>
                                             <th>بەروار</th>
+                                            <th>ناوی کاڵا</th>
+                                            <th>کۆدی کاڵا</th>
+                                            <th>بڕ</th>
+                                            <th>یەکە</th>
+                                            <th>نرخی تاک</th>
+                                            <th>نرخی گشتی</th>
+                                            <th>کرێی گواستنەوە</th>
+                                            <th>خەرجی تر</th>
+                                            <th>داشکاندن</th>
                                             <th>جۆری پارەدان</th>
-                                            <th>کۆی گشتی</th>
-                                            <th>دۆخ</th>
                                             <th>کردارەکان</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php if(empty($sales)): ?>
                                         <tr>
-                                            <td colspan="8" class="text-center py-4">هیچ پسووڵەیەک نەدۆزرایەوە</td>
+                                            <td colspan="14" class="text-center py-4">هیچ پسووڵەیەک نەدۆزرایەوە</td>
                                         </tr>
                                         <?php else: ?>
                                             <?php foreach($sales as $index => $sale): ?>
                                                 <?php 
-                                                    $total = $sale['total_amount'] ?? 0;
+                                                    $total = $sale['total_price'] ?? 0;
                                                     $paymentStatus = 'unpaid';
                                                     if ($sale['payment_type'] == 'cash' || $sale['paid_amount'] >= $total) {
                                                         $paymentStatus = 'paid';
@@ -278,24 +289,21 @@ function formatDate($date) {
                                                 <tr>
                                                     <td><?= $index + 1 ?></td>
                                                     <td><?= htmlspecialchars($sale['invoice_number']) ?></td>
-                                                    <td><?= htmlspecialchars($sale['customer_name'] ?? '-') ?></td>
-                                                    <td><?= htmlspecialchars($sale['customer_phone'] ?? '-') ?></td>
                                                     <td><?= formatDate($sale['date']) ?></td>
+                                                    <td><?= htmlspecialchars($sale['product_name'] ?? '-') ?></td>
+                                                    <td><?= htmlspecialchars($sale['product_code'] ?? '-') ?></td>
+                                                    <td><?= htmlspecialchars($sale['quantity'] ?? '-') ?></td>
+                                                    <td><?= htmlspecialchars($sale['unit_type'] ?? '-') ?></td>
+                                                    <td><?= number_format($sale['unit_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td><?= number_format($sale['total_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td><?= number_format($sale['shipping_cost'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td><?= number_format($sale['other_costs'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td><?= number_format($sale['discount'] ?? 0, 0, '.', ',') ?> د.ع</td>
                                                     <td>
                                                         <?php if($sale['payment_type'] == 'cash'): ?>
                                                             <span class="badge bg-success">نەقد</span>
                                                         <?php else: ?>
                                                             <span class="badge bg-warning">قەرز</span>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td><?= number_format($total, 0, '.', ',') ?> د.ع</td>
-                                                    <td>
-                                                        <?php if($paymentStatus == 'paid'): ?>
-                                                            <span class="badge bg-success">پارەدراوە</span>
-                                                        <?php elseif($paymentStatus == 'partial'): ?>
-                                                            <span class="badge bg-warning">بەشێکی دراوە</span>
-                                                        <?php else: ?>
-                                                            <span class="badge bg-danger">پارە نەدراوە</span>
                                                         <?php endif; ?>
                                                     </td>
                                                     <td>
