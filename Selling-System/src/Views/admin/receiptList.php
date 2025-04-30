@@ -253,17 +253,42 @@ function translateUnitType($unitType) {
                 <div class="tab-pane fade show active" id="sales" role="tabpanel" aria-labelledby="sales-tab">
                     <div class="card shadow-sm">
                         <div class="card-header bg-white">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h5 class="mb-2"><i class="fas fa-shopping-cart"></i> پسووڵەکانی فرۆشتن</h5>
-                                    <div class="input-group" style="max-width: 300px;">
-                                        <input type="text" id="salesSearchInput" class="form-control table-search-input" placeholder="گەڕان بۆ پسووڵە...">
-                                        <span class="input-group-text bg-primary text-white">
-                                            <i class="fas fa-search"></i>
-                                        </span>
+                            <div class="row align-items-center">
+                                <div class="col-md-6 mb-2 mb-md-0">
+                                    <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> پسووڵەکانی فرۆشتن</h5>
+                                </div>
+                                
+                            </div>
+                            <div class="table-controls mb-3">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
+                                            <div class="records-per-page">
+                                                <label class="me-2">نیشاندان:</label>
+                                                <div class="custom-select-wrapper">
+                                                    <select id="salesRecordsPerPage"
+                                                        class="form-select form-select-sm rounded-pill">
+                                                        <option value="5">5</option>
+                                                        <option value="10" selected>10</option>
+                                                        <option value="25">25</option>
+                                                        <option value="50">50</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8 col-sm-6">
+                                            <div class="search-container">
+                                                <div class="input-group">
+                                                    <input type="text" id="salesTableSearch"
+                                                        class="form-control rounded-pill-start table-search-input"
+                                                        placeholder="گەڕان لە تەیبڵدا...">
+                                                    <span class="input-group-text rounded-pill-end bg-light">
+                                                        <i class="fas fa-search"></i>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
