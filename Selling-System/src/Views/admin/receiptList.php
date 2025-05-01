@@ -22,10 +22,34 @@ $salesQuery = "SELECT s.*,
                LEFT JOIN sale_items si ON s.id = si.sale_id
                LEFT JOIN products p ON si.product_id = p.id
                LEFT JOIN customers c ON s.customer_id = c.id
+               WHERE s.is_draft = 0
                ORDER BY s.date DESC";
 $salesStmt = $conn->prepare($salesQuery);
 $salesStmt->execute();
 $sales = $salesStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get draft receipts
+$draftQuery = "SELECT s.*, 
+               p.name as product_name,
+               p.code as product_code,
+               si.quantity,
+               si.unit_type,
+               si.unit_price,
+               si.total_price,
+               s.shipping_cost,
+               s.other_costs,
+               s.discount,
+               s.payment_type,
+               c.name as customer_name
+               FROM sales s 
+               LEFT JOIN sale_items si ON s.id = si.sale_id
+               LEFT JOIN products p ON si.product_id = p.id
+               LEFT JOIN customers c ON s.customer_id = c.id
+               WHERE s.is_draft = 1
+               ORDER BY s.date DESC";
+$draftStmt = $conn->prepare($draftQuery);
+$draftStmt->execute();
+$drafts = $draftStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Function to calculate the total for a sale
 function calculateSaleTotal($saleId, $conn) {
@@ -236,6 +260,11 @@ function translateUnitType($unitType) {
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="drafts-tab" data-bs-toggle="tab" data-bs-target="#drafts" type="button" role="tab" aria-controls="drafts" aria-selected="false">
+                        <i class="fas fa-file-alt"></i> پسووڵە ڕەش نووسەکان
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
                     <button class="nav-link" id="purchases-tab" data-bs-toggle="tab" data-bs-target="#purchases" type="button" role="tab" aria-controls="purchases" aria-selected="false">
                         <i class="fas fa-truck"></i> پسووڵەکانی کڕین
                     </button>
@@ -385,6 +414,145 @@ function translateUnitType($unitType) {
                     </div>
                 </div>
 
+                <!-- Drafts Tab -->
+                <div class="tab-pane fade" id="drafts" role="tabpanel" aria-labelledby="drafts-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <div class="row align-items-center">
+                                <div class="col-md-6 mb-2 mb-md-0">
+                                    <h5 class="mb-0"><i class="fas fa-file-alt"></i> پسووڵە ڕەش نووسەکان</h5>
+                                </div>
+                            </div>
+                            <div class="table-controls mt-3">
+                                <div class="row align-items-center">
+                                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
+                                        <div class="records-per-page d-flex align-items-center">
+                                            <label class="me-2 mb-0">نیشاندان:</label>
+                                            <select id="draftsRecordsPerPage" class="form-select form-select-sm rounded-pill" style="width: auto;">
+                                                <option value="5">5</option>
+                                                <option value="10" selected>10</option>
+                                                <option value="25">25</option>
+                                                <option value="50">50</option>
+                                                <option value="100">100</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8 col-sm-6">
+                                        <div class="search-container">
+                                            <div class="input-group">
+                                                <input type="text" id="draftsSearchInput" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
+                                                <span class="input-group-text rounded-pill-end bg-light">
+                                                    <i class="fas fa-search"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table id="draftsTable" class="table table-bordered custom-table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>ژمارەی پسووڵە</th>
+                                            <th>بەروار</th>
+                                            <th>ناوی کڕیار</th>
+                                            <th>ناوی کاڵا</th>
+                                            <th>کۆدی کاڵا</th>
+                                            <th>بڕ</th>
+                                            <th>یەکە</th>
+                                            <th>نرخی تاک</th>
+                                            <th>نرخی گشتی</th>
+                                            <th>کرێی گواستنەوە</th>
+                                            <th>خەرجی تر</th>
+                                            <th>داشکاندن</th>
+                                            <th>جۆری پارەدان</th>
+                                            <th>کردارەکان</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if(empty($drafts)): ?>
+                                        <tr>
+                                            <td colspan="15" class="text-center py-4">هیچ پسووڵەیەکی ڕەش نووس نەدۆزرایەوە</td>
+                                        </tr>
+                                        <?php else: ?>
+                                            <?php foreach($drafts as $index => $draft): ?>
+                                                <?php 
+                                                    $total = $draft['total_price'] ?? 0;
+                                                    $paymentStatus = 'unpaid';
+                                                    if ($draft['payment_type'] == 'cash' || $draft['paid_amount'] >= $total) {
+                                                        $paymentStatus = 'paid';
+                                                    } elseif ($draft['paid_amount'] > 0) {
+                                                        $paymentStatus = 'partial';
+                                                    }
+                                                ?>
+                                                <tr>
+                                                    <td><?= $index + 1 ?></td>
+                                                    <td><?= htmlspecialchars($draft['invoice_number']) ?></td>
+                                                    <td><?= formatDate($draft['date']) ?></td>
+                                                    <td><?= htmlspecialchars($draft['customer_name'] ?? '-') ?></td>
+                                                    <td><?= htmlspecialchars($draft['product_name'] ?? '-') ?></td>
+                                                    <td><?= htmlspecialchars($draft['product_code'] ?? '-') ?></td>
+                                                    <td><?= htmlspecialchars($draft['quantity'] ?? '-') ?></td>
+                                                    <td><?= translateUnitType($draft['unit_type']) ?></td>
+                                                    <td><?= number_format($draft['unit_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td><?= number_format($draft['total_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td><?= number_format($draft['shipping_cost'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td><?= number_format($draft['other_costs'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td><?= number_format($draft['discount'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td>
+                                                        <?php if($draft['payment_type'] == 'cash'): ?>
+                                                            <span class="badge bg-success">نەقد</span>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-warning">قەرز</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td>
+                                                        <div class="action-buttons">
+                                                            <a href="editSale.php?id=<?= $draft['id'] ?>" 
+                                                               class="btn btn-sm btn-outline-primary rounded-circle"
+                                                               title="دەستکاریکردن">
+                                                                <i class="fas fa-edit"></i>
+                                                            </a>
+                                                            <button type="button" 
+                                                                class="btn btn-sm btn-outline-info rounded-circle show-receipt-items"
+                                                                data-invoice="<?php echo $draft['invoice_number']; ?>"
+                                                                title="بینینی هەموو کاڵاکان">
+                                                                <i class="fas fa-list"></i>
+                                                            </button>
+                                                            <button type="button" 
+                                                                class="btn btn-sm btn-outline-danger rounded-circle delete-draft"
+                                                                data-id="<?= $draft['id'] ?>"
+                                                                title="سڕینەوە">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <div class="pagination-wrapper">
+                                <div class="pagination-controls">
+                                    <button class="btn btn-sm btn-outline-secondary rounded-circle" id="draftsPrevPage" disabled>
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                    <div class="pagination-numbers" id="draftsPagination"></div>
+                                    <button class="btn btn-sm btn-outline-secondary rounded-circle" id="draftsNextPage">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Purchases Tab (Placeholder for future implementation) -->
                 <div class="tab-pane fade" id="purchases" role="tabpanel" aria-labelledby="purchases-tab">
                     <div class="card shadow-sm">
@@ -422,32 +590,110 @@ function translateUnitType($unitType) {
     <script src="../../js/ajax-config.js"></script>
     <script>
     $(document).ready(function() {
-        // Table pagination and filtering
-        const salesTable = $('#salesHistoryTable');
-        const salesTableBody = salesTable.find('tbody');
-        const salesRows = salesTableBody.find('tr');
-        let salesItemsPerPage = parseInt($('#salesRecordsPerPage').val());
-        let salesCurrentPage = 1;
-        let salesTotalItems = salesRows.length;
-        let salesTotalPages = Math.ceil(salesTotalItems / salesItemsPerPage);
+        // Initialize both tables
+        initializeTable('sales');
+        initializeTable('drafts');
 
-        // Initial pagination setup
-        updateSalesPagination();
-        showSalesPage(1);
+        function initializeTable(tableId) {
+            const table = $(`#${tableId}Table`);
+            const tableBody = table.find('tbody');
+            const rows = tableBody.find('tr');
+            let itemsPerPage = parseInt($(`#${tableId}RecordsPerPage`).val());
+            let currentPage = 1;
+            let totalItems = rows.length;
+            let totalPages = Math.ceil(totalItems / itemsPerPage);
 
-        // Handle records per page change
-        $('#salesRecordsPerPage').on('change', function() {
-            salesItemsPerPage = parseInt($(this).val());
-            salesCurrentPage = 1; // Reset to first page
-            salesTotalPages = Math.ceil(salesTotalItems / salesItemsPerPage);
-            showSalesPage(1);
-            updateSalesPagination();
-        });
+            // Initial pagination setup
+            updatePagination(tableId);
+            showPage(tableId, 1);
 
-        // Show receipt items in modal
+            // Handle records per page change
+            $(`#${tableId}RecordsPerPage`).on('change', function() {
+                itemsPerPage = parseInt($(this).val());
+                currentPage = 1;
+                totalPages = Math.ceil(totalItems / itemsPerPage);
+                showPage(tableId, 1);
+                updatePagination(tableId);
+            });
+
+            // Show specific page
+            function showPage(tableId, page) {
+                const rows = $(`#${tableId}Table tbody tr`);
+                rows.hide();
+                rows.slice((page - 1) * itemsPerPage, page * itemsPerPage).show();
+            }
+
+            // Update pagination info and buttons
+            function updatePagination(tableId) {
+                const pagination = $(`#${tableId}Pagination`);
+                pagination.empty();
+
+                const maxPagesToShow = 5;
+                let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+                let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+                if (endPage - startPage + 1 < maxPagesToShow) {
+                    startPage = Math.max(1, endPage - maxPagesToShow + 1);
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const pageButton = $('<button class="btn btn-sm ' + (i === currentPage ? 'btn-primary' : 'btn-outline-secondary') + ' rounded-circle">' + i + '</button>');
+                    pageButton.on('click', function () {
+                        currentPage = i;
+                        showPage(tableId, i);
+                        updatePagination(tableId);
+                    });
+                    pagination.append(pageButton);
+                }
+
+                $(`#${tableId}PrevPage`).prop('disabled', currentPage === 1);
+                $(`#${tableId}NextPage`).prop('disabled', currentPage === totalPages || totalPages === 0);
+            }
+
+            // Previous page button
+            $(`#${tableId}PrevPage`).on('click', function () {
+                if (currentPage > 1) {
+                    currentPage--;
+                    showPage(tableId, currentPage);
+                    updatePagination(tableId);
+                }
+            });
+
+            // Next page button
+            $(`#${tableId}NextPage`).on('click', function () {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    showPage(tableId, currentPage);
+                    updatePagination(tableId);
+                }
+            });
+
+            // Search functionality
+            $(`#${tableId}SearchInput`).on('keyup', function () {
+                const searchTerm = $(this).val().toLowerCase();
+                let matchCount = 0;
+
+                rows.each(function () {
+                    const rowText = $(this).text().toLowerCase();
+                    const showRow = rowText.indexOf(searchTerm) > -1;
+                    $(this).toggle(showRow);
+                    if (showRow) {
+                        matchCount++;
+                    }
+                });
+
+                totalItems = matchCount;
+                totalPages = Math.ceil(totalItems / itemsPerPage);
+                currentPage = 1;
+                showPage(tableId, 1);
+                updatePagination(tableId);
+            });
+        }
+
+        // Show receipt items in modal (for both tables)
         $(document).on('click', '.show-receipt-items', function() {
             const invoiceNumber = $(this).data('invoice');
-            const invoiceItems = <?php echo json_encode($sales); ?>;
+            const invoiceItems = <?php echo json_encode(array_merge($sales, $drafts)); ?>;
             const items = invoiceItems.filter(item => item.invoice_number === invoiceNumber);
             
             let itemsHtml = '<div class="table-responsive"><table class="table table-bordered">';
@@ -479,82 +725,54 @@ function translateUnitType($unitType) {
             });
         });
 
-        // Update pagination info and buttons
-        function updateSalesPagination() {
-            // Clear pagination
-            const pagination = $('#salesPagination');
-            pagination.empty();
-
-            // Add page numbers
-            const maxPagesToShow = 5;
-            let startPage = Math.max(1, salesCurrentPage - Math.floor(maxPagesToShow / 2));
-            let endPage = Math.min(salesTotalPages, startPage + maxPagesToShow - 1);
-
-            if (endPage - startPage + 1 < maxPagesToShow) {
-                startPage = Math.max(1, endPage - maxPagesToShow + 1);
-            }
-
-            for (let i = startPage; i <= endPage; i++) {
-                const pageButton = $('<button class="btn btn-sm ' + (i === salesCurrentPage ? 'btn-primary' : 'btn-outline-secondary') + ' rounded-circle">' + i + '</button>');
-                pageButton.on('click', function () {
-                    salesCurrentPage = i;
-                    showSalesPage(i);
-                    updateSalesPagination();
-                });
-                pagination.append(pageButton);
-            }
-
-            // Update prev/next buttons
-            $('#salesPrevPage').prop('disabled', salesCurrentPage === 1);
-            $('#salesNextPage').prop('disabled', salesCurrentPage === salesTotalPages || salesTotalPages === 0);
-        }
-
-        // Show specific page
-        function showSalesPage(page) {
-            salesRows.hide();
-            salesRows.slice((page - 1) * salesItemsPerPage, page * salesItemsPerPage).show();
-        }
-
-        // Previous page button
-        $('#salesPrevPage').on('click', function () {
-            if (salesCurrentPage > 1) {
-                salesCurrentPage--;
-                showSalesPage(salesCurrentPage);
-                updateSalesPagination();
-            }
-        });
-
-        // Next page button
-        $('#salesNextPage').on('click', function () {
-            if (salesCurrentPage < salesTotalPages) {
-                salesCurrentPage++;
-                showSalesPage(salesCurrentPage);
-                updateSalesPagination();
-            }
-        });
-
-        // Search functionality
-        $('#salesSearchInput').on('keyup', function () {
-            const searchTerm = $(this).val().toLowerCase();
-            let matchCount = 0;
-
-            salesRows.each(function () {
-                const rowText = $(this).text().toLowerCase();
-                const showRow = rowText.indexOf(searchTerm) > -1;
-                $(this).toggle(showRow);
-                if (showRow) {
-                    matchCount++;
+        // Delete draft receipt
+        $(document).on('click', '.delete-draft', function() {
+            const draftId = $(this).data('id');
+            
+            Swal.fire({
+                title: 'دڵنیای لە سڕینەوە؟',
+                text: "ئەم کردارە ناگەڕێتەوە!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'بەڵێ، بسڕەوە',
+                cancelButtonText: 'نەخێر'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Send AJAX request to delete the draft
+                    $.ajax({
+                        url: '../../ajax/delete_draft.php',
+                        type: 'POST',
+                        data: { id: draftId },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    title: 'سڕایەوە!',
+                                    text: response.message,
+                                    icon: 'success'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'هەڵە!',
+                                    text: response.message,
+                                    icon: 'error'
+                                });
+                            }
+                        },
+                        error: function() {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: 'هەڵەیەک ڕوویدا لە کاتی سڕینەوە',
+                                icon: 'error'
+                            });
+                        }
+                    });
                 }
             });
-
-            // Update pagination after search
-            salesTotalItems = matchCount;
-            salesTotalPages = Math.ceil(salesTotalItems / salesItemsPerPage);
-            
-            // Reset to first page on search
-            salesCurrentPage = 1;
-            showSalesPage(1);
-            updateSalesPagination();
         });
     });
     </script>
