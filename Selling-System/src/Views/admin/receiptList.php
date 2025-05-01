@@ -200,8 +200,8 @@ function translateUnitType($unitType) {
             white-space: normal;
             word-wrap: break-word;
             vertical-align: middle;
-            padding: 0.75rem;
-            border: 1px solid #dee2e6;
+            padding: 0.85rem;
+            border: 1px solid #eaeaea;
         }
 
         .custom-table td {
@@ -327,6 +327,12 @@ function translateUnitType($unitType) {
             border-collapse: separate;
             border-spacing: 0;
             border-radius: 16px;
+            margin: 0;
+            border: none;
+        }
+        
+        .custom-table tbody tr:hover {
+            background-color: rgba(13, 110, 253, 0.05);
         }
 
         .custom-table thead th {
@@ -339,6 +345,8 @@ function translateUnitType($unitType) {
         .card {
             border-radius: 24px !important; 
             border: 1px solid #9ec5ff !important;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
         }
 
         .card-header {
@@ -346,6 +354,14 @@ function translateUnitType($unitType) {
             justify-content: space-between;
             align-items: center;
             background-color: transparent !important;
+            border-bottom: 1px solid #e3f2fd !important;
+            padding: 1.25rem 1.5rem !important;
+        }
+
+        .card-footer {
+            background-color: transparent !important;
+            border-top: 1px solid #e3f2fd !important;
+            padding: 1rem 1.5rem !important;
         }
 
         /* Main content margin fix */
@@ -440,8 +456,8 @@ function translateUnitType($unitType) {
                                 </div>
                             </div>
                         </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
+                        <div class="card-body p-3">
+                            <div class="table-responsive p-2" style="background-color: #fff; border-radius: 16px;">
                                 <table id="salesHistoryTable" class="table table-bordered custom-table table-hover" style="border-radius: 16px;">
                                     <thead class="table-light">
                                         <tr>
@@ -576,8 +592,8 @@ function translateUnitType($unitType) {
                                 </div>
                             </div>
                         </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
+                        <div class="card-body p-3">
+                            <div class="table-responsive p-2" style="background-color: #fff; border-radius: 16px;">
                                 <table id="deliveryTable" class="table table-bordered custom-table table-hover" style="border-radius: 16px;">
                                     <thead class="table-light">
                                         <tr>
@@ -690,8 +706,8 @@ function translateUnitType($unitType) {
                                 </div>
                             </div>
                         </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
+                        <div class="card-body p-3">
+                            <div class="table-responsive p-2" style="background-color: #fff; border-radius: 16px;">
                                 <table id="draftsTable" class="table table-bordered custom-table table-hover" style="border-radius: 16px;">
                                     <thead class="table-light">
                                         <tr>
@@ -806,8 +822,8 @@ function translateUnitType($unitType) {
                                 </div>
                             </div>
                         </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
+                        <div class="card-body p-3">
+                            <div class="table-responsive p-2" style="background-color: #fff; border-radius: 16px;">
                                 <table id="returnsTable" class="table table-bordered custom-table table-hover" style="border-radius: 16px;">
                                     <thead class="table-light">
                                         <tr>
@@ -1035,4 +1051,4 @@ function translateUnitType($unitType) {
     <script src="../../js/debtTransactions.js"></script>
 </body>
 
-</html> 
+</html>
