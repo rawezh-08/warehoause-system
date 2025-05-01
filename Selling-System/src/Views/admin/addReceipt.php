@@ -25,6 +25,49 @@ require_once '../../config/database.php';
     <link rel="stylesheet" href="../../css/global.css">
     <link rel="stylesheet" href="../../css/addReceipt.css">
     <link rel="stylesheet" href="../../css/input.css">
+    
+    <!-- Custom style for buttons -->
+    <style>
+        .btn {
+            border: 1px solid transparent;
+            border-radius: 4px !important;
+            padding: 6px 12px;
+            transition: all 0.2s ease;
+        }
+        .btn-outline-primary, .btn-outline-success, .btn-outline-info {
+            background-color: transparent;
+            border: 1px solid;
+        }
+        .btn-outline-primary {
+            border-color: #0d6efd;
+            color: #0d6efd;
+        }
+        .btn-outline-success {
+            border-color: #198754;
+            color: #198754;
+        }
+        .btn-outline-info {
+            border-color: #0dcaf0;
+            color: #0dcaf0;
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            color: white;
+        }
+        .btn-outline-primary:hover {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .btn-outline-success:hover {
+            background-color: #198754;
+            color: white;
+        }
+        .btn-outline-info:hover {
+            background-color: #0dcaf0;
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <!-- Top Navigation -->
