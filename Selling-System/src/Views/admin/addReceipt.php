@@ -215,12 +215,19 @@ require_once '../../config/database.php';
                             </div>
                             <div class="col-md-3">
                                 <label class="total-label">کۆی گشتی</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control grand-total" step="1" readonly>
-                                    <button type="button" class="btn btn-outline-primary round-total" title="خڕکردنەوەی بڕی پارە">
-                                        <i class="fas fa-calculator"></i>
-                                    </button>
-                                </div>
+                                <input type="number" class="form-control grand-total" step="1" readonly>
+                            </div>
+                        </div>
+                        
+                        <!-- Purchase Totals and Profit -->
+                        <div class="row mt-3">
+                            <div class="col-md-3">
+                                <label class="total-label">کۆی نرخی کڕین</label>
+                                <input type="number" class="form-control purchase-total" step="1" readonly>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="total-label">قازانج</label>
+                                <input type="number" class="form-control profit" step="1" readonly>
                             </div>
                         </div>
                     </div>
@@ -1418,21 +1425,57 @@ require_once '../../config/database.php';
             // Update the updateTotals function
             function updateTotals() {
                 let subtotal = 0;
+                let purchaseTotal = 0;
+                
                 $('.items-list tr').each(function() {
                     const totalPrice = calculateTotalPrice($(this));
+                    const purchasePrice = calculatePurchaseTotal($(this));
                     subtotal += totalPrice;
+                    purchaseTotal += purchasePrice;
                 });
                 
                 const discount = parseFloat($('.discount').val()) || 0;
                 const shippingCost = parseFloat($('.shipping-cost').val()) || 0;
                 const otherCost = parseFloat($('.other-cost').val()) || 0;
                 
+                // Update displayed totals
                 $('.subtotal').val(subtotal);
+                $('.purchase-total').val(purchaseTotal);
                 $('.shipping-cost-total').val(shippingCost);
                 $('.grand-total').val(subtotal + shippingCost + otherCost - discount);
+                
+                // Calculate and display profit
+                const profit = subtotal - purchaseTotal;
+                $('.profit').val(profit);
             }
 
-            // Modify the product loading to include unit information
+            // Add this function to calculate purchase total price
+            function calculatePurchaseTotal($row) {
+                const quantity = parseInt($row.find('.quantity').val()) || 0;
+                const unitType = $row.find('.unit-type').val();
+                const selectedProduct = $row.find('.product-select option:selected');
+                
+                // Get pieces_per_box and boxes_per_set
+                const piecesPerBox = parseInt(selectedProduct.data('pieces-per-box')) || 1;
+                const boxesPerSet = parseInt(selectedProduct.data('boxes-per-set')) || 1;
+                const purchasePrice = parseFloat(selectedProduct.data('purchase-price')) || 0;
+                
+                let totalPieces = 0;
+                
+                // Calculate total pieces based on unit type
+                if (unitType === 'piece') {
+                    totalPieces = quantity;
+                } else if (unitType === 'box') {
+                    totalPieces = quantity * piecesPerBox;
+                } else if (unitType === 'set') {
+                    totalPieces = quantity * piecesPerBox * boxesPerSet;
+                }
+                
+                // Calculate total purchase price
+                return totalPieces * purchasePrice;
+            }
+
+            // Modify the product loading to include purchase price
             function loadProducts() {
                 $.ajax({
                     url: '../../api/get_products.php',
@@ -1450,6 +1493,7 @@ require_once '../../config/database.php';
                                         .text(product.name)
                                         .data('pieces-per-box', product.pieces_per_box)
                                         .data('boxes-per-set', product.boxes_per_set)
+                                        .data('purchase-price', product.purchase_price)
                                         .data('single-price', product.selling_price_single)
                                         .data('wholesale-price', product.selling_price_wholesale);
                                     
