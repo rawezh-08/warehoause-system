@@ -494,36 +494,7 @@ function translateUnitType($unitType) {
                     <div class="tab-pane fade show active" id="sales" role="tabpanel" aria-labelledby="sales-tab">
                         <div class="card shadow-sm">
                             <div class="card-header bg-white">
-                                <div class="filter-section mb-3">
-                                    <div class="row">
-                                        <div class="col-md-4 mb-2">
-                                            <label class="form-label">ناوی کڕیار</label>
-                                            <select class="form-select customer-filter" style="width: 100%;">
-                                                <option value="">هەموو کڕیارەکان</option>
-                                                <?php
-                                                $customerQuery = "SELECT DISTINCT c.name FROM customers c 
-                                                                JOIN sales s ON c.id = s.customer_id 
-                                                                WHERE c.name IS NOT NULL 
-                                                                ORDER BY c.name";
-                                                $customerStmt = $conn->prepare($customerQuery);
-                                                $customerStmt->execute();
-                                                $customers = $customerStmt->fetchAll(PDO::FETCH_ASSOC);
-                                                foreach($customers as $customer) {
-                                                    echo "<option value='" . htmlspecialchars($customer['name']) . "'>" . htmlspecialchars($customer['name']) . "</option>";
-                                                }
-                                                ?>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-4 mb-2">
-                                            <label class="form-label">جۆری پارەدان</label>
-                                            <select class="form-select payment-type-filter">
-                                                <option value="">هەموو جۆرەکان</option>
-                                                <option value="cash">نەقد</option>
-                                                <option value="debt">قەرز</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
+                             
                                 <div class="table-controls mt-3">
                                     <div class="row align-items-center">
                                         <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
@@ -655,36 +626,7 @@ function translateUnitType($unitType) {
                     <div class="tab-pane fade" id="delivery" role="tabpanel" aria-labelledby="delivery-tab">
                         <div class="card shadow-sm">
                             <div class="card-header bg-white">
-                                <div class="filter-section mb-3">
-                                    <div class="row">
-                                        <div class="col-md-4 mb-2">
-                                            <label class="form-label">ناوی کڕیار</label>
-                                            <select class="form-select customer-filter" style="width: 100%;">
-                                                <option value="">هەموو کڕیارەکان</option>
-                                                <?php
-                                                $customerQuery = "SELECT DISTINCT c.name FROM customers c 
-                                                                JOIN sales s ON c.id = s.customer_id 
-                                                                WHERE c.name IS NOT NULL 
-                                                                ORDER BY c.name";
-                                                $customerStmt = $conn->prepare($customerQuery);
-                                                $customerStmt->execute();
-                                                $customers = $customerStmt->fetchAll(PDO::FETCH_ASSOC);
-                                                foreach($customers as $customer) {
-                                                    echo "<option value='" . htmlspecialchars($customer['name']) . "'>" . htmlspecialchars($customer['name']) . "</option>";
-                                                }
-                                                ?>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-4 mb-2">
-                                            <label class="form-label">جۆری پارەدان</label>
-                                            <select class="form-select payment-type-filter">
-                                                <option value="">هەموو جۆرەکان</option>
-                                                <option value="cash">نەقد</option>
-                                                <option value="debt">قەرز</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
+                        
                                 <div class="table-controls mt-3">
                                     <div class="row align-items-center">
                                         <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
@@ -794,36 +736,7 @@ function translateUnitType($unitType) {
                     <div class="tab-pane fade" id="drafts" role="tabpanel" aria-labelledby="drafts-tab">
                         <div class="card shadow-sm">
                             <div class="card-header bg-white">
-                                <div class="filter-section mb-3">
-                                    <div class="row">
-                                        <div class="col-md-4 mb-2">
-                                            <label class="form-label">ناوی کڕیار</label>
-                                            <select class="form-select customer-filter" style="width: 100%;">
-                                                <option value="">هەموو کڕیارەکان</option>
-                                                <?php
-                                                $customerQuery = "SELECT DISTINCT c.name FROM customers c 
-                                                                JOIN sales s ON c.id = s.customer_id 
-                                                                WHERE c.name IS NOT NULL 
-                                                                ORDER BY c.name";
-                                                $customerStmt = $conn->prepare($customerQuery);
-                                                $customerStmt->execute();
-                                                $customers = $customerStmt->fetchAll(PDO::FETCH_ASSOC);
-                                                foreach($customers as $customer) {
-                                                    echo "<option value='" . htmlspecialchars($customer['name']) . "'>" . htmlspecialchars($customer['name']) . "</option>";
-                                                }
-                                                ?>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-4 mb-2">
-                                            <label class="form-label">جۆری پارەدان</label>
-                                            <select class="form-select payment-type-filter">
-                                                <option value="">هەموو جۆرەکان</option>
-                                                <option value="cash">نەقد</option>
-                                                <option value="debt">قەرز</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
+                        
                                 <div class="table-controls mt-3">
                                     <div class="row align-items-center">
                                         <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
@@ -935,37 +848,8 @@ function translateUnitType($unitType) {
                     <div class="tab-pane fade" id="returns" role="tabpanel" aria-labelledby="returns-tab">
                         <div class="card shadow-sm">
                             <div class="card-header bg-white">
-                                <div class="filter-section mb-3">
-                                    <div class="row">
-                                        <div class="col-md-4 mb-2">
-                                            <label class="form-label">ناوی کڕیار</label>
-                                            <select class="form-select customer-filter" style="width: 100%;">
-                                                <option value="">هەموو کڕیارەکان</option>
-                                                <?php
-                                                $customerQuery = "SELECT DISTINCT c.name FROM customers c 
-                                                                JOIN sales s ON c.id = s.customer_id 
-                                                                WHERE c.name IS NOT NULL 
-                                                                ORDER BY c.name";
-                                                $customerStmt = $conn->prepare($customerQuery);
-                                                $customerStmt->execute();
-                                                $customers = $customerStmt->fetchAll(PDO::FETCH_ASSOC);
-                                                foreach($customers as $customer) {
-                                                    echo "<option value='" . htmlspecialchars($customer['name']) . "'>" . htmlspecialchars($customer['name']) . "</option>";
-                                                }
-                                                ?>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-4 mb-2">
-                                            <label class="form-label">جۆری پارەدان</label>
-                                            <select class="form-select payment-type-filter">
-                                                <option value="">هەموو جۆرەکان</option>
-                                                <option value="cash">نەقد</option>
-                                                <option value="debt">قەرز</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="table-controls">
+                              
+                                <div class="table-controls mt-3">
                                     <div class="row align-items-center">
                                         <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
                                             <div class="records-per-page d-flex align-items-center">
@@ -1213,71 +1097,6 @@ function translateUnitType($unitType) {
                 customClass: {
                     popup: 'swal2-popup-custom'
                 }
-            });
-        });
-
-        // Initialize Select2 for customer filter
-        $('.customer-filter').select2({
-            placeholder: "هەموو کڕیارەکان",
-            allowClear: true
-        });
-
-        // Function to filter table rows
-        function filterTable(tableId) {
-            const table = $(`#${tableId}`);
-            const rows = table.find('tbody tr');
-            const customerFilter = table.closest('.card').find('.customer-filter').val().toLowerCase();
-            const paymentFilter = table.closest('.card').find('.payment-type-filter').val().toLowerCase();
-            const searchText = table.closest('.card').find('.search-input').val().toLowerCase();
-
-            rows.each(function() {
-                const row = $(this);
-                const customerName = row.find('td:nth-child(3)').text().toLowerCase(); // Adjust column index as needed
-                const paymentType = row.find('td:nth-child(5)').text().toLowerCase(); // Adjust column index as needed
-                const rowText = row.text().toLowerCase();
-
-                const matchesCustomer = !customerFilter || customerName.includes(customerFilter);
-                const matchesPayment = !paymentFilter || 
-                    (paymentFilter === 'cash' && paymentType.includes('نەقد')) ||
-                    (paymentFilter === 'debt' && paymentType.includes('قەرز'));
-                const matchesSearch = !searchText || rowText.includes(searchText);
-
-                row.toggle(matchesCustomer && matchesPayment && matchesSearch);
-            });
-        }
-
-        // Event listeners for filters and search
-        $('.customer-filter, .payment-type-filter').on('change', function() {
-            const tableId = $(this).closest('.card').find('table').attr('id');
-            filterTable(tableId);
-        });
-
-        $('.search-input').on('keyup', function() {
-            const tableId = $(this).closest('.card').find('table').attr('id');
-            filterTable(tableId);
-        });
-
-        // Initialize DataTables with custom options
-        $('.table').each(function() {
-            $(this).DataTable({
-                "dom": '<"row"<"col-md-6"l><"col-md-6"f>>rtip',
-                "language": {
-                    "search": "گەڕان:",
-                    "lengthMenu": "پیشاندانی _MENU_ داخڵکراو",
-                    "zeroRecords": "هیچ تۆمارێك نەدۆزرایەوە",
-                    "info": "پیشاندانی _START_ بۆ _END_ لە _TOTAL_ تۆمار",
-                    "infoEmpty": "پیشاندانی 0 بۆ 0 لە 0 تۆمار",
-                    "infoFiltered": "(پاڵێوراو لە _MAX_ تۆماری سەرەکی)",
-                    "paginate": {
-                        "first": "یەکەم",
-                        "last": "کۆتایی",
-                        "next": "دواتر",
-                        "previous": "پێشتر"
-                    }
-                },
-                "pageLength": 10,
-                "ordering": true,
-                "searching": true
             });
         });
     });
