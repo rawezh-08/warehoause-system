@@ -51,25 +51,10 @@ try {
     $minQuantity = isset($_POST['min_quantity']) ? str_replace(',', '', $_POST['min_quantity']) : 0;
     $currentQuantity = isset($_POST['current_quantity']) ? str_replace(',', '', $_POST['current_quantity']) : 0;
     $piecesPerBox = isset($_POST['pieces_per_box']) ? str_replace(',', '', $_POST['pieces_per_box']) : 1;
-    $boxesPerSet = isset($_POST['boxes_per_set']) ? str_replace(',', '', $_POST['boxes_per_set']) : 1;
 
-    // Get selected unit information
-    $unitStmt = $conn->prepare("SELECT name FROM units WHERE id = ?");
-    $unitStmt->execute([$_POST['unit_id']]);
-    $unitInfo = $unitStmt->fetch(PDO::FETCH_ASSOC);
-    $unitName = $unitInfo ? $unitInfo['name'] : '';
-
-    // Convert quantities based on unit
-    if (strpos(strtolower($unitName), 'سێت') !== false) {
-        // For set units: convert sets to pieces
-        $currentQuantity = $currentQuantity * $piecesPerBox * $boxesPerSet;
-        $minQuantity = $minQuantity * $piecesPerBox * $boxesPerSet;
-    } elseif (strpos(strtolower($unitName), 'کارتۆن') !== false) {
-        // For box units: convert boxes to pieces
-        $currentQuantity = $currentQuantity * $piecesPerBox;
-        $minQuantity = $minQuantity * $piecesPerBox;
-    }
-    // For piece units: no conversion needed
+    // Convert box quantities to pieces
+    $currentQuantity = $currentQuantity * $piecesPerBox;
+    $minQuantity = $minQuantity * $piecesPerBox;
 
     // Generate code if not provided
     if (empty($_POST['code'])) {
