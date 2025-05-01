@@ -573,15 +573,10 @@ function translateUnitType($unitType) {
     <!-- Page Script -->
     <script src="../../js/include-components.js"></script>
     <script src="../../js/ajax-config.js"></script>
+    <script src="../../js/purchase-search.js"></script>
+    <script src="../../js/purchase-filters.js"></script>
     <script>
     $(document).ready(function() {
-        // Initialize the supplier-select with Select2
-        $('.supplier-select').select2({
-            theme: 'bootstrap-5',
-            placeholder: 'هەموو دابینکەرەکان',
-            allowClear: true
-        });
-
         // Initialize the table with pagination
         initializeTable('purchases');
 
@@ -723,95 +718,7 @@ function translateUnitType($unitType) {
                     updatePagination(tableId);
                 }
             });
-
-            // Add search functionality
-            $(`#${tableId}SearchInput`).on('keyup', function() {
-                const searchText = $(this).val().toLowerCase();
-                const rows = $(`#${tableId}Table tbody tr`);
-                
-                rows.each(function() {
-                    const rowText = $(this).text().toLowerCase();
-                    $(this).toggle(rowText.indexOf(searchText) > -1);
-                });
-                
-                // After filtering, adjust pagination
-                const visibleRows = $(`#${tableId}Table tbody tr:visible`);
-                totalItems = visibleRows.length;
-                totalPages = Math.ceil(totalItems / itemsPerPage);
-                currentPage = 1;
-                
-                updatePagination(tableId);
-                showPage(tableId, 1);
-            });
         }
-
-        // Filter by supplier
-        $('#supplierFilter').on('change', function() {
-            const supplierId = $(this).val();
-            const rows = $('#purchasesTable tbody tr');
-            
-            if (supplierId === '') {
-                rows.show();
-            } else {
-                rows.each(function() {
-                    const rowText = $(this).find('td:eq(3)').text(); // supplier name column
-                    const supplierName = $("#supplierFilter option:selected").text();
-                    $(this).toggle(rowText.includes(supplierName));
-                });
-            }
-            
-            // After filtering, adjust pagination
-            const visibleRows = $(`#purchasesTable tbody tr:visible`);
-            const totalItems = visibleRows.length;
-            const itemsPerPage = parseInt($('#purchasesRecordsPerPage').val());
-            const totalPages = Math.ceil(totalItems / itemsPerPage);
-            
-            // Reset to first page
-            const currentPage = 1;
-            updatePagination('purchases');
-            showPage('purchases', 1);
-        });
-
-        // Filter by payment type
-        $('#paymentTypeFilter').on('change', function() {
-            const paymentType = $(this).val();
-            const rows = $('#purchasesTable tbody tr');
-            
-            if (paymentType === '') {
-                rows.show();
-            } else {
-                rows.each(function() {
-                    const rowBadgeText = $(this).find('td:eq(13) .badge').text(); // payment type column with badge
-                    let shouldShow = false;
-                    
-                    if (paymentType === 'cash' && rowBadgeText === 'نەقد') {
-                        shouldShow = true;
-                    } else if (paymentType === 'credit' && rowBadgeText === 'قەرز') {
-                        shouldShow = true;
-                    }
-                    
-                    $(this).toggle(shouldShow);
-                });
-            }
-            
-            // After filtering, adjust pagination
-            const visibleRows = $(`#purchasesTable tbody tr:visible`);
-            const totalItems = visibleRows.length;
-            const itemsPerPage = parseInt($('#purchasesRecordsPerPage').val());
-            const totalPages = Math.ceil(totalItems / itemsPerPage);
-            
-            // Reset to first page
-            const currentPage = 1;
-            updatePagination('purchases');
-            showPage('purchases', 1);
-        });
-
-        // Reset filters
-        $('#resetFilters').on('click', function() {
-            $('#supplierFilter').val('').trigger('change');
-            $('#paymentTypeFilter').val('').trigger('change');
-            $('#purchasesSearchInput').val('').trigger('keyup');
-        });
 
         // Show purchase items in modal
         $(document).on('click', '.show-purchase-items', function() {
