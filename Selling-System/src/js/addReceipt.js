@@ -314,11 +314,11 @@ $(document).ready(function() {
                 
                 if (unitType === 'piece' && data.pieces_per_box) {
                     // For piece, divide the box price by pieces per box
-                    basePrice = Math.round(basePrice / parseInt(data.pieces_per_box || 1));
+                    basePrice = parseFloat((basePrice / parseInt(data.pieces_per_box || 1)).toFixed(2));
                     console.log(`Piece price calculated: ${basePrice}`);
                 } else if (unitType === 'set' && data.pieces_per_box && data.boxes_per_set) {
                     // For set, multiply the box price by boxes per set
-                    basePrice = Math.round(basePrice * parseInt(data.boxes_per_set || 1));
+                    basePrice = parseFloat((basePrice * parseInt(data.boxes_per_set || 1)).toFixed(2));
                     console.log(`Set price calculated: ${basePrice}`);
                 }
                 // For box, keep the original price since database stores box prices
@@ -615,11 +615,11 @@ $(document).ready(function() {
             
             if (unitType === 'piece' && data.pieces_per_box) {
                 // For piece, divide the box price by pieces per box
-                basePrice = Math.round(basePrice / parseInt(data.pieces_per_box || 1));
+                basePrice = parseFloat((basePrice / parseInt(data.pieces_per_box || 1)).toFixed(2));
                 console.log(`Piece price calculated: ${basePrice}`);
             } else if (unitType === 'set' && data.pieces_per_box && data.boxes_per_set) {
                 // For set, multiply the box price by boxes per set
-                basePrice = Math.round(basePrice * parseInt(data.boxes_per_set || 1));
+                basePrice = parseFloat((basePrice * parseInt(data.boxes_per_set || 1)).toFixed(2));
                 console.log(`Set price calculated: ${basePrice}`);
             }
             // For box, keep the original price since database stores box prices
@@ -668,13 +668,13 @@ $(document).ready(function() {
             // Adjust price based on unit type - since database stores box prices
             if (unitType === 'piece' && productData.pieces_per_box) {
                 // For piece, divide the box price by pieces per box
-                newPrice = Math.round(basePrice / parseInt(productData.pieces_per_box || 1));
+                newPrice = parseFloat((basePrice / parseInt(productData.pieces_per_box || 1)).toFixed(2));
             } else if (unitType === 'box') {
                 // For box, use the price directly from database
                 newPrice = basePrice;
             } else if (unitType === 'set' && productData.boxes_per_set) {
                 // For set, multiply the box price by boxes per set
-                newPrice = Math.round(basePrice * parseInt(productData.boxes_per_set || 1));
+                newPrice = parseFloat((basePrice * parseInt(productData.boxes_per_set || 1)).toFixed(2));
             }
             
             // Update the appropriate price field based on tab type
@@ -887,11 +887,11 @@ $(document).ready(function() {
             
             if (unitType === 'piece' && data.pieces_per_box) {
                 // For piece, divide the box price by pieces per box
-                basePrice = Math.round(basePrice / parseInt(data.pieces_per_box || 1));
+                basePrice = parseFloat((basePrice / parseInt(data.pieces_per_box || 1)).toFixed(2));
                 console.log(`Piece price calculated: ${basePrice}`);
             } else if (unitType === 'set' && data.pieces_per_box && data.boxes_per_set) {
                 // For set, multiply the box price by boxes per set
-                basePrice = Math.round(basePrice * parseInt(data.boxes_per_set || 1));
+                basePrice = parseFloat((basePrice * parseInt(data.boxes_per_set || 1)).toFixed(2));
                 console.log(`Set price calculated: ${basePrice}`);
             }
             // For box, keep the original price since database stores box prices

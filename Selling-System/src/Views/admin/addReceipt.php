@@ -1358,182 +1358,55 @@ require_once '../../config/database.php';
                 }
             });
 
-            // Function to calculate total for a row based on unit type, quantity and price
-            function calculateRowTotal($row) {
-                const unitType = $row.find('.unit-type').val();
-                const quantity = parseFloat($row.find('.quantity').val()) || 0;
-                const unitPrice = parseFloat($row.find('.unit-price').val()) || 0;
-                const total = quantity * unitPrice;
-                $row.find('.total').val(total.toFixed(0));
-                
-                // Recalculate subtotal and grand total
-                updateTotals($row.closest('.receipt-container'));
-            }
-            
-            // Function to update product price based on unit type
-            function updateProductPrice($row) {
-                const productId = $row.find('.product-select').val();
-                const unitType = $row.find('.unit-type').val();
-                const priceType = $row.closest('.receipt-container').find('.price-type').val();
-                
-                if (!productId) return;
-                
-                // Get product data via AJAX
-                $.ajax({
-                    url: '../../api/get_product_details.php',
-                    type: 'GET',
-                    data: { product_id: productId },
-                    success: function(response) {
-                        if (response.success) {
-                            const product = response.data;
-                            let price = 0;
-                            
-                            // Make sure pieces_per_box is at least 1
-                            const piecesPerBox = parseFloat(product.pieces_per_box) || 1;
-                            const boxesPerSet = parseFloat(product.boxes_per_set) || 1;
-                            
-                            // Set price based on unit type and price type
-                            if (unitType === 'piece') {
-                                // For pieces, we need to calculate the price per piece
-                                if (priceType === 'wholesale') {
-                                    // Wholesale price per piece = box wholesale price ÷ pieces per box
-                                    price = parseFloat(product.selling_price_wholesale) / piecesPerBox;
-                                } else {
-                                    // Single price per piece = box single price ÷ pieces per box
-                                    price = parseFloat(product.selling_price_single) / piecesPerBox;
-                                }
-                            } else if (unitType === 'box') {
-                                // For boxes, use the full box price directly
-                                if (priceType === 'wholesale') {
-                                    price = parseFloat(product.selling_price_wholesale);
-                                } else {
-                                    price = parseFloat(product.selling_price_single);
-                                }
-                            } else if (unitType === 'set') {
-                                // For sets, multiply box price by boxes per set
-                                if (priceType === 'wholesale') {
-                                    price = parseFloat(product.selling_price_wholesale) * boxesPerSet;
-                                } else {
-                                    price = parseFloat(product.selling_price_single) * boxesPerSet;
-                                }
-                            }
-                            
-                            // Update unit price field
-                            $row.find('.unit-price').val(Math.round(price));
-                            
-                            // Calculate row total
-                            calculateRowTotal($row);
-                            
-                            // Debug: show what's happening
-                            console.log('Price calculation:', {
-                                productName: product.name,
-                                unitType: unitType,
-                                priceType: priceType,
-                                piecesPerBox: piecesPerBox,
-                                boxesPerSet: boxesPerSet,
-                                singlePrice: product.selling_price_single,
-                                wholesalePrice: product.selling_price_wholesale,
-                                calculatedPrice: price
-                            });
-                        }
+            // Add calculations for profit display
+            $(document).ready(function() {
+                // Function to calculate profit per row
+                function calculateProfit(row) {
+                    const productId = row.find('.product-select').val();
+                    if (!productId) return;
+                    
+                    const productData = row.find('.product-select').select2('data')[0];
+                    if (!productData) return;
+                    
+                    const quantity = parseFloat(row.find('.quantity').val()) || 0;
+                    const unitType = row.find('.unit-type').val();
+                    const unitPrice = parseFloat(row.find('.unit-price').val()) || 0;
+                    const piecesPerBox = parseInt(productData.pieces_per_box || 1);
+                    const boxesPerSet = parseInt(productData.boxes_per_set || 1);
+                    const purchasePrice = parseFloat(productData.purchase_price || 0);
+                    
+                    let costPerUnit = purchasePrice;
+                    
+                    // Calculate cost based on unit type
+                    if (unitType === 'piece') {
+                        // Cost per piece
+                        costPerUnit = parseFloat((purchasePrice / piecesPerBox).toFixed(2));
+                    } else if (unitType === 'set') {
+                        // Cost per set
+                        costPerUnit = parseFloat((purchasePrice * boxesPerSet).toFixed(2));
                     }
-                });
-            }
-            
-            // Handle unit type change
-            $(document).on('change', '.unit-type', function() {
-                const $row = $(this).closest('tr');
-                updateProductPrice($row);
-            });
-            
-            // Handle price type change
-            $(document).on('change', '.price-type', function() {
-                const $container = $(this).closest('.receipt-container');
-                $container.find('.items-list tr').each(function() {
-                    const $row = $(this);
-                    if ($row.find('.product-select').val()) {
-                        updateProductPrice($row);
-                    }
-                });
-            });
-            
-            // Handle product selection
-            $(document).on('change', '.product-select', function() {
-                const $row = $(this).closest('tr');
-                updateProductPrice($row);
-            });
-            
-            // Handle quantity change
-            $(document).on('input', '.quantity', function() {
-                const $row = $(this).closest('tr');
-                calculateRowTotal($row);
-            });
-            
-            // Handle unit price change
-            $(document).on('input', '.unit-price', function() {
-                const $row = $(this).closest('tr');
-                calculateRowTotal($row);
-            });
-            
-            // Function to update all totals
-            function updateTotals($container) {
-                let subtotal = 0;
-                
-                // Calculate subtotal from all item rows
-                $container.find('.items-list tr').each(function() {
-                    const total = parseFloat($(this).find('.total').val()) || 0;
-                    subtotal += total;
-                });
-                
-                // Set subtotal field
-                $container.find('.subtotal').val(subtotal.toFixed(0));
-                
-                // Get discount, shipping cost, and other costs
-                const discount = parseFloat($container.find('.discount').val()) || 0;
-                const shippingCost = parseFloat($container.find('.shipping-cost').val()) || 0;
-                const otherCost = parseFloat($container.find('.other-cost').val()) || 0;
-                
-                // Update shipping cost total field if it exists
-                if ($container.find('.shipping-cost-total').length) {
-                    $container.find('.shipping-cost-total').val(shippingCost.toFixed(0));
+                    
+                    // Calculate profit
+                    const profitPerUnit = unitPrice - costPerUnit;
+                    const totalProfit = profitPerUnit * quantity;
+                    
+                    // Show profit in console for debugging
+                    console.log(`Row profit: ${totalProfit.toFixed(2)} (${profitPerUnit.toFixed(2)} per ${unitType})`);
                 }
                 
-                // Calculate grand total
-                const grandTotal = subtotal + shippingCost + otherCost - discount;
+                // Add event listeners for profit calculation
+                $(document).on('change', '.unit-price, .quantity, .unit-type', function() {
+                    const row = $(this).closest('tr');
+                    calculateProfit(row);
+                });
                 
-                // Set grand total field
-                $container.find('.grand-total').val(grandTotal.toFixed(0));
-                
-                // If it's a credit sale, update remaining amount
-                if ($container.find('.payment-type').val() === 'credit') {
-                    const paidAmount = parseFloat($container.find('.paid-amount').val()) || 0;
-                    const remainingAmount = grandTotal - paidAmount;
-                    $container.find('.remaining-amount').val(remainingAmount.toFixed(0));
-                }
-            }
-            
-            // Handle other events affecting totals
-            $(document).on('input', '.discount, .shipping-cost, .other-cost', function() {
-                updateTotals($(this).closest('.receipt-container'));
-            });
-            
-            // Handle payment type change
-            $(document).on('change', '.payment-type', function() {
-                const $container = $(this).closest('.receipt-container');
-                const paymentType = $(this).val();
-                
-                if (paymentType === 'credit') {
-                    $container.find('.credit-payment-fields').show();
-                } else {
-                    $container.find('.credit-payment-fields').hide();
-                }
-                
-                updateTotals($container);
-            });
-            
-            // Handle paid amount change
-            $(document).on('input', '.paid-amount', function() {
-                updateTotals($(this).closest('.receipt-container'));
+                // Calculate profit when product is selected
+                $(document).on('select2:select', '.product-select', function() {
+                    const row = $(this).closest('tr');
+                    setTimeout(() => {
+                        calculateProfit(row);
+                    }, 100);
+                });
             });
         });
     </script>
