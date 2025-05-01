@@ -1388,29 +1388,53 @@ require_once '../../config/database.php';
                             const product = response.data;
                             let price = 0;
                             
+                            // Make sure pieces_per_box is at least 1
+                            const piecesPerBox = parseFloat(product.pieces_per_box) || 1;
+                            const boxesPerSet = parseFloat(product.boxes_per_set) || 1;
+                            
                             // Set price based on unit type and price type
                             if (unitType === 'piece') {
-                                // For pieces, use single price or wholesale price
-                                price = (priceType === 'wholesale') ? 
-                                    parseFloat(product.selling_price_wholesale) / parseFloat(product.pieces_per_box || 1) : 
-                                    parseFloat(product.selling_price_single) / parseFloat(product.pieces_per_box || 1);
+                                // For pieces, we need to calculate the price per piece
+                                if (priceType === 'wholesale') {
+                                    // Wholesale price per piece = box wholesale price ÷ pieces per box
+                                    price = parseFloat(product.selling_price_wholesale) / piecesPerBox;
+                                } else {
+                                    // Single price per piece = box single price ÷ pieces per box
+                                    price = parseFloat(product.selling_price_single) / piecesPerBox;
+                                }
                             } else if (unitType === 'box') {
-                                // For boxes, use full box price
-                                price = (priceType === 'wholesale') ? 
-                                    parseFloat(product.selling_price_wholesale) : 
-                                    parseFloat(product.selling_price_single);
+                                // For boxes, use the full box price directly
+                                if (priceType === 'wholesale') {
+                                    price = parseFloat(product.selling_price_wholesale);
+                                } else {
+                                    price = parseFloat(product.selling_price_single);
+                                }
                             } else if (unitType === 'set') {
-                                // For sets, calculate based on boxes per set
-                                price = (priceType === 'wholesale') ? 
-                                    parseFloat(product.selling_price_wholesale) * parseFloat(product.boxes_per_set || 1) : 
-                                    parseFloat(product.selling_price_single) * parseFloat(product.boxes_per_set || 1);
+                                // For sets, multiply box price by boxes per set
+                                if (priceType === 'wholesale') {
+                                    price = parseFloat(product.selling_price_wholesale) * boxesPerSet;
+                                } else {
+                                    price = parseFloat(product.selling_price_single) * boxesPerSet;
+                                }
                             }
                             
                             // Update unit price field
-                            $row.find('.unit-price').val(price.toFixed(0));
+                            $row.find('.unit-price').val(Math.round(price));
                             
                             // Calculate row total
                             calculateRowTotal($row);
+                            
+                            // Debug: show what's happening
+                            console.log('Price calculation:', {
+                                productName: product.name,
+                                unitType: unitType,
+                                priceType: priceType,
+                                piecesPerBox: piecesPerBox,
+                                boxesPerSet: boxesPerSet,
+                                singlePrice: product.selling_price_single,
+                                wholesalePrice: product.selling_price_wholesale,
+                                calculatedPrice: price
+                            });
                         }
                     }
                 });
