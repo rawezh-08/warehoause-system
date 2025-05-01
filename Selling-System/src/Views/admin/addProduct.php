@@ -393,32 +393,64 @@ require_once '../../process/addProduct_logic.php';
     <script>
     // Add this to your existing JavaScript
     $(document).ready(function() {
-        // Function to calculate piece prices
-        function calculatePiecePrices() {
+        // Function to calculate piece quantities
+        function calculatePieceQuantities() {
             const piecesPerBox = parseInt($('#piecesPerBox').val()) || 1;
-            const buyingPrice = parseFloat($('#buyingPrice').val()) || 0;
-            const sellingPrice = parseFloat($('#sellingPrice').val()) || 0;
-            const wholesalePrice = parseFloat($('#selling_price_wholesale').val()) || 0;
+            const boxesPerSet = parseInt($('#boxesPerSet').val()) || 1;
+            const minQuantity = parseInt($('#min_quantity').val()) || 0;
+            const currentQuantity = parseInt($('#current_quantity').val()) || 0;
+            
+            // Get the currently selected unit
+            const selectedUnitId = $('#unit_id').val();
+            const unitName = $('#unit_id option:selected').text().trim();
+            
+            // By default calculate as if everything is in boxes
+            let minQuantityPieces = minQuantity * piecesPerBox;
+            let currentQuantityPieces = currentQuantity * piecesPerBox;
+            
+            // If the unit involves sets, adjust calculations
+            if (unitName.includes('سێت') || $('#boxesPerSetContainer').is(':visible')) {
+                minQuantityPieces = minQuantity * piecesPerBox * boxesPerSet;
+                currentQuantityPieces = currentQuantity * piecesPerBox * boxesPerSet;
+            }
 
-            // Calculate piece prices
-            const pieceBuyingPrice = (buyingPrice / piecesPerBox).toFixed(2);
-            const pieceSellingPrice = (sellingPrice / piecesPerBox).toFixed(2);
-            const pieceWholesalePrice = (wholesalePrice / piecesPerBox).toFixed(2);
-
-            // Update piece price displays
-            $('#pieceBuyingPrice').text(pieceBuyingPrice);
-            $('#pieceSellingPrice').text(pieceSellingPrice);
-            $('#pieceWholesalePrice').text(pieceWholesalePrice);
+            // Update piece quantity displays
+            $('#minQuantityPieces').text(minQuantityPieces);
+            $('#currentQuantityPieces').text(currentQuantityPieces);
         }
 
-        // Add event listeners for price inputs and pieces per box
-        $('#buyingPrice, #sellingPrice, #selling_price_wholesale, #piecesPerBox').on('input', calculatePiecePrices);
+        // Add event listeners for quantity inputs, pieces per box, and boxes per set
+        $('#min_quantity, #current_quantity, #piecesPerBox, #boxesPerSet').on('input', calculatePieceQuantities);
 
-        // Calculate initial piece prices when pieces per box is entered
-        $('#piecesPerBox').on('change', function() {
+        // Calculate initial piece quantities when pieces per box or boxes per set is entered
+        $('#piecesPerBox, #boxesPerSet').on('change', function() {
             if ($(this).val()) {
-                calculatePiecePrices();
+                calculatePieceQuantities();
             }
+        });
+        
+        // Update visibility of unit-specific fields when unit changes
+        $('#unit_id').on('change', function() {
+            const unitId = $(this).val();
+            const unitName = $('#unit_id option:selected').text().trim();
+            
+            // First hide all containers
+            $('#unitQuantityContainer').hide();
+            $('#piecesPerBoxContainer').hide();
+            $('#boxesPerSetContainer').hide();
+            
+            // Then show the relevant containers based on the selected unit
+            if (unitName.includes('کارتۆن') || unitName.includes('سێت')) {
+                $('#unitQuantityContainer').show();
+                $('#piecesPerBoxContainer').show();
+                
+                if (unitName.includes('سێت')) {
+                    $('#boxesPerSetContainer').show();
+                }
+            }
+            
+            // Recalculate quantities
+            calculatePieceQuantities();
         });
     });
     </script>
@@ -426,28 +458,44 @@ require_once '../../process/addProduct_logic.php';
     <script>
     // Add this to your existing JavaScript
     $(document).ready(function() {
-        // Function to calculate piece quantities
-        function calculatePieceQuantities() {
+        // Function to calculate piece prices
+        function calculatePiecePrices() {
             const piecesPerBox = parseInt($('#piecesPerBox').val()) || 1;
-            const minQuantity = parseInt($('#min_quantity').val()) || 0;
-            const currentQuantity = parseInt($('#current_quantity').val()) || 0;
+            const boxesPerSet = parseInt($('#boxesPerSet').val()) || 1;
+            const buyingPrice = parseFloat($('#buyingPrice').val()) || 0;
+            const sellingPrice = parseFloat($('#sellingPrice').val()) || 0;
+            const wholesalePrice = parseFloat($('#selling_price_wholesale').val()) || 0;
 
-            // Calculate piece quantities
-            const minQuantityPieces = minQuantity * piecesPerBox;
-            const currentQuantityPieces = currentQuantity * piecesPerBox;
+            // Get the currently selected unit
+            const selectedUnitId = $('#unit_id').val();
+            const unitName = $('#unit_id option:selected').text().trim();
+            
+            // By default calculate as if everything is in boxes
+            let divisor = piecesPerBox;
+            
+            // If the unit involves sets, adjust calculations
+            if (unitName.includes('سێت') || $('#boxesPerSetContainer').is(':visible')) {
+                divisor = piecesPerBox * boxesPerSet;
+            }
 
-            // Update piece quantity displays
-            $('#minQuantityPieces').text(minQuantityPieces);
-            $('#currentQuantityPieces').text(currentQuantityPieces);
+            // Calculate piece prices
+            const pieceBuyingPrice = (buyingPrice / divisor).toFixed(2);
+            const pieceSellingPrice = (sellingPrice / divisor).toFixed(2);
+            const pieceWholesalePrice = (wholesalePrice / divisor).toFixed(2);
+
+            // Update piece price displays
+            $('#pieceBuyingPrice').text(pieceBuyingPrice);
+            $('#pieceSellingPrice').text(pieceSellingPrice);
+            $('#pieceWholesalePrice').text(pieceWholesalePrice);
         }
 
-        // Add event listeners for quantity inputs and pieces per box
-        $('#min_quantity, #current_quantity, #piecesPerBox').on('input', calculatePieceQuantities);
+        // Add event listeners for price inputs and conversion factors
+        $('#buyingPrice, #sellingPrice, #selling_price_wholesale, #piecesPerBox, #boxesPerSet').on('input', calculatePiecePrices);
 
-        // Calculate initial piece quantities when pieces per box is entered
-        $('#piecesPerBox').on('change', function() {
+        // Calculate initial piece prices when conversion factors change
+        $('#piecesPerBox, #boxesPerSet').on('change', function() {
             if ($(this).val()) {
-                calculatePieceQuantities();
+                calculatePiecePrices();
             }
         });
     });

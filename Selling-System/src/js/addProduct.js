@@ -341,53 +341,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Unit selection handling
     if (unitSelect) {
-        unitSelect.addEventListener('change', function() {
-            const selectedUnit = this.value;
-            const unitQuantityContainer = document.getElementById('unitQuantityContainer');
-            const piecesPerBoxContainer = document.getElementById('piecesPerBoxContainer');
-            const boxesPerSetContainer = document.getElementById('boxesPerSetContainer');
-            const piecesPerBoxInput = document.getElementById('piecesPerBox');
-            const boxesPerSetInput = document.getElementById('boxesPerSet');
-
-            if (unitQuantityContainer && piecesPerBoxContainer && boxesPerSetContainer) {
-                // First hide all containers
-                unitQuantityContainer.style.display = 'none';
-                piecesPerBoxContainer.style.display = 'none';
-                boxesPerSetContainer.style.display = 'none';
-
-                // Remove required attribute from all fields initially
-                if (piecesPerBoxInput) piecesPerBoxInput.removeAttribute('required');
-                if (boxesPerSetInput) boxesPerSetInput.removeAttribute('required');
-
-                // Show relevant containers based on unit selection
-                switch (selectedUnit) {
-                    case '1': // دانە
-                        break;
-                    case '2': // دانە و کارتۆن
-                        unitQuantityContainer.style.display = 'flex';
-                        piecesPerBoxContainer.style.display = 'block';
-                        // Add required attribute for visible fields
-                        if (piecesPerBoxInput) piecesPerBoxInput.setAttribute('required', 'required');
-                        break;
-                    case '3': // دانە و کارتۆن و سێت
-                        unitQuantityContainer.style.display = 'flex';
-                        piecesPerBoxContainer.style.display = 'block';
-                        boxesPerSetContainer.style.display = 'block';
-                        // Add required attribute for visible fields
-                        if (piecesPerBoxInput) piecesPerBoxInput.setAttribute('required', 'required');
-                        if (boxesPerSetInput) boxesPerSetInput.setAttribute('required', 'required');
-                        break;
-                }
-
-                // Clear values when hiding
-                if (selectedUnit === '1') {
-                    if (piecesPerBoxInput) piecesPerBoxInput.value = '';
-                    if (boxesPerSetInput) boxesPerSetInput.value = '';
-                } else if (selectedUnit === '2') {
-                    if (boxesPerSetInput) boxesPerSetInput.value = '';
-                }
-            }
-        });
+        unitSelect.addEventListener('change', handleUnitTypeChange);
+        // Call once on page load to set initial state
+        handleUnitTypeChange();
     }
     
     // زیادکردنی event listener بۆ دوگمەی هەڵبژاردنی وێنە
@@ -978,28 +934,56 @@ async function updateLatestProducts() {
 
 // Function to handle unit type changes
 function handleUnitTypeChange() {
-    const unitSelect = document.getElementById('unit_id');
-    const unitQuantityContainer = document.getElementById('unitQuantityContainer');
-    const piecesPerBoxContainer = document.getElementById('piecesPerBoxContainer');
-    const boxesPerSetContainer = document.getElementById('boxesPerSetContainer');
+    // Handle unit type change to show/hide related fields
+    if (unitSelect) {
+        unitSelect.addEventListener('change', function() {
+            if (unitQuantityContainer && piecesPerBoxContainer && boxesPerSetContainer) {
+                const selectedOption = this.options[this.selectedIndex];
+                const unitName = selectedOption.textContent.trim().toLowerCase();
 
-    if (unitSelect && unitQuantityContainer && piecesPerBoxContainer && boxesPerSetContainer) {
-        const selectedUnit = unitSelect.value;
-        
-        // Hide all containers first
-        unitQuantityContainer.style.display = 'none';
-        piecesPerBoxContainer.style.display = 'none';
-        boxesPerSetContainer.style.display = 'none';
-        
-        // Show relevant containers based on unit type
-        if (selectedUnit === '2') { // کارتۆن
-            unitQuantityContainer.style.display = 'flex';
-            piecesPerBoxContainer.style.display = 'block';
-        } else if (selectedUnit === '3') { // سێت
-            unitQuantityContainer.style.display = 'flex';
-            piecesPerBoxContainer.style.display = 'block';
-            boxesPerSetContainer.style.display = 'block';
-        }
+                // Hide all related fields initially
+                unitQuantityContainer.style.display = 'none';
+                piecesPerBoxContainer.style.display = 'none';
+                boxesPerSetContainer.style.display = 'none';
+
+                // First, check if the unit name contains 'کارتۆن' (box) or 'سێت' (set)
+                if (unitName.includes('کارتۆن') || unitName.includes('سێت')) {
+                    unitQuantityContainer.style.display = 'block';
+                    piecesPerBoxContainer.style.display = 'block';
+                    
+                    // If it's a set, also show the boxes per set input
+                    if (unitName.includes('سێت')) {
+                        boxesPerSetContainer.style.display = 'block';
+                    }
+                }
+
+                // Make required fields based on visibility
+                if (piecesPerBoxContainer.style.display === 'block') {
+                    document.getElementById('piecesPerBox').setAttribute('required', 'required');
+                } else {
+                    document.getElementById('piecesPerBox').removeAttribute('required');
+                }
+                
+                if (boxesPerSetContainer.style.display === 'block') {
+                    document.getElementById('boxesPerSet').setAttribute('required', 'required');
+                } else {
+                    document.getElementById('boxesPerSet').removeAttribute('required');
+                }
+
+                // Trigger quantity calculations if fields are visible
+                if (document.getElementById('min_quantity')) {
+                    document.getElementById('min_quantity').dispatchEvent(new Event('input'));
+                }
+                if (document.getElementById('current_quantity')) {
+                    document.getElementById('current_quantity').dispatchEvent(new Event('input'));
+                }
+                
+                // Trigger price calculations if fields are visible
+                if (document.getElementById('buyingPrice')) {
+                    document.getElementById('buyingPrice').dispatchEvent(new Event('input'));
+                }
+            }
+        });
     }
 }
 
