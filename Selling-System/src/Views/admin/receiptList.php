@@ -579,11 +579,11 @@ function translateUnitType($unitType) {
             let totalItems = rows.length;
             let totalPages = Math.ceil(totalItems / itemsPerPage);
 
-            // Initial pagination setup
+        // Initial pagination setup
             updatePagination(tableId);
             showPage(tableId, 1);
 
-            // Handle records per page change
+        // Handle records per page change
             $(`#${tableId}RecordsPerPage`).on('change', function() {
                 itemsPerPage = parseInt($(this).val());
                 currentPage = 1;
@@ -599,64 +599,64 @@ function translateUnitType($unitType) {
                 rows.slice((page - 1) * itemsPerPage, page * itemsPerPage).show();
             }
 
-            // Update pagination info and buttons
+        // Update pagination info and buttons
             function updatePagination(tableId) {
                 const pagination = $(`#${tableId}Pagination`);
-                pagination.empty();
+            pagination.empty();
 
-                const maxPagesToShow = 5;
+            const maxPagesToShow = 5;
                 let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
                 let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
 
-                if (endPage - startPage + 1 < maxPagesToShow) {
-                    startPage = Math.max(1, endPage - maxPagesToShow + 1);
-                }
+            if (endPage - startPage + 1 < maxPagesToShow) {
+                startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            }
 
-                for (let i = startPage; i <= endPage; i++) {
+            for (let i = startPage; i <= endPage; i++) {
                     const pageButton = $('<button class="btn btn-sm ' + (i === currentPage ? 'btn-primary' : 'btn-outline-secondary') + ' rounded-circle">' + i + '</button>');
-                    pageButton.on('click', function () {
+                pageButton.on('click', function () {
                         currentPage = i;
                         showPage(tableId, i);
                         updatePagination(tableId);
-                    });
-                    pagination.append(pageButton);
-                }
+                });
+                pagination.append(pageButton);
+            }
 
                 $(`#${tableId}PrevPage`).prop('disabled', currentPage === 1);
                 $(`#${tableId}NextPage`).prop('disabled', currentPage === totalPages || totalPages === 0);
-            }
+        }
 
-            // Previous page button
+        // Previous page button
             $(`#${tableId}PrevPage`).on('click', function () {
                 if (currentPage > 1) {
                     currentPage--;
                     showPage(tableId, currentPage);
                     updatePagination(tableId);
-                }
-            });
+            }
+        });
 
-            // Next page button
+        // Next page button
             $(`#${tableId}NextPage`).on('click', function () {
                 if (currentPage < totalPages) {
                     currentPage++;
                     showPage(tableId, currentPage);
                     updatePagination(tableId);
-                }
-            });
+            }
+        });
 
-            // Search functionality
+        // Search functionality
             $(`#${tableId}SearchInput`).on('keyup', function () {
-                const searchTerm = $(this).val().toLowerCase();
-                let matchCount = 0;
+            const searchTerm = $(this).val().toLowerCase();
+            let matchCount = 0;
 
                 rows.each(function () {
-                    const rowText = $(this).text().toLowerCase();
-                    const showRow = rowText.indexOf(searchTerm) > -1;
-                    $(this).toggle(showRow);
-                    if (showRow) {
-                        matchCount++;
-                    }
-                });
+                const rowText = $(this).text().toLowerCase();
+                const showRow = rowText.indexOf(searchTerm) > -1;
+                $(this).toggle(showRow);
+                if (showRow) {
+                    matchCount++;
+                }
+            });
 
                 totalItems = matchCount;
                 totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -669,36 +669,93 @@ function translateUnitType($unitType) {
         // Show receipt items in modal (for both tables)
         $(document).on('click', '.show-receipt-items', function() {
             const invoiceNumber = $(this).data('invoice');
-            const invoiceItems = <?php echo json_encode(array_merge($sales, $drafts)); ?>;
-            const items = invoiceItems.filter(item => item.invoice_number === invoiceNumber);
+            const isDraft = $(this).closest('table').attr('id') === 'draftsTable';
             
-            let itemsHtml = '<div class="table-responsive"><table class="table table-bordered">';
-            itemsHtml += '<thead><tr><th>ناوی کاڵا</th><th>کۆدی کاڵا</th><th>بڕ</th><th>یەکە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
-            itemsHtml += '<tbody>';
-            
-            items.forEach(item => {
-                itemsHtml += `<tr>
-                    <td>${item.product_name}</td>
-                    <td>${item.product_code}</td>
-                    <td>${item.quantity}</td>
-                    <td>${item.unit_type === 'piece' ? 'دانە' : (item.unit_type === 'box' ? 'کارتۆن' : 'سێت')}</td>
-                    <td>${parseInt(item.unit_price).toLocaleString()} دینار</td>
-                    <td>${parseInt(item.total_price).toLocaleString()} دینار</td>
-                </tr>`;
-            });
-            
-            itemsHtml += '</tbody></table></div>';
-            
-            Swal.fire({
-                title: `کاڵاکانی پسووڵە ${invoiceNumber}`,
-                html: itemsHtml,
-                width: '80%',
-                showCloseButton: true,
-                showConfirmButton: false,
-                customClass: {
-                    popup: 'swal2-popup-custom'
-                }
-            });
+            if (isDraft) {
+                // For draft receipts, fetch items via AJAX
+                $.ajax({
+                    url: '../../ajax/get_draft_items.php',
+                    type: 'POST',
+                    data: { invoice_number: invoiceNumber },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            let itemsHtml = '<div class="table-responsive"><table class="table table-bordered">';
+                            itemsHtml += '<thead><tr><th>ناوی کاڵا</th><th>کۆدی کاڵا</th><th>بڕ</th><th>یەکە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
+                            itemsHtml += '<tbody>';
+                            
+                            response.items.forEach(item => {
+                                itemsHtml += `<tr>
+                                    <td>${item.product_name}</td>
+                                    <td>${item.product_code}</td>
+                                    <td>${item.quantity}</td>
+                                    <td>${item.unit_type === 'piece' ? 'دانە' : (item.unit_type === 'box' ? 'کارتۆن' : 'سێت')}</td>
+                                    <td>${parseInt(item.unit_price).toLocaleString()} دینار</td>
+                                    <td>${parseInt(item.total_price).toLocaleString()} دینار</td>
+                                </tr>`;
+                            });
+                            
+                            itemsHtml += '</tbody></table></div>';
+                            
+                            Swal.fire({
+                                title: `کاڵاکانی پسووڵە ${invoiceNumber}`,
+                                html: itemsHtml,
+                                width: '80%',
+                                showCloseButton: true,
+                                showConfirmButton: false,
+                                customClass: {
+                                    popup: 'swal2-popup-custom'
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: response.message || 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان',
+                                icon: 'error'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان',
+                            icon: 'error'
+                        });
+                    }
+                });
+            } else {
+                // For regular receipts, use the existing code
+                const invoiceItems = <?php echo json_encode($sales); ?>;
+                const items = invoiceItems.filter(item => item.invoice_number === invoiceNumber);
+                
+                let itemsHtml = '<div class="table-responsive"><table class="table table-bordered">';
+                itemsHtml += '<thead><tr><th>ناوی کاڵا</th><th>کۆدی کاڵا</th><th>بڕ</th><th>یەکە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
+                itemsHtml += '<tbody>';
+                
+                items.forEach(item => {
+                    itemsHtml += `<tr>
+                        <td>${item.product_name}</td>
+                        <td>${item.product_code}</td>
+                        <td>${item.quantity}</td>
+                        <td>${item.unit_type === 'piece' ? 'دانە' : (item.unit_type === 'box' ? 'کارتۆن' : 'سێت')}</td>
+                        <td>${parseInt(item.unit_price).toLocaleString()} دینار</td>
+                        <td>${parseInt(item.total_price).toLocaleString()} دینار</td>
+                    </tr>`;
+                });
+                
+                itemsHtml += '</tbody></table></div>';
+                
+                Swal.fire({
+                    title: `کاڵاکانی پسووڵە ${invoiceNumber}`,
+                    html: itemsHtml,
+                    width: '80%',
+                    showCloseButton: true,
+                    showConfirmButton: false,
+                    customClass: {
+                        popup: 'swal2-popup-custom'
+                    }
+                });
+            }
         });
 
         // Delete draft receipt
