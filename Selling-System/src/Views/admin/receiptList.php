@@ -114,6 +114,59 @@ function translateUnitType($unitType) {
             return '-';
     }
 }
+
+// Get all returns
+$returnsQuery = "SELECT r.*, 
+                    GROUP_CONCAT(
+                        CONCAT(p.name, ' (', ri.quantity, ' ', 
+                        CASE ri.unit_type 
+                            WHEN 'piece' THEN 'دانە'
+                            WHEN 'box' THEN 'کارتۆن'
+                            WHEN 'set' THEN 'سێت'
+                        END, ')')
+                    SEPARATOR ', ') as products_list,
+                    SUM(ri.total_price) as total_amount
+                FROM product_returns r
+                LEFT JOIN return_items ri ON r.id = ri.return_id
+                LEFT JOIN products p ON ri.product_id = p.id
+                GROUP BY r.id
+                ORDER BY r.return_date DESC";
+
+// Get all wastings
+$wastingsQuery = "SELECT w.*, 
+                    GROUP_CONCAT(
+                        CONCAT(p.name, ' (', wi.quantity, ' ', 
+                        CASE wi.unit_type 
+                            WHEN 'piece' THEN 'دانە'
+                            WHEN 'box' THEN 'کارتۆن'
+                            WHEN 'set' THEN 'سێت'
+                        END, ')')
+                    SEPARATOR ', ') as products_list,
+                    SUM(wi.total_price) as total_amount
+                FROM wastings w
+                LEFT JOIN wasting_items wi ON w.id = wi.wasting_id
+                LEFT JOIN products p ON wi.product_id = p.id
+                GROUP BY w.id
+                ORDER BY w.date DESC";
+
+$returnsResult = $conn->query($returnsQuery);
+$wastingsResult = $conn->query($wastingsQuery);
+$returns = $returnsResult->fetchAll(PDO::FETCH_ASSOC);
+$wastings = $wastingsResult->fetchAll(PDO::FETCH_ASSOC);
+
+// Get all return items for modal
+$returnItemsQuery = "SELECT ri.*, p.name as product_name, p.code as product_code
+                    FROM return_items ri
+                    LEFT JOIN products p ON ri.product_id = p.id";
+$returnItemsResult = $conn->query($returnItemsQuery);
+$returnItems = $returnItemsResult->fetchAll(PDO::FETCH_ASSOC);
+
+// Get all wasting items for modal
+$wastingItemsQuery = "SELECT wi.*, p.name as product_name, p.code as product_code
+                    FROM wasting_items wi
+                    LEFT JOIN products p ON wi.product_id = p.id";
+$wastingItemsResult = $conn->query($wastingItemsQuery);
+$wastingItems = $wastingItemsResult->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
@@ -695,14 +748,108 @@ function translateUnitType($unitType) {
                     </div>
                 </div>
 
-                <!-- Returns Tab (Placeholder for future implementation) -->
+                <!-- Returns Tab -->
                 <div class="tab-pane fade" id="returns" role="tabpanel" aria-labelledby="returns-tab">
-                    <div class="card shadow-sm">
-                        <div class="card-body text-center py-5">
-                            <h4 class="text-muted"><i class="fas fa-undo mb-3 fa-3x"></i></h4>
-                            <h5>پسووڵەکانی گەڕانەوە</h5>
-                            <p class="text-muted">ئەم بەشە بەمزوانە چالاک دەکرێت</p>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addReturnModal">
+                                <i class="fas fa-plus"></i> زیادکردنی گەڕاوە
+                            </button>
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addWastingModal">
+                                <i class="fas fa-trash"></i> زیادکردنی بەفیڕۆچوو
+                            </button>
                         </div>
+                        <div class="d-flex gap-2">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="returnsSearch" placeholder="گەڕان...">
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                <input type="date" class="form-control" id="returnsStartDate">
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                <input type="date" class="form-control" id="returnsEndDate">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Returns Table -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="returnsTable">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>بەروار</th>
+                                    <th>کاڵاکان</th>
+                                    <th>بڕی گشتی</th>
+                                    <th>تێبینی</th>
+                                    <th>کردارەکان</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($returns as $return): ?>
+                                <tr>
+                                    <td><?php echo $return['id']; ?></td>
+                                    <td><?php echo date('Y-m-d', strtotime($return['return_date'])); ?></td>
+                                    <td><?php echo $return['products_list']; ?></td>
+                                    <td><?php echo number_format($return['total_amount'], 2); ?></td>
+                                    <td><?php echo $return['notes']; ?></td>
+                                    <td>
+                                        <button type="button" class="btn btn-info btn-sm view-items" 
+                                                data-id="<?php echo $return['id']; ?>"
+                                                data-type="return">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-danger btn-sm delete-return" 
+                                                data-id="<?php echo $return['id']; ?>">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Wastings Table -->
+                    <div class="table-responsive mt-4">
+                        <h4>بەفیڕۆچووەکان</h4>
+                        <table class="table table-striped table-hover" id="wastingsTable">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>بەروار</th>
+                                    <th>کاڵاکان</th>
+                                    <th>بڕی گشتی</th>
+                                    <th>تێبینی</th>
+                                    <th>کردارەکان</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($wastings as $wasting): ?>
+                                <tr>
+                                    <td><?php echo $wasting['id']; ?></td>
+                                    <td><?php echo date('Y-m-d', strtotime($wasting['date'])); ?></td>
+                                    <td><?php echo $wasting['products_list']; ?></td>
+                                    <td><?php echo number_format($wasting['total_amount'], 2); ?></td>
+                                    <td><?php echo $wasting['notes']; ?></td>
+                                    <td>
+                                        <button type="button" class="btn btn-info btn-sm view-items" 
+                                                data-id="<?php echo $wasting['id']; ?>"
+                                                data-type="wasting">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-danger btn-sm delete-wasting" 
+                                                data-id="<?php echo $wasting['id']; ?>">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -860,6 +1007,274 @@ function translateUnitType($unitType) {
     </script>
     <script src="../../js/receiptList.js"></script>
     <script src="../../js/debtTransactions.js"></script>
+
+    <!-- Add Wasting Modal -->
+    <div class="modal fade" id="addWastingModal" tabindex="-1" aria-labelledby="addWastingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addWastingModalLabel">زیادکردنی بەفیڕۆچوو</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addWastingForm">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="wastingDate" class="form-label">بەروار</label>
+                                <input type="date" class="form-control" id="wastingDate" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="wastingNotes" class="form-label">تێبینی</label>
+                            <textarea class="form-control" id="wastingNotes" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">کاڵاکان</label>
+                            <div id="wastingItems">
+                                <div class="wasting-item row mb-2">
+                                    <div class="col-md-4">
+                                        <select class="form-select product-select" required>
+                                            <option value="">کاڵا هەڵبژێرە</option>
+                                            <?php foreach ($products as $product): ?>
+                                            <option value="<?php echo $product['id']; ?>" 
+                                                    data-pieces-per-box="<?php echo $product['pieces_per_box']; ?>"
+                                                    data-boxes-per-set="<?php echo $product['boxes_per_set']; ?>">
+                                                <?php echo $product['name']; ?>
+                                            </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <input type="number" class="form-control quantity" placeholder="بڕ" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <select class="form-select unit-type">
+                                            <option value="piece">دانە</option>
+                                            <option value="box">کارتۆن</option>
+                                            <option value="set">سێت</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <input type="number" class="form-control unit-price" placeholder="نرخ" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-danger remove-item">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-secondary mt-2" id="addWastingItem">
+                                <i class="fas fa-plus"></i> زیادکردنی کاڵا
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" id="saveWasting">پاشەکەوت</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Initialize Returns Table -->
+    <script>
+    const returnsTable = new DataTable('#returnsTable', {
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/ku.json',
+        },
+        order: [[1, 'desc']],
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "هەموو"]]
+    });
+
+    // Initialize Wastings Table
+    const wastingsTable = new DataTable('#wastingsTable', {
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/ku.json',
+        },
+        order: [[1, 'desc']],
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "هەموو"]]
+    });
+
+    // Handle Wasting Item Addition
+    $('#addWastingItem').click(function() {
+        const itemHtml = `
+            <div class="wasting-item row mb-2">
+                <div class="col-md-4">
+                    <select class="form-select product-select" required>
+                        <option value="">کاڵا هەڵبژێرە</option>
+                        <?php foreach ($products as $product): ?>
+                        <option value="<?php echo $product['id']; ?>" 
+                                data-pieces-per-box="<?php echo $product['pieces_per_box']; ?>"
+                                data-boxes-per-set="<?php echo $product['boxes_per_set']; ?>">
+                            <?php echo $product['name']; ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="number" class="form-control quantity" placeholder="بڕ" required>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select unit-type">
+                        <option value="piece">دانە</option>
+                        <option value="box">کارتۆن</option>
+                        <option value="set">سێت</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="number" class="form-control unit-price" placeholder="نرخ" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger remove-item">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        $('#wastingItems').append(itemHtml);
+    });
+
+    // Handle Wasting Item Removal
+    $(document).on('click', '.remove-item', function() {
+        $(this).closest('.wasting-item').remove();
+    });
+
+    // Save Wasting
+    $('#saveWasting').click(function() {
+        const wastingData = {
+            date: $('#wastingDate').val(),
+            notes: $('#wastingNotes').val(),
+            products: []
+        };
+
+        $('.wasting-item').each(function() {
+            const productId = $(this).find('.product-select').val();
+            const quantity = $(this).find('.quantity').val();
+            const unitType = $(this).find('.unit-type').val();
+            const unitPrice = $(this).find('.unit-price').val();
+
+            if (productId && quantity && unitPrice) {
+                wastingData.products.push({
+                    product_id: productId,
+                    quantity: quantity,
+                    unit_type: unitType,
+                    unit_price: unitPrice
+                });
+            }
+        });
+
+        if (wastingData.products.length === 0) {
+            alert('تکایە لانیکەم یەک کاڵا زیاد بکە');
+            return;
+        }
+
+        $.ajax({
+            url: '../api/save_wasting.php',
+            method: 'POST',
+            data: JSON.stringify(wastingData),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.success) {
+                    alert('بەفیڕۆچووەکە بە سەرکەوتوویی پاشەکەوت کرا');
+                    location.reload();
+                } else {
+                    alert(response.message || 'هەڵەیەک ڕوویدا');
+                }
+            },
+            error: function() {
+                alert('هەڵەیەک ڕوویدا لە کاتی پاشەکەوتکردن');
+            }
+        });
+    });
+
+    // Delete Wasting
+    $(document).on('click', '.delete-wasting', function() {
+        if (confirm('دڵنیای لە سڕینەوەی ئەم بەفیڕۆچووە؟')) {
+            const wastingId = $(this).data('id');
+            $.ajax({
+                url: '../api/receipts/delete_wasting.php',
+                method: 'POST',
+                data: { wasting_id: wastingId },
+                success: function(response) {
+                    if (response.success) {
+                        alert('بەفیڕۆچووەکە بە سەرکەوتوویی سڕایەوە');
+                        location.reload();
+                    } else {
+                        alert(response.message || 'هەڵەیەک ڕوویدا');
+                    }
+                },
+                error: function() {
+                    alert('هەڵەیەک ڕوویدا لە کاتی سڕینەوە');
+                }
+            });
+        }
+    });
+
+    // View Wasting Items
+    $(document).on('click', '.view-items[data-type="wasting"]', function() {
+        const wastingId = $(this).data('id');
+        $.ajax({
+            url: '../api/receipts/get_wasting_details.php',
+            method: 'POST',
+            data: { wasting_id: wastingId },
+            success: function(response) {
+                if (response.status === 'success') {
+                    const wasting = response.wasting;
+                    let itemsHtml = '';
+                    wasting.items.forEach(item => {
+                        itemsHtml += `
+                            <tr>
+                                <td>${item.product_name}</td>
+                                <td>${item.quantity}</td>
+                                <td>${item.unit_type === 'piece' ? 'دانە' : item.unit_type === 'box' ? 'کارتۆن' : 'سێت'}</td>
+                                <td>${item.unit_price}</td>
+                                <td>${item.total_price}</td>
+                            </tr>
+                        `;
+                    });
+                    $('#itemsModalBody').html(`
+                        <div class="mb-3">
+                            <strong>بەروار:</strong> ${wasting.date}
+                        </div>
+                        <div class="mb-3">
+                            <strong>تێبینی:</strong> ${wasting.notes || '-'}
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>کاڵا</th>
+                                    <th>بڕ</th>
+                                    <th>یەکە</th>
+                                    <th>نرخ</th>
+                                    <th>کۆی گشتی</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${itemsHtml}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4" class="text-end"><strong>کۆی گشتی:</strong></td>
+                                    <td>${wasting.total_amount}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    `);
+                    $('#itemsModal').modal('show');
+                } else {
+                    alert(response.message || 'هەڵەیەک ڕوویدا');
+                }
+            },
+            error: function() {
+                alert('هەڵەیەک ڕوویدا لە کاتی وەرگرتنی زانیارییەکان');
+            }
+        });
+    });
+    </script>
 </body>
 
 </html> 
