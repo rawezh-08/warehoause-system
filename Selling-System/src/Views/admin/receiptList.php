@@ -494,11 +494,7 @@ function translateUnitType($unitType) {
                     <div class="tab-pane fade show active" id="sales" role="tabpanel" aria-labelledby="sales-tab">
                         <div class="card shadow-sm">
                             <div class="card-header bg-white">
-                                <div class="row align-items-center">
-                                    <div class="col-md-6 mb-2 mb-md-0">
-                                        <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> پسووڵەکانی فرۆشتن</h5>
-                                    </div>
-                                </div>
+                             
                                 <div class="table-controls mt-3">
                                     <div class="row align-items-center">
                                         <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
@@ -630,11 +626,7 @@ function translateUnitType($unitType) {
                     <div class="tab-pane fade" id="delivery" role="tabpanel" aria-labelledby="delivery-tab">
                         <div class="card shadow-sm">
                             <div class="card-header bg-white">
-                               <div class="row align-items-center">
-                                    <div class="col-md-6 mb-2 mb-md-0">
-                                        <h5 class="mb-0"><i class="fas fa-truck"></i> پسووڵەکانی گەیاندن</h5>
-                                    </div>
-                                </div>
+                        
                                 <div class="table-controls mt-3">
                                     <div class="row align-items-center">
                                         <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
@@ -744,11 +736,7 @@ function translateUnitType($unitType) {
                     <div class="tab-pane fade" id="drafts" role="tabpanel" aria-labelledby="drafts-tab">
                         <div class="card shadow-sm">
                             <div class="card-header bg-white">
-                               <div class="row align-items-center">
-                                    <div class="col-md-6 mb-2 mb-md-0">
-                                        <h5 class="mb-0"><i class="fas fa-file-alt"></i> پسووڵە ڕەش نووسەکان</h5>
-                                    </div>
-                                </div>
+                        
                                 <div class="table-controls mt-3">
                                     <div class="row align-items-center">
                                         <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
@@ -860,11 +848,7 @@ function translateUnitType($unitType) {
                     <div class="tab-pane fade" id="returns" role="tabpanel" aria-labelledby="returns-tab">
                         <div class="card shadow-sm">
                             <div class="card-header bg-white">
-                               <div class="row align-items-center">
-                                    <div class="col-md-6 mb-2 mb-md-0">
-                                        <h5 class="mb-0"><i class="fas fa-undo"></i> بەفیڕۆچوو</h5>
-                                    </div>
-                                </div>
+                              
                                 <div class="table-controls mt-3">
                                     <div class="row align-items-center">
                                         <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
