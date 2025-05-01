@@ -442,7 +442,7 @@ function translateUnitType($unitType) {
 <!-- Sidebar container - populated by JavaScript -->
 <div id="sidebar-container"></div>
 
-    <div class="main-content p-3" id="main-content" style="margin-top: 100px;">
+    <div class="main-content p-3" id="main-content" style="margin-top: 150px;">
         <div class="container-fluid">
             <div class="row mb-4">
                 <div class="col-12">
