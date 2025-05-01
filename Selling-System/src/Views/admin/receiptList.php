@@ -87,20 +87,32 @@ $draftItemsStmt->execute();
 $draftItems = $draftItemsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get all wastings
-$wastingsQuery = "SELECT w.*, 
-                  p.name as product_name,
-                  p.code as product_code,
-                  wi.quantity,
-                  wi.unit_type,
-                  wi.unit_price,
-                  wi.total_price
+$wastingsQuery = "SELECT w.id, w.date, w.notes, w.created_at, w.updated_at,
+                  COUNT(wi.id) as item_count,
+                  SUM(wi.total_price) as total_amount
                   FROM wastings w 
                   LEFT JOIN wasting_items wi ON w.id = wi.wasting_id
-                  LEFT JOIN products p ON wi.product_id = p.id
+                  GROUP BY w.id
                   ORDER BY w.date DESC";
 $wastingsStmt = $conn->prepare($wastingsQuery);
 $wastingsStmt->execute();
 $wastings = $wastingsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get all wasting items for modal display
+$wastingItemsQuery = "SELECT w.id as wasting_id, w.date,
+                      p.name as product_name,
+                      p.code as product_code,
+                      wi.quantity,
+                      wi.unit_type,
+                      wi.unit_price,
+                      wi.total_price
+                      FROM wastings w 
+                      LEFT JOIN wasting_items wi ON w.id = wi.wasting_id
+                      LEFT JOIN products p ON wi.product_id = p.id
+                      ORDER BY w.date DESC";
+$wastingItemsStmt = $conn->prepare($wastingItemsQuery);
+$wastingItemsStmt->execute();
+$wastingItems = $wastingItemsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Function to calculate the total for a sale
 function calculateSaleTotal($saleId, $conn) {
@@ -912,31 +924,23 @@ function translateUnitType($unitType) {
                                             <tr>
                                                 <th style="background-color: #cde1ff; border: none;">#</th>
                                                 <th style="background-color: #cde1ff; border: none;">بەروار</th>
-                                                <th style="background-color: #cde1ff; border: none;">ناوی کاڵا</th>
-                                                <th style="background-color: #cde1ff; border: none;">کۆدی کاڵا</th>
-                                                <th style="background-color: #cde1ff; border: none;">بڕ</th>
-                                                <th style="background-color: #cde1ff; border: none;">یەکە</th>
-                                                <th style="background-color: #cde1ff; border: none;">نرخی تاک</th>
-                                                <th style="background-color: #cde1ff; border: none;">نرخی گشتی</th>
+                                                <th style="background-color: #cde1ff; border: none;">ژمارەی کاڵاکان</th>
+                                                <th style="background-color: #cde1ff; border: none;">کۆی گشتی</th>
                                                 <th style="background-color: #cde1ff; border: none;">کردارەکان</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php if(empty($wastings)): ?>
                                             <tr>
-                                                <td colspan="9" class="text-center py-4">هیچ پسووڵەیەکی بەفیڕۆچوو نەدۆزرایەوە</td>
+                                                <td colspan="5" class="text-center py-4">هیچ پسووڵەیەکی بەفیڕۆچوو نەدۆزرایەوە</td>
                                             </tr>
                                             <?php else: ?>
                                                 <?php foreach($wastings as $index => $wasting): ?>
                                                     <tr>
                                                         <td><?= $index + 1 ?></td>
                                                         <td><?= formatDate($wasting['date']) ?></td>
-                                                        <td><?= htmlspecialchars($wasting['product_name'] ?? '-') ?></td>
-                                                        <td><?= htmlspecialchars($wasting['product_code'] ?? '-') ?></td>
-                                                        <td><?= htmlspecialchars($wasting['quantity'] ?? '-') ?></td>
-                                                        <td><?= translateUnitType($wasting['unit_type']) ?></td>
-                                                        <td><?= number_format($wasting['unit_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
-                                                        <td><?= number_format($wasting['total_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td><?= htmlspecialchars($wasting['item_count'] ?? '0') ?></td>
+                                                        <td><?= number_format($wasting['total_amount'] ?? 0, 0, '.', ',') ?> د.ع</td>
                                                         <td>
                                                             <div class="action-buttons">
                                                                 <a href="../../Views/receipt/print_wasting.php?wasting_id=<?= $wasting['id'] ?>"
@@ -946,7 +950,6 @@ function translateUnitType($unitType) {
                                                                 </a>
                                                                 <button type="button" 
                                                                     class="btn btn-sm btn-outline-info rounded-circle show-receipt-items"
-                                                                    data-invoice="<?php echo $wasting['invoice_number'] ?? 'W-'.$wasting['id']; ?>"
                                                                     data-wasting-id="<?php echo $wasting['id']; ?>"
                                                                     title="بینینی هەموو کاڵاکان">
                                                                     <i class="fas fa-list"></i>
@@ -1099,15 +1102,18 @@ function translateUnitType($unitType) {
             const wastingId = $(this).data('wasting-id');
             
             let items = [];
+            let modalTitle = '';
             
             // Special handling for wastings
             if (wastingId) {
-                const allWastings = <?php echo json_encode($wastings); ?>;
-                items = allWastings.filter(item => item.id == wastingId);
+                const allWastingItems = <?php echo json_encode($wastingItems); ?>;
+                items = allWastingItems.filter(item => item.wasting_id == wastingId);
+                modalTitle = `بەفیڕۆچووەکان - ئایدی: ${wastingId}`;
             } else {
                 // Handle regular items by invoice number
-                const invoiceItems = <?php echo json_encode(array_merge($sales, $draftItems, $deliveryItems, $wastings)); ?>;
+                const invoiceItems = <?php echo json_encode(array_merge($sales, $draftItems, $deliveryItems)); ?>;
                 items = invoiceItems.filter(item => item.invoice_number === invoiceNumber);
+                modalTitle = `کاڵاکانی پسووڵە ${invoiceNumber || ''}`;
             }
             
             let itemsHtml = '<div class="table-responsive"><table class="table table-bordered">';
@@ -1132,7 +1138,7 @@ function translateUnitType($unitType) {
             itemsHtml += '</tbody></table></div>';
             
             Swal.fire({
-                title: `کاڵاکانی پسووڵە ${invoiceNumber || ''}`,
+                title: modalTitle,
                 html: itemsHtml,
                 width: '80%',
                 showCloseButton: true,
