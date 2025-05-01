@@ -493,13 +493,13 @@ function translateUnitType($unitType) {
                     <div class="card-body p-3">
                         <form id="receiptFiltersForm">
                             <div class="row g-3 align-items-end">
-                                <div class="col-md-4">
+                                <div class="col-md-5">
                                     <label for="customerFilter" class="form-label">ناوی کڕیار</label>
                                     <select id="customerFilter" class="form-select customer-select">
                                         <option value="">هەموو کڕیارەکان</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-5">
                                     <label for="paymentTypeFilter" class="form-label">جۆری پارەدان</label>
                                     <select id="paymentTypeFilter" class="form-select">
                                         <option value="">هەموو جۆرەکان</option>
@@ -507,11 +507,8 @@ function translateUnitType($unitType) {
                                         <option value="debt">قەرز</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3 d-flex align-items-end">
-                                    <button type="button" id="applyFilters" class="btn btn-primary me-2">
-                                        <i class="fas fa-filter me-1"></i> فلتەر
-                                    </button>
-                                    <button type="button" id="resetFilters" class="btn btn-outline-secondary">
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="button" id="resetFilters" class="btn btn-outline-secondary w-100">
                                         <i class="fas fa-redo-alt me-1"></i> ڕیسێت
                                     </button>
                                 </div>

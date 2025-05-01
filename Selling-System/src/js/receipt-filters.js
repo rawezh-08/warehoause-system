@@ -32,10 +32,13 @@ $(document).ready(function() {
                 return 'هیچ ئەنجامێک نەدۆزرایەوە';
             }
         }
+    }).on('change', function() {
+        // Automatically apply filters when selection changes
+        applyFilters();
     });
 
-    // Apply filters button click handler
-    $('#applyFilters').on('click', function() {
+    // Apply filters automatically when payment type changes
+    $('#paymentTypeFilter').on('change', function() {
         applyFilters();
     });
 
