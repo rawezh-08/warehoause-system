@@ -382,7 +382,12 @@ $totalDebtFromSuppliers = $stmt->fetch(PDO::FETCH_ASSOC)['total_debt_from_suppli
 // Calculate the total value of inventory in the warehouse
 $stmt = $conn->prepare("
     SELECT 
-        COALESCE(SUM(p.current_quantity * p.purchase_price * p.pieces_per_box), 0) as total_inventory_value 
+        COALESCE(SUM(
+            CASE 
+                WHEN p.pieces_per_box > 0 THEN (p.current_quantity / p.pieces_per_box) * p.purchase_price
+                ELSE p.current_quantity * p.purchase_price
+            END
+        ), 0) as total_inventory_value 
     FROM 
         products p
 ");
@@ -457,7 +462,6 @@ $stmt = $conn->prepare("
         p.image,
         p.current_quantity,
         p.min_quantity,
-        p.pieces_per_box,
         c.name as category_name,
         ROUND((p.current_quantity / p.min_quantity) * 100) as stock_percentage
     FROM 
