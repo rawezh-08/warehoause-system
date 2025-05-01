@@ -2392,25 +2392,54 @@ $(document).ready(function() {
             const $row = $(this).closest('tr');
             const productId = $row.find('.product-select').val();
             const selectedUnit = $(this).val();
+            const tabPane = $row.closest('.tab-pane');
+            const priceType = tabPane.find('.price-type').val(); // single یان wholesale
             
             if (productId) {
-                // داواکردنی نرخی ڕاست بەپێی یەکە
-                $.ajax({
-                    url: '../../api/get_product_price_by_unit.php',
-                    type: 'GET',
-                    data: {
-                        product_id: productId,
-                        unit_type: selectedUnit
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            // نوێکردنەوەی نرخی یەکە
-                            $row.find('.unit-price').val(response.price);
-                            // نوێکردنەوەی کۆی گشتی
-                            calculateRowTotal($row);
-                        }
-                    }
-                });
+                // Get product data from select2
+                const productData = $row.find('.product-select').select2('data')[0];
+                let basePrice;
+
+                // دیاریکردنی نرخی بنەڕەتی بەپێی جۆری نرخ
+                if (priceType === 'wholesale') {
+                    basePrice = parseFloat(productData.wholesale_price) || 0;
+                } else {
+                    basePrice = parseFloat(productData.retail_price) || 0;
+                }
+
+                // ژماردنی نرخی یەکە بەپێی جۆری یەکە
+                let finalPrice = basePrice;
+                const piecesPerBox = parseInt(productData.pieces_per_box) || 1;
+                const boxesPerSet = parseInt(productData.boxes_per_set) || 1;
+
+                switch (selectedUnit) {
+                    case 'piece':
+                        // بۆ دانە، نرخی کارتۆن دابەش دەکەین بەسەر ژمارەی دانەکان
+                        finalPrice = Math.round(basePrice / piecesPerBox);
+                        break;
+                    case 'box':
+                        // بۆ کارتۆن، نرخی بنەڕەتی بەکاردێت
+                        finalPrice = basePrice;
+                        break;
+                    case 'set':
+                        // بۆ سێت، نرخی کارتۆن × ژمارەی کارتۆن لە سێتێکدا
+                        finalPrice = basePrice * boxesPerSet;
+                        break;
+                }
+
+                console.log(`Price calculation for ${productData.text}:
+                    Price Type: ${priceType}
+                    Base Price: ${basePrice}
+                    Selected Unit: ${selectedUnit}
+                    Pieces per Box: ${piecesPerBox}
+                    Boxes per Set: ${boxesPerSet}
+                    Final Price: ${finalPrice}`);
+
+                // نوێکردنەوەی نرخی یەکە
+                $row.find('.unit-price').val(finalPrice);
+                
+                // نوێکردنەوەی کۆی گشتی
+                calculateRowTotal($row);
             }
         });
     }
