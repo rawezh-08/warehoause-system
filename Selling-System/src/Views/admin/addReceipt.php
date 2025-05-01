@@ -187,9 +187,13 @@ require_once '../../config/database.php';
                         </div>
                     </div>
 
-                    <!-- Notes Section -->
+                    <!-- Phone Number Field -->
                     <div class="row mb-4">
-                        <div class="col-12">
+                        <div class="col-md-6">
+                            <label class="form-label">ژمارەی مۆبایل</label>
+                            <input type="tel" class="form-control phone-number" placeholder="07xxxxxxxxx" pattern="07[0-9]{9}">
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label">تێبینی</label>
                             <textarea class="form-control notes" rows="2" placeholder="تێبینی"></textarea>
                         </div>
@@ -947,7 +951,7 @@ require_once '../../config/database.php';
                     receipt_type: 'selling',
                     is_draft: true,
                     invoice_number: currentTab.find('.receipt-number').val(),
-                    customer_id: currentTab.find('.customer-select').val(),
+                    customer_id: currentTab.find('.customer-select').val() || null,
                     date: currentTab.find('.sale-date').val(),
                     payment_type: currentTab.find('.payment-type').val(),
                     discount: currentTab.find('.discount').val() || 0,
@@ -956,6 +960,7 @@ require_once '../../config/database.php';
                     shipping_cost: currentTab.find('.shipping-cost').val() || 0,
                     other_cost: currentTab.find('.other-cost').val() || 0,
                     notes: currentTab.find('.notes').val() || '',
+                    phone_number: currentTab.find('.phone-number').val() || null,
                     products: []
                 };
 
@@ -1200,6 +1205,7 @@ require_once '../../config/database.php';
                     shipping_cost: currentTab.find('.shipping-cost').val() || 0,
                     other_cost: currentTab.find('.other-cost').val() || 0,
                     notes: currentTab.find('.notes').val() || '',
+                    phone_number: currentTab.find('.phone-number').val() || null,
                     products: []
                 };
 
