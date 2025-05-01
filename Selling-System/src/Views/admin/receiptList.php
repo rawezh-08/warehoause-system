@@ -964,6 +964,14 @@ function translateUnitType($unitType) {
     <script src="../../js/receipt-search.js"></script>
     <script>
     $(document).ready(function() {
+        // Map of table identifiers to actual table IDs
+        const tableMap = {
+            'sales': 'salesHistoryTable',
+            'delivery': 'deliveryTable',
+            'drafts': 'draftsTable',
+            'returns': 'returnsTable'
+        };
+        
         // Initialize all tables
         initializeTable('sales');
         initializeTable('drafts');
@@ -971,7 +979,8 @@ function translateUnitType($unitType) {
         initializeTable('returns');
 
         function initializeTable(tableId) {
-            const table = $(`#${tableId}Table`);
+            const actualTableId = tableMap[tableId];
+            const table = $(`#${actualTableId}`);
             const tableBody = table.find('tbody');
             const rows = tableBody.find('tr');
             let itemsPerPage = parseInt($(`#${tableId}RecordsPerPage`).val());
@@ -989,7 +998,7 @@ function translateUnitType($unitType) {
                 currentPage = 1;
                 
                 // Count visible rows after filtering
-                const visibleRows = $(`#${tableId}Table tbody tr:visible`);
+                const visibleRows = $(`#${actualTableId} tbody tr:visible`);
                 totalItems = visibleRows.length;
                 totalPages = Math.ceil(totalItems / itemsPerPage);
                 
@@ -1000,7 +1009,7 @@ function translateUnitType($unitType) {
             // Show specific page
             function showPage(tableId, page) {
                 // Only operate on visible rows (after filtering)
-                const visibleRows = $(`#${tableId}Table tbody tr:visible`);
+                const visibleRows = $(`#${actualTableId} tbody tr:visible`);
                 visibleRows.hide();
                 visibleRows.slice((page - 1) * itemsPerPage, page * itemsPerPage).show();
             }

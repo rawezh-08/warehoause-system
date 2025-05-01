@@ -2,18 +2,18 @@
  * Enhanced search functionality for receipt tables
  */
 $(document).ready(function() {
-    // Initialize search for all tabs
-    setupTableSearch('sales');
-    setupTableSearch('delivery');
-    setupTableSearch('drafts');
-    setupTableSearch('returns');
+    // Initialize search for all tabs with correct table IDs
+    setupTableSearch('sales', 'salesHistoryTable');
+    setupTableSearch('delivery', 'deliveryTable');
+    setupTableSearch('drafts', 'draftsTable');
+    setupTableSearch('returns', 'returnsTable');
     
-    function setupTableSearch(tableId) {
-        const searchInput = $(`#${tableId}SearchInput`);
+    function setupTableSearch(tabId, tableId) {
+        const searchInput = $(`#${tabId}SearchInput`);
         
         searchInput.on('keyup', function() {
             const searchTerm = $(this).val().toLowerCase();
-            const tableRows = $(`#${tableId}Table tbody tr`);
+            const tableRows = $(`#${tableId} tbody tr`);
             
             // Search in the table rows
             tableRows.each(function() {
@@ -23,7 +23,7 @@ $(document).ready(function() {
             });
             
             // Trigger pagination update to reflect filtered rows
-            $(`#${tableId}RecordsPerPage`).trigger('change');
+            $(`#${tabId}RecordsPerPage`).trigger('change');
         });
     }
 }); 
