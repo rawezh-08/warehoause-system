@@ -151,100 +151,41 @@ try {
             'products' => $products_json
         ], true));
         
-        // For regular (non-draft) sales, call the stored procedure
-        if ($is_draft) {
-            // Insert draft sale directly
-            $stmt = $conn->prepare("
-                INSERT INTO sales (
-                    invoice_number, customer_id, date, payment_type, 
-                    discount, paid_amount, price_type, shipping_cost, other_costs,
-                    notes, created_by, is_delivery, delivery_address, is_draft
-                ) VALUES (
-                    ?, ?, ?, ?, 
-                    ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?
-                )
-            ");
-            
-            $stmt->execute([
-                $data['invoice_number'],
-                $data['customer_id'],
-                $data['date'],
-                $data['payment_type'],
-                floatval($data['discount']),
-                floatval($data['paid_amount']),
-                $data['price_type'],
-                floatval($data['shipping_cost']),
-                floatval($data['other_cost']),
-                $data['notes'],
-                1, // created_by
-                isset($data['is_delivery']) ? 1 : 0,
-                $data['delivery_address'] ?? null,
-                1 // is_draft
-            ]);
-            
-            $receipt_id = $conn->lastInsertId();
-            
-            // Insert sale items
-            $stmt = $conn->prepare("
-                INSERT INTO sale_items (
-                    sale_id, product_id, quantity, unit_type, pieces_count,
-                    unit_price, total_price
-                ) VALUES (
-                    ?, ?, ?, ?, ?,
-                    ?, ?
-                )
-            ");
-            
-            foreach ($products_json as $item) {
-                $total_price = $item['quantity'] * $item['unit_price'];
-                $pieces_count = $item['quantity']; // For draft, we don't need to calculate actual pieces
-                
-                $stmt->execute([
-                    $receipt_id,
-                    $item['product_id'],
-                    $item['quantity'],
-                    $item['unit_type'],
-                    $pieces_count,
-                    $item['unit_price'],
-                    $total_price
-                ]);
-            }
+        // For regular sales, use the stored procedure
+        if ($data['payment_type'] === 'credit') {
+            $stmt = $conn->prepare("CALL add_sale_with_advance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         } else {
-            // For regular sales, use the stored procedure
-            if ($data['payment_type'] === 'credit') {
-                $stmt = $conn->prepare("CALL add_sale_with_advance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            } else {
-                $stmt = $conn->prepare("CALL add_sale(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            }
-            
-            $stmt->bindParam(1, $data['invoice_number'], PDO::PARAM_STR);
-            $stmt->bindParam(2, $data['customer_id'], PDO::PARAM_INT);
-            $stmt->bindParam(3, $data['date'], PDO::PARAM_STR);
-            $stmt->bindParam(4, $data['payment_type'], PDO::PARAM_STR);
-            $stmt->bindParam(5, $data['discount'], PDO::PARAM_STR);
-            $stmt->bindParam(6, $data['paid_amount'], PDO::PARAM_STR);
-            $stmt->bindParam(7, $data['price_type'], PDO::PARAM_STR);
-            $stmt->bindParam(8, $data['shipping_cost'], PDO::PARAM_STR);
-            $stmt->bindParam(9, $data['other_cost'], PDO::PARAM_STR);
-            $stmt->bindParam(10, $data['notes'], PDO::PARAM_STR);
-            $created_by = 1; // Replace with actual user ID when authentication is implemented
-            $stmt->bindParam(11, $created_by, PDO::PARAM_INT);
-            $stmt->bindParam(12, $products_json_string, PDO::PARAM_STR);
-            $is_delivery = isset($data['is_delivery']) ? 1 : 0;
-            $stmt->bindParam(13, $is_delivery, PDO::PARAM_INT);
-            $delivery_address = isset($data['delivery_address']) ? $data['delivery_address'] : null;
-            $stmt->bindParam(14, $delivery_address, PDO::PARAM_STR);
-            
-            $stmt->execute();
-            
-            // Get the result
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            $receipt_id = $result['result'];
-            
-            // Close the cursor to prevent "Cannot execute queries while there are pending result sets" error
-            $stmt->closeCursor();
+            $stmt = $conn->prepare("CALL add_sale(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         }
+        
+        $stmt->bindParam(1, $data['invoice_number'], PDO::PARAM_STR);
+        $stmt->bindParam(2, $data['customer_id'], PDO::PARAM_INT);
+        $stmt->bindParam(3, $data['date'], PDO::PARAM_STR);
+        $stmt->bindParam(4, $data['payment_type'], PDO::PARAM_STR);
+        $stmt->bindParam(5, $data['discount'], PDO::PARAM_STR);
+        $stmt->bindParam(6, $data['paid_amount'], PDO::PARAM_STR);
+        $stmt->bindParam(7, $data['price_type'], PDO::PARAM_STR);
+        $stmt->bindParam(8, $data['shipping_cost'], PDO::PARAM_STR);
+        $stmt->bindParam(9, $data['other_cost'], PDO::PARAM_STR);
+        $stmt->bindParam(10, $data['notes'], PDO::PARAM_STR);
+        $created_by = 1; // Replace with actual user ID when authentication is implemented
+        $stmt->bindParam(11, $created_by, PDO::PARAM_INT);
+        $stmt->bindParam(12, $products_json_string, PDO::PARAM_STR);
+        $is_delivery = isset($data['is_delivery']) ? 1 : 0;
+        $stmt->bindParam(13, $is_delivery, PDO::PARAM_INT);
+        $delivery_address = isset($data['delivery_address']) ? $data['delivery_address'] : null;
+        $stmt->bindParam(14, $delivery_address, PDO::PARAM_STR);
+        $phone_number = isset($data['phone_number']) ? $data['phone_number'] : null;
+        $stmt->bindParam(15, $phone_number, PDO::PARAM_STR);
+        
+        $stmt->execute();
+        
+        // Get the result
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $receipt_id = $result['result'];
+        
+        // Close the cursor
+        $stmt->closeCursor();
     } elseif ($data['receipt_type'] === 'buying') {
         // Validate buying data
         if (empty($data['supplier_id']) || empty($data['products'])) {

@@ -1251,7 +1251,6 @@ require_once '../../config/database.php';
                                 confirmButtonText: 'باشە'
                             }).then((result) => {
                                 if (result.isConfirmed) {
-                                    // Redirect to delivery receipt view
                                     window.location.href = `../receipt/delivery_receipt.php?id=${response.receipt_id}`;
                                 }
                             });
@@ -1275,10 +1274,6 @@ require_once '../../config/database.php';
                             icon: 'error',
                             confirmButtonText: 'باشە'
                         });
-                    },
-                    complete: function() {
-                        // Reset button state
-                        saveButton.prop('disabled', false).html('پاشەکەوتکردن');
                     }
                 });
             });

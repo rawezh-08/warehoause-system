@@ -241,7 +241,23 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_purchase` (IN `p_invoice_number
     SELECT purchase_id AS 'result';
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `add_sale` (IN `p_invoice_number` VARCHAR(50), IN `p_customer_id` INT, IN `p_date` TIMESTAMP, IN `p_payment_type` ENUM('cash','credit'), IN `p_discount` DECIMAL(10,2), IN `p_paid_amount` DECIMAL(10,2), IN `p_price_type` ENUM('single','wholesale'), IN `p_shipping_cost` DECIMAL(10,2), IN `p_other_costs` DECIMAL(10,2), IN `p_notes` TEXT, IN `p_created_by` INT, IN `p_products` JSON, IN `p_is_delivery` TINYINT(1), IN `p_delivery_address` TEXT)   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `add_sale` (
+    IN `p_invoice_number` VARCHAR(50),
+    IN `p_customer_id` INT,
+    IN `p_date` TIMESTAMP,
+    IN `p_payment_type` ENUM('cash','credit'),
+    IN `p_discount` DECIMAL(10,2),
+    IN `p_paid_amount` DECIMAL(10,2),
+    IN `p_price_type` ENUM('single','wholesale'),
+    IN `p_shipping_cost` DECIMAL(10,2),
+    IN `p_other_costs` DECIMAL(10,2),
+    IN `p_notes` TEXT,
+    IN `p_created_by` INT,
+    IN `p_products` JSON,
+    IN `p_is_delivery` TINYINT(1),
+    IN `p_delivery_address` TEXT,
+    IN `p_phone_number` VARCHAR(20)
+)   BEGIN
     DECLARE sale_id INT;
     DECLARE i INT DEFAULT 0;
     DECLARE product_count INT;
@@ -262,11 +278,11 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_sale` (IN `p_invoice_number` VA
     INSERT INTO sales (
         invoice_number, customer_id, date, payment_type, 
         discount, paid_amount, price_type, shipping_cost, other_costs,
-        notes, created_by, is_delivery, delivery_address
+        notes, created_by, is_delivery, delivery_address, phone_number
     ) VALUES (
         p_invoice_number, p_customer_id, p_date, p_payment_type, 
         p_discount, p_paid_amount, p_price_type, p_shipping_cost, p_other_costs,
-        p_notes, p_created_by, p_is_delivery, p_delivery_address
+        p_notes, p_created_by, p_is_delivery, p_delivery_address, p_phone_number
     );
     
     SET sale_id = LAST_INSERT_ID();
@@ -1826,7 +1842,8 @@ CREATE TABLE `sales` (
   `remaining_amount` decimal(10,0) DEFAULT 0,
   `is_draft` tinyint(1) DEFAULT 0,
   `is_delivery` tinyint(1) DEFAULT 0,
-  `delivery_address` text DEFAULT NULL
+  `delivery_address` text DEFAULT NULL,
+  `delivery_phone` VARCHAR(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
