@@ -353,12 +353,6 @@ function translateUnitType($unitType) {
                                                                     title="چاپکردن">
                                                                     <i class="fas fa-print"></i>
                                                                 </a>
-                                                                <!-- Add View Items Button -->
-                                                                <button class="btn btn-sm btn-outline-info rounded-circle view-sale-items" 
-                                                                    title="بینینی کاڵاکان" 
-                                                                    data-sale-id="<?= $sale['id'] ?? 'missing-id' ?>">
-                                                                    <i class="fas fa-eye"></i>
-                                                                </button>
                                                                 <!-- Add Return Button -->
                                                                 
                                                             </div>
@@ -432,93 +426,6 @@ function translateUnitType($unitType) {
         let salesCurrentPage = 1;
         let salesTotalItems = salesRows.length;
         let salesTotalPages = Math.ceil(salesTotalItems / salesItemsPerPage);
-
-        // Add debug for view-sale-items buttons
-        $('.view-sale-items').each(function() {
-            console.log('Found button with sale-id:', $(this).data('sale-id'));
-        });
-        
-        // Direct event handler for debugging
-        $('.view-sale-items').on('click', function(e) {
-            e.preventDefault();
-            console.log('Button clicked directly! Sale ID:', $(this).data('sale-id'));
-            const saleId = $(this).data('sale-id');
-            
-            // Direct AJAX call
-            $.ajax({
-                url: '../../ajax/get_sale_items.php',
-                type: 'POST',
-                data: { sale_id: saleId },
-                dataType: 'json',
-                success: function(response) {
-                    console.log('AJAX response:', response);
-                    alert('Response received: ' + (response.status === 'success' ? 'Success' : 'Error'));
-                    
-                    if (response.status === 'success') {
-                        // Create table for items
-                        let itemsHtml = `
-                            <div class="table-responsive">
-                                <table class="table table-sm table-bordered">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>#</th>
-                                            <th>ناوی کاڵا</th>
-                                            <th>کۆدی کاڵا</th>
-                                            <th>بڕ</th>
-                                            <th>یەکە</th>
-                                            <th>نرخی تاک</th>
-                                            <th>کۆی گشتی</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
-                        
-                        if (response.items.length === 0) {
-                            itemsHtml += `<tr><td colspan="7" class="text-center">هیچ کاڵایەک نەدۆزرایەوە</td></tr>`;
-                        } else {
-                            response.items.forEach((item, index) => {
-                                let unitName = '-';
-                                switch (item.unit_type) {
-                                    case 'piece': unitName = 'دانە'; break;
-                                    case 'box': unitName = 'کارتۆن'; break;
-                                    case 'set': unitName = 'سێت'; break;
-                                }
-                                
-                                itemsHtml += `
-                                    <tr>
-                                        <td>${index + 1}</td>
-                                        <td>${item.product_name || '-'}</td>
-                                        <td>${item.product_code || '-'}</td>
-                                        <td>${item.quantity || '-'}</td>
-                                        <td>${unitName}</td>
-                                        <td>${new Intl.NumberFormat('en-US').format(item.unit_price) + ' د.ع'}</td>
-                                        <td>${new Intl.NumberFormat('en-US').format(item.total_price) + ' د.ع'}</td>
-                                    </tr>`;
-                            });
-                        }
-                        
-                        itemsHtml += `</tbody></table></div>`;
-                        
-                        // Show modal with items
-                        Swal.fire({
-                            title: `کاڵاکانی پسووڵە - ${response.sale.invoice_number || ''}`,
-                            html: itemsHtml,
-                            width: '80%',
-                            confirmButtonText: 'داخستن'
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'هەڵە ڕوویدا!',
-                            text: response.message || 'نەتوانرا زانیاریەکان بهێنرێت، تکایە دووبارە هەوڵبدەوە.'
-                        });
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('AJAX error:', xhr, status, error);
-                    alert('Error: ' + error);
-                }
-            });
-        });
 
         // Initial pagination setup
         updateSalesPagination();
