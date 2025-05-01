@@ -353,15 +353,7 @@ function translateUnitType($unitType) {
                                                                     title="چاپکردن">
                                                                     <i class="fas fa-print"></i>
                                                                 </a>
-                                                           
-                                                                <button type="button" 
-                                                                    class="btn btn-sm btn-outline-info rounded-circle show-invoice-items"
-                                                                    data-invoice="<?php echo $sale['invoice_number']; ?>"
-                                                                    title="بینینی هەموو کاڵاکان">
-                                                                    <i class="fas fa-list"></i>
-                                                                </button>
                                                                 <!-- Add Return Button -->
-                                                                
                                                                 
                                                             </div>
                                                     </td>
@@ -524,84 +516,6 @@ function translateUnitType($unitType) {
             salesCurrentPage = 1;
             showSalesPage(1);
             updateSalesPagination();
-        });
-        
-        // Show invoice items when clicking the info button
-        $('.show-invoice-items').on('click', function () {
-            const invoiceNumber = $(this).data('invoice');
-            
-            $.ajax({
-                url: '../../includes/get_invoice_items.php',
-                type: 'POST',
-                data: { invoice_number: invoiceNumber },
-                dataType: 'json',
-                success: function (response) {
-                    if (response.status === 'success') {
-                        // Create table with items
-                        let itemsHtml = `
-                            <div class="table-responsive">
-                                <table class="table table-sm table-bordered">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>#</th>
-                                            <th>ناوی کاڵا</th>
-                                            <th>بڕ</th>
-                                            <th>یەکە</th>
-                                            <th>نرخی تاک</th>
-                                            <th>کۆی گشتی</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
-                        
-                        if (response.items.length === 0) {
-                            itemsHtml += `<tr><td colspan="6" class="text-center">هیچ کاڵایەک نەدۆزرایەوە</td></tr>`;
-                        } else {
-                            response.items.forEach((item, index) => {
-                                let unitName = '-';
-                                switch (item.unit_type) {
-                                    case 'piece': unitName = 'دانە'; break;
-                                    case 'box': unitName = 'کارتۆن'; break;
-                                    case 'set': unitName = 'سێت'; break;
-                                    default: unitName = item.unit_type || '-';
-                                }
-                                
-                                itemsHtml += `
-                                    <tr>
-                                        <td>${index + 1}</td>
-                                        <td>${item.product_name}</td>
-                                        <td>${item.quantity}</td>
-                                        <td>${unitName}</td>
-                                        <td>${Number(item.unit_price).toLocaleString()} د.ع</td>
-                                        <td>${Number(item.total_price).toLocaleString()} د.ع</td>
-                                    </tr>`;
-                            });
-                        }
-                        
-                        itemsHtml += `</tbody></table></div>`;
-                        
-                        // Show modal with items
-                        Swal.fire({
-                            title: `ناوەرۆکی پسووڵەی <strong dir="ltr">#${invoiceNumber}</strong>`,
-                            html: itemsHtml,
-                            width: '80%',
-                            confirmButtonText: 'داخستن'
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'هەڵە ڕوویدا!',
-                            text: response.message || 'نەتوانرا زانیاریەکان بهێنرێت، تکایە دووبارە هەوڵبدەوە.'
-                        });
-                    }
-                },
-                error: function () {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'هەڵە ڕوویدا!',
-                        text: 'کێشەیەک لە پەیوەندی کردن بە سێرڤەرەوە ڕوویدا، تکایە دواتر هەوڵبدەوە.'
-                    });
-                }
-            });
         });
     });
     </script>
