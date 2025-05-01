@@ -436,496 +436,513 @@ function translateUnitType($unitType) {
 </head>
 
 <body>
-    <div id="main-content" id="main-content">
-<div id="navbar-container"></div>
+    <div id="main-container">
+        <div id="navbar-container"></div>
 
-<!-- Sidebar container - populated by JavaScript -->
-<div id="sidebar-container"></div>
+        <!-- Sidebar container - populated by JavaScript -->
+        <div id="sidebar-container"></div>
 
-    <div class="main-content p-3 mt-5" id="main-content">
-        <div class="container-fluid">
-            <div class="row mb-4">
-                <div class="col-12">
-                    <h3 class="page-title">لیستی پسووڵەکان</h3>
+        <div class="main-content p-3" id="main-content-area" style="margin-top: 80px;">
+            <div class="container-fluid">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h3 class="page-title">لیستی پسووڵەکان</h3>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Tabs Navigation -->
-            <ul class="nav nav-tabs custom-tabs mb-4" id="receiptTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="sales-tab" data-bs-toggle="tab" data-bs-target="#sales" type="button" role="tab" aria-controls="sales" aria-selected="true">
-                        <i class="fas fa-shopping-cart"></i> پسووڵەکانی فرۆشتن
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="delivery-tab" data-bs-toggle="tab" data-bs-target="#delivery" type="button" role="tab" aria-controls="delivery" aria-selected="false">
-                        <i class="fas fa-truck"></i> پسووڵەکانی گەیاندن
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="drafts-tab" data-bs-toggle="tab" data-bs-target="#drafts" type="button" role="tab" aria-controls="drafts" aria-selected="false">
-                        <i class="fas fa-file-alt"></i> پسووڵە ڕەش نووسەکان
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="returns-tab" data-bs-toggle="tab" data-bs-target="#returns" type="button" role="tab" aria-controls="returns" aria-selected="false">
-                        <i class="fas fa-undo"></i> بەفیڕۆچوو
-                    </button>
-                </li>
-            </ul>
+                <!-- Tabs Navigation -->
+                <ul class="nav nav-tabs custom-tabs mb-4" id="receiptTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="sales-tab" data-bs-toggle="tab" data-bs-target="#sales" type="button" role="tab" aria-controls="sales" aria-selected="true">
+                            <i class="fas fa-shopping-cart"></i> پسووڵەکانی فرۆشتن
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="delivery-tab" data-bs-toggle="tab" data-bs-target="#delivery" type="button" role="tab" aria-controls="delivery" aria-selected="false">
+                            <i class="fas fa-truck"></i> پسووڵەکانی گەیاندن
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="drafts-tab" data-bs-toggle="tab" data-bs-target="#drafts" type="button" role="tab" aria-controls="drafts" aria-selected="false">
+                            <i class="fas fa-file-alt"></i> پسووڵە ڕەش نووسەکان
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="returns-tab" data-bs-toggle="tab" data-bs-target="#returns" type="button" role="tab" aria-controls="returns" aria-selected="false">
+                            <i class="fas fa-undo"></i> بەفیڕۆچوو
+                        </button>
+                    </li>
+                </ul>
 
-            <!-- Tab Content -->
-            <div class="tab-content" id="receiptTabsContent">
-                <!-- Sales Tab -->
-                <div class="tab-pane fade show active" id="sales" role="tabpanel" aria-labelledby="sales-tab">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white">
-                 
-                            <div class="table-controls mt-3">
+                <!-- Tab Content -->
+                <div class="tab-content" id="receiptTabsContent">
+                    <!-- Sales Tab -->
+                    <div class="tab-pane fade show active" id="sales" role="tabpanel" aria-labelledby="sales-tab">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white">
                                 <div class="row align-items-center">
-                                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
-                                        <div class="records-per-page d-flex align-items-center">
-                                            <label class="me-2 mb-0">نیشاندان:</label>
-                                            <select id="salesRecordsPerPage" class="form-select form-select-sm rounded-pill" style="width: auto;">
-                                                <option value="5">5</option>
-                                                <option value="10" selected>10</option>
-                                                <option value="25">25</option>
-                                                <option value="50">50</option>
-                                                <option value="100">100</option>
-                                            </select>
-                                        </div>
+                                    <div class="col-md-6 mb-2 mb-md-0">
+                                        <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> پسووڵەکانی فرۆشتن</h5>
                                     </div>
-                                    <div class="col-md-8 col-sm-6">
-                                        <div class="search-container">
-                                            <div class="input-group">
-                                                <input type="text" id="salesSearchInput" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
-                                                <span class="input-group-text rounded-pill-end bg-light">
-                                                    <i class="fas fa-search"></i>
-                                                </span>
+                                </div>
+                                <div class="table-controls mt-3">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
+                                            <div class="records-per-page d-flex align-items-center">
+                                                <label class="me-2 mb-0">نیشاندان:</label>
+                                                <select id="salesRecordsPerPage" class="form-select form-select-sm rounded-pill" style="width: auto;">
+                                                    <option value="5">5</option>
+                                                    <option value="10" selected>10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8 col-sm-6">
+                                            <div class="search-container">
+                                                <div class="input-group">
+                                                    <input type="text" id="salesSearchInput" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
+                                                    <span class="input-group-text rounded-pill-end bg-light">
+                                                        <i class="fas fa-search"></i>
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                            <div class="card-body p-3">
+                                <div class="table-responsive p-2" style="background-color: #fff; border-radius: 16px;">
+                                    <table id="salesHistoryTable" class="table table-bordered custom-table table-hover" style="border-radius: 16px;">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="background-color: #cde1ff; border: none;">#</th>
+                                                <th style="background-color: #cde1ff; border: none;">ژمارەی پسووڵە</th>
+                                                <th style="background-color: #cde1ff; border: none;">بەروار</th>
+                                                <th style="background-color: #cde1ff; border: none;">ناوی کڕیار</th>
+                                                <th style="background-color: #cde1ff; border: none;">ناوی کاڵا</th>
+                                                <th style="background-color: #cde1ff; border: none;">کۆدی کاڵا</th>
+                                                <th style="background-color: #cde1ff; border: none;">بڕ</th>
+                                                <th style="background-color: #cde1ff; border: none;">یەکە</th>
+                                                <th style="background-color: #cde1ff; border: none;">نرخی تاک</th>
+                                                <th style="background-color: #cde1ff; border: none;">نرخی گشتی</th>
+                                                <th style="background-color: #cde1ff; border: none;">کرێی گواستنەوە</th>
+                                                <th style="background-color: #cde1ff; border: none;">خەرجی تر</th>
+                                                <th style="background-color: #cde1ff; border: none;">داشکاندن</th>
+                                                <th style="background-color: #cde1ff; border: none;">جۆری پارەدان</th>
+                                                <th style="background-color: #cde1ff; border: none;">کردارەکان</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if(empty($sales)): ?>
+                                            <tr>
+                                                <td colspan="15" class="text-center py-4">هیچ پسووڵەیەک نەدۆزرایەوە</td>
+                                            </tr>
+                                            <?php else: ?>
+                                                <?php foreach($sales as $index => $sale): ?>
+                                                    <?php 
+                                                        $total = $sale['total_price'] ?? 0;
+                                                        $paymentStatus = 'unpaid';
+                                                        if ($sale['payment_type'] == 'cash' || $sale['paid_amount'] >= $total) {
+                                                            $paymentStatus = 'paid';
+                                                        } elseif ($sale['paid_amount'] > 0) {
+                                                            $paymentStatus = 'partial';
+                                                        }
+                                                    ?>
+                                                    <tr>
+                                                        <td><?= $index + 1 ?></td>
+                                                        <td><?= htmlspecialchars($sale['invoice_number']) ?></td>
+                                                        <td><?= formatDate($sale['date']) ?></td>
+                                                        <td><?= htmlspecialchars($sale['customer_name'] ?? '-') ?></td>
+                                                        <td><?= htmlspecialchars($sale['product_name'] ?? '-') ?></td>
+                                                        <td><?= htmlspecialchars($sale['product_code'] ?? '-') ?></td>
+                                                        <td><?= htmlspecialchars($sale['quantity'] ?? '-') ?></td>
+                                                        <td><?= translateUnitType($sale['unit_type']) ?></td>
+                                                        <td><?= number_format($sale['unit_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td><?= number_format($sale['total_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td><?= number_format($sale['shipping_cost'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td><?= number_format($sale['other_costs'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td><?= number_format($sale['discount'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td>
+                                                            <?php if($sale['payment_type'] == 'cash'): ?>
+                                                                <span class="badge bg-success">نەقد</span>
+                                                            <?php else: ?>
+                                                                <span class="badge bg-warning">قەرز</span>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td>
+                                                        <div class="action-buttons">
+                                                                    <a href="<?php echo (isset($sale['is_delivery']) && $sale['is_delivery'] == 1) ? 
+                                                                        '../../Views/receipt/delivery_receipt.php?sale_id=' . $sale['id'] : 
+                                                                        '../../Views/receipt/print_receipt.php?sale_id=' . $sale['id']; ?>"
+                                                                        class="btn btn-sm btn-outline-success rounded-circle"
+                                                                        title="چاپکردن">
+                                                                        <i class="fas fa-print"></i>
+                                                                    </a>
+                                                                    <button type="button" 
+                                                                        class="btn btn-sm btn-outline-info rounded-circle show-receipt-items"
+                                                                        data-invoice="<?php echo $sale['invoice_number']; ?>"
+                                                                        title="بینینی هەموو کاڵاکان">
+                                                                        <i class="fas fa-list"></i>
+                                                                    </button>
+                                                                </div>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-white">
+                                <div class="pagination-wrapper">
+                                   
+                                    <div class="pagination-controls">
+                                        <button class="btn btn-sm btn-outline-secondary rounded-circle" id="salesPrevPage" disabled>
+                                            <i class="fas fa-chevron-right"></i>
+                                        </button>
+                                        <div class="pagination-numbers" id="salesPagination"></div>
+                                        <button class="btn btn-sm btn-outline-secondary rounded-circle" id="salesNextPage">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-body p-3">
-                            <div class="table-responsive p-2" style="background-color: #fff; border-radius: 16px;">
-                                <table id="salesHistoryTable" class="table table-bordered custom-table table-hover" style="border-radius: 16px;">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th style="background-color: #cde1ff; border: none;">#</th>
-                                            <th style="background-color: #cde1ff; border: none;">ژمارەی پسووڵە</th>
-                                            <th style="background-color: #cde1ff; border: none;">بەروار</th>
-                                            <th style="background-color: #cde1ff; border: none;">ناوی کڕیار</th>
-                                            <th style="background-color: #cde1ff; border: none;">ناوی کاڵا</th>
-                                            <th style="background-color: #cde1ff; border: none;">کۆدی کاڵا</th>
-                                            <th style="background-color: #cde1ff; border: none;">بڕ</th>
-                                            <th style="background-color: #cde1ff; border: none;">یەکە</th>
-                                            <th style="background-color: #cde1ff; border: none;">نرخی تاک</th>
-                                            <th style="background-color: #cde1ff; border: none;">نرخی گشتی</th>
-                                            <th style="background-color: #cde1ff; border: none;">کرێی گواستنەوە</th>
-                                            <th style="background-color: #cde1ff; border: none;">خەرجی تر</th>
-                                            <th style="background-color: #cde1ff; border: none;">داشکاندن</th>
-                                            <th style="background-color: #cde1ff; border: none;">جۆری پارەدان</th>
-                                            <th style="background-color: #cde1ff; border: none;">کردارەکان</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php if(empty($sales)): ?>
-                                        <tr>
-                                            <td colspan="15" class="text-center py-4">هیچ پسووڵەیەک نەدۆزرایەوە</td>
-                                        </tr>
-                                        <?php else: ?>
-                                            <?php foreach($sales as $index => $sale): ?>
-                                                <?php 
-                                                    $total = $sale['total_price'] ?? 0;
-                                                    $paymentStatus = 'unpaid';
-                                                    if ($sale['payment_type'] == 'cash' || $sale['paid_amount'] >= $total) {
-                                                        $paymentStatus = 'paid';
-                                                    } elseif ($sale['paid_amount'] > 0) {
-                                                        $paymentStatus = 'partial';
-                                                    }
-                                                ?>
-                                                <tr>
-                                                    <td><?= $index + 1 ?></td>
-                                                    <td><?= htmlspecialchars($sale['invoice_number']) ?></td>
-                                                    <td><?= formatDate($sale['date']) ?></td>
-                                                    <td><?= htmlspecialchars($sale['customer_name'] ?? '-') ?></td>
-                                                    <td><?= htmlspecialchars($sale['product_name'] ?? '-') ?></td>
-                                                    <td><?= htmlspecialchars($sale['product_code'] ?? '-') ?></td>
-                                                    <td><?= htmlspecialchars($sale['quantity'] ?? '-') ?></td>
-                                                    <td><?= translateUnitType($sale['unit_type']) ?></td>
-                                                    <td><?= number_format($sale['unit_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
-                                                    <td><?= number_format($sale['total_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
-                                                    <td><?= number_format($sale['shipping_cost'] ?? 0, 0, '.', ',') ?> د.ع</td>
-                                                    <td><?= number_format($sale['other_costs'] ?? 0, 0, '.', ',') ?> د.ع</td>
-                                                    <td><?= number_format($sale['discount'] ?? 0, 0, '.', ',') ?> د.ع</td>
-                                                    <td>
-                                                        <?php if($sale['payment_type'] == 'cash'): ?>
-                                                            <span class="badge bg-success">نەقد</span>
-                                                        <?php else: ?>
-                                                            <span class="badge bg-warning">قەرز</span>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td>
-                                                    <div class="action-buttons">
-                                                                <a href="<?php echo (isset($sale['is_delivery']) && $sale['is_delivery'] == 1) ? 
-                                                                    '../../Views/receipt/delivery_receipt.php?sale_id=' . $sale['id'] : 
-                                                                    '../../Views/receipt/print_receipt.php?sale_id=' . $sale['id']; ?>"
+                    </div>
+
+                    <!-- Delivery Tab -->
+                    <div class="tab-pane fade" id="delivery" role="tabpanel" aria-labelledby="delivery-tab">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white">
+                               <div class="row align-items-center">
+                                    <div class="col-md-6 mb-2 mb-md-0">
+                                        <h5 class="mb-0"><i class="fas fa-truck"></i> پسووڵەکانی گەیاندن</h5>
+                                    </div>
+                                </div>
+                                <div class="table-controls mt-3">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
+                                            <div class="records-per-page d-flex align-items-center">
+                                                <label class="me-2 mb-0">نیشاندان:</label>
+                                                <select id="deliveryRecordsPerPage" class="form-select form-select-sm rounded-pill" style="width: auto;">
+                                                    <option value="5">5</option>
+                                                    <option value="10" selected>10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8 col-sm-6">
+                                            <div class="search-container">
+                                                <div class="input-group">
+                                                    <input type="text" id="deliverySearchInput" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
+                                                    <span class="input-group-text rounded-pill-end bg-light">
+                                                        <i class="fas fa-search"></i>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="table-responsive p-2" style="background-color: #fff; border-radius: 16px;">
+                                    <table id="deliveryTable" class="table table-bordered custom-table table-hover" style="border-radius: 16px;">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="background-color: #cde1ff; border: none;">#</th>
+                                                <th style="background-color: #cde1ff; border: none;">ژمارەی پسووڵە</th>
+                                                <th style="background-color: #cde1ff; border: none;">بەروار</th>
+                                                <th style="background-color: #cde1ff; border: none;">ناوی کڕیار</th>
+                                                <th style="background-color: #cde1ff; border: none;">نرخی گشتی</th>
+                                                <th style="background-color: #cde1ff; border: none;">کرێی گواستنەوە</th>
+                                                <th style="background-color: #cde1ff; border: none;">خەرجی تر</th>
+                                                <th style="background-color: #cde1ff; border: none;">داشکاندن</th>
+                                                <th style="background-color: #cde1ff; border: none;">جۆری پارەدان</th>
+                                                <th style="background-color: #cde1ff; border: none;">کردارەکان</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if(empty($deliveries)): ?>
+                                            <tr>
+                                                <td colspan="10" class="text-center py-4">هیچ پسووڵەیەکی گەیاندن نەدۆزرایەوە</td>
+                                            </tr>
+                                            <?php else: ?>
+                                                <?php foreach($deliveries as $index => $delivery): ?>
+                                                    <tr>
+                                                        <td><?= $index + 1 ?></td>
+                                                        <td><?= htmlspecialchars($delivery['invoice_number']) ?></td>
+                                                        <td><?= formatDate($delivery['date']) ?></td>
+                                                        <td><?= htmlspecialchars($delivery['customer_name'] ?? '-') ?></td>
+                                                        <td><?= number_format($delivery['total_amount'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td><?= number_format($delivery['shipping_cost'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td><?= number_format($delivery['other_costs'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td><?= number_format($delivery['discount'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td>
+                                                            <?php if($delivery['payment_type'] == 'cash'): ?>
+                                                                <span class="badge bg-success">نەقد</span>
+                                                            <?php else: ?>
+                                                                <span class="badge bg-warning">قەرز</span>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td>
+                                                            <div class="action-buttons">
+                                                                <a href="../../Views/receipt/delivery_receipt.php?sale_id=<?= $delivery['id'] ?>"
                                                                     class="btn btn-sm btn-outline-success rounded-circle"
                                                                     title="چاپکردن">
                                                                     <i class="fas fa-print"></i>
                                                                 </a>
                                                                 <button type="button" 
                                                                     class="btn btn-sm btn-outline-info rounded-circle show-receipt-items"
-                                                                    data-invoice="<?php echo $sale['invoice_number']; ?>"
+                                                                    data-invoice="<?php echo $delivery['invoice_number']; ?>"
                                                                     title="بینینی هەموو کاڵاکان">
                                                                     <i class="fas fa-list"></i>
                                                                 </button>
                                                             </div>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                        </div>
-                        <div class="card-footer bg-white">
-                            <div class="pagination-wrapper">
-                               
-                                <div class="pagination-controls">
-                                    <button class="btn btn-sm btn-outline-secondary rounded-circle" id="salesPrevPage" disabled>
-                                        <i class="fas fa-chevron-right"></i>
-                                    </button>
-                                    <div class="pagination-numbers" id="salesPagination"></div>
-                                    <button class="btn btn-sm btn-outline-secondary rounded-circle" id="salesNextPage">
-                                        <i class="fas fa-chevron-left"></i>
-                                    </button>
+                            <div class="card-footer bg-white">
+                                <div class="pagination-wrapper">
+                                    <div class="pagination-controls">
+                                        <button class="btn btn-sm btn-outline-secondary rounded-circle" id="deliveryPrevPage" disabled>
+                                            <i class="fas fa-chevron-right"></i>
+                                        </button>
+                                        <div class="pagination-numbers" id="deliveryPagination"></div>
+                                        <button class="btn btn-sm btn-outline-secondary rounded-circle" id="deliveryNextPage">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Delivery Tab -->
-                <div class="tab-pane fade" id="delivery" role="tabpanel" aria-labelledby="delivery-tab">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white">
-                          
-                            <div class="table-controls mt-3">
-                                <div class="row align-items-center">
-                                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
-                                        <div class="records-per-page d-flex align-items-center">
-                                            <label class="me-2 mb-0">نیشاندان:</label>
-                                            <select id="deliveryRecordsPerPage" class="form-select form-select-sm rounded-pill" style="width: auto;">
-                                                <option value="5">5</option>
-                                                <option value="10" selected>10</option>
-                                                <option value="25">25</option>
-                                                <option value="50">50</option>
-                                                <option value="100">100</option>
-                                            </select>
-                                        </div>
+                    <!-- Drafts Tab -->
+                    <div class="tab-pane fade" id="drafts" role="tabpanel" aria-labelledby="drafts-tab">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white">
+                               <div class="row align-items-center">
+                                    <div class="col-md-6 mb-2 mb-md-0">
+                                        <h5 class="mb-0"><i class="fas fa-file-alt"></i> پسووڵە ڕەش نووسەکان</h5>
                                     </div>
-                                    <div class="col-md-8 col-sm-6">
-                                        <div class="search-container">
-                                            <div class="input-group">
-                                                <input type="text" id="deliverySearchInput" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
-                                                <span class="input-group-text rounded-pill-end bg-light">
-                                                    <i class="fas fa-search"></i>
-                                                </span>
+                                </div>
+                                <div class="table-controls mt-3">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
+                                            <div class="records-per-page d-flex align-items-center">
+                                                <label class="me-2 mb-0">نیشاندان:</label>
+                                                <select id="draftsRecordsPerPage" class="form-select form-select-sm rounded-pill" style="width: auto;">
+                                                    <option value="5">5</option>
+                                                    <option value="10" selected>10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8 col-sm-6">
+                                            <div class="search-container">
+                                                <div class="input-group">
+                                                    <input type="text" id="draftsSearchInput" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
+                                                    <span class="input-group-text rounded-pill-end bg-light">
+                                                        <i class="fas fa-search"></i>
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="card-body p-3">
-                            <div class="table-responsive p-2" style="background-color: #fff; border-radius: 16px;">
-                                <table id="deliveryTable" class="table table-bordered custom-table table-hover" style="border-radius: 16px;">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th style="background-color: #cde1ff; border: none;">#</th>
-                                            <th style="background-color: #cde1ff; border: none;">ژمارەی پسووڵە</th>
-                                            <th style="background-color: #cde1ff; border: none;">بەروار</th>
-                                            <th style="background-color: #cde1ff; border: none;">ناوی کڕیار</th>
-                                            <th style="background-color: #cde1ff; border: none;">نرخی گشتی</th>
-                                            <th style="background-color: #cde1ff; border: none;">کرێی گواستنەوە</th>
-                                            <th style="background-color: #cde1ff; border: none;">خەرجی تر</th>
-                                            <th style="background-color: #cde1ff; border: none;">داشکاندن</th>
-                                            <th style="background-color: #cde1ff; border: none;">جۆری پارەدان</th>
-                                            <th style="background-color: #cde1ff; border: none;">کردارەکان</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php if(empty($deliveries)): ?>
-                                        <tr>
-                                            <td colspan="10" class="text-center py-4">هیچ پسووڵەیەکی گەیاندن نەدۆزرایەوە</td>
-                                        </tr>
-                                        <?php else: ?>
-                                            <?php foreach($deliveries as $index => $delivery): ?>
-                                                <tr>
-                                                    <td><?= $index + 1 ?></td>
-                                                    <td><?= htmlspecialchars($delivery['invoice_number']) ?></td>
-                                                    <td><?= formatDate($delivery['date']) ?></td>
-                                                    <td><?= htmlspecialchars($delivery['customer_name'] ?? '-') ?></td>
-                                                    <td><?= number_format($delivery['total_amount'] ?? 0, 0, '.', ',') ?> د.ع</td>
-                                                    <td><?= number_format($delivery['shipping_cost'] ?? 0, 0, '.', ',') ?> د.ع</td>
-                                                    <td><?= number_format($delivery['other_costs'] ?? 0, 0, '.', ',') ?> د.ع</td>
-                                                    <td><?= number_format($delivery['discount'] ?? 0, 0, '.', ',') ?> د.ع</td>
-                                                    <td>
-                                                        <?php if($delivery['payment_type'] == 'cash'): ?>
-                                                            <span class="badge bg-success">نەقد</span>
-                                                        <?php else: ?>
-                                                            <span class="badge bg-warning">قەرز</span>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td>
-                                                        <div class="action-buttons">
-                                                            <a href="../../Views/receipt/delivery_receipt.php?sale_id=<?= $delivery['id'] ?>"
-                                                                class="btn btn-sm btn-outline-success rounded-circle"
-                                                                title="چاپکردن">
-                                                                <i class="fas fa-print"></i>
-                                                            </a>
-                                                            <button type="button" 
-                                                                class="btn btn-sm btn-outline-info rounded-circle show-receipt-items"
-                                                                data-invoice="<?php echo $delivery['invoice_number']; ?>"
-                                                                title="بینینی هەموو کاڵاکان">
-                                                                <i class="fas fa-list"></i>
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
+                            <div class="card-body p-3">
+                                <div class="table-responsive p-2" style="background-color: #fff; border-radius: 16px;">
+                                    <table id="draftsTable" class="table table-bordered custom-table table-hover" style="border-radius: 16px;">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="background-color: #cde1ff; border: none;">#</th>
+                                                <th style="background-color: #cde1ff; border: none;">ژمارەی پسووڵە</th>
+                                                <th style="background-color: #cde1ff; border: none;">بەروار</th>
+                                                <th style="background-color: #cde1ff; border: none;">ناوی کڕیار</th>
+                                                <th style="background-color: #cde1ff; border: none;">نرخی گشتی</th>
+                                                <th style="background-color: #cde1ff; border: none;">کرێی گواستنەوە</th>
+                                                <th style="background-color: #cde1ff; border: none;">خەرجی تر</th>
+                                                <th style="background-color: #cde1ff; border: none;">داشکاندن</th>
+                                                <th style="background-color: #cde1ff; border: none;">جۆری پارەدان</th>
+                                                <th style="background-color: #cde1ff; border: none;">کردارەکان</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if(empty($drafts)): ?>
+                                            <tr>
+                                                <td colspan="10" class="text-center py-4">هیچ پسووڵەیەکی ڕەش نووس نەدۆزرایەوە</td>
+                                            </tr>
+                                            <?php else: ?>
+                                                <?php foreach($drafts as $index => $draft): ?>
+                                                    <tr>
+                                                        <td><?= $index + 1 ?></td>
+                                                        <td><?= htmlspecialchars($draft['invoice_number']) ?></td>
+                                                        <td><?= formatDate($draft['date']) ?></td>
+                                                        <td><?= htmlspecialchars($draft['customer_name'] ?? '-') ?></td>
+                                                        <td><?= number_format($draft['total_amount'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td><?= number_format($draft['shipping_cost'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td><?= number_format($draft['other_costs'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td><?= number_format($draft['discount'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td>
+                                                            <?php if($draft['payment_type'] == 'cash'): ?>
+                                                                <span class="badge bg-success">نەقد</span>
+                                                            <?php else: ?>
+                                                                <span class="badge bg-warning">قەرز</span>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td>
+                                                            <div class="action-buttons">
+                                                                <a href="<?php echo (isset($draft['is_delivery']) && $draft['is_delivery'] == 1) ? 
+                                                                    '../../Views/receipt/delivery_receipt.php?sale_id=' . $draft['id'] : 
+                                                                    '../../Views/receipt/print_receipt.php?sale_id=' . $draft['id']; ?>"
+                                                                    class="btn btn-sm btn-outline-success rounded-circle"
+                                                                    title="چاپکردن">
+                                                                    <i class="fas fa-print"></i>
+                                                                </a>
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-info rounded-circle show-receipt-items"
+                                                                    data-invoice="<?php echo $draft['invoice_number']; ?>"
+                                                                    title="بینینی هەموو کاڵاکان">
+                                                                    <i class="fas fa-list"></i>
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                        </div>
-                        <div class="card-footer bg-white">
-                            <div class="pagination-wrapper">
-                                <div class="pagination-controls">
-                                    <button class="btn btn-sm btn-outline-secondary rounded-circle" id="deliveryPrevPage" disabled>
-                                        <i class="fas fa-chevron-right"></i>
-                                    </button>
-                                    <div class="pagination-numbers" id="deliveryPagination"></div>
-                                    <button class="btn btn-sm btn-outline-secondary rounded-circle" id="deliveryNextPage">
-                                        <i class="fas fa-chevron-left"></i>
-                                    </button>
+                            <div class="card-footer bg-white">
+                                <div class="pagination-wrapper">
+                                    <div class="pagination-controls">
+                                        <button class="btn btn-sm btn-outline-secondary rounded-circle" id="draftsPrevPage" disabled>
+                                            <i class="fas fa-chevron-right"></i>
+                                        </button>
+                                        <div class="pagination-numbers" id="draftsPagination"></div>
+                                        <button class="btn btn-sm btn-outline-secondary rounded-circle" id="draftsNextPage">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Drafts Tab -->
-                <div class="tab-pane fade" id="drafts" role="tabpanel" aria-labelledby="drafts-tab">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white">
-                           
-                            <div class="table-controls mt-3">
-                                <div class="row align-items-center">
-                                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
-                                        <div class="records-per-page d-flex align-items-center">
-                                            <label class="me-2 mb-0">نیشاندان:</label>
-                                            <select id="draftsRecordsPerPage" class="form-select form-select-sm rounded-pill" style="width: auto;">
-                                                <option value="5">5</option>
-                                                <option value="10" selected>10</option>
-                                                <option value="25">25</option>
-                                                <option value="50">50</option>
-                                                <option value="100">100</option>
-                                            </select>
-                                        </div>
+                    <!-- Returns Tab -->
+                    <div class="tab-pane fade" id="returns" role="tabpanel" aria-labelledby="returns-tab">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white">
+                               <div class="row align-items-center">
+                                    <div class="col-md-6 mb-2 mb-md-0">
+                                        <h5 class="mb-0"><i class="fas fa-undo"></i> بەفیڕۆچوو</h5>
                                     </div>
-                                    <div class="col-md-8 col-sm-6">
-                                        <div class="search-container">
-                                            <div class="input-group">
-                                                <input type="text" id="draftsSearchInput" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
-                                                <span class="input-group-text rounded-pill-end bg-light">
-                                                    <i class="fas fa-search"></i>
-                                                </span>
+                                </div>
+                                <div class="table-controls mt-3">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
+                                            <div class="records-per-page d-flex align-items-center">
+                                                <label class="me-2 mb-0">نیشاندان:</label>
+                                                <select id="returnsRecordsPerPage" class="form-select form-select-sm rounded-pill" style="width: auto;">
+                                                    <option value="5">5</option>
+                                                    <option value="10" selected>10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8 col-sm-6">
+                                            <div class="search-container">
+                                                <div class="input-group">
+                                                    <input type="text" id="returnsSearchInput" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
+                                                    <span class="input-group-text rounded-pill-end bg-light">
+                                                        <i class="fas fa-search"></i>
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="card-body p-3">
-                            <div class="table-responsive p-2" style="background-color: #fff; border-radius: 16px;">
-                                <table id="draftsTable" class="table table-bordered custom-table table-hover" style="border-radius: 16px;">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th style="background-color: #cde1ff; border: none;">#</th>
-                                            <th style="background-color: #cde1ff; border: none;">ژمارەی پسووڵە</th>
-                                            <th style="background-color: #cde1ff; border: none;">بەروار</th>
-                                            <th style="background-color: #cde1ff; border: none;">ناوی کڕیار</th>
-                                            <th style="background-color: #cde1ff; border: none;">نرخی گشتی</th>
-                                            <th style="background-color: #cde1ff; border: none;">کرێی گواستنەوە</th>
-                                            <th style="background-color: #cde1ff; border: none;">خەرجی تر</th>
-                                            <th style="background-color: #cde1ff; border: none;">داشکاندن</th>
-                                            <th style="background-color: #cde1ff; border: none;">جۆری پارەدان</th>
-                                            <th style="background-color: #cde1ff; border: none;">کردارەکان</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php if(empty($drafts)): ?>
-                                        <tr>
-                                            <td colspan="10" class="text-center py-4">هیچ پسووڵەیەکی ڕەش نووس نەدۆزرایەوە</td>
-                                        </tr>
-                                        <?php else: ?>
-                                            <?php foreach($drafts as $index => $draft): ?>
-                                                <tr>
-                                                    <td><?= $index + 1 ?></td>
-                                                    <td><?= htmlspecialchars($draft['invoice_number']) ?></td>
-                                                    <td><?= formatDate($draft['date']) ?></td>
-                                                    <td><?= htmlspecialchars($draft['customer_name'] ?? '-') ?></td>
-                                                    <td><?= number_format($draft['total_amount'] ?? 0, 0, '.', ',') ?> د.ع</td>
-                                                    <td><?= number_format($draft['shipping_cost'] ?? 0, 0, '.', ',') ?> د.ع</td>
-                                                    <td><?= number_format($draft['other_costs'] ?? 0, 0, '.', ',') ?> د.ع</td>
-                                                    <td><?= number_format($draft['discount'] ?? 0, 0, '.', ',') ?> د.ع</td>
-                                                    <td>
-                                                        <?php if($draft['payment_type'] == 'cash'): ?>
-                                                            <span class="badge bg-success">نەقد</span>
-                                                        <?php else: ?>
-                                                            <span class="badge bg-warning">قەرز</span>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td>
-                                                        <div class="action-buttons">
-                                                            <a href="<?php echo (isset($draft['is_delivery']) && $draft['is_delivery'] == 1) ? 
-                                                                '../../Views/receipt/delivery_receipt.php?sale_id=' . $draft['id'] : 
-                                                                '../../Views/receipt/print_receipt.php?sale_id=' . $draft['id']; ?>"
-                                                                class="btn btn-sm btn-outline-success rounded-circle"
-                                                                title="چاپکردن">
-                                                                <i class="fas fa-print"></i>
-                                                            </a>
-                                                            <button type="button" 
-                                                                class="btn btn-sm btn-outline-info rounded-circle show-receipt-items"
-                                                                data-invoice="<?php echo $draft['invoice_number']; ?>"
-                                                                title="بینینی هەموو کاڵاکان">
-                                                                <i class="fas fa-list"></i>
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="card-footer bg-white">
-                            <div class="pagination-wrapper">
-                                <div class="pagination-controls">
-                                    <button class="btn btn-sm btn-outline-secondary rounded-circle" id="draftsPrevPage" disabled>
-                                        <i class="fas fa-chevron-right"></i>
-                                    </button>
-                                    <div class="pagination-numbers" id="draftsPagination"></div>
-                                    <button class="btn btn-sm btn-outline-secondary rounded-circle" id="draftsNextPage">
-                                        <i class="fas fa-chevron-left"></i>
-                                    </button>
+                            <div class="card-body p-3">
+                                <div class="table-responsive p-2" style="background-color: #fff; border-radius: 16px;">
+                                    <table id="returnsTable" class="table table-bordered custom-table table-hover" style="border-radius: 16px;">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="background-color: #cde1ff; border: none;">#</th>
+                                                <th style="background-color: #cde1ff; border: none;">بەروار</th>
+                                                <th style="background-color: #cde1ff; border: none;">ناوی کاڵا</th>
+                                                <th style="background-color: #cde1ff; border: none;">کۆدی کاڵا</th>
+                                                <th style="background-color: #cde1ff; border: none;">بڕ</th>
+                                                <th style="background-color: #cde1ff; border: none;">یەکە</th>
+                                                <th style="background-color: #cde1ff; border: none;">نرخی تاک</th>
+                                                <th style="background-color: #cde1ff; border: none;">نرخی گشتی</th>
+                                                <th style="background-color: #cde1ff; border: none;">کردارەکان</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if(empty($wastings)): ?>
+                                            <tr>
+                                                <td colspan="9" class="text-center py-4">هیچ پسووڵەیەکی بەفیڕۆچوو نەدۆزرایەوە</td>
+                                            </tr>
+                                            <?php else: ?>
+                                                <?php foreach($wastings as $index => $wasting): ?>
+                                                    <tr>
+                                                        <td><?= $index + 1 ?></td>
+                                                        <td><?= formatDate($wasting['date']) ?></td>
+                                                        <td><?= htmlspecialchars($wasting['product_name'] ?? '-') ?></td>
+                                                        <td><?= htmlspecialchars($wasting['product_code'] ?? '-') ?></td>
+                                                        <td><?= htmlspecialchars($wasting['quantity'] ?? '-') ?></td>
+                                                        <td><?= translateUnitType($wasting['unit_type']) ?></td>
+                                                        <td><?= number_format($wasting['unit_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td><?= number_format($wasting['total_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td>
+                                                            <div class="action-buttons">
+                                                                <a href="../../Views/receipt/print_wasting.php?wasting_id=<?= $wasting['id'] ?>"
+                                                                    class="btn btn-sm btn-outline-success rounded-circle"
+                                                                    title="چاپکردن">
+                                                                    <i class="fas fa-print"></i>
+                                                                </a>
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-info rounded-circle show-receipt-items"
+                                                                    data-invoice="<?php echo $wasting['invoice_number']; ?>"
+                                                                    title="بینینی هەموو کاڵاکان">
+                                                                    <i class="fas fa-list"></i>
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Returns Tab -->
-                <div class="tab-pane fade" id="returns" role="tabpanel" aria-labelledby="returns-tab">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white">
-                            
-                            <div class="table-controls mt-3">
-                                <div class="row align-items-center">
-                                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
-                                        <div class="records-per-page d-flex align-items-center">
-                                            <label class="me-2 mb-0">نیشاندان:</label>
-                                            <select id="returnsRecordsPerPage" class="form-select form-select-sm rounded-pill" style="width: auto;">
-                                                <option value="5">5</option>
-                                                <option value="10" selected>10</option>
-                                                <option value="25">25</option>
-                                                <option value="50">50</option>
-                                                <option value="100">100</option>
-                                            </select>
-                                        </div>
+                            <div class="card-footer bg-white">
+                                <div class="pagination-wrapper">
+                                    <div class="pagination-controls">
+                                        <button class="btn btn-sm btn-outline-secondary rounded-circle" id="returnsPrevPage" disabled>
+                                            <i class="fas fa-chevron-right"></i>
+                                        </button>
+                                        <div class="pagination-numbers" id="returnsPagination"></div>
+                                        <button class="btn btn-sm btn-outline-secondary rounded-circle" id="returnsNextPage">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </button>
                                     </div>
-                                    <div class="col-md-8 col-sm-6">
-                                        <div class="search-container">
-                                            <div class="input-group">
-                                                <input type="text" id="returnsSearchInput" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
-                                                <span class="input-group-text rounded-pill-end bg-light">
-                                                    <i class="fas fa-search"></i>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body p-3">
-                            <div class="table-responsive p-2" style="background-color: #fff; border-radius: 16px;">
-                                <table id="returnsTable" class="table table-bordered custom-table table-hover" style="border-radius: 16px;">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th style="background-color: #cde1ff; border: none;">#</th>
-                                            <th style="background-color: #cde1ff; border: none;">بەروار</th>
-                                            <th style="background-color: #cde1ff; border: none;">ناوی کاڵا</th>
-                                            <th style="background-color: #cde1ff; border: none;">کۆدی کاڵا</th>
-                                            <th style="background-color: #cde1ff; border: none;">بڕ</th>
-                                            <th style="background-color: #cde1ff; border: none;">یەکە</th>
-                                            <th style="background-color: #cde1ff; border: none;">نرخی تاک</th>
-                                            <th style="background-color: #cde1ff; border: none;">نرخی گشتی</th>
-                                            <th style="background-color: #cde1ff; border: none;">کردارەکان</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php if(empty($wastings)): ?>
-                                        <tr>
-                                            <td colspan="9" class="text-center py-4">هیچ پسووڵەیەکی بەفیڕۆچوو نەدۆزرایەوە</td>
-                                        </tr>
-                                        <?php else: ?>
-                                            <?php foreach($wastings as $index => $wasting): ?>
-                                                <tr>
-                                                    <td><?= $index + 1 ?></td>
-                                                    <td><?= formatDate($wasting['date']) ?></td>
-                                                    <td><?= htmlspecialchars($wasting['product_name'] ?? '-') ?></td>
-                                                    <td><?= htmlspecialchars($wasting['product_code'] ?? '-') ?></td>
-                                                    <td><?= htmlspecialchars($wasting['quantity'] ?? '-') ?></td>
-                                                    <td><?= translateUnitType($wasting['unit_type']) ?></td>
-                                                    <td><?= number_format($wasting['unit_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
-                                                    <td><?= number_format($wasting['total_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
-                                                    <td>
-                                                        <div class="action-buttons">
-                                                            <a href="../../Views/receipt/print_wasting.php?wasting_id=<?= $wasting['id'] ?>"
-                                                                class="btn btn-sm btn-outline-success rounded-circle"
-                                                                title="چاپکردن">
-                                                                <i class="fas fa-print"></i>
-                                                            </a>
-                                                            <button type="button" 
-                                                                class="btn btn-sm btn-outline-info rounded-circle show-receipt-items"
-                                                                data-invoice="<?php echo $wasting['invoice_number']; ?>"
-                                                                title="بینینی هەموو کاڵاکان">
-                                                                <i class="fas fa-list"></i>
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="card-footer bg-white">
-                            <div class="pagination-wrapper">
-                                <div class="pagination-controls">
-                                    <button class="btn btn-sm btn-outline-secondary rounded-circle" id="returnsPrevPage" disabled>
-                                        <i class="fas fa-chevron-right"></i>
-                                    </button>
-                                    <div class="pagination-numbers" id="returnsPagination"></div>
-                                    <button class="btn btn-sm btn-outline-secondary rounded-circle" id="returnsNextPage">
-                                        <i class="fas fa-chevron-left"></i>
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -934,7 +951,6 @@ function translateUnitType($unitType) {
             </div>
         </div>
     </div>
-</div>
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
