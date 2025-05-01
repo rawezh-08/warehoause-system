@@ -689,6 +689,10 @@ require_once '../../config/database.php';
                             <label for="deliveryAddress" class="form-label">ناونیشانی گەیاندن</label>
                             <textarea class="form-control" id="deliveryAddress" rows="3" required></textarea>
                         </div>
+                        <div class="mb-3">
+                            <label for="phoneNumber" class="form-label">ژمارەی مۆبایل</label>
+                            <input type="text" class="form-control" id="phoneNumber" required placeholder="07XX XXX XXXX">
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -1157,11 +1161,22 @@ require_once '../../config/database.php';
                 
                 // Get form data
                 const deliveryAddress = $('#deliveryAddress').val();
+                const phoneNumber = $('#phoneNumber').val();
                 
                 if (!deliveryAddress) {
                     Swal.fire({
                         title: 'هەڵە!',
                         text: 'تکایە ناونیشانی گەیاندن بنووسە',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                    return;
+                }
+
+                if (!phoneNumber) {
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'تکایە ژمارەی مۆبایل بنووسە',
                         icon: 'error',
                         confirmButtonText: 'باشە'
                     });
@@ -1174,6 +1189,7 @@ require_once '../../config/database.php';
                     receipt_type: 'selling',
                     is_delivery: true,
                     delivery_address: deliveryAddress,
+                    phone_number: phoneNumber,
                     invoice_number: currentTab.find('.receipt-number').val(),
                     customer_id: currentTab.find('.customer-select').val() || null,
                     date: currentTab.find('.sale-date').val(),

@@ -45,7 +45,8 @@ CREATE TABLE `sales` (
   `remaining_amount` decimal(10,0) DEFAULT 0,
   `is_draft` tinyint(1) DEFAULT 0,
   `is_delivery` tinyint(1) DEFAULT 0,
-  `delivery_address` text DEFAULT NULL
+  `delivery_address` text DEFAULT NULL,
+  `phone_number` varchar(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
