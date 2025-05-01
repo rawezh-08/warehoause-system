@@ -224,9 +224,9 @@ require_once '../../process/products_logic.php';
                                                 $pieces_per_box = isset($product['pieces_per_box']) ? (int)$product['pieces_per_box'] : 1;
                                                 $box_quantity = floor($current_quantity / $pieces_per_box);
                                                 
-                                                if ($current_quantity < 10): ?>
-                                                    <span class="badge bg-danger rounded-pill">مەترسیدارە (<?php echo $box_quantity; ?> کارتۆن)</span>
-                                                <?php elseif ($current_quantity >= 10 && $current_quantity <= 50): ?>
+                                                if ($current_quantity < $pieces_per_box): ?>
+                                                    <span class="badge bg-danger rounded-pill">مەترسیدارە (<?php echo $current_quantity; ?> دانە)</span>
+                                                <?php elseif ($current_quantity >= $pieces_per_box && $current_quantity <= ($pieces_per_box * 5)): ?>
                                                     <span class="badge bg-warning rounded-pill">بڕێکی کەم بەردەستە (<?php echo $box_quantity; ?> کارتۆن)</span>
                                                 <?php else: ?>
                                                     <span class="badge bg-success rounded-pill">کۆنتڕۆڵ (<?php echo $box_quantity; ?> کارتۆن)</span>
