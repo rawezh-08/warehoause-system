@@ -728,17 +728,7 @@ $(document).ready(function() {
 
         // Add special buttons for selling tab
         if (tabType === RECEIPT_TYPES.SELLING) {
-            // Add costs and profits button
-            const costsBtn = $('<button>')
-                .addClass('btn btn-info costs-btn')
-                .html('<i class="fas fa-calculator me-2"></i>نرخ و قازانج')
-                .on('click', function() {
-                    showProductCostsAndProfits(tabId);
-                });
-            
-            // Add the costs button next to the save button
-            $(`#${tabId} .save-btn`).before(costsBtn);
-
+            // Remove the costs button creation code since it's already in HTML
             // Add draft button handler
             $(`#${tabId} .draft-btn`).off('click').on('click', function() {
                 saveReceipt(tabId, tabType, true);
