@@ -381,6 +381,7 @@ try {
     $categoryId = $_POST['category_id'];
     $unitId = $_POST['unit_id'];
     $notes = isset($_POST['notes']) ? $_POST['notes'] : null;
+    $boxesPerSet = isset($_POST['boxes_per_set']) ? str_replace(',', '', $_POST['boxes_per_set']) : null;
     
     $stmt->bindParam(':name', $name);
     $stmt->bindParam(':code', $code);

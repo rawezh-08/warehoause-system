@@ -725,7 +725,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Function to format numbers with commas for thousands
+    // Function to format numbers with commas
     function formatNumber(input) {
         // Remove existing commas and get the value
         let value = input.value.replace(/,/g, '');
@@ -743,8 +743,72 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Initialize by making sure we're on the correct tab and buttons are set up
-    switchToTab('basic-info');
+    // Function to handle unit type changes
+    function handleUnitTypeChange() {
+        const unitSelect = document.getElementById('unit_id');
+        const piecesPerBoxContainer = document.getElementById('piecesPerBoxContainer');
+        const boxesPerSetContainer = document.getElementById('boxesPerSetContainer');
+        
+        if (!unitSelect) return;
+        
+        const selectedUnit = unitSelect.value;
+        
+        // Show/hide containers based on unit type
+        if (selectedUnit === '2') { // Box
+            piecesPerBoxContainer.style.display = 'block';
+            boxesPerSetContainer.style.display = 'none';
+        } else if (selectedUnit === '3') { // Set
+            piecesPerBoxContainer.style.display = 'block';
+            boxesPerSetContainer.style.display = 'block';
+        } else { // Piece
+            piecesPerBoxContainer.style.display = 'none';
+            boxesPerSetContainer.style.display = 'none';
+        }
+    }
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize number formatting
+        const numberInputs = [
+            'buyingPrice',
+            'sellingPrice',
+            'selling_price_wholesale',
+            'piecesPerBox',
+            'boxesPerSet',
+            'min_quantity',
+            'current_quantity'
+        ];
+
+        numberInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.setAttribute('type', 'text');
+                input.addEventListener('input', function() {
+                    formatNumber(this);
+                });
+            }
+        });
+
+        // Initialize unit type handling
+        const unitSelect = document.getElementById('unit_id');
+        if (unitSelect) {
+            unitSelect.addEventListener('change', handleUnitTypeChange);
+            // Call once on page load to set initial state
+            handleUnitTypeChange();
+        }
+
+        // Initialize tab navigation
+        handleTabNavigation();
+
+        // DO NOT initialize form submission here - it's already handled in the main code
+        // handleFormSubmission();
+
+        // Initialize refresh button
+        const refreshButton = document.querySelector('.refresh-products');
+        if (refreshButton) {
+            refreshButton.addEventListener('click', updateLatestProducts);
+        }
+    });
 
     // Form submission handler
     if (addProductForm) {
@@ -979,27 +1043,23 @@ async function updateLatestProducts() {
 // Function to handle unit type changes
 function handleUnitTypeChange() {
     const unitSelect = document.getElementById('unit_id');
-    const unitQuantityContainer = document.getElementById('unitQuantityContainer');
     const piecesPerBoxContainer = document.getElementById('piecesPerBoxContainer');
     const boxesPerSetContainer = document.getElementById('boxesPerSetContainer');
-
-    if (unitSelect && unitQuantityContainer && piecesPerBoxContainer && boxesPerSetContainer) {
-        const selectedUnit = unitSelect.value;
-        
-        // Hide all containers first
-        unitQuantityContainer.style.display = 'none';
+    
+    if (!unitSelect) return;
+    
+    const selectedUnit = unitSelect.value;
+    
+    // Show/hide containers based on unit type
+    if (selectedUnit === '2') { // Box
+        piecesPerBoxContainer.style.display = 'block';
+        boxesPerSetContainer.style.display = 'none';
+    } else if (selectedUnit === '3') { // Set
+        piecesPerBoxContainer.style.display = 'block';
+        boxesPerSetContainer.style.display = 'block';
+    } else { // Piece
         piecesPerBoxContainer.style.display = 'none';
         boxesPerSetContainer.style.display = 'none';
-        
-        // Show relevant containers based on unit type
-        if (selectedUnit === '2') { // کارتۆن
-            unitQuantityContainer.style.display = 'flex';
-            piecesPerBoxContainer.style.display = 'block';
-        } else if (selectedUnit === '3') { // سێت
-            unitQuantityContainer.style.display = 'flex';
-            piecesPerBoxContainer.style.display = 'block';
-            boxesPerSetContainer.style.display = 'block';
-        }
     }
 }
 
@@ -1042,50 +1102,6 @@ function handleFormSubmission() {
     // This function is not used anymore to prevent double submission
     // We're keeping it empty as a placeholder in case other code references it
 }
-
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize number formatting
-    const numberInputs = [
-        'buyingPrice',
-        'sellingPrice',
-        'selling_price_wholesale',
-        'piecesPerBox',
-        'boxesPerSet',
-        'min_quantity',
-        'current_quantity'
-    ];
-
-    numberInputs.forEach(inputId => {
-        const input = document.getElementById(inputId);
-        if (input) {
-            input.setAttribute('type', 'text');
-            input.addEventListener('input', function() {
-                formatNumber(this);
-            });
-        }
-    });
-
-    // Initialize unit type handling
-    const unitSelect = document.getElementById('unit_id');
-    if (unitSelect) {
-        unitSelect.addEventListener('change', handleUnitTypeChange);
-        // Call once on page load to set initial state
-        handleUnitTypeChange();
-    }
-
-    // Initialize tab navigation
-    handleTabNavigation();
-
-    // DO NOT initialize form submission here - it's already handled in the main code
-    // handleFormSubmission();
-
-    // Initialize refresh button
-    const refreshButton = document.querySelector('.refresh-products');
-    if (refreshButton) {
-        refreshButton.addEventListener('click', updateLatestProducts);
-    }
-});
 
 // Add this function for client-side image compression
 function compressImage(file, maxSizeMB, maxDimension) {
