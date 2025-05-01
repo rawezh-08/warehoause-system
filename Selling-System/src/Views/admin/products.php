@@ -222,15 +222,60 @@ require_once '../../process/products_logic.php';
                                                 <?php 
                                                 $current_quantity = isset($product['current_quantity']) ? (int)$product['current_quantity'] : 0;
                                                 $pieces_per_box = isset($product['pieces_per_box']) ? (int)$product['pieces_per_box'] : 1;
-                                                $box_quantity = floor($current_quantity / $pieces_per_box);
-                                                
-                                                if ($current_quantity < $pieces_per_box): ?>
-                                                    <span class="badge bg-danger rounded-pill">مەترسیدارە (<?php echo $current_quantity; ?> دانە)</span>
-                                                <?php elseif ($current_quantity >= $pieces_per_box && $current_quantity <= ($pieces_per_box * 5)): ?>
-                                                    <span class="badge bg-warning rounded-pill">بڕێکی کەم بەردەستە (<?php echo $box_quantity; ?> کارتۆن)</span>
-                                                <?php else: ?>
-                                                    <span class="badge bg-success rounded-pill">کۆنتڕۆڵ (<?php echo $box_quantity; ?> کارتۆن)</span>
-                                                <?php endif; ?>
+                                                $boxes_per_set = isset($product['boxes_per_set']) ? (int)$product['boxes_per_set'] : 1;
+                                                $unit_id = $product['unit_id'];
+
+                                                // Calculate quantities for different units
+                                                $piece_quantity = $current_quantity;
+                                                $box_quantity = $pieces_per_box > 0 ? floor($current_quantity / $pieces_per_box) : 0;
+                                                $set_quantity = ($pieces_per_box > 0 && $boxes_per_set > 0) ? 
+                                                    floor($box_quantity / $boxes_per_set) : 0;
+
+                                                // Determine display unit and quantity based on unit type
+                                                $display_quantity = $current_quantity;
+                                                $display_unit = "دانە";
+
+                                                if ($unit_id == '2') { // Box
+                                                    $display_quantity = $box_quantity;
+                                                    $display_unit = "کارتۆن";
+                                                } elseif ($unit_id == '3') { // Set
+                                                    $display_quantity = $set_quantity;
+                                                    $display_unit = "سێت";
+                                                }
+
+                                                // Determine status and display
+                                                $status_class = 'success';
+                                                $status_text = 'کۆنتڕۆڵ';
+
+                                                if ($unit_id == '1') { // Piece
+                                                    if ($current_quantity < $product['min_quantity']) {
+                                                        $status_class = 'danger';
+                                                        $status_text = 'مەترسیدارە';
+                                                    } elseif ($current_quantity <= $product['min_quantity'] * 2) {
+                                                        $status_class = 'warning';
+                                                        $status_text = 'بڕێکی کەم بەردەستە';
+                                                    }
+                                                } elseif ($unit_id == '2') { // Box
+                                                    if ($box_quantity < 1) {
+                                                        $status_class = 'danger';
+                                                        $status_text = 'مەترسیدارە';
+                                                    } elseif ($box_quantity <= 5) {
+                                                        $status_class = 'warning';
+                                                        $status_text = 'بڕێکی کەم بەردەستە';
+                                                    }
+                                                } elseif ($unit_id == '3') { // Set
+                                                    if ($set_quantity < 1) {
+                                                        $status_class = 'danger';
+                                                        $status_text = 'مەترسیدارە';
+                                                    } elseif ($set_quantity <= 3) {
+                                                        $status_class = 'warning';
+                                                        $status_text = 'بڕێکی کەم بەردەستە';
+                                                    }
+                                                }
+                                                ?>
+                                                <span class="badge bg-<?php echo $status_class; ?> rounded-pill">
+                                                    <?php echo $status_text; ?> (<?php echo $display_quantity . ' ' . $display_unit; ?>)
+                                                </span>
                                             </td>
                                             <td>
                                                 <div class="btn-group">
