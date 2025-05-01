@@ -432,6 +432,20 @@ function translateUnitType($unitType) {
                 min-width: 120px;
             }
         }
+
+        /* Fix margin for main content */
+        #main-content-area {
+            margin-top: 100px !important;
+            padding-top: 20px !important;
+        }
+        
+        /* Make sure the page title is visible */
+        .page-title {
+            margin-top: 10px !important;
+            margin-bottom: 20px !important;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
     </style>
 </head>
 
@@ -442,7 +456,7 @@ function translateUnitType($unitType) {
         <!-- Sidebar container - populated by JavaScript -->
         <div id="sidebar-container"></div>
 
-        <div class="main-content p-3" id="main-content-area" style="margin-top: 80px;">
+        <div class="main-content p-3" id="main-content-area">
             <div class="container-fluid">
                 <div class="row mb-4">
                     <div class="col-12">
