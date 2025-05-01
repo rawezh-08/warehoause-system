@@ -79,6 +79,12 @@ ALTER TABLE `sales`
 --
 ALTER TABLE `sales`
   ADD CONSTRAINT `sales_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`);
+
+--
+-- Add phone_number column to sales table
+--
+ALTER TABLE `sales` ADD `phone_number` varchar(20) DEFAULT NULL AFTER `delivery_address`;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
