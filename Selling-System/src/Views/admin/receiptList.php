@@ -480,11 +480,7 @@ function translateUnitType($unitType) {
                 <div class="tab-pane fade show active" id="sales" role="tabpanel" aria-labelledby="sales-tab">
                     <div class="card shadow-sm">
                         <div class="card-header bg-white">
-                            <div class="row align-items-center">
-                                <div class="col-md-6 mb-2 mb-md-0">
-                                    <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> پسووڵەکانی فرۆشتن</h5>
-                                </div>
-                            </div>
+                 
                             <div class="table-controls mt-3">
                                 <div class="row align-items-center">
                                     <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
