@@ -2395,4 +2395,108 @@ $(document).ready(function() {
             calculateRowTotal(row);
         }
     }
+
+    // فەنکشنی نوێ بۆ هەڵسوکەوت لەگەڵ گۆڕینی یەکە
+    function handleUnitTypeChange() {
+        $('.unit-type').on('change', function() {
+            const $row = $(this).closest('tr');
+            const productId = $row.find('.product-select').val();
+            const selectedUnit = $(this).val();
+            
+            if (productId) {
+                // داواکردنی نرخی ڕاست بەپێی یەکە
+                $.ajax({
+                    url: '../../api/get_product_price_by_unit.php',
+                    type: 'GET',
+                    data: {
+                        product_id: productId,
+                        unit_type: selectedUnit
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // نوێکردنەوەی نرخی یەکە
+                            $row.find('.unit-price').val(response.price);
+                            // نوێکردنەوەی کۆی گشتی
+                            calculateRowTotal($row);
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    // فەنکشنی نوێ بۆ ژماردنی قازانج
+    function calculateProfit() {
+        let totalProfit = 0;
+        
+        $('.items-list tr').each(function() {
+            const $row = $(this);
+            const productId = $row.find('.product-select').val();
+            const quantity = parseFloat($row.find('.quantity').val()) || 0;
+            const unitType = $row.find('.unit-type').val();
+            const unitPrice = parseFloat($row.find('.unit-price').val()) || 0;
+            
+            if (productId && quantity > 0) {
+                // داواکردنی زانیارییەکانی بەرهەم
+                $.ajax({
+                    url: '../../api/get_product_info.php',
+                    type: 'GET',
+                    data: { product_id: productId },
+                    async: false,
+                    success: function(response) {
+                        if (response.success) {
+                            const product = response.data;
+                            let purchasePrice = 0;
+                            
+                            // دیاریکردنی نرخی کڕین بەپێی یەکە
+                            switch (unitType) {
+                                case 'piece':
+                                    purchasePrice = product.purchase_price;
+                                    break;
+                                case 'box':
+                                    purchasePrice = product.purchase_price * product.pieces_per_box;
+                                    break;
+                                case 'set':
+                                    purchasePrice = product.purchase_price * product.pieces_per_box * product.boxes_per_set;
+                                    break;
+                            }
+                            
+                            // ژماردنی قازانج بۆ ئەم ڕیزە
+                            const rowProfit = (unitPrice - purchasePrice) * quantity;
+                            totalProfit += rowProfit;
+                        }
+                    }
+                });
+            }
+        });
+        
+        return totalProfit;
+    }
+
+    // فەنکشنی نوێ بۆ پیشاندانی نرخ و قازانج
+    function showPriceAndProfit() {
+        const totalAmount = parseFloat($('.grand-total').val()) || 0;
+        const totalProfit = calculateProfit();
+        
+        Swal.fire({
+            title: 'نرخ و قازانج',
+            html: `
+                <div class="text-start">
+                    <p><strong>کۆی نرخ:</strong> ${totalAmount.toLocaleString()} دینار</p>
+                    <p><strong>کۆی قازانج:</strong> ${totalProfit.toLocaleString()} دینار</p>
+                    <p><strong>ڕێژەی قازانج:</strong> ${((totalProfit / totalAmount) * 100).toFixed(2)}%</p>
+                </div>
+            `,
+            icon: 'info',
+            confirmButtonText: 'باشە'
+        });
+    }
+
+    // زیادکردنی event listener بۆ دوگمەی نرخ و قازانج
+    $('.price-profit-btn').on('click', function() {
+        showPriceAndProfit();
+    });
+    
+    // دەستپێکردنی فەنکشنی گۆڕینی یەکە
+    handleUnitTypeChange();
 });
