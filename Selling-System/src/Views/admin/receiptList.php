@@ -321,11 +321,6 @@ function translateUnitType($unitType) {
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="purchases-tab" data-bs-toggle="tab" data-bs-target="#purchases" type="button" role="tab" aria-controls="purchases" aria-selected="false">
-                        <i class="fas fa-truck"></i> پسووڵەکانی کڕین
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
                     <button class="nav-link" id="returns-tab" data-bs-toggle="tab" data-bs-target="#returns" type="button" role="tab" aria-controls="returns" aria-selected="false">
                         <i class="fas fa-undo"></i> بەفیڕۆچوو
                     </button>
@@ -700,17 +695,6 @@ function translateUnitType($unitType) {
                     </div>
                 </div>
 
-                <!-- Purchases Tab (Placeholder for future implementation) -->
-                <div class="tab-pane fade" id="purchases" role="tabpanel" aria-labelledby="purchases-tab">
-                    <div class="card shadow-sm">
-                        <div class="card-body text-center py-5">
-                            <h4 class="text-muted"><i class="fas fa-truck mb-3 fa-3x"></i></h4>
-                            <h5>پسووڵەکانی کڕین</h5>
-                            <p class="text-muted">ئەم بەشە بەمزوانە چالاک دەکرێت</p>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Returns Tab -->
                 <div class="tab-pane fade" id="returns" role="tabpanel" aria-labelledby="returns-tab">
                     <div class="card shadow-sm">
@@ -753,7 +737,6 @@ function translateUnitType($unitType) {
                                     <thead class="table-light">
                                         <tr>
                                             <th>#</th>
-                                            <th>ژمارەی پسووڵە</th>
                                             <th>بەروار</th>
                                             <th>ناوی کاڵا</th>
                                             <th>کۆدی کاڵا</th>
@@ -767,13 +750,12 @@ function translateUnitType($unitType) {
                                     <tbody>
                                         <?php if(empty($wastings)): ?>
                                         <tr>
-                                            <td colspan="10" class="text-center py-4">هیچ پسووڵەیەکی بەفیڕۆچوو نەدۆزرایەوە</td>
+                                            <td colspan="9" class="text-center py-4">هیچ پسووڵەیەکی بەفیڕۆچوو نەدۆزرایەوە</td>
                                         </tr>
                                         <?php else: ?>
                                             <?php foreach($wastings as $index => $wasting): ?>
                                                 <tr>
                                                     <td><?= $index + 1 ?></td>
-                                                    <td><?= htmlspecialchars($wasting['invoice_number']) ?></td>
                                                     <td><?= formatDate($wasting['date']) ?></td>
                                                     <td><?= htmlspecialchars($wasting['product_name'] ?? '-') ?></td>
                                                     <td><?= htmlspecialchars($wasting['product_code'] ?? '-') ?></td>
