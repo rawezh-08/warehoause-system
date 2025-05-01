@@ -466,28 +466,6 @@ function translateUnitType($unitType) {
             });
             
             itemsHtml += '</tbody></table></div>';
-
-            // Calculate totals
-            const subtotal = items.reduce((sum, item) => sum + item.total_price, 0);
-            const discount = items[0]?.discount || 0;
-            const shippingCost = items[0]?.shipping_cost || 0;
-            const otherCosts = items[0]?.other_costs || 0;
-            const total = subtotal - discount + shippingCost + otherCosts;
-
-            // Add summary section
-            itemsHtml += '<div class="mt-3">';
-            itemsHtml += '<div class="row justify-content-end">';
-            itemsHtml += '<div class="col-md-6">';
-            itemsHtml += '<table class="table table-sm">';
-            itemsHtml += '<tr><td>کۆی کاڵاکان:</td><td class="text-end">' + parseInt(subtotal).toLocaleString() + ' دینار</td></tr>';
-            itemsHtml += '<tr><td>داشکاندن:</td><td class="text-end">' + parseInt(discount).toLocaleString() + ' دینار</td></tr>';
-            itemsHtml += '<tr><td>کرێی گواستنەوە:</td><td class="text-end">' + parseInt(shippingCost).toLocaleString() + ' دینار</td></tr>';
-            itemsHtml += '<tr><td>خەرجی تر:</td><td class="text-end">' + parseInt(otherCosts).toLocaleString() + ' دینار</td></tr>';
-            itemsHtml += '<tr class="fw-bold"><td>کۆی گشتی:</td><td class="text-end">' + parseInt(total).toLocaleString() + ' دینار</td></tr>';
-            itemsHtml += '</table>';
-            itemsHtml += '</div>';
-            itemsHtml += '</div>';
-            itemsHtml += '</div>';
             
             Swal.fire({
                 title: `کاڵاکانی پسووڵە ${invoiceNumber}`,
