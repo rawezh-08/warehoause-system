@@ -113,10 +113,10 @@ require_once '../../process/addProduct_logic.php';
                                                     <label for="piecesPerBox" class="form-label">ژمارەی دانە لە کارتۆن</label>
                                                     <input type="text" id="piecesPerBox" name="pieces_per_box" class="form-control" placeholder="ژمارەی دانە لە کارتۆن" required>
                                                 </div>
-                                                <div class="col-md-4 mb-3" id="boxesPerSetContainer" style="display: none;">
+                                                <!-- <div class="col-md-4 mb-3" id="boxesPerSetContainer" style="display: none;">
                                                     <label for="boxesPerSet" class="form-label">ژمارەی کارتۆن لە سێت</label>
                                                     <input type="text" id="boxesPerSet" name="boxes_per_set" class="form-control" placeholder="ژمارەی کارتۆن لە سێت" required>
-                                                </div>
+                                                </div> -->
                                             </div>
                                             
                                             <div class="row mb-4" style="text-align: center;">
