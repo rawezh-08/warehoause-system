@@ -992,3 +992,23 @@ textarea:focus::placeholder {
     color: var(--primary-color);
 }
 
+/* RTL fixes for sidebar menu items */
+.sidebar .menu-item .item-link {
+    display: flex !important;
+    align-items: center !important;
+    text-align: right !important;
+    direction: rtl !important;
+}
+
+.sidebar .menu-item .item-link img {
+    margin-left: 10px;
+}
+
+.sidebar .menu-item .item-link .icon-cont {
+    margin-left: 10px;
+}
+
+.sidebar .dropdown-icon {
+    margin-right: auto;
+}
+

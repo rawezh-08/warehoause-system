@@ -189,6 +189,22 @@ function translateUnitType($unitType) {
             border: 1px solid rgba(25, 135, 84, 0.4);
         }
         
+        /* RTL specific fixes */
+        .sidebar-menu .menu-item a i {
+            margin-left: 8px;
+            margin-right: 0;
+        }
+        
+        .sidebar-menu .menu-item a {
+            display: flex;
+            align-items: center;
+        }
+        
+        /* Fix for cart icon in sidebar */
+        .sidebar .menu-item a span {
+            display: inline-block;
+        }
+        
         /* Transparent search input */
         .table-search-input {
             background-color: transparent !important;
@@ -288,18 +304,58 @@ function translateUnitType($unitType) {
         }
 
         .custom-tabs .nav-link:hover {
-            border-color: #e9ecef #e9ecef #dee2e6;
-            color: #495057;
+            border-color: transparent;
+            color: #0d6efd;
         }
 
         .custom-tabs .nav-link.active {
-            color: #495057;
+            color: #0d6efd;
             background-color: #fff;
-            border-color: #dee2e6 #dee2e6 #fff;
+            border-bottom: 3px solid #0d6efd;
+            font-weight: 600;
         }
 
         .custom-tabs .nav-item .nav-link i {
             margin-left: 0.5rem;
+        }
+        
+        /* Fix for buttons and icon display in RTL mode */
+        button, .btn {
+            direction: rtl !important;
+            text-align: right !important;
+        }
+        
+        /* Fix for RTL alignment in sidebar */
+        .sidebar .menu-item .item-link {
+            display: flex !important;
+            align-items: center !important;
+            text-align: right !important;
+        }
+        
+        .sidebar .menu-item .item-link span {
+            order: 2;
+        }
+        
+        .sidebar .menu-item .item-link .icon-cont {
+            order: 1;
+            margin-left: 10px;
+        }
+        
+        .sidebar .menu-item .item-link .dropdown-icon {
+            order: 3;
+            margin-right: auto;
+        }
+        
+        /* Fix for cart icon specifically */
+        #psoola-btn {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+        }
+        
+        #psoola-btn i {
+            margin-left: 8px !important;
+            margin-right: 0 !important;
         }
 
         .status-badge {
