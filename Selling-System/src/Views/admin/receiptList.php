@@ -30,22 +30,12 @@ $sales = $salesStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get draft receipts
 $draftQuery = "SELECT s.*, 
-               p.name as product_name,
-               p.code as product_code,
-               si.quantity,
-               si.unit_type,
-               si.unit_price,
-               si.total_price,
-               s.shipping_cost,
-               s.other_costs,
-               s.discount,
-               s.payment_type,
-               c.name as customer_name
+               c.name as customer_name,
+               (SELECT SUM(total_price) FROM sale_items WHERE sale_id = s.id) as total_amount
                FROM sales s 
-               LEFT JOIN sale_items si ON s.id = si.sale_id
-               LEFT JOIN products p ON si.product_id = p.id
                LEFT JOIN customers c ON s.customer_id = c.id
                WHERE s.is_draft = 1
+               GROUP BY s.id
                ORDER BY s.date DESC";
 $draftStmt = $conn->prepare($draftQuery);
 $draftStmt->execute();
@@ -459,11 +449,6 @@ function translateUnitType($unitType) {
                                             <th>ژمارەی پسووڵە</th>
                                             <th>بەروار</th>
                                             <th>ناوی کڕیار</th>
-                                            <th>ناوی کاڵا</th>
-                                            <th>کۆدی کاڵا</th>
-                                            <th>بڕ</th>
-                                            <th>یەکە</th>
-                                            <th>نرخی تاک</th>
                                             <th>نرخی گشتی</th>
                                             <th>کرێی گواستنەوە</th>
                                             <th>خەرجی تر</th>
@@ -475,12 +460,12 @@ function translateUnitType($unitType) {
                                     <tbody>
                                         <?php if(empty($drafts)): ?>
                                         <tr>
-                                            <td colspan="15" class="text-center py-4">هیچ پسووڵەیەکی ڕەش نووس نەدۆزرایەوە</td>
+                                            <td colspan="10" class="text-center py-4">هیچ پسووڵەیەکی ڕەش نووس نەدۆزرایەوە</td>
                                         </tr>
                                         <?php else: ?>
                                             <?php foreach($drafts as $index => $draft): ?>
                                                 <?php 
-                                                    $total = $draft['total_price'] ?? 0;
+                                                    $total = $draft['total_amount'] ?? 0;
                                                     $paymentStatus = 'unpaid';
                                                     if ($draft['payment_type'] == 'cash' || $draft['paid_amount'] >= $total) {
                                                         $paymentStatus = 'paid';
@@ -493,12 +478,7 @@ function translateUnitType($unitType) {
                                                     <td><?= htmlspecialchars($draft['invoice_number']) ?></td>
                                                     <td><?= formatDate($draft['date']) ?></td>
                                                     <td><?= htmlspecialchars($draft['customer_name'] ?? '-') ?></td>
-                                                    <td><?= htmlspecialchars($draft['product_name'] ?? '-') ?></td>
-                                                    <td><?= htmlspecialchars($draft['product_code'] ?? '-') ?></td>
-                                                    <td><?= htmlspecialchars($draft['quantity'] ?? '-') ?></td>
-                                                    <td><?= translateUnitType($draft['unit_type']) ?></td>
-                                                    <td><?= number_format($draft['unit_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
-                                                    <td><?= number_format($draft['total_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td><?= number_format($draft['total_amount'] ?? 0, 0, '.', ',') ?> د.ع</td>
                                                     <td><?= number_format($draft['shipping_cost'] ?? 0, 0, '.', ',') ?> د.ع</td>
                                                     <td><?= number_format($draft['other_costs'] ?? 0, 0, '.', ',') ?> د.ع</td>
                                                     <td><?= number_format($draft['discount'] ?? 0, 0, '.', ',') ?> د.ع</td>
@@ -511,22 +491,18 @@ function translateUnitType($unitType) {
                                                     </td>
                                                     <td>
                                                         <div class="action-buttons">
-                                                            <a href="editSale.php?id=<?= $draft['id'] ?>" 
-                                                               class="btn btn-sm btn-outline-primary rounded-circle"
-                                                               title="دەستکاریکردن">
-                                                                <i class="fas fa-edit"></i>
+                                                            <a href="<?php echo (isset($draft['is_delivery']) && $draft['is_delivery'] == 1) ? 
+                                                                '../../Views/receipt/delivery_receipt.php?sale_id=' . $draft['id'] : 
+                                                                '../../Views/receipt/print_receipt.php?sale_id=' . $draft['id']; ?>"
+                                                                class="btn btn-sm btn-outline-success rounded-circle"
+                                                                title="چاپکردن">
+                                                                <i class="fas fa-print"></i>
                                                             </a>
                                                             <button type="button" 
                                                                 class="btn btn-sm btn-outline-info rounded-circle show-receipt-items"
                                                                 data-invoice="<?php echo $draft['invoice_number']; ?>"
                                                                 title="بینینی هەموو کاڵاکان">
                                                                 <i class="fas fa-list"></i>
-                                                            </button>
-                                                            <button type="button" 
-                                                                class="btn btn-sm btn-outline-danger rounded-circle delete-draft"
-                                                                data-id="<?= $draft['id'] ?>"
-                                                                title="سڕینەوە">
-                                                                <i class="fas fa-trash"></i>
                                                             </button>
                                                         </div>
                                                     </td>
