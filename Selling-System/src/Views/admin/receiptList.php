@@ -1081,7 +1081,7 @@ function translateUnitType($unitType) {
 
                 // Add first page button if not visible
                 if (startPage > 1) {
-                    const firstPageBtn = $('<button class="btn btn-sm btn-outline-secondary rounded-circle">1</button>');
+                    const firstPageBtn = $('<button class="btn btn-sm btn-outline-secondary rounded-circle">١</button>');
                     firstPageBtn.on('click', function() {
                         currentPage = 1;
                         showPage(tableId, 1);
@@ -1097,7 +1097,9 @@ function translateUnitType($unitType) {
 
                 // Add page buttons
                 for (let i = startPage; i <= endPage; i++) {
-                    const pageButton = $('<button class="btn btn-sm ' + (i === currentPage ? 'btn-primary' : 'btn-outline-secondary') + ' rounded-circle">' + i + '</button>');
+                    // Convert to Kurdish numerals
+                    const kurdishNum = convertToKurdishNumerals(i);
+                    const pageButton = $('<button class="btn btn-sm ' + (i === currentPage ? 'btn-primary' : 'btn-outline-secondary') + ' rounded-circle">' + kurdishNum + '</button>');
                     pageButton.on('click', function() {
                         currentPage = i;
                         showPage(tableId, i);
@@ -1113,7 +1115,7 @@ function translateUnitType($unitType) {
                         pagination.append('<span class="px-1">...</span>');
                     }
                     
-                    const lastPageBtn = $('<button class="btn btn-sm btn-outline-secondary rounded-circle">' + totalPages + '</button>');
+                    const lastPageBtn = $('<button class="btn btn-sm btn-outline-secondary rounded-circle">' + convertToKurdishNumerals(totalPages) + '</button>');
                     lastPageBtn.on('click', function() {
                         currentPage = totalPages;
                         showPage(tableId, totalPages);
@@ -1124,6 +1126,14 @@ function translateUnitType($unitType) {
 
                 $(`#${tableId}PrevPage`).prop('disabled', currentPage === 1);
                 $(`#${tableId}NextPage`).prop('disabled', currentPage === totalPages);
+            }
+
+            // Convert numbers to Kurdish numerals
+            function convertToKurdishNumerals(num) {
+                const kurdishDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+                return num.toString().split('').map(digit => 
+                    isNaN(parseInt(digit)) ? digit : kurdishDigits[parseInt(digit)]
+                ).join('');
             }
 
             // Previous page button
