@@ -307,7 +307,7 @@ $total = $subtotal + $receipt['shipping_cost'] + $receipt['other_costs'] - $rece
                         </div>
                         <div class="info-row">
                             <span class="info-label">ژمارە:</span>
-                            <span class="info-value"><?php echo htmlspecialchars($receipt['phone_number'] ?: $receipt['customer_phone']); ?></span>
+                            <span class="info-value"><?php echo htmlspecialchars($receipt['phone_number']); ?></span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">ناونیشانی گەیاندن:</span>
