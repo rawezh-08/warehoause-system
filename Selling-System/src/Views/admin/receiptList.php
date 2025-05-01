@@ -961,6 +961,7 @@ function translateUnitType($unitType) {
     <!-- Page Script -->
     <script src="../../js/include-components.js"></script>
     <script src="../../js/ajax-config.js"></script>
+    <script src="../../js/receipt-search.js"></script>
     <script>
     $(document).ready(function() {
         // Initialize all tables
@@ -978,39 +979,36 @@ function translateUnitType($unitType) {
             let totalItems = rows.length;
             let totalPages = Math.ceil(totalItems / itemsPerPage);
 
-        // Initial pagination setup
+            // Initial pagination setup
             updatePagination(tableId);
             showPage(tableId, 1);
 
-        // Handle records per page change
+            // Handle records per page change
             $(`#${tableId}RecordsPerPage`).on('change', function() {
                 itemsPerPage = parseInt($(this).val());
                 currentPage = 1;
+                
+                // Count visible rows after filtering
+                const visibleRows = $(`#${tableId}Table tbody tr:visible`);
+                totalItems = visibleRows.length;
                 totalPages = Math.ceil(totalItems / itemsPerPage);
-                showPage(tableId, 1);
+                
                 updatePagination(tableId);
+                showPage(tableId, 1);
             });
 
             // Show specific page
             function showPage(tableId, page) {
+                // Only operate on visible rows (after filtering)
                 const visibleRows = $(`#${tableId}Table tbody tr:visible`);
                 visibleRows.hide();
                 visibleRows.slice((page - 1) * itemsPerPage, page * itemsPerPage).show();
             }
 
-        // Update pagination info and buttons
+            // Update pagination info and buttons
             function updatePagination(tableId) {
                 const pagination = $(`#${tableId}Pagination`);
                 pagination.empty();
-
-                const visibleRows = $(`#${tableId}Table tbody tr:visible`);
-                totalItems = visibleRows.length;
-                totalPages = Math.ceil(totalItems / itemsPerPage);
-                
-                // Reset to first page if current page is beyond total pages
-                if (currentPage > totalPages && totalPages > 0) {
-                    currentPage = 1;
-                }
 
                 const maxPagesToShow = 5;
                 let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
@@ -1034,7 +1032,7 @@ function translateUnitType($unitType) {
                 $(`#${tableId}NextPage`).prop('disabled', currentPage === totalPages || totalPages === 0);
             }
 
-        // Previous page button
+            // Previous page button
             $(`#${tableId}PrevPage`).on('click', function () {
                 if (currentPage > 1) {
                     currentPage--;
@@ -1043,7 +1041,7 @@ function translateUnitType($unitType) {
                 }
             });
 
-        // Next page button
+            // Next page button
             $(`#${tableId}NextPage`).on('click', function () {
                 if (currentPage < totalPages) {
                     currentPage++;
@@ -1052,20 +1050,7 @@ function translateUnitType($unitType) {
                 }
             });
 
-        // Search functionality
-            $(`#${tableId}SearchInput`).on('keyup', function () {
-                const searchTerm = $(this).val().toLowerCase();
-                
-                $(`#${tableId}Table tbody tr`).each(function () {
-                    const rowText = $(this).text().toLowerCase();
-                    $(this).toggle(rowText.includes(searchTerm));
-                });
-                
-                // Reset pagination after search
-                currentPage = 1;
-                updatePagination(tableId);
-                showPage(tableId, 1);
-            });
+            // Search functionality is now handled in receipt-search.js
         }
 
         // Show receipt items in modal (for all tables)
