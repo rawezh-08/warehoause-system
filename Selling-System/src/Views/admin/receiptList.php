@@ -571,7 +571,7 @@ function translateUnitType($unitType) {
 
             // Fetch items for this sale
             $.ajax({
-                url: '../../controllers/sale/get_sale_items.php',
+                url: '/Selling-System/src/controllers/sale/get_sale_items.php',
                 method: 'GET',
                 data: { sale_id: saleId },
                 success: function(response) {
@@ -628,7 +628,7 @@ function translateUnitType($unitType) {
 
                     // Make AJAX request to process return
                     $.ajax({
-                        url: '../../controllers/sale/process_return.php',
+                        url: '/Selling-System/src/controllers/sale/process_return.php',
                         method: 'POST',
                         data: { sale_id: saleId },
                         success: function(response) {
