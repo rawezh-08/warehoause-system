@@ -1365,5 +1365,333 @@ require_once '../../config/database.php';
     <script src="../../js/addReceipt.js"></script>
     <script src="../../js/advance-payment.js"></script>
     <script src="../../js/include-components.js"></script>
+
+    <!-- Add this script for handling unit types and quantity calculations -->
+    <script>
+        $(document).ready(function() {
+            // Function to handle unit type changes
+            function handleUnitTypeChange($row) {
+                const productId = $row.find('.product-select').val();
+                const unitType = $row.find('.unit-type').val();
+                
+                if (!productId) return;
+                
+                // Get product information
+                $.ajax({
+                    url: '../../api/get_product_info.php',
+                    type: 'GET',
+                    data: { product_id: productId },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            const product = response.data;
+                            const piecesPerBox = product.pieces_per_box || 1;
+                            const boxesPerSet = product.boxes_per_set || 1;
+                            
+                            // Store unit conversion rates in data attributes
+                            $row.find('.unit-type').data('pieces-per-box', piecesPerBox);
+                            $row.find('.unit-type').data('boxes-per-set', boxesPerSet);
+                            
+                            // Set the appropriate price based on unit type and price type
+                            const priceType = $('.price-type').val();
+                            let unitPrice = 0;
+                            
+                            if (priceType === 'wholesale') {
+                                unitPrice = parseFloat(product.selling_price_wholesale);
+                            } else {
+                                unitPrice = parseFloat(product.selling_price_single);
+                            }
+                            
+                            // Adjust price based on unit type
+                            if (unitType === 'piece') {
+                                // Price is already per piece
+                            } else if (unitType === 'box') {
+                                unitPrice = unitPrice * piecesPerBox;
+                            } else if (unitType === 'set') {
+                                unitPrice = unitPrice * piecesPerBox * boxesPerSet;
+                            }
+                            
+                            $row.find('.unit-price').val(unitPrice);
+                            
+                            // Update total price
+                            calculateRowTotal($row);
+                        }
+                    }
+                });
+            }
+            
+            // Function to calculate row total
+            function calculateRowTotal($row) {
+                const unitPrice = parseFloat($row.find('.unit-price').val()) || 0;
+                const quantity = parseFloat($row.find('.quantity').val()) || 0;
+                const total = unitPrice * quantity;
+                
+                $row.find('.total').val(total);
+                
+                // Update order total
+                calculateOrderTotal();
+            }
+            
+            // Function to calculate order total
+            function calculateOrderTotal() {
+                let subtotal = 0;
+                $('.tab-pane.active .items-list tr').each(function() {
+                    subtotal += parseFloat($(this).find('.total').val()) || 0;
+                });
+                
+                const discount = parseFloat($('.tab-pane.active .discount').val()) || 0;
+                const shippingCost = parseFloat($('.tab-pane.active .shipping-cost').val()) || 0;
+                const otherCost = parseFloat($('.tab-pane.active .other-cost').val()) || 0;
+                
+                const total = subtotal - discount + shippingCost + otherCost;
+                
+                $('.tab-pane.active .subtotal').val(subtotal);
+                $('.tab-pane.active .shipping-cost-total').val(shippingCost);
+                $('.tab-pane.active .grand-total').val(total);
+                
+                // Update remaining amount for credit payment
+                if ($('.tab-pane.active .payment-type').val() === 'credit') {
+                    const paidAmount = parseFloat($('.tab-pane.active .paid-amount').val()) || 0;
+                    const remainingAmount = total - paidAmount;
+                    $('.tab-pane.active .remaining-amount').val(remainingAmount);
+                }
+            }
+            
+            // Add event listener for product select change
+            $(document).on('change', '.product-select', function() {
+                const $row = $(this).closest('tr');
+                
+                if ($(this).val()) {
+                    // Product selected
+                    $.ajax({
+                        url: '../../api/get_product_info.php',
+                        type: 'GET',
+                        data: { product_id: $(this).val() },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                const product = response.data;
+                                
+                                // Show product image if available
+                                if (product.image) {
+                                    const imageUrl = `../../uploads/products/${product.image.split('/').pop()}`;
+                                    $row.find('.product-image-cell').html(`<img src="${imageUrl}" class="img-thumbnail" style="max-height: 50px;" alt="${product.name}">`);
+                                } else {
+                                    $row.find('.product-image-cell').html('<i class="fas fa-box"></i>');
+                                }
+                                
+                                // Store product information
+                                $row.find('.unit-type').data('pieces-per-box', product.pieces_per_box || 1);
+                                $row.find('.unit-type').data('boxes-per-set', product.boxes_per_set || 1);
+                                
+                                // Set unit types based on product configuration
+                                const $unitType = $row.find('.unit-type');
+                                $unitType.empty();
+                                
+                                // Always add piece option
+                                $unitType.append('<option value="piece">دانە</option>');
+                                
+                                // Add box option if pieces_per_box is defined
+                                if (product.pieces_per_box) {
+                                    $unitType.append('<option value="box">کارتۆن</option>');
+                                }
+                                
+                                // Add set option if both pieces_per_box and boxes_per_set are defined
+                                if (product.pieces_per_box && product.boxes_per_set) {
+                                    $unitType.append('<option value="set">سێت</option>');
+                                }
+                                
+                                // Select the first unit type
+                                $unitType.val('piece').trigger('change');
+                                
+                                // Set the appropriate price based on price type
+                                const priceType = $('.price-type').val();
+                                if (priceType === 'wholesale') {
+                                    $row.find('.unit-price').val(product.selling_price_wholesale);
+                                } else {
+                                    $row.find('.unit-price').val(product.selling_price_single);
+                                }
+                                
+                                // Set quantity to 1 by default
+                                $row.find('.quantity').val(1);
+                                
+                                // Calculate total
+                                calculateRowTotal($row);
+                            }
+                        }
+                    });
+                } else {
+                    // Reset row if no product selected
+                    $row.find('.product-image-cell').empty();
+                    $row.find('.unit-price').val('');
+                    $row.find('.quantity').val('');
+                    $row.find('.total').val('');
+                    calculateOrderTotal();
+                }
+            });
+            
+            // Add event listener for unit type change
+            $(document).on('change', '.unit-type', function() {
+                const $row = $(this).closest('tr');
+                handleUnitTypeChange($row);
+            });
+            
+            // Add event listener for quantity and price changes
+            $(document).on('input', '.unit-price, .quantity', function() {
+                const $row = $(this).closest('tr');
+                calculateRowTotal($row);
+            });
+            
+            // Add event listener for price type change
+            $(document).on('change', '.price-type', function() {
+                // Update prices for all rows
+                $('.tab-pane.active .items-list tr').each(function() {
+                    const $row = $(this);
+                    const productId = $row.find('.product-select').val();
+                    
+                    if (productId) {
+                        handleUnitTypeChange($row);
+                    }
+                });
+            });
+            
+            // Add event listener for discount, shipping cost and other cost changes
+            $(document).on('input', '.discount, .shipping-cost, .other-cost', function() {
+                calculateOrderTotal();
+            });
+            
+            // Add event listener for paid amount change
+            $(document).on('input', '.paid-amount', function() {
+                calculateOrderTotal();
+            });
+            
+            // Add event listener for payment type change
+            $(document).on('change', '.payment-type', function() {
+                const paymentType = $(this).val();
+                
+                if (paymentType === 'credit') {
+                    $('.tab-pane.active .credit-payment-fields').show();
+                } else {
+                    $('.tab-pane.active .credit-payment-fields').hide();
+                }
+                
+                calculateOrderTotal();
+            });
+            
+            // Initialize Select2 for product selection
+            $(document).on('mouseenter', '.product-select', function() {
+                if (!$(this).hasClass('select2-hidden-accessible')) {
+                    $(this).select2({
+                        placeholder: 'کاڵا هەڵبژێرە',
+                        ajax: {
+                            url: '../../api/search_products.php',
+                            dataType: 'json',
+                            delay: 250,
+                            data: function(params) {
+                                return {
+                                    q: params.term,
+                                    page: params.page
+                                };
+                            },
+                            processResults: function(data, params) {
+                                return {
+                                    results: data.items,
+                                    pagination: {
+                                        more: data.has_more
+                                    }
+                                };
+                            },
+                            cache: true
+                        },
+                        minimumInputLength: 1,
+                        templateResult: formatProduct,
+                        templateSelection: formatProductSelection
+                    });
+                }
+            });
+            
+            // Add event listener for add row button
+            $(document).on('click', '.add-row-btn', function() {
+                const $receiptContainer = $(this).closest('.receipt-container');
+                const $itemsList = $receiptContainer.find('.items-list');
+                
+                // Clone the first row
+                const $newRow = $itemsList.find('tr:first').clone();
+                
+                // Reset the new row
+                $newRow.find('.product-select').val(null).trigger('change');
+                $newRow.find('.product-image-cell').empty();
+                $newRow.find('.unit-price').val('');
+                $newRow.find('.quantity').val('');
+                $newRow.find('.total').val('');
+                
+                // Add the new row to the table
+                $itemsList.append($newRow);
+                
+                // Update row numbers
+                updateRowNumbers($itemsList);
+            });
+            
+            // Add event listener for remove row button
+            $(document).on('click', '.remove-row', function() {
+                const $row = $(this).closest('tr');
+                const $itemsList = $row.closest('.items-list');
+                
+                // Don't remove if it's the only row
+                if ($itemsList.find('tr').length > 1) {
+                    $row.remove();
+                    
+                    // Update row numbers
+                    updateRowNumbers($itemsList);
+                    
+                    // Update order total
+                    calculateOrderTotal();
+                } else {
+                    // Clear the row instead of removing it
+                    $row.find('.product-select').val(null).trigger('change');
+                    $row.find('.product-image-cell').empty();
+                    $row.find('.unit-price').val('');
+                    $row.find('.quantity').val('');
+                    $row.find('.total').val('');
+                    calculateOrderTotal();
+                }
+            });
+            
+            // Function to update row numbers
+            function updateRowNumbers($itemsList) {
+                $itemsList.find('tr').each(function(index) {
+                    $(this).find('td:first').text(index + 1);
+                });
+            }
+            
+            // Function to format product in Select2 dropdown
+            function formatProduct(product) {
+                if (!product.id) {
+                    return product.text;
+                }
+                
+                let imageHtml = '<i class="fas fa-box me-2"></i>';
+                if (product.image) {
+                    const imageUrl = `../../uploads/products/${product.image.split('/').pop()}`;
+                    imageHtml = `<img src="${imageUrl}" class="me-2" style="height: 30px;" alt="${product.name}">`;
+                }
+                
+                return $(`
+                    <div class="d-flex align-items-center">
+                        ${imageHtml}
+                        <div>
+                            <div class="fw-bold">${product.name}</div>
+                            <div class="small text-muted">کۆد: ${product.code} | نرخ: ${product.selling_price_single} د.ع</div>
+                        </div>
+                    </div>
+                `);
+            }
+            
+            // Function to format selected product in Select2
+            function formatProductSelection(product) {
+                return product.name || product.text;
+            }
+        });
+    </script>
 </body>
 </html> 
