@@ -1175,7 +1175,7 @@ require_once '../../config/database.php';
                     is_delivery: true,
                     delivery_address: deliveryAddress,
                     invoice_number: currentTab.find('.receipt-number').val(),
-                    customer_id: currentTab.find('.customer-select').val(),
+                    customer_id: currentTab.find('.customer-select').val() || null,
                     date: currentTab.find('.sale-date').val(),
                     payment_type: currentTab.find('.payment-type').val(),
                     discount: currentTab.find('.discount').val() || 0,
@@ -1200,6 +1200,17 @@ require_once '../../config/database.php';
                         });
                     }
                 });
+
+                // Check if products are selected
+                if (receiptData.products.length === 0) {
+                    Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'تکایە لانیکەم یەک کاڵا هەڵبژێرە',
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                    return;
+                }
 
                 // Debug: Log the data being sent
                 console.log('Sending receipt data:', receiptData);
