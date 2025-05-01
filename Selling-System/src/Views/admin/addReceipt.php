@@ -1357,57 +1357,6 @@ require_once '../../config/database.php';
                     });
                 }
             });
-
-            // Add calculations for profit display
-            $(document).ready(function() {
-                // Function to calculate profit per row
-                function calculateProfit(row) {
-                    const productId = row.find('.product-select').val();
-                    if (!productId) return;
-                    
-                    const productData = row.find('.product-select').select2('data')[0];
-                    if (!productData) return;
-                    
-                    const quantity = parseFloat(row.find('.quantity').val()) || 0;
-                    const unitType = row.find('.unit-type').val();
-                    const unitPrice = parseFloat(row.find('.unit-price').val()) || 0;
-                    const piecesPerBox = parseInt(productData.pieces_per_box || 1);
-                    const boxesPerSet = parseInt(productData.boxes_per_set || 1);
-                    const purchasePrice = parseFloat(productData.purchase_price || 0);
-                    
-                    let costPerUnit = purchasePrice;
-                    
-                    // Calculate cost based on unit type
-                    if (unitType === 'piece') {
-                        // Cost per piece
-                        costPerUnit = parseFloat((purchasePrice / piecesPerBox).toFixed(2));
-                    } else if (unitType === 'set') {
-                        // Cost per set
-                        costPerUnit = parseFloat((purchasePrice * boxesPerSet).toFixed(2));
-                    }
-                    
-                    // Calculate profit
-                    const profitPerUnit = unitPrice - costPerUnit;
-                    const totalProfit = profitPerUnit * quantity;
-                    
-                    // Show profit in console for debugging
-                    console.log(`Row profit: ${totalProfit.toFixed(2)} (${profitPerUnit.toFixed(2)} per ${unitType})`);
-                }
-                
-                // Add event listeners for profit calculation
-                $(document).on('change', '.unit-price, .quantity, .unit-type', function() {
-                    const row = $(this).closest('tr');
-                    calculateProfit(row);
-                });
-                
-                // Calculate profit when product is selected
-                $(document).on('select2:select', '.product-select', function() {
-                    const row = $(this).closest('tr');
-                    setTimeout(() => {
-                        calculateProfit(row);
-                    }, 100);
-                });
-            });
         });
     </script>
 
