@@ -88,28 +88,19 @@ $draftItems = $draftItemsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get all wastings
 $wastingsQuery = "SELECT w.*, 
-                  (SELECT SUM(total_price) FROM wasting_items WHERE wasting_id = w.id) as total_amount
+                  p.name as product_name,
+                  p.code as product_code,
+                  wi.quantity,
+                  wi.unit_type,
+                  wi.unit_price,
+                  wi.total_price
                   FROM wastings w 
+                  LEFT JOIN wasting_items wi ON w.id = wi.wasting_id
+                  LEFT JOIN products p ON wi.product_id = p.id
                   ORDER BY w.date DESC";
 $wastingsStmt = $conn->prepare($wastingsQuery);
 $wastingsStmt->execute();
 $wastings = $wastingsStmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Get all wasting items for modal
-$wastingItemsQuery = "SELECT w.*, 
-                      p.name as product_name,
-                      p.code as product_code,
-                      wi.quantity,
-                      wi.unit_type,
-                      wi.unit_price,
-                      wi.total_price
-                      FROM wastings w 
-                      LEFT JOIN wasting_items wi ON w.id = wi.wasting_id
-                      LEFT JOIN products p ON wi.product_id = p.id
-                      ORDER BY w.date DESC";
-$wastingItemsStmt = $conn->prepare($wastingItemsQuery);
-$wastingItemsStmt->execute();
-$wastingItems = $wastingItemsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Function to calculate the total for a sale
 function calculateSaleTotal($saleId, $conn) {
@@ -784,9 +775,12 @@ function translateUnitType($unitType) {
                                                     <td><?= $index + 1 ?></td>
                                                     <td><?= htmlspecialchars($wasting['invoice_number']) ?></td>
                                                     <td><?= formatDate($wasting['date']) ?></td>
-                                                    <td colspan="3" class="text-center">-</td>
-                                                    <td colspan="2" class="text-center">-</td>
-                                                    <td colspan="2" class="text-center"><?= number_format($wasting['total_amount'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td><?= htmlspecialchars($wasting['product_name'] ?? '-') ?></td>
+                                                    <td><?= htmlspecialchars($wasting['product_code'] ?? '-') ?></td>
+                                                    <td><?= htmlspecialchars($wasting['quantity'] ?? '-') ?></td>
+                                                    <td><?= translateUnitType($wasting['unit_type']) ?></td>
+                                                    <td><?= number_format($wasting['unit_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td><?= number_format($wasting['total_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
                                                     <td>
                                                         <div class="action-buttons">
                                                             <a href="../../Views/receipt/print_wasting.php?wasting_id=<?= $wasting['id'] ?>"
@@ -945,7 +939,7 @@ function translateUnitType($unitType) {
         // Show receipt items in modal (for all tables)
         $(document).on('click', '.show-receipt-items', function() {
             const invoiceNumber = $(this).data('invoice');
-            const invoiceItems = <?php echo json_encode(array_merge($sales, $draftItems, $deliveryItems, $wastingItems)); ?>;
+            const invoiceItems = <?php echo json_encode(array_merge($sales, $draftItems, $deliveryItems)); ?>;
             const items = invoiceItems.filter(item => item.invoice_number === invoiceNumber);
             
             let itemsHtml = '<div class="table-responsive"><table class="table table-bordered">';
@@ -953,16 +947,14 @@ function translateUnitType($unitType) {
             itemsHtml += '<tbody>';
             
             items.forEach(item => {
-                if (item.product_name) {  // Only show items that have product details
-                    itemsHtml += `<tr>
-                        <td>${item.product_name}</td>
-                        <td>${item.product_code}</td>
-                        <td>${item.quantity}</td>
-                        <td>${item.unit_type === 'piece' ? 'دانە' : (item.unit_type === 'box' ? 'کارتۆن' : 'سێت')}</td>
-                        <td>${parseInt(item.unit_price).toLocaleString()} دینار</td>
-                        <td>${parseInt(item.total_price).toLocaleString()} دینار</td>
-                    </tr>`;
-                }
+                itemsHtml += `<tr>
+                    <td>${item.product_name}</td>
+                    <td>${item.product_code}</td>
+                    <td>${item.quantity}</td>
+                    <td>${item.unit_type === 'piece' ? 'دانە' : (item.unit_type === 'box' ? 'کارتۆن' : 'سێت')}</td>
+                    <td>${parseInt(item.unit_price).toLocaleString()} دینار</td>
+                    <td>${parseInt(item.total_price).toLocaleString()} دینار</td>
+                </tr>`;
             });
             
             itemsHtml += '</tbody></table></div>';
