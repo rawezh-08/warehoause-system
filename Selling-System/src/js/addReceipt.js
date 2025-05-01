@@ -2479,18 +2479,73 @@ $(document).ready(function() {
     function showPriceAndProfit() {
         const totalAmount = parseFloat($('.grand-total').val()) || 0;
         const totalProfit = calculateProfit();
+        const profitPercentage = ((totalProfit / totalAmount) * 100).toFixed(2);
         
+        // Format numbers with Kurdish thousands separator
+        const formatNumber = (num) => {
+            return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "،");
+        };
+
+        // Determine profit status and icon
+        let profitStatus = '';
+        let statusColor = '';
+        let statusIcon = '';
+        
+        if (totalProfit > 0) {
+            profitStatus = 'قازانج';
+            statusColor = '#28a745';
+            statusIcon = '<i class="fas fa-arrow-up"></i>';
+        } else if (totalProfit < 0) {
+            profitStatus = 'زیان';
+            statusColor = '#dc3545';
+            statusIcon = '<i class="fas fa-arrow-down"></i>';
+        } else {
+            profitStatus = 'بێ قازانج';
+            statusColor = '#ffc107';
+            statusIcon = '<i class="fas fa-equals"></i>';
+        }
+
         Swal.fire({
-            title: 'نرخ و قازانج',
+            title: '<span style="color: #2c3e50; font-size: 24px;">شیکردنەوەی نرخ و قازانج</span>',
             html: `
-                <div class="text-start">
-                    <p><strong>کۆی نرخ:</strong> ${totalAmount.toLocaleString()} دینار</p>
-                    <p><strong>کۆی قازانج:</strong> ${totalProfit.toLocaleString()} دینار</p>
-                    <p><strong>ڕێژەی قازانج:</strong> ${((totalProfit / totalAmount) * 100).toFixed(2)}%</p>
+                <div style="background: #f8f9fa; border-radius: 15px; padding: 20px; margin-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                        <span style="color: #2c3e50; font-size: 16px;">کۆی نرخی فرۆشتن:</span>
+                        <span style="color: #2c3e50; font-weight: bold; font-size: 18px;">${formatNumber(totalAmount)} دینار</span>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                        <span style="color: #2c3e50; font-size: 16px;">بارودۆخی قازانج:</span>
+                        <span style="color: ${statusColor}; font-weight: bold; font-size: 18px;">
+                            ${statusIcon} ${profitStatus}
+                        </span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                        <span style="color: #2c3e50; font-size: 16px;">بڕی قازانج:</span>
+                        <span style="color: ${statusColor}; font-weight: bold; font-size: 18px;">
+                            ${formatNumber(Math.abs(totalProfit))} دینار
+                        </span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                        <span style="color: #2c3e50; font-size: 16px;">ڕێژەی قازانج:</span>
+                        <span style="color: ${statusColor}; font-weight: bold; font-size: 18px;">
+                            ${Math.abs(profitPercentage)}%
+                        </span>
+                    </div>
                 </div>
             `,
-            icon: 'info',
-            confirmButtonText: 'باشە'
+            confirmButtonText: 'داخستن',
+            customClass: {
+                container: 'profit-modal',
+                popup: 'profit-popup',
+                confirmButton: 'btn btn-primary'
+            },
+            buttonsStyling: false,
+            showCloseButton: true,
+            background: '#ffffff',
+            width: '400px'
         });
     }
 
