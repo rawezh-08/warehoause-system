@@ -353,15 +353,11 @@ function translateUnitType($unitType) {
                                                                     title="چاپکردن">
                                                                     <i class="fas fa-print"></i>
                                                                 </a>
-                                                                <button class="btn btn-sm btn-outline-info rounded-circle view-items-btn" 
-                                                                        data-sale-id="<?= $sale['id'] ?>"
-                                                                        title="بینینی کاڵاکان">
+                                                                <button type="button" 
+                                                                    class="btn btn-sm btn-outline-info rounded-circle show-receipt-items"
+                                                                    data-invoice="<?php echo $sale['invoice_number']; ?>"
+                                                                    title="بینینی هەموو کاڵاکان">
                                                                     <i class="fas fa-list"></i>
-                                                                </button>
-                                                                <button class="btn btn-sm btn-outline-warning rounded-circle return-items-btn" 
-                                                                        data-sale-id="<?= $sale['id'] ?>"
-                                                                        title="گەڕانەوەی کاڵا">
-                                                                    <i class="fas fa-undo"></i>
                                                                 </button>
                                                             </div>
                                                     </td>
@@ -415,41 +411,6 @@ function translateUnitType($unitType) {
     </div>
 </div>
 
-<!-- Items Modal -->
-<div class="modal fade" id="itemsModal" tabindex="-1" aria-labelledby="itemsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="itemsModalLabel">کاڵاکانی پسووڵە</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>ناوی کاڵا</th>
-                                <th>کۆدی کاڵا</th>
-                                <th>بڕ</th>
-                                <th>یەکە</th>
-                                <th>نرخی تاک</th>
-                                <th>نرخی گشتی</th>
-                            </tr>
-                        </thead>
-                        <tbody id="itemsModalBody">
-                            <!-- Items will be loaded here dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
-            </div>
-        </div>
-    </div>
-</div>
-
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
@@ -481,6 +442,41 @@ function translateUnitType($unitType) {
             salesTotalPages = Math.ceil(salesTotalItems / salesItemsPerPage);
             showSalesPage(1);
             updateSalesPagination();
+        });
+
+        // Show receipt items in modal
+        $(document).on('click', '.show-receipt-items', function() {
+            const invoiceNumber = $(this).data('invoice');
+            const invoiceItems = <?php echo json_encode($sales); ?>;
+            const items = invoiceItems.filter(item => item.invoice_number === invoiceNumber);
+            
+            let itemsHtml = '<div class="table-responsive"><table class="table table-bordered">';
+            itemsHtml += '<thead><tr><th>ناوی کاڵا</th><th>کۆدی کاڵا</th><th>بڕ</th><th>یەکە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
+            itemsHtml += '<tbody>';
+            
+            items.forEach(item => {
+                itemsHtml += `<tr>
+                    <td>${item.product_name}</td>
+                    <td>${item.product_code}</td>
+                    <td>${item.quantity}</td>
+                    <td>${item.unit_type === 'piece' ? 'دانە' : (item.unit_type === 'box' ? 'کارتۆن' : 'سێت')}</td>
+                    <td>${item.unit_price.toLocaleString()} دینار</td>
+                    <td>${item.total_price.toLocaleString()} دینار</td>
+                </tr>`;
+            });
+            
+            itemsHtml += '</tbody></table></div>';
+            
+            Swal.fire({
+                title: `کاڵاکانی پسووڵە ${invoiceNumber}`,
+                html: itemsHtml,
+                width: '80%',
+                showCloseButton: true,
+                showConfirmButton: false,
+                customClass: {
+                    popup: 'swal2-popup-custom'
+                }
+            });
         });
 
         // Update pagination info and buttons
@@ -560,121 +556,6 @@ function translateUnitType($unitType) {
             showSalesPage(1);
             updateSalesPagination();
         });
-
-        // Handle view items button click
-        $('.view-items-btn').on('click', function() {
-            const saleId = $(this).data('sale-id');
-            
-            // Show loading state
-            $('#itemsModalBody').html('<tr><td colspan="7" class="text-center">سەیرکردن...</td></tr>');
-            $('#itemsModal').modal('show');
-
-            // Fetch items for this sale
-            $.ajax({
-                url: '../../../controllers/sale/get_sale_items.php',
-                method: 'GET',
-                data: { sale_id: saleId },
-                success: function(response) {
-                    if (response.success) {
-                        let itemsHtml = '';
-                        response.items.forEach((item, index) => {
-                            itemsHtml += `
-                                <tr>
-                                    <td>${index + 1}</td>
-                                    <td>${item.product_name}</td>
-                                    <td>${item.product_code}</td>
-                                    <td>${item.quantity}</td>
-                                    <td>${translateUnitType(item.unit_type)}</td>
-                                    <td>${number_format(item.unit_price)} د.ع</td>
-                                    <td>${number_format(item.total_price)} د.ع</td>
-                                </tr>
-                            `;
-                        });
-                        $('#itemsModalBody').html(itemsHtml);
-                    } else {
-                        $('#itemsModalBody').html('<tr><td colspan="7" class="text-center text-danger">هەڵەیەک ڕوویدا</td></tr>');
-                    }
-                },
-                error: function() {
-                    $('#itemsModalBody').html('<tr><td colspan="7" class="text-center text-danger">هەڵەیەک ڕوویدا</td></tr>');
-                }
-            });
-        });
-
-        // Handle return items button click
-        $('.return-items-btn').on('click', function() {
-            const saleId = $(this).data('sale-id');
-            
-            Swal.fire({
-                title: 'دڵنیای لە گەڕانەوەی کاڵا؟',
-                text: 'ئایا دڵنیای لە گەڕانەوەی کاڵاکان؟',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'بەڵێ، گەڕانەوە',
-                cancelButtonText: 'نەخێر'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Show loading state
-                    Swal.fire({
-                        title: 'سەیرکردن...',
-                        text: 'تکایە چاوەڕوان بکە',
-                        allowOutsideClick: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        }
-                    });
-
-                    // Make AJAX request to process return
-                    $.ajax({
-                        url: '../../../controllers/sale/process_return.php',
-                        method: 'POST',
-                        data: { sale_id: saleId },
-                        success: function(response) {
-                            if (response.success) {
-                                Swal.fire({
-                                    title: 'سەرکەوتوو!',
-                                    text: 'کاڵاکان بە سەرکەوتوویی گەڕایەوە',
-                                    icon: 'success'
-                                }).then(() => {
-                                    // Reload the page to show updated data
-                                    location.reload();
-                                });
-                            } else {
-                                Swal.fire({
-                                    title: 'هەڵە!',
-                                    text: response.message || 'هەڵەیەک ڕوویدا',
-                                    icon: 'error'
-                                });
-                            }
-                        },
-                        error: function() {
-                            Swal.fire({
-                                title: 'هەڵە!',
-                                text: 'هەڵەیەک ڕوویدا لە کاتی گەڕانەوەی کاڵا',
-                                icon: 'error'
-                            });
-                        }
-                    });
-                }
-            });
-        });
-
-        // Helper function to format numbers
-        function number_format(number) {
-            return new Intl.NumberFormat('en-US').format(number);
-        }
-
-        // Helper function to translate unit type
-        function translateUnitType(unitType) {
-            switch (unitType) {
-                case 'piece': return 'دانە';
-                case 'box': return 'کارتۆن';
-                case 'set': return 'سێت';
-                default: return '-';
-            }
-        }
     });
     </script>
     <script src="../../js/receiptList.js"></script>
