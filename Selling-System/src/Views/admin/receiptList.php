@@ -142,16 +142,53 @@ function translateUnitType($unitType) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
-    <link rel="stylesheet" href="../../css/global.css">
+    <!-- Global CSS -->
+    <link rel="stylesheet" href="../../assets/css/custom.css">
+    <!-- Page CSS -->
     <link rel="stylesheet" href="../../css/dashboard.css">
-    <link rel="stylesheet" href="../../css/reports.css">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/products.css">
 
     <link rel="stylesheet" href="../../test/main.css">
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     <!-- Custom styles for this page -->
     <style>
+        .badge {
+            font-size: 0.85rem;
+            padding: 6px 12px;
+            letter-spacing: 0.3px;
+            font-weight: 500;
+        }
+        
+        .badge.rounded-pill {
+            border-radius: 50rem;
+            padding-right: 12px;
+            padding-left: 12px;
+        }
+        
+        .badge.bg-danger {
+            background-color: rgba(220, 53, 69, 0.2) !important;
+            color: #dc3545 !important;
+            border: 1px solid rgba(220, 53, 69, 0.4);
+        }
+        
+        .badge.bg-warning {
+            background-color: rgba(255, 193, 7, 0.2) !important;
+            color: #e0a800 !important;
+            border: 1px solid rgba(255, 193, 7, 0.4);
+        }
+        
+        .badge.bg-success {
+            background-color: rgba(25, 135, 84, 0.2) !important;
+            color: #198754 !important;
+            border: 1px solid rgba(25, 135, 84, 0.4);
+        }
+        
         /* Transparent search input */
         .table-search-input {
             background-color: transparent !important;
@@ -179,8 +216,8 @@ function translateUnitType($unitType) {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            background-color: #f8f9fa;
-            border-bottom: 2px solid #dee2e6;
+            background-color: #cde1ff;
+            border: none !important;
         }
 
         /* Adjust pagination display */
@@ -273,8 +310,42 @@ function translateUnitType($unitType) {
         .table-responsive {
             overflow-x: auto;
             max-height: 68vh;
-            border: 1px solid #dee2e6;
             border-radius: 0.25rem;
+        }
+
+        /* Filter section styles */
+        .filter-section {
+            background-color: #f8f9ff;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border-radius: 24px; 
+        }
+
+        /* Custom table styles */
+        .custom-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 16px;
+        }
+
+        .custom-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        /* Card styling */
+        .card {
+            border-radius: 24px !important; 
+            border: 1px solid #9ec5ff !important;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: transparent !important;
         }
 
         /* Main content margin fix */
@@ -299,9 +370,13 @@ function translateUnitType($unitType) {
 <!-- Sidebar container - populated by JavaScript -->
 <div id="sidebar-container"></div>
 
-    <div class="container-fluid mt-5">
-        <div class="main-content">
-            <h2 class="text-center mb-4"><i class="fas fa-receipt"></i> لیستی پسووڵەکان</h2>
+    <div class="main-content p-3" id="main-content" style="margin-top: 100px;">
+        <div class="container-fluid">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h3 class="page-title">لیستی پسووڵەکان</h3>
+                </div>
+            </div>
 
             <!-- Tabs Navigation -->
             <ul class="nav nav-tabs custom-tabs mb-4" id="receiptTabs" role="tablist">
@@ -367,24 +442,24 @@ function translateUnitType($unitType) {
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table id="salesHistoryTable" class="table table-bordered custom-table table-hover">
+                                <table id="salesHistoryTable" class="table table-bordered custom-table table-hover" style="border-radius: 16px;">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>#</th>
-                                            <th>ژمارەی پسووڵە</th>
-                                            <th>بەروار</th>
-                                            <th>ناوی کڕیار</th>
-                                            <th>ناوی کاڵا</th>
-                                            <th>کۆدی کاڵا</th>
-                                            <th>بڕ</th>
-                                            <th>یەکە</th>
-                                            <th>نرخی تاک</th>
-                                            <th>نرخی گشتی</th>
-                                            <th>کرێی گواستنەوە</th>
-                                            <th>خەرجی تر</th>
-                                            <th>داشکاندن</th>
-                                            <th>جۆری پارەدان</th>
-                                            <th>کردارەکان</th>
+                                            <th style="background-color: #cde1ff; border: none;">#</th>
+                                            <th style="background-color: #cde1ff; border: none;">ژمارەی پسووڵە</th>
+                                            <th style="background-color: #cde1ff; border: none;">بەروار</th>
+                                            <th style="background-color: #cde1ff; border: none;">ناوی کڕیار</th>
+                                            <th style="background-color: #cde1ff; border: none;">ناوی کاڵا</th>
+                                            <th style="background-color: #cde1ff; border: none;">کۆدی کاڵا</th>
+                                            <th style="background-color: #cde1ff; border: none;">بڕ</th>
+                                            <th style="background-color: #cde1ff; border: none;">یەکە</th>
+                                            <th style="background-color: #cde1ff; border: none;">نرخی تاک</th>
+                                            <th style="background-color: #cde1ff; border: none;">نرخی گشتی</th>
+                                            <th style="background-color: #cde1ff; border: none;">کرێی گواستنەوە</th>
+                                            <th style="background-color: #cde1ff; border: none;">خەرجی تر</th>
+                                            <th style="background-color: #cde1ff; border: none;">داشکاندن</th>
+                                            <th style="background-color: #cde1ff; border: none;">جۆری پارەدان</th>
+                                            <th style="background-color: #cde1ff; border: none;">کردارەکان</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -503,19 +578,19 @@ function translateUnitType($unitType) {
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table id="deliveryTable" class="table table-bordered custom-table table-hover">
+                                <table id="deliveryTable" class="table table-bordered custom-table table-hover" style="border-radius: 16px;">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>#</th>
-                                            <th>ژمارەی پسووڵە</th>
-                                            <th>بەروار</th>
-                                            <th>ناوی کڕیار</th>
-                                            <th>نرخی گشتی</th>
-                                            <th>کرێی گواستنەوە</th>
-                                            <th>خەرجی تر</th>
-                                            <th>داشکاندن</th>
-                                            <th>جۆری پارەدان</th>
-                                            <th>کردارەکان</th>
+                                            <th style="background-color: #cde1ff; border: none;">#</th>
+                                            <th style="background-color: #cde1ff; border: none;">ژمارەی پسووڵە</th>
+                                            <th style="background-color: #cde1ff; border: none;">بەروار</th>
+                                            <th style="background-color: #cde1ff; border: none;">ناوی کڕیار</th>
+                                            <th style="background-color: #cde1ff; border: none;">نرخی گشتی</th>
+                                            <th style="background-color: #cde1ff; border: none;">کرێی گواستنەوە</th>
+                                            <th style="background-color: #cde1ff; border: none;">خەرجی تر</th>
+                                            <th style="background-color: #cde1ff; border: none;">داشکاندن</th>
+                                            <th style="background-color: #cde1ff; border: none;">جۆری پارەدان</th>
+                                            <th style="background-color: #cde1ff; border: none;">کردارەکان</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -617,19 +692,19 @@ function translateUnitType($unitType) {
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table id="draftsTable" class="table table-bordered custom-table table-hover">
+                                <table id="draftsTable" class="table table-bordered custom-table table-hover" style="border-radius: 16px;">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>#</th>
-                                            <th>ژمارەی پسووڵە</th>
-                                            <th>بەروار</th>
-                                            <th>ناوی کڕیار</th>
-                                            <th>نرخی گشتی</th>
-                                            <th>کرێی گواستنەوە</th>
-                                            <th>خەرجی تر</th>
-                                            <th>داشکاندن</th>
-                                            <th>جۆری پارەدان</th>
-                                            <th>کردارەکان</th>
+                                            <th style="background-color: #cde1ff; border: none;">#</th>
+                                            <th style="background-color: #cde1ff; border: none;">ژمارەی پسووڵە</th>
+                                            <th style="background-color: #cde1ff; border: none;">بەروار</th>
+                                            <th style="background-color: #cde1ff; border: none;">ناوی کڕیار</th>
+                                            <th style="background-color: #cde1ff; border: none;">نرخی گشتی</th>
+                                            <th style="background-color: #cde1ff; border: none;">کرێی گواستنەوە</th>
+                                            <th style="background-color: #cde1ff; border: none;">خەرجی تر</th>
+                                            <th style="background-color: #cde1ff; border: none;">داشکاندن</th>
+                                            <th style="background-color: #cde1ff; border: none;">جۆری پارەدان</th>
+                                            <th style="background-color: #cde1ff; border: none;">کردارەکان</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -733,18 +808,18 @@ function translateUnitType($unitType) {
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table id="returnsTable" class="table table-bordered custom-table table-hover">
+                                <table id="returnsTable" class="table table-bordered custom-table table-hover" style="border-radius: 16px;">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>#</th>
-                                            <th>بەروار</th>
-                                            <th>ناوی کاڵا</th>
-                                            <th>کۆدی کاڵا</th>
-                                            <th>بڕ</th>
-                                            <th>یەکە</th>
-                                            <th>نرخی تاک</th>
-                                            <th>نرخی گشتی</th>
-                                            <th>کردارەکان</th>
+                                            <th style="background-color: #cde1ff; border: none;">#</th>
+                                            <th style="background-color: #cde1ff; border: none;">بەروار</th>
+                                            <th style="background-color: #cde1ff; border: none;">ناوی کاڵا</th>
+                                            <th style="background-color: #cde1ff; border: none;">کۆدی کاڵا</th>
+                                            <th style="background-color: #cde1ff; border: none;">بڕ</th>
+                                            <th style="background-color: #cde1ff; border: none;">یەکە</th>
+                                            <th style="background-color: #cde1ff; border: none;">نرخی تاک</th>
+                                            <th style="background-color: #cde1ff; border: none;">نرخی گشتی</th>
+                                            <th style="background-color: #cde1ff; border: none;">کردارەکان</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -809,6 +884,8 @@ function translateUnitType($unitType) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
     <!-- Page Script -->
