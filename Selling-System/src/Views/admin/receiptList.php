@@ -358,6 +358,11 @@ function translateUnitType($unitType) {
                                                                         title="بینینی کاڵاکان">
                                                                     <i class="fas fa-list"></i>
                                                                 </button>
+                                                                <button class="btn btn-sm btn-outline-warning rounded-circle return-items-btn" 
+                                                                        data-sale-id="<?= $sale['id'] ?>"
+                                                                        title="گەڕانەوەی کاڵا">
+                                                                    <i class="fas fa-undo"></i>
+                                                                </button>
                                                             </div>
                                                     </td>
                                                 </tr>
@@ -592,6 +597,66 @@ function translateUnitType($unitType) {
                 },
                 error: function() {
                     $('#itemsModalBody').html('<tr><td colspan="7" class="text-center text-danger">هەڵەیەک ڕوویدا</td></tr>');
+                }
+            });
+        });
+
+        // Handle return items button click
+        $('.return-items-btn').on('click', function() {
+            const saleId = $(this).data('sale-id');
+            
+            Swal.fire({
+                title: 'دڵنیای لە گەڕانەوەی کاڵا؟',
+                text: 'ئایا دڵنیای لە گەڕانەوەی کاڵاکان؟',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'بەڵێ، گەڕانەوە',
+                cancelButtonText: 'نەخێر'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading state
+                    Swal.fire({
+                        title: 'سەیرکردن...',
+                        text: 'تکایە چاوەڕوان بکە',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    // Make AJAX request to process return
+                    $.ajax({
+                        url: '../../controllers/sale/process_return.php',
+                        method: 'POST',
+                        data: { sale_id: saleId },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    title: 'سەرکەوتوو!',
+                                    text: 'کاڵاکان بە سەرکەوتوویی گەڕایەوە',
+                                    icon: 'success'
+                                }).then(() => {
+                                    // Reload the page to show updated data
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'هەڵە!',
+                                    text: response.message || 'هەڵەیەک ڕوویدا',
+                                    icon: 'error'
+                                });
+                            }
+                        },
+                        error: function() {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: 'هەڵەیەک ڕوویدا لە کاتی گەڕانەوەی کاڵا',
+                                icon: 'error'
+                            });
+                        }
+                    });
                 }
             });
         });
