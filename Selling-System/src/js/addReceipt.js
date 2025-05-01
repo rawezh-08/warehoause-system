@@ -1499,14 +1499,16 @@ $(document).ready(function() {
         const stockStatus = parseInt(product.current_quantity) > 10 ? 'in-stock' : (parseInt(product.current_quantity) > 0 ? 'low-stock' : 'out-of-stock');
         const stockLabel = stockStatus === 'in-stock' ? 'بەردەستە' : (stockStatus === 'low-stock' ? 'کەمە' : 'نەماوە');
         
-        // Use default avatar image if product image is not available
-        const imageUrl = product.image || '../../assets/images/default-avatar.png';
+        const imageUrl = product.image || null;
         
         return $(
             `<div class="product-option-container">
                 <div class="product-option-image-container">
                     <div class="product-option-image">
-                        <img src="${imageUrl}" alt="${product.text}" class="product-thumbnail"/>
+                        ${imageUrl ? 
+                            `<img src="${imageUrl}" alt="${product.text}" class="product-thumbnail"/>` : 
+                            `<div class="no-image"><i class="fas fa-box"></i></div>`
+                        }
                     </div>
                     <div class="product-quantity-badge">
                         <i class="fas fa-cubes"></i> ${product.current_quantity} دانە
@@ -1534,30 +1536,17 @@ $(document).ready(function() {
         }
         
         const stockStatus = parseInt(product.current_quantity) > 10 ? 'in-stock' : (parseInt(product.current_quantity) > 0 ? 'low-stock' : 'out-of-stock');
-        const stockLabel = stockStatus === 'in-stock' ? 'بەردەستە' : (stockStatus === 'low-stock' ? 'کەمە' : 'نەماوە');
         
-        // Use default avatar image if product image is not available
-        const imageUrl = product.image || '../../assets/images/default-avatar.png';
-        
-        return $(
-            `<div class="product-selection-container">
-                <div class="product-selection-image">
-                    <img src="${imageUrl}" alt="${product.text}" class="product-thumbnail"/>
-                </div>
-                <div class="product-selection-details">
-                    <div class="product-name-row">
-                        <span class="product-name">${product.text}</span>
-                        <span class="product-stock ${stockStatus}">
-                            <i class="fas fa-circle"></i> ${stockLabel}
-                        </span>
-                    </div>
-                    <div class="product-prices">
-                        <span class="retail-price"><i class="fas fa-tag"></i> تاک: ${product.retail_price}</span>
-                        <span class="wholesale-price"><i class="fas fa-tags"></i> کۆ: ${product.wholesale_price}</span>
-                    </div>
-                </div>
-            </div>`
-        );
+        return $(`
+            <div class="product-selection">
+                <span class="product-selection-name">
+                    ${product.code ? `<span class="code">[${product.code}]</span> ` : ''}${product.text}
+                </span>
+                <span class="product-selection-stock ${stockStatus}">
+                    <i class="fas fa-cubes"></i> ${product.current_quantity} دانە
+                </span>
+            </div>
+        `);
     }
 
     // Add the new supplier formatting functions
