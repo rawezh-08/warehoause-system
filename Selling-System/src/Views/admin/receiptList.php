@@ -57,6 +57,32 @@ $deliveryItemsStmt = $conn->prepare($deliveryItemsQuery);
 $deliveryItemsStmt->execute();
 $deliveryItems = $deliveryItemsStmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Get all wastings (returns)
+$wastingsQuery = "SELECT w.*, 
+                  c.name as customer_name,
+                  (SELECT SUM(total_price) FROM wasting_items WHERE wasting_id = w.id) as total_amount
+                  FROM wastings w 
+                  LEFT JOIN customers c ON w.customer_id = c.id
+                  ORDER BY w.date DESC";
+$wastingsStmt = $conn->prepare($wastingsQuery);
+$wastingsStmt->execute();
+$wastings = $wastingsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get all wasting items for modal
+$wastingItemsQuery = "SELECT w.*, 
+                      p.name as product_name,
+                      p.code as product_code,
+                      wi.quantity,
+                      wi.unit_type,
+                      wi.unit_price,
+                      wi.total_price
+                      FROM wastings w 
+                      LEFT JOIN wasting_items wi ON w.id = wi.wasting_id
+                      LEFT JOIN products p ON wi.product_id = p.id";
+$wastingItemsStmt = $conn->prepare($wastingItemsQuery);
+$wastingItemsStmt->execute();
+$wastingItems = $wastingItemsStmt->fetchAll(PDO::FETCH_ASSOC);
+
 // Get draft receipts
 $draftQuery = "SELECT s.*, 
                c.name as customer_name,
@@ -695,13 +721,116 @@ function translateUnitType($unitType) {
                     </div>
                 </div>
 
-                <!-- Returns Tab (Placeholder for future implementation) -->
+                <!-- Returns Tab -->
                 <div class="tab-pane fade" id="returns" role="tabpanel" aria-labelledby="returns-tab">
                     <div class="card shadow-sm">
-                        <div class="card-body text-center py-5">
-                            <h4 class="text-muted"><i class="fas fa-undo mb-3 fa-3x"></i></h4>
-                            <h5>پسووڵەکانی گەڕانەوە</h5>
-                            <p class="text-muted">ئەم بەشە بەمزوانە چالاک دەکرێت</p>
+                        <div class="card-header bg-white">
+                            <div class="row align-items-center">
+                                <div class="col-md-6 mb-2 mb-md-0">
+                                    <h5 class="mb-0"><i class="fas fa-undo"></i> پسووڵەکانی بەفیڕۆچوو</h5>
+                                </div>
+                            </div>
+                            <div class="table-controls mt-3">
+                                <div class="row align-items-center">
+                                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
+                                        <div class="records-per-page d-flex align-items-center">
+                                            <label class="me-2 mb-0">نیشاندان:</label>
+                                            <select id="returnsRecordsPerPage" class="form-select form-select-sm rounded-pill" style="width: auto;">
+                                                <option value="5">5</option>
+                                                <option value="10" selected>10</option>
+                                                <option value="25">25</option>
+                                                <option value="50">50</option>
+                                                <option value="100">100</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8 col-sm-6">
+                                        <div class="search-container">
+                                            <div class="input-group">
+                                                <input type="text" id="returnsSearchInput" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
+                                                <span class="input-group-text rounded-pill-end bg-light">
+                                                    <i class="fas fa-search"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table id="returnsTable" class="table table-bordered custom-table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>ژمارەی پسووڵە</th>
+                                            <th>بەروار</th>
+                                            <th>ناوی کڕیار</th>
+                                            <th>نرخی گشتی</th>
+                                            <th>کرێی گواستنەوە</th>
+                                            <th>خەرجی تر</th>
+                                            <th>داشکاندن</th>
+                                            <th>جۆری پارەدان</th>
+                                            <th>کردارەکان</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if(empty($wastings)): ?>
+                                        <tr>
+                                            <td colspan="10" class="text-center py-4">هیچ پسووڵەیەکی بەفیڕۆچوو نەدۆزرایەوە</td>
+                                        </tr>
+                                        <?php else: ?>
+                                            <?php foreach($wastings as $index => $wasting): ?>
+                                                <tr>
+                                                    <td><?= $index + 1 ?></td>
+                                                    <td><?= htmlspecialchars($wasting['invoice_number']) ?></td>
+                                                    <td><?= formatDate($wasting['date']) ?></td>
+                                                    <td><?= htmlspecialchars($wasting['customer_name'] ?? '-') ?></td>
+                                                    <td><?= number_format($wasting['total_amount'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td><?= number_format($wasting['shipping_cost'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td><?= number_format($wasting['other_costs'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td><?= number_format($wasting['discount'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td>
+                                                        <?php if($wasting['payment_type'] == 'cash'): ?>
+                                                            <span class="badge bg-success">نەقد</span>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-warning">قەرز</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td>
+                                                        <div class="action-buttons">
+                                                            <a href="../../Views/receipt/print_wasting.php?wasting_id=<?= $wasting['id'] ?>"
+                                                                class="btn btn-sm btn-outline-success rounded-circle"
+                                                                title="چاپکردن">
+                                                                <i class="fas fa-print"></i>
+                                                            </a>
+                                                            <button type="button" 
+                                                                class="btn btn-sm btn-outline-info rounded-circle show-receipt-items"
+                                                                data-invoice="<?php echo $wasting['invoice_number']; ?>"
+                                                                title="بینینی هەموو کاڵاکان">
+                                                                <i class="fas fa-list"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <div class="pagination-wrapper">
+                                <div class="pagination-controls">
+                                    <button class="btn btn-sm btn-outline-secondary rounded-circle" id="returnsPrevPage" disabled>
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                    <div class="pagination-numbers" id="returnsPagination"></div>
+                                    <button class="btn btn-sm btn-outline-secondary rounded-circle" id="returnsNextPage">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -725,6 +854,7 @@ function translateUnitType($unitType) {
         initializeTable('sales');
         initializeTable('drafts');
         initializeTable('delivery');
+        initializeTable('returns');
 
         function initializeTable(tableId) {
             const table = $(`#${tableId}Table`);
@@ -825,7 +955,7 @@ function translateUnitType($unitType) {
         // Show receipt items in modal (for all tables)
         $(document).on('click', '.show-receipt-items', function() {
             const invoiceNumber = $(this).data('invoice');
-            const invoiceItems = <?php echo json_encode(array_merge($sales, $draftItems, $deliveryItems)); ?>;
+            const invoiceItems = <?php echo json_encode(array_merge($sales, $draftItems, $deliveryItems, $wastingItems)); ?>;
             const items = invoiceItems.filter(item => item.invoice_number === invoiceNumber);
             
             let itemsHtml = '<div class="table-responsive"><table class="table table-bordered">';
