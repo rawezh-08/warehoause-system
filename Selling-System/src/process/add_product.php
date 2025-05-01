@@ -51,10 +51,13 @@ try {
     $minQuantity = isset($_POST['min_quantity']) ? str_replace(',', '', $_POST['min_quantity']) : 0;
     $currentQuantity = isset($_POST['current_quantity']) ? str_replace(',', '', $_POST['current_quantity']) : 0;
     $piecesPerBox = isset($_POST['pieces_per_box']) ? str_replace(',', '', $_POST['pieces_per_box']) : 1;
+    $boxesPerSet = isset($_POST['boxes_per_set']) ? str_replace(',', '', $_POST['boxes_per_set']) : null;
 
-    // Convert box quantities to pieces
-    $currentQuantity = $currentQuantity * $piecesPerBox;
-    $minQuantity = $minQuantity * $piecesPerBox;
+    // Convert box quantities to pieces if unit type is box or set
+    if ($_POST['unit_id'] == '2' || $_POST['unit_id'] == '3') {
+        $currentQuantity = $currentQuantity * $piecesPerBox;
+        $minQuantity = $minQuantity * $piecesPerBox;
+    }
 
     // Generate code if not provided
     if (empty($_POST['code'])) {
@@ -360,65 +363,69 @@ try {
         ]);
     }
 
-    // Insert product into database
-    $query = "INSERT INTO products (
-        name, code, barcode, category_id, unit_id, 
-        pieces_per_box, boxes_per_set, purchase_price, 
-        selling_price_single, selling_price_wholesale, 
-        min_quantity, current_quantity, notes, image
-    ) VALUES (
-        :name, :code, :barcode, :category_id, :unit_id, 
-        :pieces_per_box, :boxes_per_set, :purchase_price, 
-        :selling_price_single, :selling_price_wholesale, 
-        :min_quantity, :current_quantity, :notes, :image
-    )";
-    
-    $stmt = $conn->prepare($query);
-    // Fix reference issues by creating variables
-    $name = $_POST['name'];
-    $code = $_POST['code'];
-    $barcode = isset($_POST['barcode']) ? $_POST['barcode'] : '';
-    $categoryId = $_POST['category_id'];
-    $unitId = $_POST['unit_id'];
-    $notes = isset($_POST['notes']) ? $_POST['notes'] : null;
-    $boxesPerSet = isset($_POST['boxes_per_set']) ? str_replace(',', '', $_POST['boxes_per_set']) : null;
-    
-    $stmt->bindParam(':name', $name);
-    $stmt->bindParam(':code', $code);
-    $stmt->bindParam(':barcode', $barcode);
-    $stmt->bindParam(':category_id', $categoryId);
-    $stmt->bindParam(':unit_id', $unitId);
-    $stmt->bindParam(':pieces_per_box', $piecesPerBox);
-    $stmt->bindParam(':boxes_per_set', $boxesPerSet);
-    $stmt->bindParam(':purchase_price', $purchasePrice);
-    $stmt->bindParam(':selling_price_single', $sellingPriceSingle);
-    $stmt->bindParam(':selling_price_wholesale', $sellingPriceWholesale);
-    $stmt->bindParam(':min_quantity', $minQuantity);
-    $stmt->bindParam(':current_quantity', $currentQuantity);
-    $stmt->bindParam(':notes', $notes);
-    $stmt->bindParam(':image', $imagePath);
-    
-    log_debug('Database insert parameters', [
-        'name' => $name,
-        'code' => $code,
-        'image_path' => $imagePath
-    ]);
-    
-    if ($stmt->execute()) {
-        log_debug('Product added successfully');
-        echo json_encode([
-            'success' => true,
-            'message' => 'کاڵاکە بە سەرکەوتوویی زیاد کرا',
-            'image_path' => $imagePath
-        ]);
-    } else {
-        log_debug('Database insert failed', $stmt->errorInfo());
-        throw new Exception('هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا');
+    try {
+        // Insert product into database
+        $query = "INSERT INTO products (
+            name, code, barcode, category_id, unit_id, 
+            pieces_per_box, boxes_per_set, purchase_price, 
+            selling_price_single, selling_price_wholesale, 
+            min_quantity, current_quantity, notes, image
+        ) VALUES (
+            :name, :code, :barcode, :category_id, :unit_id, 
+            :pieces_per_box, :boxes_per_set, :purchase_price, 
+            :selling_price_single, :selling_price_wholesale, 
+            :min_quantity, :current_quantity, :notes, :image
+        )";
+        
+        $stmt = $conn->prepare($query);
+        
+        // Fix reference issues by creating variables
+        $name = $_POST['name'];
+        $code = $_POST['code'];
+        $barcode = isset($_POST['barcode']) ? $_POST['barcode'] : '';
+        $categoryId = $_POST['category_id'];
+        $unitId = $_POST['unit_id'];
+        $notes = isset($_POST['notes']) ? $_POST['notes'] : null;
+        
+        // Bind parameters
+        $params = [
+            ':name' => $name,
+            ':code' => $code,
+            ':barcode' => $barcode,
+            ':category_id' => $categoryId,
+            ':unit_id' => $unitId,
+            ':pieces_per_box' => $piecesPerBox,
+            ':boxes_per_set' => $boxesPerSet,
+            ':purchase_price' => $purchasePrice,
+            ':selling_price_single' => $sellingPriceSingle,
+            ':selling_price_wholesale' => $sellingPriceWholesale,
+            ':min_quantity' => $minQuantity,
+            ':current_quantity' => $currentQuantity,
+            ':notes' => $notes,
+            ':image' => $imagePath
+        ];
+        
+        log_debug('Database insert parameters', $params);
+        
+        if ($stmt->execute($params)) {
+            log_debug('Product added successfully');
+            echo json_encode([
+                'success' => true,
+                'message' => 'کاڵاکە بە سەرکەوتوویی زیاد کرا',
+                'image_path' => $imagePath
+            ]);
+        } else {
+            log_debug('Database insert failed', $stmt->errorInfo());
+            throw new Exception('هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا');
+        }
+    } catch (PDOException $e) {
+        log_debug('Database error', $e->getMessage());
+        throw new Exception('هەڵەیەک ڕوویدا لە کاتی زیادکردنی کاڵا: ' . $e->getMessage());
     }
 
 } catch (Exception $e) {
     log_debug('Exception occurred', $e->getMessage());
-    http_response_code(400);
+    http_response_code(500);
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()

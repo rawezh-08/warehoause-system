@@ -766,6 +766,39 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Function to handle tab navigation
+    function handleTabNavigation() {
+        const basicInfoTab = document.querySelector('[data-tab="basic-info"]');
+        const priceInfoTab = document.querySelector('[data-tab="price-info"]');
+        const basicInfoContent = document.getElementById('basic-info-content');
+        const priceInfoContent = document.getElementById('price-info-content');
+        const prevTabBtn = document.getElementById('prevTabBtn');
+        const nextTabBtn = document.getElementById('nextTabBtn');
+        const submitBtn = document.getElementById('submitBtn');
+
+        if (basicInfoTab && priceInfoTab && basicInfoContent && priceInfoContent) {
+            basicInfoTab.addEventListener('click', function() {
+                basicInfoTab.classList.add('active');
+                priceInfoTab.classList.remove('active');
+                basicInfoContent.style.display = 'block';
+                priceInfoContent.style.display = 'none';
+                prevTabBtn.style.display = 'none';
+                nextTabBtn.style.display = 'block';
+                submitBtn.style.display = 'none';
+            });
+
+            priceInfoTab.addEventListener('click', function() {
+                priceInfoTab.classList.add('active');
+                basicInfoTab.classList.remove('active');
+                priceInfoContent.style.display = 'block';
+                basicInfoContent.style.display = 'none';
+                prevTabBtn.style.display = 'block';
+                nextTabBtn.style.display = 'none';
+                submitBtn.style.display = 'block';
+            });
+        }
+    }
+
     // Initialize when DOM is loaded
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize number formatting
@@ -799,9 +832,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Initialize tab navigation
         handleTabNavigation();
-
-        // DO NOT initialize form submission here - it's already handled in the main code
-        // handleFormSubmission();
 
         // Initialize refresh button
         const refreshButton = document.querySelector('.refresh-products');
@@ -1038,69 +1068,6 @@ async function updateLatestProducts() {
             `;
         }
     }
-}
-
-// Function to handle unit type changes
-function handleUnitTypeChange() {
-    const unitSelect = document.getElementById('unit_id');
-    const piecesPerBoxContainer = document.getElementById('piecesPerBoxContainer');
-    const boxesPerSetContainer = document.getElementById('boxesPerSetContainer');
-    
-    if (!unitSelect) return;
-    
-    const selectedUnit = unitSelect.value;
-    
-    // Show/hide containers based on unit type
-    if (selectedUnit === '2') { // Box
-        piecesPerBoxContainer.style.display = 'block';
-        boxesPerSetContainer.style.display = 'none';
-    } else if (selectedUnit === '3') { // Set
-        piecesPerBoxContainer.style.display = 'block';
-        boxesPerSetContainer.style.display = 'block';
-    } else { // Piece
-        piecesPerBoxContainer.style.display = 'none';
-        boxesPerSetContainer.style.display = 'none';
-    }
-}
-
-// Function to handle tab navigation
-function handleTabNavigation() {
-    const basicInfoTab = document.querySelector('[data-tab="basic-info"]');
-    const priceInfoTab = document.querySelector('[data-tab="price-info"]');
-    const basicInfoContent = document.getElementById('basic-info-content');
-    const priceInfoContent = document.getElementById('price-info-content');
-    const prevTabBtn = document.getElementById('prevTabBtn');
-    const nextTabBtn = document.getElementById('nextTabBtn');
-    const submitBtn = document.getElementById('submitBtn');
-
-    if (basicInfoTab && priceInfoTab && basicInfoContent && priceInfoContent) {
-        basicInfoTab.addEventListener('click', function() {
-            basicInfoTab.classList.add('active');
-            priceInfoTab.classList.remove('active');
-            basicInfoContent.style.display = 'block';
-            priceInfoContent.style.display = 'none';
-            prevTabBtn.style.display = 'none';
-            nextTabBtn.style.display = 'block';
-            submitBtn.style.display = 'none';
-        });
-
-        priceInfoTab.addEventListener('click', function() {
-            priceInfoTab.classList.add('active');
-            basicInfoTab.classList.remove('active');
-            priceInfoContent.style.display = 'block';
-            basicInfoContent.style.display = 'none';
-            prevTabBtn.style.display = 'block';
-            nextTabBtn.style.display = 'none';
-            submitBtn.style.display = 'block';
-        });
-    }
-}
-
-// Function to handle form submission
-function handleFormSubmission() {
-    console.log("Form submission handler initialization is disabled to prevent double submission");
-    // This function is not used anymore to prevent double submission
-    // We're keeping it empty as a placeholder in case other code references it
 }
 
 // Add this function for client-side image compression
