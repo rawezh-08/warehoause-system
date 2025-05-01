@@ -230,14 +230,14 @@ require_once '../../config/database.php';
                         <button type="button" class="btn btn-outline-primary draft-btn">
                             <i class="fas fa-file-alt"></i> ڕەشنووس
                         </button>
+                        <button type="button" class="btn btn-outline-info price-profit-btn ms-2">
+                            <i class="fas fa-calculator"></i> نرخ و قازانج
+                        </button>
                         <button type="button" class="btn btn-outline-success delivery-btn ms-2">
                             <i class="fas fa-truck"></i> پسووڵەی گەیاندن
                         </button>
-                        <button type="button" class="btn btn-info price-profit-btn ms-2">
-                            <i class="fas fa-calculator"></i> نرخ و قازانج
-                        </button>
                         <button type="button" class="btn btn-primary save-btn cta-btn ms-2">
-                            پاشەکەوتکردن <i class="fas fa-save"></i>
+                            <i class="fas fa-save"></i> پاشەکەوتکردن
                         </button>
                     </div>
                 </div>
@@ -1368,5 +1368,91 @@ require_once '../../config/database.php';
     <script src="../../js/addReceipt.js"></script>
     <script src="../../js/advance-payment.js"></script>
     <script src="../../js/include-components.js"></script>
+
+    <style>
+        /* دیزاینی دوگمەکان */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 140px;
+            justify-content: center;
+        }
+
+        /* دیزاینی دوگمەی ڕەشنووس */
+        .btn-outline-primary {
+            border: 2px solid #0d6efd;
+            color: #0d6efd;
+        }
+        .btn-outline-primary:hover {
+            background-color: #0d6efd;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* دیزاینی دوگمەی نرخ و قازانج */
+        .btn-outline-info {
+            border: 2px solid #0dcaf0;
+            color: #0dcaf0;
+        }
+        .btn-outline-info:hover {
+            background-color: #0dcaf0;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* دیزاینی دوگمەی پسووڵەی گەیاندن */
+        .btn-outline-success {
+            border: 2px solid #198754;
+            color: #198754;
+        }
+        .btn-outline-success:hover {
+            background-color: #198754;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* دیزاینی دوگمەی پاشەکەوتکردن */
+        .btn-primary {
+            background-color: #0d6efd;
+            border: 2px solid #0d6efd;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0b5ed7;
+            transform: translateY(-2px);
+        }
+
+        /* ئەنیمەیشنی ئایکۆنەکان */
+        .btn i {
+            transition: transform 0.3s ease;
+        }
+        .btn:hover i {
+            transform: scale(1.2);
+        }
+
+        /* ڕیسپۆنسیڤ */
+        @media (max-width: 768px) {
+            .mt-4.text-start {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .btn {
+                min-width: calc(50% - 5px);
+                margin-left: 0 !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .btn {
+                min-width: 100%;
+            }
+        }
+    </style>
 </body>
 </html> 
