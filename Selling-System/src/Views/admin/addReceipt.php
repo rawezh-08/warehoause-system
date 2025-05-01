@@ -227,16 +227,16 @@ require_once '../../config/database.php';
 
                     <!-- Submit Button -->
                     <div class="mt-4 text-start d-flex justify-content-start align-items-center">
-                        <button type="button" class="btn btn-outline-primary draft-btn">
+                        <button type="button" class="draft-btn">
                             <i class="fas fa-file-alt"></i> ڕەشنووس
                         </button>
-                        <button type="button" class="btn btn-outline-success delivery-btn ms-2">
+                        <button type="button" class="delivery-btn ms-2">
                             <i class="fas fa-truck"></i> پسووڵەی گەیاندن
                         </button>
-                        <button type="button" class="btn btn-outline-info price-profit-btn ms-2">
+                        <button type="button" class="price-profit-btn ms-2">
                             <i class="fas fa-calculator"></i> نرخ و قازانج
                         </button>
-                        <button type="button" class="btn btn-primary save-btn cta-btn ms-2">
+                        <button type="button" class="save-btn ms-2">
                             پاشەکەوتکردن <i class="fas fa-save"></i>
                         </button>
                     </div>
