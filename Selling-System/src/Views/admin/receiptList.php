@@ -1042,10 +1042,20 @@ function translateUnitType($unitType) {
 
             // Show specific page
             function showPage(tableId, page) {
+                const actualTableId = tableMap[tableId];
+                
                 // Only operate on visible rows (after filtering)
                 const visibleRows = $(`#${actualTableId} tbody tr:visible`);
+                
+                // Calculate start and end indexes
+                const startIndex = (page - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                
+                // Hide all rows first
                 visibleRows.hide();
-                visibleRows.slice((page - 1) * itemsPerPage, page * itemsPerPage).show();
+                
+                // Show only rows for current page
+                visibleRows.slice(startIndex, endIndex).show();
             }
 
             // Update pagination info and buttons
@@ -1053,17 +1063,44 @@ function translateUnitType($unitType) {
                 const pagination = $(`#${tableId}Pagination`);
                 pagination.empty();
 
+                // Don't show pagination if there are no pages
+                if (totalPages === 0) {
+                    $(`#${tableId}PrevPage`).prop('disabled', true);
+                    $(`#${tableId}NextPage`).prop('disabled', true);
+                    return;
+                }
+                
+                // Limit number of page buttons to display
                 const maxPagesToShow = 5;
                 let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
                 let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
 
-                if (endPage - startPage + 1 < maxPagesToShow) {
+                if (endPage - startPage + 1 < maxPagesToShow && startPage > 1) {
                     startPage = Math.max(1, endPage - maxPagesToShow + 1);
                 }
 
+                // Add first page button if not visible
+                if (startPage > 1) {
+                    const firstPageBtn = $('<button class="btn btn-sm btn-outline-secondary rounded-circle">١</button>');
+                    firstPageBtn.on('click', function() {
+                        currentPage = 1;
+                        showPage(tableId, 1);
+                        updatePagination(tableId);
+                    });
+                    pagination.append(firstPageBtn);
+                    
+                    // Add ellipsis if there's a gap
+                    if (startPage > 2) {
+                        pagination.append('<span class="px-1">...</span>');
+                    }
+                }
+
+                // Add page buttons
                 for (let i = startPage; i <= endPage; i++) {
-                    const pageButton = $('<button class="btn btn-sm ' + (i === currentPage ? 'btn-primary' : 'btn-outline-secondary') + ' rounded-circle">' + i + '</button>');
-                    pageButton.on('click', function () {
+                    // Convert to Kurdish numerals
+                    const kurdishNum = convertToKurdishNumerals(i);
+                    const pageButton = $('<button class="btn btn-sm ' + (i === currentPage ? 'btn-primary' : 'btn-outline-secondary') + ' rounded-circle">' + kurdishNum + '</button>');
+                    pageButton.on('click', function() {
                         currentPage = i;
                         showPage(tableId, i);
                         updatePagination(tableId);
@@ -1071,12 +1108,36 @@ function translateUnitType($unitType) {
                     pagination.append(pageButton);
                 }
 
+                // Add last page button if not visible
+                if (endPage < totalPages) {
+                    // Add ellipsis if there's a gap
+                    if (endPage < totalPages - 1) {
+                        pagination.append('<span class="px-1">...</span>');
+                    }
+                    
+                    const lastPageBtn = $('<button class="btn btn-sm btn-outline-secondary rounded-circle">' + convertToKurdishNumerals(totalPages) + '</button>');
+                    lastPageBtn.on('click', function() {
+                        currentPage = totalPages;
+                        showPage(tableId, totalPages);
+                        updatePagination(tableId);
+                    });
+                    pagination.append(lastPageBtn);
+                }
+
                 $(`#${tableId}PrevPage`).prop('disabled', currentPage === 1);
-                $(`#${tableId}NextPage`).prop('disabled', currentPage === totalPages || totalPages === 0);
+                $(`#${tableId}NextPage`).prop('disabled', currentPage === totalPages);
+            }
+
+            // Convert numbers to Kurdish numerals
+            function convertToKurdishNumerals(num) {
+                const kurdishDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+                return num.toString().split('').map(digit => 
+                    isNaN(parseInt(digit)) ? digit : kurdishDigits[parseInt(digit)]
+                ).join('');
             }
 
             // Previous page button
-            $(`#${tableId}PrevPage`).on('click', function () {
+            $(`#${tableId}PrevPage`).on('click', function() {
                 if (currentPage > 1) {
                     currentPage--;
                     showPage(tableId, currentPage);
@@ -1085,7 +1146,7 @@ function translateUnitType($unitType) {
             });
 
             // Next page button
-            $(`#${tableId}NextPage`).on('click', function () {
+            $(`#${tableId}NextPage`).on('click', function() {
                 if (currentPage < totalPages) {
                     currentPage++;
                     showPage(tableId, currentPage);
