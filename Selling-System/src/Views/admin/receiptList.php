@@ -353,8 +353,11 @@ function translateUnitType($unitType) {
                                                                     title="چاپکردن">
                                                                     <i class="fas fa-print"></i>
                                                                 </a>
-                                                                <!-- Add Return Button -->
-                                                                
+                                                                <button class="btn btn-sm btn-outline-info rounded-circle view-items-btn" 
+                                                                        data-sale-id="<?= $sale['id'] ?>"
+                                                                        title="بینینی کاڵاکان">
+                                                                    <i class="fas fa-list"></i>
+                                                                </button>
                                                             </div>
                                                     </td>
                                                 </tr>
@@ -402,6 +405,41 @@ function translateUnitType($unitType) {
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Items Modal -->
+<div class="modal fade" id="itemsModal" tabindex="-1" aria-labelledby="itemsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="itemsModalLabel">کاڵاکانی پسووڵە</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>ناوی کاڵا</th>
+                                <th>کۆدی کاڵا</th>
+                                <th>بڕ</th>
+                                <th>یەکە</th>
+                                <th>نرخی تاک</th>
+                                <th>نرخی گشتی</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemsModalBody">
+                            <!-- Items will be loaded here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
             </div>
         </div>
     </div>
@@ -517,6 +555,61 @@ function translateUnitType($unitType) {
             showSalesPage(1);
             updateSalesPagination();
         });
+
+        // Handle view items button click
+        $('.view-items-btn').on('click', function() {
+            const saleId = $(this).data('sale-id');
+            
+            // Show loading state
+            $('#itemsModalBody').html('<tr><td colspan="7" class="text-center">سەیرکردن...</td></tr>');
+            $('#itemsModal').modal('show');
+
+            // Fetch items for this sale
+            $.ajax({
+                url: '../../controllers/sale/get_sale_items.php',
+                method: 'GET',
+                data: { sale_id: saleId },
+                success: function(response) {
+                    if (response.success) {
+                        let itemsHtml = '';
+                        response.items.forEach((item, index) => {
+                            itemsHtml += `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${item.product_name}</td>
+                                    <td>${item.product_code}</td>
+                                    <td>${item.quantity}</td>
+                                    <td>${translateUnitType(item.unit_type)}</td>
+                                    <td>${number_format(item.unit_price)} د.ع</td>
+                                    <td>${number_format(item.total_price)} د.ع</td>
+                                </tr>
+                            `;
+                        });
+                        $('#itemsModalBody').html(itemsHtml);
+                    } else {
+                        $('#itemsModalBody').html('<tr><td colspan="7" class="text-center text-danger">هەڵەیەک ڕوویدا</td></tr>');
+                    }
+                },
+                error: function() {
+                    $('#itemsModalBody').html('<tr><td colspan="7" class="text-center text-danger">هەڵەیەک ڕوویدا</td></tr>');
+                }
+            });
+        });
+
+        // Helper function to format numbers
+        function number_format(number) {
+            return new Intl.NumberFormat('en-US').format(number);
+        }
+
+        // Helper function to translate unit type
+        function translateUnitType(unitType) {
+            switch (unitType) {
+                case 'piece': return 'دانە';
+                case 'box': return 'کارتۆن';
+                case 'set': return 'سێت';
+                default: return '-';
+            }
+        }
     });
     </script>
     <script src="../../js/receiptList.js"></script>
