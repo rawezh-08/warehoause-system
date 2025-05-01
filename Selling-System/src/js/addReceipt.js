@@ -257,13 +257,7 @@ $(document).ready(function() {
                         </div>
                     `);
                 } else {
-                    row.find('.product-image-cell').html(`
-                        <div class="product-image-container">
-                            <div class="no-image-placeholder">
-                                <i class="fas fa-box"></i>
-                            </div>
-                        </div>
-                    `);
+                    row.find('.product-image-cell').html('');
                 }
                 
                 // Update unit type dropdown based on product data
@@ -558,13 +552,7 @@ $(document).ready(function() {
                     </div>
                 `);
             } else {
-                row.find('.product-image-cell').html(`
-                    <div class="product-image-container">
-                        <div class="no-image-placeholder">
-                            <i class="fas fa-box"></i>
-                        </div>
-                    </div>
-                `);
+                row.find('.product-image-cell').html('');
             }
             
             // Update unit type dropdown based on product data
@@ -830,13 +818,7 @@ $(document).ready(function() {
                     </div>
                 `);
             } else {
-                row.find('.product-image-cell').html(`
-                    <div class="product-image-container">
-                        <div class="no-image-placeholder">
-                            <i class="fas fa-box"></i>
-                        </div>
-                    </div>
-                `);
+                row.find('.product-image-cell').html('');
             }
             
             // Update unit type dropdown based on product data
@@ -1507,7 +1489,7 @@ $(document).ready(function() {
                     <div class="product-option-image">
                         ${imageUrl ? 
                             `<img src="${imageUrl}" alt="${product.text}" class="product-thumbnail"/>` : 
-                            `<div class="no-image"><i class="fas fa-box"></i></div>`
+                            ``
                         }
                     </div>
                     <div class="product-quantity-badge">
