@@ -858,12 +858,23 @@ require_once '../../config/database.php';
         $(document).ready(function() {
             // Function to generate receipt number
             function generateReceiptNumber() {
-                const date = new Date();
-                const year = date.getFullYear().toString().slice(-2);
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const day = date.getDate().toString().padStart(2, '0');
-                const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-                return `INV-${year}${month}${day}-${random}`;
+                // Get the highest receipt number from the server and increment it
+                return $.ajax({
+                    url: '../../api/get_next_receipt_number.php',
+                    type: 'GET',
+                    dataType: 'json',
+                    async: false
+                }).then(function(response) {
+                    if (response && response.success && response.next_number) {
+                        return response.next_number;
+                    } else {
+                        // Fallback to A-0001 if the API fails
+                        return 'A-0001';
+                    }
+                }).catch(function() {
+                    // Fallback to A-0001 if the API fails
+                    return 'A-0001';
+                });
             }
 
             // Function to check if receipt number exists
@@ -878,36 +889,20 @@ require_once '../../config/database.php';
 
             // Function to set receipt number
             async function setReceiptNumber() {
-                let receiptNumber = generateReceiptNumber();
-                let exists = true;
-                let attempts = 0;
-                const maxAttempts = 5;
-
-                while (exists && attempts < maxAttempts) {
-                    try {
-                        const response = await checkReceiptNumber(receiptNumber);
-                        exists = response.exists;
-                        if (exists) {
-                            receiptNumber = generateReceiptNumber();
-                            attempts++;
-                        }
-                    } catch (error) {
-                        console.error('Error checking receipt number:', error);
-                        break;
-                    }
-                }
-
-                if (attempts >= maxAttempts) {
+                try {
+                    const receiptNumber = await generateReceiptNumber();
+                    $('.receipt-number').val(receiptNumber);
+                } catch (error) {
+                    console.error('Error generating receipt number:', error);
+                    $('.receipt-number').val('A-0001'); // Fallback default
+                    
                     Swal.fire({
                         title: 'هەڵە!',
                         text: 'نەتوانرا ژمارەی پسووڵەیەکی نوێ دروست بکرێت',
                         icon: 'error',
                         confirmButtonText: 'باشە'
                     });
-                    return;
                 }
-
-                $('.receipt-number').val(receiptNumber);
             }
 
             // Set receipt number when page loads
