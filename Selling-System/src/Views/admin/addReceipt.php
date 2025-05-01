@@ -233,7 +233,7 @@ require_once '../../config/database.php';
                         <button type="button" class="btn btn-outline-success delivery-btn ms-2">
                             <i class="fas fa-truck"></i> پسووڵەی گەیاندن
                         </button>
-                        <button type="button" class="btn btn-info price-profit-btn ms-2">
+                        <button type="button" class="btn btn-info costs-btn ms-2">
                             <i class="fas fa-calculator"></i> نرخ و قازانج
                         </button>
                         <button type="button" class="btn btn-primary save-btn cta-btn ms-2">

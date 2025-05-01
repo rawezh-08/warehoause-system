@@ -2489,19 +2489,185 @@ $(document).ready(function() {
     function showPriceAndProfit() {
         const totalAmount = parseFloat($('.grand-total').val()) || 0;
         const totalProfit = calculateProfit();
+        const profitPercentage = ((totalProfit / totalAmount) * 100).toFixed(2);
+        
+        // Format numbers with Kurdish thousands separator
+        const formatNumber = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "،");
         
         Swal.fire({
-            title: 'نرخ و قازانج',
+            title: '<div class="profit-title"><i class="fas fa-chart-line"></i> نرخ و قازانج</div>',
             html: `
-                <div class="text-start">
-                    <p><strong>کۆی نرخ:</strong> ${totalAmount.toLocaleString()} دینار</p>
-                    <p><strong>کۆی قازانج:</strong> ${totalProfit.toLocaleString()} دینار</p>
-                    <p><strong>ڕێژەی قازانج:</strong> ${((totalProfit / totalAmount) * 100).toFixed(2)}%</p>
+                <div class="profit-summary">
+                    <div class="profit-item total-sales">
+                        <div class="profit-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="profit-details">
+                            <div class="profit-label">کۆی نرخی فرۆشتن</div>
+                            <div class="profit-value">${formatNumber(totalAmount)} دینار</div>
+                        </div>
+                    </div>
+                    
+                    <div class="profit-item total-profit ${totalProfit >= 0 ? 'positive' : 'negative'}">
+                        <div class="profit-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="profit-details">
+                            <div class="profit-label">کۆی قازانج</div>
+                            <div class="profit-value">${formatNumber(totalProfit)} دینار</div>
+                        </div>
+                    </div>
+                    
+                    <div class="profit-item profit-percentage ${profitPercentage >= 0 ? 'positive' : 'negative'}">
+                        <div class="profit-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="profit-details">
+                            <div class="profit-label">ڕێژەی قازانج</div>
+                            <div class="profit-value">${profitPercentage}%</div>
+                        </div>
+                    </div>
                 </div>
             `,
-            icon: 'info',
-            confirmButtonText: 'باشە'
+            confirmButtonText: 'داخستن',
+            customClass: {
+                container: 'profit-modal-container',
+                popup: 'profit-modal',
+                confirmButton: 'profit-confirm-btn'
+            }
         });
+
+        // Add custom styles
+        if (!document.getElementById('profit-modal-styles')) {
+            const styles = `
+                <style id="profit-modal-styles">
+                    .profit-modal {
+                        background: #ffffff;
+                        border-radius: 15px;
+                        padding: 20px;
+                        max-width: 500px;
+                    }
+                    
+                    .profit-title {
+                        color: #2c3e50;
+                        font-size: 1.5rem;
+                        margin-bottom: 20px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 10px;
+                    }
+                    
+                    .profit-title i {
+                        color: #3498db;
+                    }
+                    
+                    .profit-summary {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 15px;
+                    }
+                    
+                    .profit-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 15px;
+                        padding: 20px;
+                        border-radius: 12px;
+                        background: #f8f9fa;
+                        transition: transform 0.2s ease;
+                    }
+                    
+                    .profit-item:hover {
+                        transform: translateY(-2px);
+                    }
+                    
+                    .profit-icon {
+                        width: 50px;
+                        height: 50px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1.5rem;
+                    }
+                    
+                    .total-sales .profit-icon {
+                        background: #e3f2fd;
+                        color: #2196f3;
+                    }
+                    
+                    .profit-item.positive .profit-icon {
+                        background: #e8f5e9;
+                        color: #4caf50;
+                    }
+                    
+                    .profit-item.negative .profit-icon {
+                        background: #ffebee;
+                        color: #f44336;
+                    }
+                    
+                    .profit-details {
+                        flex: 1;
+                    }
+                    
+                    .profit-label {
+                        color: #6c757d;
+                        font-size: 0.9rem;
+                        margin-bottom: 5px;
+                    }
+                    
+                    .profit-value {
+                        font-size: 1.2rem;
+                        font-weight: 600;
+                        color: #2c3e50;
+                    }
+                    
+                    .positive .profit-value {
+                        color: #4caf50;
+                    }
+                    
+                    .negative .profit-value {
+                        color: #f44336;
+                    }
+                    
+                    .profit-confirm-btn {
+                        background: #3498db !important;
+                        color: white !important;
+                        padding: 10px 30px !important;
+                        border-radius: 8px !important;
+                        font-size: 1rem !important;
+                        font-weight: 500 !important;
+                        margin-top: 20px !important;
+                    }
+                    
+                    .profit-confirm-btn:hover {
+                        background: #2980b9 !important;
+                    }
+                    
+                    @media (max-width: 480px) {
+                        .profit-modal {
+                            margin: 10px;
+                        }
+                        
+                        .profit-item {
+                            padding: 15px;
+                        }
+                        
+                        .profit-icon {
+                            width: 40px;
+                            height: 40px;
+                            font-size: 1.2rem;
+                        }
+                        
+                        .profit-value {
+                            font-size: 1rem;
+                        }
+                    }
+                </style>
+            `;
+            $('head').append(styles);
+        }
     }
 
     // زیادکردنی event listener بۆ دوگمەی نرخ و قازانج
