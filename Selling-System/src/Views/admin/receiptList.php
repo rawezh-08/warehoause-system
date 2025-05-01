@@ -446,31 +446,6 @@ function translateUnitType($unitType) {
             font-weight: 700;
             color: var(--primary-color);
         }
-
-        /* Styling for filter components */
-        .filter-item {
-            margin-bottom: 10px;
-        }
-        
-        .filter-control {
-            width: 100%;
-            border-radius: 24px !important;
-            background-color: #fff;
-            border: 1px solid #dee2e6;
-            transition: all 0.2s ease;
-        }
-        
-        .filter-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
-        }
-        
-        .filter-label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #6c757d;
-        }
     </style>
 </head>
 
@@ -519,9 +494,39 @@ function translateUnitType($unitType) {
                     <div class="tab-pane fade show active" id="sales" role="tabpanel" aria-labelledby="sales-tab">
                         <div class="card shadow-sm">
                             <div class="card-header bg-white">
+                                <div class="filter-section mb-3">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-2">
+                                            <label class="form-label">ناوی کڕیار</label>
+                                            <select class="form-select customer-filter" style="width: 100%;">
+                                                <option value="">هەموو کڕیارەکان</option>
+                                                <?php
+                                                $customerQuery = "SELECT DISTINCT c.name FROM customers c 
+                                                                JOIN sales s ON c.id = s.customer_id 
+                                                                WHERE c.name IS NOT NULL 
+                                                                ORDER BY c.name";
+                                                $customerStmt = $conn->prepare($customerQuery);
+                                                $customerStmt->execute();
+                                                $customers = $customerStmt->fetchAll(PDO::FETCH_ASSOC);
+                                                foreach($customers as $customer) {
+                                                    echo "<option value='" . htmlspecialchars($customer['name']) . "'>" . htmlspecialchars($customer['name']) . "</option>";
+                                                }
+                                                ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <label class="form-label">جۆری پارەدان</label>
+                                            <select class="form-select payment-type-filter">
+                                                <option value="">هەموو جۆرەکان</option>
+                                                <option value="cash">نەقد</option>
+                                                <option value="debt">قەرز</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="table-controls mt-3">
                                     <div class="row align-items-center">
-                                        <div class="col-md-2 col-sm-6 mb-2 mb-md-0">
+                                        <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
                                             <div class="records-per-page d-flex align-items-center">
                                                 <label class="me-2 mb-0">نیشاندان:</label>
                                                 <select id="salesRecordsPerPage" class="form-select form-select-sm rounded-pill" style="width: auto;">
@@ -533,36 +538,7 @@ function translateUnitType($unitType) {
                                                 </select>
                                             </div>
                                         </div>
-                                        <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
-                                            <div class="filter-item">
-                                                <select id="customerFilter" class="form-select form-select-sm rounded-pill filter-control">
-                                                    <option value="">هەموو کڕیارەکان</option>
-                                                    <?php
-                                                    // Get unique customer names
-                                                    $customerNames = [];
-                                                    foreach ($sales as $sale) {
-                                                        if (!empty($sale['customer_name']) && !in_array($sale['customer_name'], $customerNames)) {
-                                                            $customerNames[] = $sale['customer_name'];
-                                                        }
-                                                    }
-                                                    sort($customerNames);
-                                                    foreach ($customerNames as $customerName) {
-                                                        echo '<option value="' . htmlspecialchars($customerName) . '">' . htmlspecialchars($customerName) . '</option>';
-                                                    }
-                                                    ?>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
-                                            <div class="filter-item">
-                                                <select id="paymentFilter" class="form-select form-select-sm rounded-pill filter-control">
-                                                    <option value="">هەموو جۆری پارەدان</option>
-                                                    <option value="cash">نەقد</option>
-                                                    <option value="credit">قەرز</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4 col-sm-6">
+                                        <div class="col-md-8 col-sm-6">
                                             <div class="search-container">
                                                 <div class="input-group">
                                                     <input type="text" id="salesSearchInput" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
@@ -679,10 +655,39 @@ function translateUnitType($unitType) {
                     <div class="tab-pane fade" id="delivery" role="tabpanel" aria-labelledby="delivery-tab">
                         <div class="card shadow-sm">
                             <div class="card-header bg-white">
-                        
+                                <div class="filter-section mb-3">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-2">
+                                            <label class="form-label">ناوی کڕیار</label>
+                                            <select class="form-select customer-filter" style="width: 100%;">
+                                                <option value="">هەموو کڕیارەکان</option>
+                                                <?php
+                                                $customerQuery = "SELECT DISTINCT c.name FROM customers c 
+                                                                JOIN sales s ON c.id = s.customer_id 
+                                                                WHERE c.name IS NOT NULL 
+                                                                ORDER BY c.name";
+                                                $customerStmt = $conn->prepare($customerQuery);
+                                                $customerStmt->execute();
+                                                $customers = $customerStmt->fetchAll(PDO::FETCH_ASSOC);
+                                                foreach($customers as $customer) {
+                                                    echo "<option value='" . htmlspecialchars($customer['name']) . "'>" . htmlspecialchars($customer['name']) . "</option>";
+                                                }
+                                                ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <label class="form-label">جۆری پارەدان</label>
+                                            <select class="form-select payment-type-filter">
+                                                <option value="">هەموو جۆرەکان</option>
+                                                <option value="cash">نەقد</option>
+                                                <option value="debt">قەرز</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="table-controls mt-3">
                                     <div class="row align-items-center">
-                                        <div class="col-md-2 col-sm-6 mb-2 mb-md-0">
+                                        <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
                                             <div class="records-per-page d-flex align-items-center">
                                                 <label class="me-2 mb-0">نیشاندان:</label>
                                                 <select id="deliveryRecordsPerPage" class="form-select form-select-sm rounded-pill" style="width: auto;">
@@ -694,36 +699,7 @@ function translateUnitType($unitType) {
                                                 </select>
                                             </div>
                                         </div>
-                                        <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
-                                            <div class="filter-item">
-                                                <select id="deliveryCustomerFilter" class="form-select form-select-sm rounded-pill filter-control">
-                                                    <option value="">هەموو کڕیارەکان</option>
-                                                    <?php
-                                                    // Get unique customer names from deliveries
-                                                    $deliveryCustomerNames = [];
-                                                    foreach ($deliveries as $delivery) {
-                                                        if (!empty($delivery['customer_name']) && !in_array($delivery['customer_name'], $deliveryCustomerNames)) {
-                                                            $deliveryCustomerNames[] = $delivery['customer_name'];
-                                                        }
-                                                    }
-                                                    sort($deliveryCustomerNames);
-                                                    foreach ($deliveryCustomerNames as $customerName) {
-                                                        echo '<option value="' . htmlspecialchars($customerName) . '">' . htmlspecialchars($customerName) . '</option>';
-                                                    }
-                                                    ?>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
-                                            <div class="filter-item">
-                                                <select id="deliveryPaymentFilter" class="form-select form-select-sm rounded-pill filter-control">
-                                                    <option value="">هەموو جۆری پارەدان</option>
-                                                    <option value="cash">نەقد</option>
-                                                    <option value="credit">قەرز</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4 col-sm-6">
+                                        <div class="col-md-8 col-sm-6">
                                             <div class="search-container">
                                                 <div class="input-group">
                                                     <input type="text" id="deliverySearchInput" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
@@ -818,10 +794,39 @@ function translateUnitType($unitType) {
                     <div class="tab-pane fade" id="drafts" role="tabpanel" aria-labelledby="drafts-tab">
                         <div class="card shadow-sm">
                             <div class="card-header bg-white">
-                        
+                                <div class="filter-section mb-3">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-2">
+                                            <label class="form-label">ناوی کڕیار</label>
+                                            <select class="form-select customer-filter" style="width: 100%;">
+                                                <option value="">هەموو کڕیارەکان</option>
+                                                <?php
+                                                $customerQuery = "SELECT DISTINCT c.name FROM customers c 
+                                                                JOIN sales s ON c.id = s.customer_id 
+                                                                WHERE c.name IS NOT NULL 
+                                                                ORDER BY c.name";
+                                                $customerStmt = $conn->prepare($customerQuery);
+                                                $customerStmt->execute();
+                                                $customers = $customerStmt->fetchAll(PDO::FETCH_ASSOC);
+                                                foreach($customers as $customer) {
+                                                    echo "<option value='" . htmlspecialchars($customer['name']) . "'>" . htmlspecialchars($customer['name']) . "</option>";
+                                                }
+                                                ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <label class="form-label">جۆری پارەدان</label>
+                                            <select class="form-select payment-type-filter">
+                                                <option value="">هەموو جۆرەکان</option>
+                                                <option value="cash">نەقد</option>
+                                                <option value="debt">قەرز</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="table-controls mt-3">
                                     <div class="row align-items-center">
-                                        <div class="col-md-2 col-sm-6 mb-2 mb-md-0">
+                                        <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
                                             <div class="records-per-page d-flex align-items-center">
                                                 <label class="me-2 mb-0">نیشاندان:</label>
                                                 <select id="draftsRecordsPerPage" class="form-select form-select-sm rounded-pill" style="width: auto;">
@@ -833,36 +838,7 @@ function translateUnitType($unitType) {
                                                 </select>
                                             </div>
                                         </div>
-                                        <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
-                                            <div class="filter-item">
-                                                <select id="draftsCustomerFilter" class="form-select form-select-sm rounded-pill filter-control">
-                                                    <option value="">هەموو کڕیارەکان</option>
-                                                    <?php
-                                                    // Get unique customer names from drafts
-                                                    $draftCustomerNames = [];
-                                                    foreach ($drafts as $draft) {
-                                                        if (!empty($draft['customer_name']) && !in_array($draft['customer_name'], $draftCustomerNames)) {
-                                                            $draftCustomerNames[] = $draft['customer_name'];
-                                                        }
-                                                    }
-                                                    sort($draftCustomerNames);
-                                                    foreach ($draftCustomerNames as $customerName) {
-                                                        echo '<option value="' . htmlspecialchars($customerName) . '">' . htmlspecialchars($customerName) . '</option>';
-                                                    }
-                                                    ?>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
-                                            <div class="filter-item">
-                                                <select id="draftsPaymentFilter" class="form-select form-select-sm rounded-pill filter-control">
-                                                    <option value="">هەموو جۆری پارەدان</option>
-                                                    <option value="cash">نەقد</option>
-                                                    <option value="credit">قەرز</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4 col-sm-6">
+                                        <div class="col-md-8 col-sm-6">
                                             <div class="search-container">
                                                 <div class="input-group">
                                                     <input type="text" id="draftsSearchInput" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
@@ -959,8 +935,37 @@ function translateUnitType($unitType) {
                     <div class="tab-pane fade" id="returns" role="tabpanel" aria-labelledby="returns-tab">
                         <div class="card shadow-sm">
                             <div class="card-header bg-white">
-                              
-                                <div class="table-controls mt-3">
+                                <div class="filter-section mb-3">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-2">
+                                            <label class="form-label">ناوی کڕیار</label>
+                                            <select class="form-select customer-filter" style="width: 100%;">
+                                                <option value="">هەموو کڕیارەکان</option>
+                                                <?php
+                                                $customerQuery = "SELECT DISTINCT c.name FROM customers c 
+                                                                JOIN sales s ON c.id = s.customer_id 
+                                                                WHERE c.name IS NOT NULL 
+                                                                ORDER BY c.name";
+                                                $customerStmt = $conn->prepare($customerQuery);
+                                                $customerStmt->execute();
+                                                $customers = $customerStmt->fetchAll(PDO::FETCH_ASSOC);
+                                                foreach($customers as $customer) {
+                                                    echo "<option value='" . htmlspecialchars($customer['name']) . "'>" . htmlspecialchars($customer['name']) . "</option>";
+                                                }
+                                                ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <label class="form-label">جۆری پارەدان</label>
+                                            <select class="form-select payment-type-filter">
+                                                <option value="">هەموو جۆرەکان</option>
+                                                <option value="cash">نەقد</option>
+                                                <option value="debt">قەرز</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="table-controls">
                                     <div class="row align-items-center">
                                         <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
                                             <div class="records-per-page d-flex align-items-center">
@@ -1076,86 +1081,24 @@ function translateUnitType($unitType) {
     $(document).ready(function() {
         // Initialize all tables
         initializeTable('sales');
-        initializeTable('delivery');
         initializeTable('drafts');
+        initializeTable('delivery');
         initializeTable('returns');
 
         function initializeTable(tableId) {
             const table = $(`#${tableId}Table`);
             const tableBody = table.find('tbody');
-            const allRows = tableBody.find('tr').clone(); // Store original rows for filtering
+            const rows = tableBody.find('tr');
             let itemsPerPage = parseInt($(`#${tableId}RecordsPerPage`).val());
             let currentPage = 1;
-            let filteredRows = allRows;
-            let totalItems = allRows.length;
+            let totalItems = rows.length;
             let totalPages = Math.ceil(totalItems / itemsPerPage);
 
-            // Initial pagination setup
+        // Initial pagination setup
             updatePagination(tableId);
             showPage(tableId, 1);
 
-            // Filter function
-            function applyFilters() {
-                const searchTerm = $(`#${tableId}SearchInput`).val().toLowerCase();
-                let customerFilter = '';
-                let paymentFilter = '';
-                
-                // Get specific filters for each tab
-                if (tableId === 'sales') {
-                    customerFilter = $('#customerFilter').val();
-                    paymentFilter = $('#paymentFilter').val();
-                } else if (tableId === 'delivery') {
-                    customerFilter = $('#deliveryCustomerFilter').val();
-                    paymentFilter = $('#deliveryPaymentFilter').val();
-                } else if (tableId === 'drafts') {
-                    customerFilter = $('#draftsCustomerFilter').val();
-                    paymentFilter = $('#draftsPaymentFilter').val();
-                }
-                
-                filteredRows = allRows.filter(function() {
-                    const rowText = $(this).text().toLowerCase();
-                    let matchesSearch = searchTerm === '' || rowText.includes(searchTerm);
-                    let matchesCustomer = true;
-                    let matchesPayment = true;
-                    
-                    // Apply customer filter if available
-                    if (customerFilter && ['sales', 'delivery', 'drafts'].includes(tableId)) {
-                        const rowCustomer = $(this).find('td:eq(3)').text().trim(); // Customer name is in 4th column (index 3)
-                        matchesCustomer = rowCustomer.includes(customerFilter);
-                    }
-                    
-                    // Apply payment filter if available
-                    if (paymentFilter && ['sales', 'delivery', 'drafts'].includes(tableId)) {
-                        const rowPaymentType = $(this).find('td:nth-last-child(2)').text().trim().includes('نەقد') ? 'cash' : 'credit';
-                        matchesPayment = rowPaymentType === paymentFilter;
-                    }
-                    
-                    return matchesSearch && matchesCustomer && matchesPayment;
-                });
-                
-                // Update table with filtered rows
-                tableBody.empty();
-                if (filteredRows.length > 0) {
-                    filteredRows.each(function(index) {
-                        // Update row indices to maintain consistent numbering
-                        $(this).find('td:first-child').text(index + 1);
-                        tableBody.append($(this));
-                    });
-                } else {
-                    // No results found
-                    const colSpan = tableBody.closest('table').find('th').length;
-                    tableBody.append(`<tr><td colspan="${colSpan}" class="text-center py-4">هیچ پسووڵەیەک نەدۆزرایەوە</td></tr>`);
-                }
-                
-                // Reset pagination after filtering
-                totalItems = filteredRows.length;
-                totalPages = Math.ceil(totalItems / itemsPerPage);
-                currentPage = 1;
-                updatePagination(tableId);
-                showPage(tableId, 1);
-            }
-            
-            // Handle records per page change
+        // Handle records per page change
             $(`#${tableId}RecordsPerPage`).on('change', function() {
                 itemsPerPage = parseInt($(this).val());
                 currentPage = 1;
@@ -1171,94 +1114,71 @@ function translateUnitType($unitType) {
                 rows.slice((page - 1) * itemsPerPage, page * itemsPerPage).show();
             }
 
-            // Update pagination info and buttons
+        // Update pagination info and buttons
             function updatePagination(tableId) {
                 const pagination = $(`#${tableId}Pagination`);
-                pagination.empty();
+            pagination.empty();
 
-                if (totalPages <= 1) {
-                    $(`#${tableId}PrevPage`).prop('disabled', true);
-                    $(`#${tableId}NextPage`).prop('disabled', true);
-                    return;
-                }
-
-                const maxPagesToShow = 5;
+            const maxPagesToShow = 5;
                 let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
                 let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
 
-                if (endPage - startPage + 1 < maxPagesToShow) {
-                    startPage = Math.max(1, endPage - maxPagesToShow + 1);
-                }
+            if (endPage - startPage + 1 < maxPagesToShow) {
+                startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            }
 
-                for (let i = startPage; i <= endPage; i++) {
+            for (let i = startPage; i <= endPage; i++) {
                     const pageButton = $('<button class="btn btn-sm ' + (i === currentPage ? 'btn-primary' : 'btn-outline-secondary') + ' rounded-circle">' + i + '</button>');
-                    pageButton.on('click', function () {
+                pageButton.on('click', function () {
                         currentPage = i;
                         showPage(tableId, i);
                         updatePagination(tableId);
-                    });
-                    pagination.append(pageButton);
-                }
+                });
+                pagination.append(pageButton);
+            }
 
                 $(`#${tableId}PrevPage`).prop('disabled', currentPage === 1);
                 $(`#${tableId}NextPage`).prop('disabled', currentPage === totalPages || totalPages === 0);
-            }
+        }
 
-            // Previous page button
+        // Previous page button
             $(`#${tableId}PrevPage`).on('click', function () {
                 if (currentPage > 1) {
                     currentPage--;
                     showPage(tableId, currentPage);
                     updatePagination(tableId);
-                }
-            });
+            }
+        });
 
-            // Next page button
+        // Next page button
             $(`#${tableId}NextPage`).on('click', function () {
                 if (currentPage < totalPages) {
                     currentPage++;
                     showPage(tableId, currentPage);
                     updatePagination(tableId);
+            }
+        });
+
+        // Search functionality
+            $(`#${tableId}SearchInput`).on('keyup', function () {
+            const searchTerm = $(this).val().toLowerCase();
+            let matchCount = 0;
+
+                rows.each(function () {
+                const rowText = $(this).text().toLowerCase();
+                const showRow = rowText.indexOf(searchTerm) > -1;
+                $(this).toggle(showRow);
+                if (showRow) {
+                    matchCount++;
                 }
             });
 
-            // Search functionality
-            $(`#${tableId}SearchInput`).on('keyup', function () {
-                applyFilters();
+                totalItems = matchCount;
+                totalPages = Math.ceil(totalItems / itemsPerPage);
+                currentPage = 1;
+                showPage(tableId, 1);
+                updatePagination(tableId);
             });
-            
-            // Attach customer filter events if they exist
-            if (tableId === 'sales') {
-                // Customer filter
-                $('#customerFilter').on('change', function() {
-                    applyFilters();
-                });
-                
-                // Payment type filter
-                $('#paymentFilter').on('change', function() {
-                    applyFilters();
-                });
-            } else if (tableId === 'delivery') {
-                // Customer filter
-                $('#deliveryCustomerFilter').on('change', function() {
-                    applyFilters();
-                });
-                
-                // Payment type filter
-                $('#deliveryPaymentFilter').on('change', function() {
-                    applyFilters();
-                });
-            } else if (tableId === 'drafts') {
-                // Customer filter
-                $('#draftsCustomerFilter').on('change', function() {
-                    applyFilters();
-                });
-                
-                // Payment type filter
-                $('#draftsPaymentFilter').on('change', function() {
-                    applyFilters();
-                });
-            }
         }
 
         // Show receipt items in modal (for all tables)
@@ -1293,6 +1213,71 @@ function translateUnitType($unitType) {
                 customClass: {
                     popup: 'swal2-popup-custom'
                 }
+            });
+        });
+
+        // Initialize Select2 for customer filter
+        $('.customer-filter').select2({
+            placeholder: "هەموو کڕیارەکان",
+            allowClear: true
+        });
+
+        // Function to filter table rows
+        function filterTable(tableId) {
+            const table = $(`#${tableId}`);
+            const rows = table.find('tbody tr');
+            const customerFilter = table.closest('.card').find('.customer-filter').val().toLowerCase();
+            const paymentFilter = table.closest('.card').find('.payment-type-filter').val().toLowerCase();
+            const searchText = table.closest('.card').find('.search-input').val().toLowerCase();
+
+            rows.each(function() {
+                const row = $(this);
+                const customerName = row.find('td:nth-child(3)').text().toLowerCase(); // Adjust column index as needed
+                const paymentType = row.find('td:nth-child(5)').text().toLowerCase(); // Adjust column index as needed
+                const rowText = row.text().toLowerCase();
+
+                const matchesCustomer = !customerFilter || customerName.includes(customerFilter);
+                const matchesPayment = !paymentFilter || 
+                    (paymentFilter === 'cash' && paymentType.includes('نەقد')) ||
+                    (paymentFilter === 'debt' && paymentType.includes('قەرز'));
+                const matchesSearch = !searchText || rowText.includes(searchText);
+
+                row.toggle(matchesCustomer && matchesPayment && matchesSearch);
+            });
+        }
+
+        // Event listeners for filters and search
+        $('.customer-filter, .payment-type-filter').on('change', function() {
+            const tableId = $(this).closest('.card').find('table').attr('id');
+            filterTable(tableId);
+        });
+
+        $('.search-input').on('keyup', function() {
+            const tableId = $(this).closest('.card').find('table').attr('id');
+            filterTable(tableId);
+        });
+
+        // Initialize DataTables with custom options
+        $('.table').each(function() {
+            $(this).DataTable({
+                "dom": '<"row"<"col-md-6"l><"col-md-6"f>>rtip',
+                "language": {
+                    "search": "گەڕان:",
+                    "lengthMenu": "پیشاندانی _MENU_ داخڵکراو",
+                    "zeroRecords": "هیچ تۆمارێك نەدۆزرایەوە",
+                    "info": "پیشاندانی _START_ بۆ _END_ لە _TOTAL_ تۆمار",
+                    "infoEmpty": "پیشاندانی 0 بۆ 0 لە 0 تۆمار",
+                    "infoFiltered": "(پاڵێوراو لە _MAX_ تۆماری سەرەکی)",
+                    "paginate": {
+                        "first": "یەکەم",
+                        "last": "کۆتایی",
+                        "next": "دواتر",
+                        "previous": "پێشتر"
+                    }
+                },
+                "pageLength": 10,
+                "ordering": true,
+                "searching": true
             });
         });
     });
