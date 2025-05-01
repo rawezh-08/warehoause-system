@@ -524,11 +524,7 @@ function translateUnitType($unitType) {
                                                 </td>
                                                 <td>
                                                     <div class="action-buttons">
-                                                        <a href="../../Views/receipt/print_purchase.php?purchase_id=<?= $purchase['id'] ?>" 
-                                                            class="btn btn-sm btn-outline-success rounded-circle"
-                                                            title="چاپکردن">
-                                                            <i class="fas fa-print"></i>
-                                                        </a>
+
                                                         <button type="button" 
                                                             class="btn btn-sm btn-outline-info rounded-circle show-purchase-items"
                                                             data-invoice="<?php echo $purchase['invoice_number']; ?>"
