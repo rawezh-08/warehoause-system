@@ -993,37 +993,46 @@ function translateUnitType($unitType) {
 
             // Show specific page
             function showPage(tableId, page) {
-                const rows = $(`#${tableId}Table tbody tr`);
-                rows.hide();
-                rows.slice((page - 1) * itemsPerPage, page * itemsPerPage).show();
+                const visibleRows = $(`#${tableId}Table tbody tr:visible`);
+                visibleRows.hide();
+                visibleRows.slice((page - 1) * itemsPerPage, page * itemsPerPage).show();
             }
 
         // Update pagination info and buttons
             function updatePagination(tableId) {
                 const pagination = $(`#${tableId}Pagination`);
-            pagination.empty();
+                pagination.empty();
 
-            const maxPagesToShow = 5;
+                const visibleRows = $(`#${tableId}Table tbody tr:visible`);
+                totalItems = visibleRows.length;
+                totalPages = Math.ceil(totalItems / itemsPerPage);
+                
+                // Reset to first page if current page is beyond total pages
+                if (currentPage > totalPages && totalPages > 0) {
+                    currentPage = 1;
+                }
+
+                const maxPagesToShow = 5;
                 let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
                 let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
 
-            if (endPage - startPage + 1 < maxPagesToShow) {
-                startPage = Math.max(1, endPage - maxPagesToShow + 1);
-            }
+                if (endPage - startPage + 1 < maxPagesToShow) {
+                    startPage = Math.max(1, endPage - maxPagesToShow + 1);
+                }
 
-            for (let i = startPage; i <= endPage; i++) {
+                for (let i = startPage; i <= endPage; i++) {
                     const pageButton = $('<button class="btn btn-sm ' + (i === currentPage ? 'btn-primary' : 'btn-outline-secondary') + ' rounded-circle">' + i + '</button>');
-                pageButton.on('click', function () {
+                    pageButton.on('click', function () {
                         currentPage = i;
                         showPage(tableId, i);
                         updatePagination(tableId);
-                });
-                pagination.append(pageButton);
-            }
+                    });
+                    pagination.append(pageButton);
+                }
 
                 $(`#${tableId}PrevPage`).prop('disabled', currentPage === 1);
                 $(`#${tableId}NextPage`).prop('disabled', currentPage === totalPages || totalPages === 0);
-        }
+            }
 
         // Previous page button
             $(`#${tableId}PrevPage`).on('click', function () {
@@ -1031,8 +1040,8 @@ function translateUnitType($unitType) {
                     currentPage--;
                     showPage(tableId, currentPage);
                     updatePagination(tableId);
-            }
-        });
+                }
+            });
 
         // Next page button
             $(`#${tableId}NextPage`).on('click', function () {
@@ -1040,28 +1049,22 @@ function translateUnitType($unitType) {
                     currentPage++;
                     showPage(tableId, currentPage);
                     updatePagination(tableId);
-            }
-        });
-
-        // Search functionality
-            $(`#${tableId}SearchInput`).on('keyup', function () {
-            const searchTerm = $(this).val().toLowerCase();
-            let matchCount = 0;
-
-                rows.each(function () {
-                const rowText = $(this).text().toLowerCase();
-                const showRow = rowText.indexOf(searchTerm) > -1;
-                $(this).toggle(showRow);
-                if (showRow) {
-                    matchCount++;
                 }
             });
 
-                totalItems = matchCount;
-                totalPages = Math.ceil(totalItems / itemsPerPage);
+        // Search functionality
+            $(`#${tableId}SearchInput`).on('keyup', function () {
+                const searchTerm = $(this).val().toLowerCase();
+                
+                $(`#${tableId}Table tbody tr`).each(function () {
+                    const rowText = $(this).text().toLowerCase();
+                    $(this).toggle(rowText.includes(searchTerm));
+                });
+                
+                // Reset pagination after search
                 currentPage = 1;
-                showPage(tableId, 1);
                 updatePagination(tableId);
+                showPage(tableId, 1);
             });
         }
 
