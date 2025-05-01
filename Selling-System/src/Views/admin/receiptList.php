@@ -460,8 +460,8 @@ function translateUnitType($unitType) {
                     <td>${item.product_code}</td>
                     <td>${item.quantity}</td>
                     <td>${item.unit_type === 'piece' ? 'دانە' : (item.unit_type === 'box' ? 'کارتۆن' : 'سێت')}</td>
-                    <td>${item.unit_price.toLocaleString()} دینار</td>
-                    <td>${item.total_price.toLocaleString()} دینار</td>
+                    <td>${parseInt(item.unit_price).toLocaleString()} دینار</td>
+                    <td>${parseInt(item.total_price).toLocaleString()} دینار</td>
                 </tr>`;
             });
             
