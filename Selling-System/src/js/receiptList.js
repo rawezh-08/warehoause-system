@@ -228,8 +228,11 @@ $(document).ready(function() {
     });
     
     // View Sale Items
-    $(document).on('click', '.view-sale-items', function() {
+    $(document).on('click', '.view-sale-items', function(e) {
+        e.preventDefault();
+        console.log('View sale items button clicked');
         const saleId = $(this).data('sale-id');
+        console.log('Sale ID:', saleId);
         
         // Show loading
         Swal.fire({
@@ -243,11 +246,12 @@ $(document).ready(function() {
         
         // Fetch sale items
         $.ajax({
-            url: '../../includes/get_sale_items.php',
+            url: '../ajax/get_sale_items.php',
             type: 'POST',
             data: { sale_id: saleId },
             dataType: 'json',
             success: function(response) {
+                console.log('AJAX response:', response);
                 Swal.close();
                 
                 if (response.status === 'success') {
