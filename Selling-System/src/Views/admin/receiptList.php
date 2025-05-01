@@ -949,7 +949,8 @@ function translateUnitType($unitType) {
                                                                 </a>
                                                                 <button type="button" 
                                                                     class="btn btn-sm btn-outline-info rounded-circle show-receipt-items"
-                                                                    data-invoice="<?php echo $wasting['invoice_number']; ?>"
+                                                                    data-invoice="<?php echo $wasting['invoice_number'] ?? 'W-'.$wasting['id']; ?>"
+                                                                    data-wasting-id="<?php echo $wasting['id']; ?>"
                                                                     title="بینینی هەموو کاڵاکان">
                                                                     <i class="fas fa-list"></i>
                                                                 </button>
@@ -1098,28 +1099,43 @@ function translateUnitType($unitType) {
         // Show receipt items in modal (for all tables)
         $(document).on('click', '.show-receipt-items', function() {
             const invoiceNumber = $(this).data('invoice');
-            const invoiceItems = <?php echo json_encode(array_merge($sales, $draftItems, $deliveryItems)); ?>;
-            const items = invoiceItems.filter(item => item.invoice_number === invoiceNumber);
+            const wastingId = $(this).data('wasting-id');
+            
+            let items = [];
+            
+            // Special handling for wastings
+            if (wastingId) {
+                const allWastings = <?php echo json_encode($wastings); ?>;
+                items = allWastings.filter(item => item.id == wastingId);
+            } else {
+                // Handle regular items by invoice number
+                const invoiceItems = <?php echo json_encode(array_merge($sales, $draftItems, $deliveryItems, $wastings)); ?>;
+                items = invoiceItems.filter(item => item.invoice_number === invoiceNumber);
+            }
             
             let itemsHtml = '<div class="table-responsive"><table class="table table-bordered">';
             itemsHtml += '<thead><tr><th>ناوی کاڵا</th><th>کۆدی کاڵا</th><th>بڕ</th><th>یەکە</th><th>نرخی تاک</th><th>نرخی گشتی</th></tr></thead>';
             itemsHtml += '<tbody>';
             
-            items.forEach(item => {
-                itemsHtml += `<tr>
-                    <td>${item.product_name}</td>
-                    <td>${item.product_code}</td>
-                    <td>${item.quantity}</td>
-                    <td>${item.unit_type === 'piece' ? 'دانە' : (item.unit_type === 'box' ? 'کارتۆن' : 'سێت')}</td>
-                    <td>${parseInt(item.unit_price).toLocaleString()} دینار</td>
-                    <td>${parseInt(item.total_price).toLocaleString()} دینار</td>
-                </tr>`;
-            });
+            if (items.length === 0) {
+                itemsHtml += '<tr><td colspan="6" class="text-center">هیچ کاڵایەک نەدۆزرایەوە</td></tr>';
+            } else {
+                items.forEach(item => {
+                    itemsHtml += `<tr>
+                        <td>${item.product_name || '-'}</td>
+                        <td>${item.product_code || '-'}</td>
+                        <td>${item.quantity || '-'}</td>
+                        <td>${item.unit_type === 'piece' ? 'دانە' : (item.unit_type === 'box' ? 'کارتۆن' : 'سێت')}</td>
+                        <td>${parseInt(item.unit_price || 0).toLocaleString()} دینار</td>
+                        <td>${parseInt(item.total_price || 0).toLocaleString()} دینار</td>
+                    </tr>`;
+                });
+            }
             
             itemsHtml += '</tbody></table></div>';
             
             Swal.fire({
-                title: `کاڵاکانی پسووڵە ${invoiceNumber}`,
+                title: `کاڵاکانی پسووڵە ${invoiceNumber || ''}`,
                 html: itemsHtml,
                 width: '80%',
                 showCloseButton: true,
