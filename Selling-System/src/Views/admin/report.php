@@ -382,29 +382,12 @@ $totalDebtFromSuppliers = $stmt->fetch(PDO::FETCH_ASSOC)['total_debt_from_suppli
 // Calculate the total value of inventory in the warehouse
 $stmt = $conn->prepare("
     SELECT 
-        COALESCE(SUM(
-            CASE 
-                WHEN p.unit_type = 'piece' THEN p.current_quantity * p.purchase_price
-                WHEN p.unit_type = 'box' THEN p.current_quantity * p.purchase_price
-                WHEN p.unit_type = 'set' THEN p.current_quantity * p.purchase_price
-                ELSE 0 
-            END
-        ), 0) as total_inventory_value,
-        COALESCE(SUM(
-            CASE 
-                WHEN p.unit_type = 'piece' THEN p.current_quantity
-                WHEN p.unit_type = 'box' THEN p.current_quantity * p.items_per_box
-                WHEN p.unit_type = 'set' THEN p.current_quantity * p.items_per_set
-                ELSE 0 
-            END
-        ), 0) as total_items
+        COALESCE(SUM(p.current_quantity * p.box_price), 0) as total_inventory_value 
     FROM 
         products p
 ");
 $stmt->execute();
-$result = $stmt->fetch(PDO::FETCH_ASSOC);
-$totalInventoryValue = $result['total_inventory_value'];
-$totalItems = $result['total_items'];
+$totalInventoryValue = $stmt->fetch(PDO::FETCH_ASSOC)['total_inventory_value'];
 
 // 1. Best selling products (more detailed)
 $stmt = $conn->prepare("
