@@ -488,6 +488,38 @@ function translateUnitType($unitType) {
                     </li>
                 </ul>
 
+                <!-- Filter Section -->
+                <div class="card mb-4 filter-section">
+                    <div class="card-body p-3">
+                        <form id="receiptFiltersForm">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-4">
+                                    <label for="customerFilter" class="form-label">ناوی کڕیار</label>
+                                    <select id="customerFilter" class="form-select customer-select">
+                                        <option value="">هەموو کڕیارەکان</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="paymentTypeFilter" class="form-label">جۆری پارەدان</label>
+                                    <select id="paymentTypeFilter" class="form-select">
+                                        <option value="">هەموو جۆرەکان</option>
+                                        <option value="cash">نەقد</option>
+                                        <option value="debt">قەرز</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 d-flex align-items-end">
+                                    <button type="button" id="applyFilters" class="btn btn-primary me-2">
+                                        <i class="fas fa-filter me-1"></i> فلتەر
+                                    </button>
+                                    <button type="button" id="resetFilters" class="btn btn-outline-secondary">
+                                        <i class="fas fa-redo-alt me-1"></i> ڕیسێت
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <!-- Tab Content -->
                 <div class="tab-content" id="receiptTabsContent">
                     <!-- Sales Tab -->
@@ -962,6 +994,7 @@ function translateUnitType($unitType) {
     <script src="../../js/include-components.js"></script>
     <script src="../../js/ajax-config.js"></script>
     <script src="../../js/receipt-search.js"></script>
+    <script src="../../js/receipt-filters.js"></script>
     <script>
     $(document).ready(function() {
         // Map of table identifiers to actual table IDs
