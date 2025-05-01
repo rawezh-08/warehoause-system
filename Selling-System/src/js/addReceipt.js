@@ -2446,24 +2446,36 @@ $(document).ready(function() {
                     success: function(response) {
                         if (response.success) {
                             const product = response.data;
-                            let purchasePrice = 0;
-                            
-                            // دیاریکردنی نرخی کڕین بەپێی یەکە
+                            let purchasePrice = parseFloat(product.purchase_price) || 0;
+                            let sellingPrice = unitPrice;
+                            let actualQuantity = quantity;
+
+                            // ژماردنی بڕی ڕاستەقینە بەپێی یەکە
                             switch (unitType) {
                                 case 'piece':
-                                    purchasePrice = product.purchase_price;
+                                    // بۆ دانە، نرخی کڕین دابەش دەکەین بەسەر دانەکانی ناو کارتۆن
+                                    purchasePrice = purchasePrice / (parseInt(product.pieces_per_box) || 1);
                                     break;
                                 case 'box':
-                                    purchasePrice = product.purchase_price * product.pieces_per_box;
+                                    // بۆ کارتۆن، نرخی کڕین وەک خۆی بەکاردێت
                                     break;
                                 case 'set':
-                                    purchasePrice = product.purchase_price * product.pieces_per_box * product.boxes_per_set;
+                                    // بۆ سێت، نرخی کڕین × ژمارەی کارتۆن لە سێتێکدا
+                                    purchasePrice = purchasePrice * (parseInt(product.boxes_per_set) || 1);
                                     break;
                             }
-                            
+
                             // ژماردنی قازانج بۆ ئەم ڕیزە
-                            const rowProfit = (unitPrice - purchasePrice) * quantity;
+                            const rowProfit = (sellingPrice - purchasePrice) * actualQuantity;
                             totalProfit += rowProfit;
+                            
+                            console.log(`Row calculation:
+                                Product: ${product.name}
+                                Unit Type: ${unitType}
+                                Purchase Price: ${purchasePrice}
+                                Selling Price: ${sellingPrice}
+                                Quantity: ${actualQuantity}
+                                Row Profit: ${rowProfit}`);
                         }
                     }
                 });
