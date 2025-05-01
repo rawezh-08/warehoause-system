@@ -748,6 +748,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const unitSelect = document.getElementById('unit_id');
         const piecesPerBoxContainer = document.getElementById('piecesPerBoxContainer');
         const boxesPerSetContainer = document.getElementById('boxesPerSetContainer');
+        const piecesPerBoxInput = document.getElementById('piecesPerBox');
+        const boxesPerSetInput = document.getElementById('boxesPerSet');
         
         if (!unitSelect) return;
         
@@ -757,12 +759,36 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedUnit === '2') { // Box
             piecesPerBoxContainer.style.display = 'block';
             boxesPerSetContainer.style.display = 'none';
+            if (piecesPerBoxInput) {
+                piecesPerBoxInput.setAttribute('required', 'required');
+                if (!piecesPerBoxInput.value) piecesPerBoxInput.value = '1';
+            }
+            if (boxesPerSetInput) {
+                boxesPerSetInput.removeAttribute('required');
+                boxesPerSetInput.value = '1';
+            }
         } else if (selectedUnit === '3') { // Set
             piecesPerBoxContainer.style.display = 'block';
             boxesPerSetContainer.style.display = 'block';
+            if (piecesPerBoxInput) {
+                piecesPerBoxInput.setAttribute('required', 'required');
+                if (!piecesPerBoxInput.value) piecesPerBoxInput.value = '1';
+            }
+            if (boxesPerSetInput) {
+                boxesPerSetInput.setAttribute('required', 'required');
+                if (!boxesPerSetInput.value) boxesPerSetInput.value = '1';
+            }
         } else { // Piece
             piecesPerBoxContainer.style.display = 'none';
             boxesPerSetContainer.style.display = 'none';
+            if (piecesPerBoxInput) {
+                piecesPerBoxInput.removeAttribute('required');
+                piecesPerBoxInput.value = '1';
+            }
+            if (boxesPerSetInput) {
+                boxesPerSetInput.removeAttribute('required');
+                boxesPerSetInput.value = '1';
+            }
         }
     }
 
@@ -879,6 +905,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     button.disabled = false;
                 });
                 return;
+            }
+            
+            // Ensure pieces_per_box and boxes_per_set have default values
+            const piecesPerBoxInput = document.getElementById('piecesPerBox');
+            const boxesPerSetInput = document.getElementById('boxesPerSet');
+            
+            if (piecesPerBoxInput && !piecesPerBoxInput.value) {
+                piecesPerBoxInput.value = '1';
+            }
+            if (boxesPerSetInput && !boxesPerSetInput.value) {
+                boxesPerSetInput.value = '1';
             }
             
             // Clean number inputs (remove commas)

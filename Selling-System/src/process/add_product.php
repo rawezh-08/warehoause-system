@@ -50,8 +50,14 @@ try {
     $sellingPriceWholesale = isset($_POST['selling_price_wholesale']) ? str_replace(',', '', $_POST['selling_price_wholesale']) : null;
     $minQuantity = isset($_POST['min_quantity']) ? str_replace(',', '', $_POST['min_quantity']) : 0;
     $currentQuantity = isset($_POST['current_quantity']) ? str_replace(',', '', $_POST['current_quantity']) : 0;
-    $piecesPerBox = isset($_POST['pieces_per_box']) ? str_replace(',', '', $_POST['pieces_per_box']) : 1;
-    $boxesPerSet = isset($_POST['boxes_per_set']) ? str_replace(',', '', $_POST['boxes_per_set']) : null;
+    
+    // Set default values for pieces_per_box and boxes_per_set
+    $piecesPerBox = isset($_POST['pieces_per_box']) && !empty($_POST['pieces_per_box']) 
+        ? str_replace(',', '', $_POST['pieces_per_box']) 
+        : 1;
+    $boxesPerSet = isset($_POST['boxes_per_set']) && !empty($_POST['boxes_per_set']) 
+        ? str_replace(',', '', $_POST['boxes_per_set']) 
+        : 1;
 
     // Convert box quantities to pieces if unit type is box or set
     if ($_POST['unit_id'] == '2' || $_POST['unit_id'] == '3') {
