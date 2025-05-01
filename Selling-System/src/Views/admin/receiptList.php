@@ -86,29 +86,21 @@ $draftItemsStmt = $conn->prepare($draftItemsQuery);
 $draftItemsStmt->execute();
 $draftItems = $draftItemsStmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Get wastage records
-$wastageQuery = "SELECT w.*, 
-                 e.name as employee_name
-                 FROM wastings w 
-                 LEFT JOIN employees e ON w.employee_id = e.id
-                 ORDER BY w.date DESC";
-$wastageStmt = $conn->prepare($wastageQuery);
-$wastageStmt->execute();
-$wastages = $wastageStmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Get wastage items
-$wastageItemsQuery = "SELECT wi.*, 
-                      w.invoice_number,
-                      w.date,
-                      p.name as product_name,
-                      p.code as product_code
-                      FROM wasting_items wi 
-                      JOIN wastings w ON wi.wasting_id = w.id
-                      JOIN products p ON wi.product_id = p.id
-                      ORDER BY w.date DESC";
-$wastageItemsStmt = $conn->prepare($wastageItemsQuery);
-$wastageItemsStmt->execute();
-$wastageItems = $wastageItemsStmt->fetchAll(PDO::FETCH_ASSOC);
+// Get all wastings
+$wastingsQuery = "SELECT w.*, 
+                  p.name as product_name,
+                  p.code as product_code,
+                  wi.quantity,
+                  wi.unit_type,
+                  wi.unit_price,
+                  wi.total_price
+                  FROM wastings w 
+                  LEFT JOIN wasting_items wi ON w.id = wi.wasting_id
+                  LEFT JOIN products p ON wi.product_id = p.id
+                  ORDER BY w.date DESC";
+$wastingsStmt = $conn->prepare($wastingsQuery);
+$wastingsStmt->execute();
+$wastings = $wastingsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Function to calculate the total for a sale
 function calculateSaleTotal($saleId, $conn) {
@@ -719,7 +711,7 @@ function translateUnitType($unitType) {
                     </div>
                 </div>
 
-                <!-- Returns Tab (Placeholder for future implementation) -->
+                <!-- Returns Tab -->
                 <div class="tab-pane fade" id="returns" role="tabpanel" aria-labelledby="returns-tab">
                     <div class="card shadow-sm">
                         <div class="card-header bg-white">
@@ -763,35 +755,42 @@ function translateUnitType($unitType) {
                                             <th>#</th>
                                             <th>ژمارەی پسووڵە</th>
                                             <th>بەروار</th>
-                                            <th>فەرمانبەر</th>
-                                            <th>تێبینی</th>
+                                            <th>ناوی کاڵا</th>
+                                            <th>کۆدی کاڵا</th>
+                                            <th>بڕ</th>
+                                            <th>یەکە</th>
+                                            <th>نرخی تاک</th>
+                                            <th>نرخی گشتی</th>
                                             <th>کردارەکان</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php if(empty($wastages)): ?>
+                                        <?php if(empty($wastings)): ?>
                                         <tr>
-                                            <td colspan="6" class="text-center py-4">هیچ تۆمارێکی بەفیڕۆچوو نەدۆزرایەوە</td>
+                                            <td colspan="10" class="text-center py-4">هیچ پسووڵەیەکی بەفیڕۆچوو نەدۆزرایەوە</td>
                                         </tr>
                                         <?php else: ?>
-                                            <?php foreach($wastages as $index => $wastage): ?>
+                                            <?php foreach($wastings as $index => $wasting): ?>
                                                 <tr>
                                                     <td><?= $index + 1 ?></td>
-                                                    <td><?= htmlspecialchars($wastage['invoice_number']) ?></td>
-                                                    <td><?= formatDate($wastage['date']) ?></td>
-                                                    <td><?= htmlspecialchars($wastage['employee_name'] ?? '-') ?></td>
-                                                    <td><?= htmlspecialchars($wastage['notes'] ?? '-') ?></td>
+                                                    <td><?= htmlspecialchars($wasting['invoice_number']) ?></td>
+                                                    <td><?= formatDate($wasting['date']) ?></td>
+                                                    <td><?= htmlspecialchars($wasting['product_name'] ?? '-') ?></td>
+                                                    <td><?= htmlspecialchars($wasting['product_code'] ?? '-') ?></td>
+                                                    <td><?= htmlspecialchars($wasting['quantity'] ?? '-') ?></td>
+                                                    <td><?= translateUnitType($wasting['unit_type']) ?></td>
+                                                    <td><?= number_format($wasting['unit_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td><?= number_format($wasting['total_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
                                                     <td>
                                                         <div class="action-buttons">
-                                                            <a href="../../Views/receipt/wastage_receipt.php?wastage_id=<?= $wastage['id'] ?>"
+                                                            <a href="../../Views/receipt/print_wasting.php?wasting_id=<?= $wasting['id'] ?>"
                                                                 class="btn btn-sm btn-outline-success rounded-circle"
                                                                 title="چاپکردن">
                                                                 <i class="fas fa-print"></i>
                                                             </a>
                                                             <button type="button" 
-                                                                class="btn btn-sm btn-outline-info rounded-circle show-wastage-items"
-                                                                data-wastage-id="<?= $wastage['id'] ?>"
-                                                                data-invoice="<?= $wastage['invoice_number'] ?>"
+                                                                class="btn btn-sm btn-outline-info rounded-circle show-receipt-items"
+                                                                data-invoice="<?php echo $wasting['invoice_number']; ?>"
                                                                 title="بینینی هەموو کاڵاکان">
                                                                 <i class="fas fa-list"></i>
                                                             </button>
@@ -850,11 +849,11 @@ function translateUnitType($unitType) {
             let totalItems = rows.length;
             let totalPages = Math.ceil(totalItems / itemsPerPage);
 
-            // Initial pagination setup
+        // Initial pagination setup
             updatePagination(tableId);
             showPage(tableId, 1);
 
-            // Handle records per page change
+        // Handle records per page change
             $(`#${tableId}RecordsPerPage`).on('change', function() {
                 itemsPerPage = parseInt($(this).val());
                 currentPage = 1;
@@ -870,64 +869,64 @@ function translateUnitType($unitType) {
                 rows.slice((page - 1) * itemsPerPage, page * itemsPerPage).show();
             }
 
-            // Update pagination info and buttons
+        // Update pagination info and buttons
             function updatePagination(tableId) {
                 const pagination = $(`#${tableId}Pagination`);
-                pagination.empty();
+            pagination.empty();
 
-                const maxPagesToShow = 5;
+            const maxPagesToShow = 5;
                 let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
                 let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
 
-                if (endPage - startPage + 1 < maxPagesToShow) {
-                    startPage = Math.max(1, endPage - maxPagesToShow + 1);
-                }
+            if (endPage - startPage + 1 < maxPagesToShow) {
+                startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            }
 
-                for (let i = startPage; i <= endPage; i++) {
+            for (let i = startPage; i <= endPage; i++) {
                     const pageButton = $('<button class="btn btn-sm ' + (i === currentPage ? 'btn-primary' : 'btn-outline-secondary') + ' rounded-circle">' + i + '</button>');
-                    pageButton.on('click', function () {
+                pageButton.on('click', function () {
                         currentPage = i;
                         showPage(tableId, i);
                         updatePagination(tableId);
-                    });
-                    pagination.append(pageButton);
-                }
+                });
+                pagination.append(pageButton);
+            }
 
                 $(`#${tableId}PrevPage`).prop('disabled', currentPage === 1);
                 $(`#${tableId}NextPage`).prop('disabled', currentPage === totalPages || totalPages === 0);
-            }
+        }
 
-            // Previous page button
+        // Previous page button
             $(`#${tableId}PrevPage`).on('click', function () {
                 if (currentPage > 1) {
                     currentPage--;
                     showPage(tableId, currentPage);
                     updatePagination(tableId);
-                }
-            });
+            }
+        });
 
-            // Next page button
+        // Next page button
             $(`#${tableId}NextPage`).on('click', function () {
                 if (currentPage < totalPages) {
                     currentPage++;
                     showPage(tableId, currentPage);
                     updatePagination(tableId);
-                }
-            });
+            }
+        });
 
-            // Search functionality
+        // Search functionality
             $(`#${tableId}SearchInput`).on('keyup', function () {
-                const searchTerm = $(this).val().toLowerCase();
-                let matchCount = 0;
+            const searchTerm = $(this).val().toLowerCase();
+            let matchCount = 0;
 
                 rows.each(function () {
-                    const rowText = $(this).text().toLowerCase();
-                    const showRow = rowText.indexOf(searchTerm) > -1;
-                    $(this).toggle(showRow);
-                    if (showRow) {
-                        matchCount++;
-                    }
-                });
+                const rowText = $(this).text().toLowerCase();
+                const showRow = rowText.indexOf(searchTerm) > -1;
+                $(this).toggle(showRow);
+                if (showRow) {
+                    matchCount++;
+                }
+            });
 
                 totalItems = matchCount;
                 totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -962,41 +961,6 @@ function translateUnitType($unitType) {
             
             Swal.fire({
                 title: `کاڵاکانی پسووڵە ${invoiceNumber}`,
-                html: itemsHtml,
-                width: '80%',
-                showCloseButton: true,
-                showConfirmButton: false,
-                customClass: {
-                    popup: 'swal2-popup-custom'
-                }
-            });
-        });
-
-        // Show wastage items in modal
-        $(document).on('click', '.show-wastage-items', function() {
-            const wastageId = $(this).data('wastage-id');
-            const invoiceNumber = $(this).data('invoice');
-            const wastageItems = <?php echo json_encode($wastageItems); ?>;
-            const items = wastageItems.filter(item => item.wasting_id == wastageId);
-            
-            let itemsHtml = '<div class="table-responsive"><table class="table table-bordered">';
-            itemsHtml += '<thead><tr><th>ناوی کاڵا</th><th>کۆدی کاڵا</th><th>بڕ</th><th>یەکە</th><th>هۆکار</th></tr></thead>';
-            itemsHtml += '<tbody>';
-            
-            items.forEach(item => {
-                itemsHtml += `<tr>
-                    <td>${item.product_name}</td>
-                    <td>${item.product_code}</td>
-                    <td>${item.quantity}</td>
-                    <td>${item.unit_type === 'piece' ? 'دانە' : (item.unit_type === 'box' ? 'کارتۆن' : 'سێت')}</td>
-                    <td>${item.reason || '-'}</td>
-                </tr>`;
-            });
-            
-            itemsHtml += '</tbody></table></div>';
-            
-            Swal.fire({
-                title: `کاڵا بەفیڕۆچووەکانی پسووڵە ${invoiceNumber}`,
                 html: itemsHtml,
                 width: '80%',
                 showCloseButton: true,
