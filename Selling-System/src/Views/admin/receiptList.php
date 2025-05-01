@@ -22,11 +22,40 @@ $salesQuery = "SELECT s.*,
                LEFT JOIN sale_items si ON s.id = si.sale_id
                LEFT JOIN products p ON si.product_id = p.id
                LEFT JOIN customers c ON s.customer_id = c.id
-               WHERE s.is_draft = 0
+               WHERE s.is_draft = 0 AND s.is_delivery = 0
                ORDER BY s.date DESC";
 $salesStmt = $conn->prepare($salesQuery);
 $salesStmt->execute();
 $sales = $salesStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get delivery receipts
+$deliveryQuery = "SELECT s.*, 
+                  c.name as customer_name,
+                  (SELECT SUM(total_price) FROM sale_items WHERE sale_id = s.id) as total_amount
+                  FROM sales s 
+                  LEFT JOIN customers c ON s.customer_id = c.id
+                  WHERE s.is_delivery = 1
+                  GROUP BY s.id
+                  ORDER BY s.date DESC";
+$deliveryStmt = $conn->prepare($deliveryQuery);
+$deliveryStmt->execute();
+$deliveries = $deliveryStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get all delivery items for modal
+$deliveryItemsQuery = "SELECT s.*, 
+                       p.name as product_name,
+                       p.code as product_code,
+                       si.quantity,
+                       si.unit_type,
+                       si.unit_price,
+                       si.total_price
+                       FROM sales s 
+                       LEFT JOIN sale_items si ON s.id = si.sale_id
+                       LEFT JOIN products p ON si.product_id = p.id
+                       WHERE s.is_delivery = 1";
+$deliveryItemsStmt = $conn->prepare($deliveryItemsQuery);
+$deliveryItemsStmt->execute();
+$deliveryItems = $deliveryItemsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get draft receipts
 $draftQuery = "SELECT s.*, 
@@ -266,6 +295,11 @@ function translateUnitType($unitType) {
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="delivery-tab" data-bs-toggle="tab" data-bs-target="#delivery" type="button" role="tab" aria-controls="delivery" aria-selected="false">
+                        <i class="fas fa-truck"></i> پسووڵەکانی گەیاندن
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
                     <button class="nav-link" id="drafts-tab" data-bs-toggle="tab" data-bs-target="#drafts" type="button" role="tab" aria-controls="drafts" aria-selected="false">
                         <i class="fas fa-file-alt"></i> پسووڵە ڕەش نووسەکان
                     </button>
@@ -412,6 +446,120 @@ function translateUnitType($unitType) {
                                     </button>
                                     <div class="pagination-numbers" id="salesPagination"></div>
                                     <button class="btn btn-sm btn-outline-secondary rounded-circle" id="salesNextPage">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delivery Tab -->
+                <div class="tab-pane fade" id="delivery" role="tabpanel" aria-labelledby="delivery-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <div class="row align-items-center">
+                                <div class="col-md-6 mb-2 mb-md-0">
+                                    <h5 class="mb-0"><i class="fas fa-truck"></i> پسووڵەکانی گەیاندن</h5>
+                                </div>
+                            </div>
+                            <div class="table-controls mt-3">
+                                <div class="row align-items-center">
+                                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
+                                        <div class="records-per-page d-flex align-items-center">
+                                            <label class="me-2 mb-0">نیشاندان:</label>
+                                            <select id="deliveryRecordsPerPage" class="form-select form-select-sm rounded-pill" style="width: auto;">
+                                                <option value="5">5</option>
+                                                <option value="10" selected>10</option>
+                                                <option value="25">25</option>
+                                                <option value="50">50</option>
+                                                <option value="100">100</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8 col-sm-6">
+                                        <div class="search-container">
+                                            <div class="input-group">
+                                                <input type="text" id="deliverySearchInput" class="form-control rounded-pill-start table-search-input" placeholder="گەڕان لە تەیبڵدا...">
+                                                <span class="input-group-text rounded-pill-end bg-light">
+                                                    <i class="fas fa-search"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table id="deliveryTable" class="table table-bordered custom-table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>ژمارەی پسووڵە</th>
+                                            <th>بەروار</th>
+                                            <th>ناوی کڕیار</th>
+                                            <th>نرخی گشتی</th>
+                                            <th>کرێی گواستنەوە</th>
+                                            <th>خەرجی تر</th>
+                                            <th>داشکاندن</th>
+                                            <th>جۆری پارەدان</th>
+                                            <th>کردارەکان</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if(empty($deliveries)): ?>
+                                        <tr>
+                                            <td colspan="10" class="text-center py-4">هیچ پسووڵەیەکی گەیاندن نەدۆزرایەوە</td>
+                                        </tr>
+                                        <?php else: ?>
+                                            <?php foreach($deliveries as $index => $delivery): ?>
+                                                <tr>
+                                                    <td><?= $index + 1 ?></td>
+                                                    <td><?= htmlspecialchars($delivery['invoice_number']) ?></td>
+                                                    <td><?= formatDate($delivery['date']) ?></td>
+                                                    <td><?= htmlspecialchars($delivery['customer_name'] ?? '-') ?></td>
+                                                    <td><?= number_format($delivery['total_amount'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td><?= number_format($delivery['shipping_cost'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td><?= number_format($delivery['other_costs'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td><?= number_format($delivery['discount'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                    <td>
+                                                        <?php if($delivery['payment_type'] == 'cash'): ?>
+                                                            <span class="badge bg-success">نەقد</span>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-warning">قەرز</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td>
+                                                        <div class="action-buttons">
+                                                            <a href="../../Views/receipt/delivery_receipt.php?sale_id=<?= $delivery['id'] ?>"
+                                                                class="btn btn-sm btn-outline-success rounded-circle"
+                                                                title="چاپکردن">
+                                                                <i class="fas fa-print"></i>
+                                                            </a>
+                                                            <button type="button" 
+                                                                class="btn btn-sm btn-outline-info rounded-circle show-receipt-items"
+                                                                data-invoice="<?php echo $delivery['invoice_number']; ?>"
+                                                                title="بینینی هەموو کاڵاکان">
+                                                                <i class="fas fa-list"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <div class="pagination-wrapper">
+                                <div class="pagination-controls">
+                                    <button class="btn btn-sm btn-outline-secondary rounded-circle" id="deliveryPrevPage" disabled>
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                    <div class="pagination-numbers" id="deliveryPagination"></div>
+                                    <button class="btn btn-sm btn-outline-secondary rounded-circle" id="deliveryNextPage">
                                         <i class="fas fa-chevron-left"></i>
                                     </button>
                                 </div>
@@ -573,9 +721,10 @@ function translateUnitType($unitType) {
     <script src="../../js/ajax-config.js"></script>
     <script>
     $(document).ready(function() {
-        // Initialize both tables
+        // Initialize all tables
         initializeTable('sales');
         initializeTable('drafts');
+        initializeTable('delivery');
 
         function initializeTable(tableId) {
             const table = $(`#${tableId}Table`);
@@ -673,10 +822,10 @@ function translateUnitType($unitType) {
             });
         }
 
-        // Show receipt items in modal (for both tables)
+        // Show receipt items in modal (for all tables)
         $(document).on('click', '.show-receipt-items', function() {
             const invoiceNumber = $(this).data('invoice');
-            const invoiceItems = <?php echo json_encode(array_merge($sales, $draftItems)); ?>;
+            const invoiceItems = <?php echo json_encode(array_merge($sales, $draftItems, $deliveryItems)); ?>;
             const items = invoiceItems.filter(item => item.invoice_number === invoiceNumber);
             
             let itemsHtml = '<div class="table-responsive"><table class="table table-bordered">';
