@@ -5,11 +5,14 @@ require_once '../config/database.php';
 header('Content-Type: application/json');
 
 try {
-    // Get the latest receipt number from the database
+    // Use UNION to get receipt numbers from both tables in a single query
     $stmt = $conn->query("
         SELECT invoice_number 
-        FROM receipts 
-        WHERE invoice_number REGEXP '^[A-Z]-[0-9]+$' 
+        FROM (
+            SELECT invoice_number FROM receipts WHERE invoice_number REGEXP '^[A-Z]-[0-9]+$'
+            UNION
+            SELECT invoice_number FROM receipt_drafts WHERE invoice_number REGEXP '^[A-Z]-[0-9]+$'
+        ) AS combined_receipts
         ORDER BY LEFT(invoice_number, 1), CAST(SUBSTRING(invoice_number, 3) AS UNSIGNED) DESC 
         LIMIT 1
     ");
@@ -46,60 +49,56 @@ try {
         }
     }
     
-    // Also check for drafts (they might have higher numbers)
-    $stmt = $conn->query("
-        SELECT invoice_number 
-        FROM receipt_drafts 
-        WHERE invoice_number REGEXP '^[A-Z]-[0-9]+$' 
-        ORDER BY LEFT(invoice_number, 1), CAST(SUBSTRING(invoice_number, 3) AS UNSIGNED) DESC 
-        LIMIT 1
+    // Make a final check to ensure this invoice number doesn't already exist
+    $checkStmt = $conn->prepare("
+        SELECT 1 
+        FROM (
+            SELECT invoice_number FROM receipts
+            UNION
+            SELECT invoice_number FROM receipt_drafts
+        ) AS all_receipts
+        WHERE invoice_number = ?
     ");
+    $checkStmt->execute([$nextReceiptNumber]);
     
-    $lastDraftNumber = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if ($lastDraftNumber && !empty($lastDraftNumber['invoice_number'])) {
-        // Extract the parts (letter and number)
-        $parts = explode('-', $lastDraftNumber['invoice_number']);
+    // If this receipt number already exists, find the next available one
+    if ($checkStmt->rowCount() > 0) {
+        $found = false;
+        $attempts = 0;
+        $maxAttempts = 1000; // Safety limit
+        $checkLetter = substr($nextReceiptNumber, 0, 1);
+        $checkNumber = intval(substr($nextReceiptNumber, 2));
         
-        if (count($parts) == 2 && strlen($parts[0]) == 1 && is_numeric($parts[1])) {
-            $draftLetter = $parts[0];
-            $draftNumber = intval($parts[1]);
+        while (!$found && $attempts < $maxAttempts) {
+            $checkNumber++;
             
-            // Increment the number
-            $nextDraftNumber = $draftNumber + 1;
-            
-            // Check if we need to move to the next letter
-            if ($nextDraftNumber > 9999) {
-                $nextDraftLetter = chr(ord($draftLetter) + 1);
-                // If we go beyond 'Z', wrap around to 'A'
-                if (ord($nextDraftLetter) > ord('Z')) {
-                    $nextDraftLetter = 'A';
+            // Move to next letter if needed
+            if ($checkNumber > 9999) {
+                $checkLetter = chr(ord($checkLetter) + 1);
+                if (ord($checkLetter) > ord('Z')) {
+                    $checkLetter = 'A';
                 }
-                $draftReceiptNumber = $nextDraftLetter . '-0001';
-            } else {
-                $draftReceiptNumber = $draftLetter . '-' . str_pad($nextDraftNumber, 4, '0', STR_PAD_LEFT);
+                $checkNumber = 1;
             }
             
-            // Compare the two receipt numbers to find the higher one
-            $receiptParts = explode('-', $nextReceiptNumber);
-            $draftParts = explode('-', $draftReceiptNumber);
+            $candidateNumber = $checkLetter . '-' . str_pad($checkNumber, 4, '0', STR_PAD_LEFT);
             
-            $receiptLetter = $receiptParts[0];
-            $draftLetter = $draftParts[0];
-            
-            // Compare letters first
-            if (ord($draftLetter) > ord($receiptLetter)) {
-                $nextReceiptNumber = $draftReceiptNumber;
-            } 
-            // If letters are the same, compare numbers
-            elseif ($draftLetter == $receiptLetter) {
-                $receiptNumber = intval($receiptParts[1]);
-                $draftNumber = intval($draftParts[1]);
-                
-                if ($draftNumber > $receiptNumber) {
-                    $nextReceiptNumber = $draftReceiptNumber;
-                }
+            $checkStmt->execute([$candidateNumber]);
+            if ($checkStmt->rowCount() === 0) {
+                $nextReceiptNumber = $candidateNumber;
+                $found = true;
             }
+            
+            $attempts++;
+        }
+        
+        // If we couldn't find a unique number after many attempts, return an error
+        if (!$found) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'هەڵە: نەتوانرا ژمارەیەکی یەکتای پسووڵە بدۆزرێتەوە دوای ' . $maxAttempts . ' هەوڵدان'
+            ]);
+            exit;
         }
     }
     
