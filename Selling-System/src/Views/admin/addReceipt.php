@@ -1357,6 +1357,109 @@ require_once '../../config/database.php';
                     });
                 }
             });
+
+            // Add this function to calculate total price based on unit type
+            function calculateTotalPrice($row) {
+                const quantity = parseInt($row.find('.quantity').val()) || 0;
+                const unitPrice = parseFloat($row.find('.unit-price').val()) || 0;
+                const unitType = $row.find('.unit-type').val();
+                const productId = $row.find('.product-select').val();
+                
+                // Get pieces_per_box and boxes_per_set from the product data
+                let piecesPerBox = parseInt($row.find('.product-select option:selected').data('pieces-per-box')) || 1;
+                let boxesPerSet = parseInt($row.find('.product-select option:selected').data('boxes-per-set')) || 1;
+                
+                let totalPrice = 0;
+                
+                if (unitType === 'piece') {
+                    totalPrice = quantity * unitPrice;
+                } else if (unitType === 'box') {
+                    totalPrice = quantity * unitPrice * piecesPerBox;
+                } else if (unitType === 'set') {
+                    totalPrice = quantity * unitPrice * piecesPerBox * boxesPerSet;
+                }
+                
+                return totalPrice;
+            }
+
+            // Update the product select change handler
+            $(document).on('change', '.product-select', function() {
+                const $row = $(this).closest('tr');
+                const $unitPrice = $row.find('.unit-price');
+                const $unitType = $row.find('.unit-type');
+                const selectedOption = $(this).find('option:selected');
+                
+                // Store pieces_per_box and boxes_per_set as data attributes
+                $(this).data('pieces-per-box', selectedOption.data('pieces-per-box'));
+                $(this).data('boxes-per-set', selectedOption.data('boxes-per-set'));
+                
+                // Update unit price based on price type
+                const priceType = $('.price-type').val();
+                if (priceType === 'wholesale') {
+                    $unitPrice.val(selectedOption.data('wholesale-price'));
+                } else {
+                    $unitPrice.val(selectedOption.data('single-price'));
+                }
+                
+                // Update total
+                const totalPrice = calculateTotalPrice($row);
+                $row.find('.total').val(totalPrice);
+                updateTotals();
+            });
+
+            // Update handlers for quantity and unit type changes
+            $(document).on('change', '.quantity, .unit-type', function() {
+                const $row = $(this).closest('tr');
+                const totalPrice = calculateTotalPrice($row);
+                $row.find('.total').val(totalPrice);
+                updateTotals();
+            });
+
+            // Update the updateTotals function
+            function updateTotals() {
+                let subtotal = 0;
+                $('.items-list tr').each(function() {
+                    const totalPrice = calculateTotalPrice($(this));
+                    subtotal += totalPrice;
+                });
+                
+                const discount = parseFloat($('.discount').val()) || 0;
+                const shippingCost = parseFloat($('.shipping-cost').val()) || 0;
+                const otherCost = parseFloat($('.other-cost').val()) || 0;
+                
+                $('.subtotal').val(subtotal);
+                $('.shipping-cost-total').val(shippingCost);
+                $('.grand-total').val(subtotal + shippingCost + otherCost - discount);
+            }
+
+            // Modify the product loading to include unit information
+            function loadProducts() {
+                $.ajax({
+                    url: '../../api/get_products.php',
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.success) {
+                            const products = response.products;
+                            $('.product-select').each(function() {
+                                const $select = $(this);
+                                $select.empty().append('<option value="">کاڵا هەڵبژێرە</option>');
+                                
+                                products.forEach(product => {
+                                    const $option = $('<option></option>')
+                                        .val(product.id)
+                                        .text(product.name)
+                                        .data('pieces-per-box', product.pieces_per_box)
+                                        .data('boxes-per-set', product.boxes_per_set)
+                                        .data('single-price', product.selling_price_single)
+                                        .data('wholesale-price', product.selling_price_wholesale);
+                                    
+                                    $select.append($option);
+                                });
+                            });
+                        }
+                    }
+                });
+            }
         });
     </script>
 

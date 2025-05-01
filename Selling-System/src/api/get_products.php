@@ -4,15 +4,35 @@ require_once '../config/database.php';
 
 try {
     // Get all products
-    $query = "SELECT id, name, price, cost, stock_quantity FROM products ORDER BY name";
-    $stmt = $conn->prepare($query);
+    $stmt = $conn->prepare("
+        SELECT 
+            p.id,
+            p.name,
+            p.code,
+            p.barcode,
+            p.image,
+            p.pieces_per_box,
+            p.boxes_per_set,
+            p.purchase_price,
+            p.selling_price_single,
+            p.selling_price_wholesale,
+            p.current_quantity,
+            p.min_quantity,
+            c.name as category_name,
+            u.name as unit_name
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        LEFT JOIN units u ON p.unit_id = u.id
+        ORDER BY p.name ASC
+    ");
+
     $stmt->execute();
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Return success response
     echo json_encode([
         'success' => true,
-        'data' => $products
+        'products' => $products
     ]);
     
 } catch (Exception $e) {
