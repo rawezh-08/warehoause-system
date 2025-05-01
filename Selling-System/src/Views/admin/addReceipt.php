@@ -215,19 +215,12 @@ require_once '../../config/database.php';
                             </div>
                             <div class="col-md-3">
                                 <label class="total-label">کۆی گشتی</label>
-                                <input type="number" class="form-control grand-total" step="1" readonly>
-                            </div>
-                        </div>
-                        
-                        <!-- Purchase Totals and Profit -->
-                        <div class="row mt-3">
-                            <div class="col-md-3">
-                                <label class="total-label">کۆی نرخی کڕین</label>
-                                <input type="number" class="form-control purchase-total" step="1" readonly>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="total-label">قازانج</label>
-                                <input type="number" class="form-control profit" step="1" readonly>
+                                <div class="input-group">
+                                    <input type="number" class="form-control grand-total" step="1" readonly>
+                                    <button type="button" class="btn btn-outline-primary round-total" title="خڕکردنەوەی بڕی پارە">
+                                        <i class="fas fa-calculator"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1365,145 +1358,124 @@ require_once '../../config/database.php';
                 }
             });
 
-            // Add this function to calculate total price based on unit type
-            function calculateTotalPrice($row) {
-                const quantity = parseInt($row.find('.quantity').val()) || 0;
-                const unitPrice = parseFloat($row.find('.unit-price').val()) || 0;
+            // Add this new function to calculate unit price based on unit type
+            function calculateUnitPrice($row) {
                 const unitType = $row.find('.unit-type').val();
-                const productId = $row.find('.product-select').val();
+                const product = $row.find('.product-select').select2('data')[0];
+                const priceType = $('.price-type').val();
                 
-                // Get pieces_per_box and boxes_per_set from the product data
-                let piecesPerBox = parseInt($row.find('.product-select option:selected').data('pieces-per-box')) || 1;
-                let boxesPerSet = parseInt($row.find('.product-select option:selected').data('boxes-per-set')) || 1;
-                
-                let totalPrice = 0;
-                
-                if (unitType === 'piece') {
-                    totalPrice = quantity * unitPrice;
-                } else if (unitType === 'box') {
-                    totalPrice = quantity * unitPrice * piecesPerBox;
-                } else if (unitType === 'set') {
-                    totalPrice = quantity * unitPrice * piecesPerBox * boxesPerSet;
+                if (!product || !product.id) return 0;
+
+                let basePrice;
+                if (priceType === 'wholesale') {
+                    basePrice = parseFloat(product.selling_price_wholesale) || 0;
+                } else {
+                    basePrice = parseFloat(product.selling_price_single) || 0;
                 }
-                
-                return totalPrice;
+
+                // Get pieces per box from the product data
+                const piecesPerBox = parseInt(product.pieces_per_box) || 1;
+                const boxesPerSet = parseInt(product.boxes_per_set) || 1;
+
+                switch(unitType) {
+                    case 'piece':
+                        return basePrice;
+                    case 'box':
+                        return basePrice * piecesPerBox;
+                    case 'set':
+                        return basePrice * piecesPerBox * boxesPerSet;
+                    default:
+                        return basePrice;
+                }
             }
 
-            // Update the product select change handler
+            // Add this function to update row totals
+            function updateRowTotal($row) {
+                const quantity = parseFloat($row.find('.quantity').val()) || 0;
+                const unitPrice = calculateUnitPrice($row);
+                const total = quantity * unitPrice;
+                $row.find('.unit-price').val(unitPrice);
+                $row.find('.total').val(total);
+                updateTotalAmount();
+            }
+
+            // Modify the existing event handlers
+            $(document).on('change', '.unit-type', function() {
+                const $row = $(this).closest('tr');
+                updateRowTotal($row);
+            });
+
+            $(document).on('change', '.quantity', function() {
+                const $row = $(this).closest('tr');
+                updateRowTotal($row);
+            });
+
             $(document).on('change', '.product-select', function() {
                 const $row = $(this).closest('tr');
-                const $unitPrice = $row.find('.unit-price');
-                const $unitType = $row.find('.unit-type');
-                const selectedOption = $(this).find('option:selected');
-                
-                // Store pieces_per_box and boxes_per_set as data attributes
-                $(this).data('pieces-per-box', selectedOption.data('pieces-per-box'));
-                $(this).data('boxes-per-set', selectedOption.data('boxes-per-set'));
-                
-                // Update unit price based on price type
-                const priceType = $('.price-type').val();
-                if (priceType === 'wholesale') {
-                    $unitPrice.val(selectedOption.data('wholesale-price'));
-                } else {
-                    $unitPrice.val(selectedOption.data('single-price'));
-                }
-                
-                // Update total
-                const totalPrice = calculateTotalPrice($row);
-                $row.find('.total').val(totalPrice);
-                updateTotals();
+                updateRowTotal($row);
             });
 
-            // Update handlers for quantity and unit type changes
-            $(document).on('change', '.quantity, .unit-type', function() {
-                const $row = $(this).closest('tr');
-                const totalPrice = calculateTotalPrice($row);
-                $row.find('.total').val(totalPrice);
-                updateTotals();
-            });
-
-            // Update the updateTotals function
-            function updateTotals() {
-                let subtotal = 0;
-                let purchaseTotal = 0;
-                
+            // Update when price type changes
+            $('.price-type').on('change', function() {
                 $('.items-list tr').each(function() {
-                    const totalPrice = calculateTotalPrice($(this));
-                    const purchasePrice = calculatePurchaseTotal($(this));
-                    subtotal += totalPrice;
-                    purchaseTotal += purchasePrice;
+                    updateRowTotal($(this));
                 });
-                
+            });
+
+            // Function to calculate total amount
+            function updateTotalAmount() {
+                let subtotal = 0;
+                $('.items-list tr').each(function() {
+                    const total = parseFloat($(this).find('.total').val()) || 0;
+                    subtotal += total;
+                });
+
+                // Update subtotal
+                $('.subtotal').val(subtotal);
+
+                // Get other values
                 const discount = parseFloat($('.discount').val()) || 0;
                 const shippingCost = parseFloat($('.shipping-cost').val()) || 0;
                 const otherCost = parseFloat($('.other-cost').val()) || 0;
-                
-                // Update displayed totals
-                $('.subtotal').val(subtotal);
-                $('.purchase-total').val(purchaseTotal);
-                $('.shipping-cost-total').val(shippingCost);
-                $('.grand-total').val(subtotal + shippingCost + otherCost - discount);
-                
-                // Calculate and display profit
-                const profit = subtotal - purchaseTotal;
-                $('.profit').val(profit);
-            }
 
-            // Add this function to calculate purchase total price
-            function calculatePurchaseTotal($row) {
-                const quantity = parseInt($row.find('.quantity').val()) || 0;
-                const unitType = $row.find('.unit-type').val();
-                const selectedProduct = $row.find('.product-select option:selected');
-                
-                // Get pieces_per_box and boxes_per_set
-                const piecesPerBox = parseInt(selectedProduct.data('pieces-per-box')) || 1;
-                const boxesPerSet = parseInt(selectedProduct.data('boxes-per-set')) || 1;
-                const purchasePrice = parseFloat(selectedProduct.data('purchase-price')) || 0;
-                
-                let totalPieces = 0;
-                
-                // Calculate total pieces based on unit type
-                if (unitType === 'piece') {
-                    totalPieces = quantity;
-                } else if (unitType === 'box') {
-                    totalPieces = quantity * piecesPerBox;
-                } else if (unitType === 'set') {
-                    totalPieces = quantity * piecesPerBox * boxesPerSet;
+                // Calculate grand total
+                const grandTotal = subtotal - discount + shippingCost + otherCost;
+                $('.grand-total').val(grandTotal);
+
+                // If payment type is credit, update remaining amount
+                if ($('.payment-type').val() === 'credit') {
+                    const paidAmount = parseFloat($('.paid-amount').val()) || 0;
+                    $('.remaining-amount').val(grandTotal - paidAmount);
                 }
-                
-                // Calculate total purchase price
-                return totalPieces * purchasePrice;
             }
 
-            // Modify the product loading to include purchase price
-            function loadProducts() {
-                $.ajax({
-                    url: '../../api/get_products.php',
-                    type: 'GET',
-                    success: function(response) {
-                        if (response.success) {
-                            const products = response.products;
-                            $('.product-select').each(function() {
-                                const $select = $(this);
-                                $select.empty().append('<option value="">کاڵا هەڵبژێرە</option>');
-                                
-                                products.forEach(product => {
-                                    const $option = $('<option></option>')
-                                        .val(product.id)
-                                        .text(product.name)
-                                        .data('pieces-per-box', product.pieces_per_box)
-                                        .data('boxes-per-set', product.boxes_per_set)
-                                        .data('purchase-price', product.purchase_price)
-                                        .data('single-price', product.selling_price_single)
-                                        .data('wholesale-price', product.selling_price_wholesale);
-                                    
-                                    $select.append($option);
-                                });
-                            });
-                        }
-                    }
-                });
-            }
+            // Add this to initialize Select2 with additional data
+            $('.product-select').select2({
+                ajax: {
+                    url: '../../api/search_products.php',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term
+                        };
+                    },
+                    processResults: function(data) {
+                        return {
+                            results: data.map(item => ({
+                                id: item.id,
+                                text: item.name,
+                                selling_price_single: item.selling_price_single,
+                                selling_price_wholesale: item.selling_price_wholesale,
+                                pieces_per_box: item.pieces_per_box,
+                                boxes_per_set: item.boxes_per_set
+                            }))
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 1
+            });
         });
     </script>
 
