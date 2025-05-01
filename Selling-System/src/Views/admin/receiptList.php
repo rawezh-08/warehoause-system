@@ -353,6 +353,12 @@ function translateUnitType($unitType) {
                                                                     title="چاپکردن">
                                                                     <i class="fas fa-print"></i>
                                                                 </a>
+                                                                <!-- Add View Items Button -->
+                                                                <button class="btn btn-sm btn-outline-info rounded-circle view-sale-items" 
+                                                                    title="بینینی کاڵاکان" 
+                                                                    data-sale-id="<?= $sale['id'] ?>">
+                                                                    <i class="fas fa-eye"></i>
+                                                                </button>
                                                                 <!-- Add Return Button -->
                                                                 
                                                             </div>

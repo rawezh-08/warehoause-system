@@ -227,6 +227,92 @@ $(document).ready(function() {
         }
     });
     
+    // View Sale Items
+    $(document).on('click', '.view-sale-items', function() {
+        const saleId = $(this).data('sale-id');
+        
+        // Show loading
+        Swal.fire({
+            title: 'تکایە چاوەڕوان بە...',
+            text: 'دەستکەوتنی زانیاری کاڵاکان',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        // Fetch sale items
+        $.ajax({
+            url: '../../includes/get_sale_items.php',
+            type: 'POST',
+            data: { sale_id: saleId },
+            dataType: 'json',
+            success: function(response) {
+                Swal.close();
+                
+                if (response.status === 'success') {
+                    // Create table for items
+                    let itemsHtml = `
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>ناوی کاڵا</th>
+                                        <th>کۆدی کاڵا</th>
+                                        <th>بڕ</th>
+                                        <th>یەکە</th>
+                                        <th>نرخی تاک</th>
+                                        <th>کۆی گشتی</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+                    
+                    if (response.items.length === 0) {
+                        itemsHtml += `<tr><td colspan="7" class="text-center">هیچ کاڵایەک نەدۆزرایەوە</td></tr>`;
+                    } else {
+                        response.items.forEach((item, index) => {
+                            itemsHtml += `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${item.product_name || '-'}</td>
+                                    <td>${item.product_code || '-'}</td>
+                                    <td>${item.quantity || '-'}</td>
+                                    <td>${getUnitName(item.unit_type)}</td>
+                                    <td>${formatCurrency(item.unit_price)}</td>
+                                    <td>${formatCurrency(item.total_price)}</td>
+                                </tr>`;
+                        });
+                    }
+                    
+                    itemsHtml += `</tbody></table></div>`;
+                    
+                    // Show modal with items
+                    Swal.fire({
+                        title: `کاڵاکانی پسووڵە - ${response.sale.invoice_number || ''}`,
+                        html: itemsHtml,
+                        width: '80%',
+                        confirmButtonText: 'داخستن'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە ڕوویدا!',
+                        text: response.message || 'نەتوانرا زانیاریەکان بهێنرێت، تکایە دووبارە هەوڵبدەوە.'
+                    });
+                }
+            },
+            error: function() {
+                Swal.close();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە ڕوویدا!',
+                    text: 'کێشەیەک لە پەیوەندی کردن بە سێرڤەرەوە ڕوویدا، تکایە دواتر هەوڵبدەوە.'
+                });
+            }
+        });
+    });
+    
     // Print Receipt
     $(document).on('click', '.print-receipt-btn', function() {
         const receiptId = $(this).data('receipt-id');
@@ -235,4 +321,23 @@ $(document).ready(function() {
         // Open the print page in a new tab
         window.open(`printReceipt.php?id=${receiptId}&type=${receiptType}`, '_blank');
     });
+    
+    // Helper function for formatting currency
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('en-US').format(amount) + ' د.ع';
+    }
+
+    // Helper function to display unit type in Kurdish
+    function getUnitName(unitType) {
+        switch (unitType) {
+            case 'piece':
+                return 'دانە';
+            case 'box':
+                return 'کارتۆن';
+            case 'set':
+                return 'سێت';
+            default:
+                return unitType || '-';
+        }
+    }
 }); 
