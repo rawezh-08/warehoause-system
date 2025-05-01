@@ -59,8 +59,8 @@
                 <ul class="submenu collapse" id="salesSubmenu">
                     <li><a href="addReceipt.php">زیادکردنی پسوڵە</a></li>
 
-                    <li><a href="receiptList.php">لیستی پسووڵەی فرەشەکان</a></li>
-                    <li><a href="purchaseList.php">لیستی پسووڵەی کڕیارەکان</a></li>
+                    <li><a href="receiptList.php">پسووڵەکانی فرۆشتن</a></li>
+                    <li><a href="purchaseList.php">پسووڵەکانی کڕین</a></li>
                 </ul>
             </li>
 
