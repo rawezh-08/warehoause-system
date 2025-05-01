@@ -1185,30 +1185,14 @@ require_once '../../config/database.php';
 
                 // Get current receipt data
                 const currentTab = $('.tab-pane.active');
-                const receiptData = {
-                    receipt_type: 'selling',
-                    is_delivery: true,
-                    delivery_address: deliveryAddress,
-                    phone_number: phoneNumber,
-                    invoice_number: currentTab.find('.receipt-number').val(),
-                    customer_id: currentTab.find('.customer-select').val() || null,
-                    date: currentTab.find('.sale-date').val(),
-                    payment_type: currentTab.find('.payment-type').val(),
-                    discount: currentTab.find('.discount').val() || 0,
-                    paid_amount: currentTab.find('.paid-amount').val() || 0,
-                    price_type: currentTab.find('.price-type').val(),
-                    shipping_cost: currentTab.find('.shipping-cost').val() || 0,
-                    other_cost: currentTab.find('.other-cost').val() || 0,
-                    notes: currentTab.find('.notes').val() || '',
-                    products: []
-                };
-
-                // Get products data
+                
+                // Collect product items
+                const products = [];
                 currentTab.find('.items-list tr').each(function() {
                     const $row = $(this);
                     const productId = $row.find('.product-select').val();
                     if (productId) {
-                        receiptData.products.push({
+                        products.push({
                             product_id: productId,
                             quantity: $row.find('.quantity').val(),
                             unit_type: $row.find('.unit-type').val(),
@@ -1216,9 +1200,9 @@ require_once '../../config/database.php';
                         });
                     }
                 });
-
+                
                 // Check if products are selected
-                if (receiptData.products.length === 0) {
+                if (products.length === 0) {
                     Swal.fire({
                         title: 'هەڵە!',
                         text: 'تکایە لانیکەم یەک کاڵا هەڵبژێرە',
@@ -1227,9 +1211,30 @@ require_once '../../config/database.php';
                     });
                     return;
                 }
+                
+                // Create receipt data object
+                const receiptData = {
+                    receipt_type: 'selling',
+                    is_delivery: true, // Important: set this flag
+                    delivery_address: deliveryAddress,
+                    phone_number: phoneNumber,
+                    invoice_number: currentTab.find('.receipt-number').val(),
+                    customer_id: currentTab.find('.customer-select').val() || null,
+                    date: currentTab.find('.sale-date').val() || new Date().toISOString().split('T')[0],
+                    payment_type: currentTab.find('.payment-type').val(),
+                    discount: currentTab.find('.discount').val() || 0,
+                    paid_amount: currentTab.find('.payment-type').val() === 'credit' ? 
+                        (parseFloat(currentTab.find('.paid-amount').val()) || 0) : 
+                        parseFloat(currentTab.find('.grand-total').val()) || 0,
+                    price_type: currentTab.find('.price-type').val(),
+                    shipping_cost: currentTab.find('.shipping-cost').val() || 0,
+                    other_cost: currentTab.find('.other-cost').val() || 0,
+                    notes: currentTab.find('.notes').val() || '',
+                    products: products
+                };
 
                 // Debug: Log the data being sent
-                console.log('Sending receipt data:', receiptData);
+                console.log('Sending delivery receipt data:', receiptData);
 
                 // Show loading state
                 const saveButton = $(this);

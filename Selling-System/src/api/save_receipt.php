@@ -158,11 +158,11 @@ try {
                 INSERT INTO sales (
                     invoice_number, customer_id, date, payment_type, 
                     discount, paid_amount, price_type, shipping_cost, other_costs,
-                    notes, created_by, is_delivery, delivery_address, is_draft
+                    notes, created_by, is_delivery, delivery_address, is_draft, phone_number
                 ) VALUES (
                     ?, ?, ?, ?, 
                     ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?
+                    ?, ?, ?, ?, ?, ?
                 )
             ");
             
@@ -180,7 +180,8 @@ try {
                 1, // created_by
                 isset($data['is_delivery']) ? 1 : 0,
                 $data['delivery_address'] ?? null,
-                1 // is_draft
+                1, // is_draft
+                $data['phone_number'] ?? null
             ]);
             
             $receipt_id = $conn->lastInsertId();
@@ -213,9 +214,9 @@ try {
         } else {
             // For regular sales, use the stored procedure
             if ($data['payment_type'] === 'credit') {
-                $stmt = $conn->prepare("CALL add_sale_with_advance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt = $conn->prepare("CALL add_sale_with_advance(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             } else {
-                $stmt = $conn->prepare("CALL add_sale(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt = $conn->prepare("CALL add_sale(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             }
             
             $stmt->bindParam(1, $data['invoice_number'], PDO::PARAM_STR);
@@ -235,6 +236,8 @@ try {
             $stmt->bindParam(13, $is_delivery, PDO::PARAM_INT);
             $delivery_address = isset($data['delivery_address']) ? $data['delivery_address'] : null;
             $stmt->bindParam(14, $delivery_address, PDO::PARAM_STR);
+            $phone_number = isset($data['phone_number']) ? $data['phone_number'] : null;
+            $stmt->bindParam(15, $phone_number, PDO::PARAM_STR);
             
             $stmt->execute();
             
