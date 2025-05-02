@@ -5,13 +5,13 @@ require_once '../../config/database.php';
 $db = new Database();
 $conn = $db->getConnection();
 
-// Get all suppliers
-$query = "SELECT * FROM suppliers ORDER BY name ASC";
+// Get all suppliers that are not business partners
+$query = "SELECT * FROM suppliers WHERE is_business_partner = 0 OR is_business_partner IS NULL ORDER BY name ASC";
 $stmt = $conn->prepare($query);
 $stmt->execute();
 $suppliers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Calculate summary statistics
+// Calculate summary statistics - only for non-business partners
 $totalSuppliers = count($suppliers);
 $totalDebt = 0;
 $suppliersWithDebt = 0;
