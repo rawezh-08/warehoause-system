@@ -14,13 +14,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Get form data
         $name = $_POST['partnerName'];
         $phone1 = $_POST['partnerPhone1'];
-        $phone2 = !empty($_POST['partnerPhone2']) ? $_POST['partnerPhone2'] : null;
-        $address = !empty($_POST['partnerAddress']) ? $_POST['partnerAddress'] : null;
-        $notes = !empty($_POST['partnerNotes']) ? $_POST['partnerNotes'] : null;
+        // Use empty string instead of null for optional fields
+        $phone2 = !empty($_POST['partnerPhone2']) ? $_POST['partnerPhone2'] : '';
+        $address = !empty($_POST['partnerAddress']) ? $_POST['partnerAddress'] : '';
+        $notes = !empty($_POST['partnerNotes']) ? $_POST['partnerNotes'] : '';
         
         // Customer specific data
-        $guarantorName = !empty($_POST['guarantorName']) ? $_POST['guarantorName'] : null;
-        $guarantorPhone = !empty($_POST['guarantorPhone']) ? $_POST['guarantorPhone'] : null;
+        $guarantorName = !empty($_POST['guarantorName']) ? $_POST['guarantorName'] : '';
+        $guarantorPhone = !empty($_POST['guarantorPhone']) ? $_POST['guarantorPhone'] : '';
         
         // Handle empty or invalid numeric values
         $debitOnBusiness = !empty($_POST['debitOnBusiness']) ? str_replace(',', '', $_POST['debitOnBusiness']) : 0;
