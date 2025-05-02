@@ -953,3 +953,66 @@ function addEmployeeActionListeners() {
 function formatNumberWithCommas(number) {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
+
+// Business Partner Form Handling
+const businessPartnerForm = document.getElementById('businessPartnerForm');
+if (businessPartnerForm) {
+    businessPartnerForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!this.checkValidity()) {
+            e.stopPropagation();
+            this.classList.add('was-validated');
+            return;
+        }
+        
+        const formData = new FormData(this);
+        
+        $.ajax({
+            url: this.action,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                const result = JSON.parse(response);
+                if (result.status === 'success') {
+                    Swal.fire({
+                        title: 'سەرکەوتوو',
+                        text: result.message,
+                        icon: 'success',
+                        confirmButtonText: 'باشە'
+                    }).then(() => {
+                        // Reset form
+                        businessPartnerForm.reset();
+                        businessPartnerForm.classList.remove('was-validated');
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'هەڵە',
+                        text: result.message,
+                        icon: 'error',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    title: 'هەڵە',
+                    text: 'هەڵەیەک ڕوویدا لە کاتی ناردنی داواکاری',
+                    icon: 'error',
+                    confirmButtonText: 'باشە'
+                });
+            }
+        });
+    });
+}
+
+// Reset Business Partner Form
+const resetBusinessPartnerForm = document.getElementById('resetBusinessPartnerForm');
+if (resetBusinessPartnerForm) {
+    resetBusinessPartnerForm.addEventListener('click', function() {
+        businessPartnerForm.reset();
+        businessPartnerForm.classList.remove('was-validated');
+    });
+}
