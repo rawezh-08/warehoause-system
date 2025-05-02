@@ -350,6 +350,10 @@ foreach ($businessPartners as $partner) {
                                                         <td><?php echo !empty($partner['notes']) ? htmlspecialchars($partner['notes']) : '-'; ?></td>
                                                         <td>
                                                             <div class="action-buttons">
+                                                                <a href="businessPartnerProfile.php?<?php echo ($partner['customer_id'] ? 'customer_id=' . $partner['customer_id'] : '') . ($partner['supplier_id'] ? ($partner['customer_id'] ? '&' : '') . 'supplier_id=' . $partner['supplier_id'] : ''); ?>" class="btn btn-sm btn-outline-info rounded-circle" title="پڕۆفایلی گشتگیر">
+                                                                    <i class="fas fa-id-card"></i>
+                                                                </a>
+                                                                
                                                                 <?php if ($partner['customer_id']): ?>
                                                                 <a href="customerProfile.php?id=<?php echo $partner['customer_id']; ?>" class="btn btn-sm btn-outline-primary rounded-circle" title="پرۆفایلی کڕیار">
                                                                     <i class="fas fa-user"></i>
