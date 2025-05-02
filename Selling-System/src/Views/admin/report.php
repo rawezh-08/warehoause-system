@@ -188,6 +188,28 @@ $warehouseLosses = 0;
 // Calculate net profit (simple calculation)
 $netProfit = $totalSales - $totalPurchases - $warehouseExpenses - $employeeExpenses - $warehouseLosses;
 
+// Calculate net profit - More accurate calculation
+// Get the actual profit margin by calculating the difference between sales and cost of goods
+$stmt = $conn->prepare("
+    SELECT 
+        COALESCE(SUM(si.total_price - (si.pieces_count * p.purchase_price)), 0) as total_profit_margin
+    FROM 
+        sale_items si
+    JOIN 
+        products p ON si.product_id = p.id
+    JOIN 
+        sales s ON si.sale_id = s.id
+    WHERE 
+        s.is_draft = 0
+        " . ($dateCondition ? ' AND ' . substr($dateCondition, 6) : '') . "
+");
+$stmt->execute();
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
+$profitMargin = $result['total_profit_margin'];
+
+// Calculate true net profit by considering the profit margin minus expenses
+$netProfit = $profitMargin - $warehouseExpenses - $employeeExpenses - $warehouseLosses;
+
 // Calculate available cash (from sales minus expenses and purchases)
 $stmt = $conn->prepare("
     SELECT 
@@ -491,6 +513,7 @@ $stmt = $conn->prepare("
     SELECT
         DATE_FORMAT(s.date, '%Y-%m') as month,
         COALESCE(SUM(si.total_price), 0) as sales_revenue,
+        COALESCE(SUM(si.pieces_count * p.purchase_price), 0) as cost_of_goods_sold,
         (
             SELECT COALESCE(SUM(pi.total_price), 0)
             FROM purchases pu
@@ -511,6 +534,8 @@ $stmt = $conn->prepare("
         sales s
     JOIN
         sale_items si ON s.id = si.sale_id
+    JOIN
+        products p ON si.product_id = p.id
     WHERE
         s.date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
         AND s.is_draft = 0
@@ -528,12 +553,14 @@ $monthlyProfitData = [];
 foreach ($monthlyProfitLoss as $data) {
     $monthNum = substr($data['month'], -2);
     $year = substr($data['month'], 0, 4);
-    $profit = $data['sales_revenue'] - $data['purchase_cost'] - $data['expenses'] - $data['employee_expenses'];
+    // Calculate true profit: sales revenue minus cost of goods sold minus expenses
+    $profit = $data['sales_revenue'] - $data['cost_of_goods_sold'] - $data['expenses'] - $data['employee_expenses'];
 
     $monthlyProfitData[] = [
         "month" => $kurdishMonths[$monthNum] . ' ' . $year,
         "revenue" => $data['sales_revenue'],
-        "expenses" => $data['purchase_cost'] + $data['expenses'] + $data['employee_expenses'],
+        "cost_of_goods" => $data['cost_of_goods_sold'],
+        "expenses" => $data['expenses'] + $data['employee_expenses'],
         "profit" => $profit
     ];
 }
@@ -1101,8 +1128,8 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <div class="stat-status <?php echo $netProfit >= 0 ? 'text-success' : 'text-danger'; ?> fw-bold">
                                         <?php echo $netProfit >= 0 ? 'قازانج' : 'زەرەر'; ?>
                                     </div>
-                                    <div class="stat-change <?php echo $netProfit >= 0 ? 'positive' : 'negative'; ?> mt-2">
-                                        <i class="fas <?php echo $netProfit >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'; ?>"></i> 12.7%
+                                    <div class="small text-muted mt-2">
+                                        <i class="fas fa-info-circle"></i> قازانجی نرخی فرۆشتن - نرخی کڕین - خەرجییەکان
                                     </div>
                                 </div>
                             </div>
