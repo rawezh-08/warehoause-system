@@ -192,7 +192,7 @@ $netProfit = $totalSales - $totalPurchases - $warehouseExpenses - $employeeExpen
 // Get the actual profit margin by calculating the difference between sales and cost of goods
 $stmt = $conn->prepare("
     SELECT 
-        COALESCE(SUM(si.total_price - (si.pieces_count * p.purchase_price)), 0) as total_profit_margin
+        COALESCE(SUM(si.total_price - (p.purchase_price * si.pieces_count)), 0) as total_profit_margin
     FROM 
         sale_items si
     JOIN 
@@ -513,13 +513,7 @@ $stmt = $conn->prepare("
     SELECT
         DATE_FORMAT(s.date, '%Y-%m') as month,
         COALESCE(SUM(si.total_price), 0) as sales_revenue,
-        COALESCE(SUM(si.pieces_count * p.purchase_price), 0) as cost_of_goods_sold,
-        (
-            SELECT COALESCE(SUM(pi.total_price), 0)
-            FROM purchases pu
-            JOIN purchase_items pi ON pu.id = pi.purchase_id
-            WHERE DATE_FORMAT(pu.date, '%Y-%m') = DATE_FORMAT(s.date, '%Y-%m')
-        ) as purchase_cost,
+        COALESCE(SUM(p.purchase_price * si.pieces_count), 0) as cost_of_goods_sold,
         (
             SELECT COALESCE(SUM(amount), 0)
             FROM expenses
@@ -1327,6 +1321,12 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <div class="chart-container">
                                 <h5 class="card-title mb-4">قازانج و زەرەر بەپێی مانگ</h5>
                                 <div id="monthlyProfitChart" style="height: 350px;"></div>
+                                <div class="small text-muted mt-3">
+                                    <i class="fas fa-info-circle"></i> قازانج هەژمار کراوە بەم شێوەیە: (داهاتی فرۆشتن - نرخی کڕینی کاڵاکان - خەرجییەکان)
+                                </div>
+                                <div class="small text-muted mt-1">
+                                    <i class="fas fa-calculator"></i> بۆ نموونە: کاڵایەک بە 24000د.ع دەفرۆشرێت کە نرخی کڕینی 20500د.ع بووە = 3500د.ع قازانج
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -1521,7 +1521,13 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 return $item['revenue'];
                             }, $monthlyProfitData)); ?>]
                 }, {
-                    name: 'خەرجی',
+                    name: 'نرخی کاڵاکان',
+                    type: 'column',
+                    data: [<?php echo implode(',', array_map(function ($item) {
+                                return $item['cost_of_goods'];
+                            }, $monthlyProfitData)); ?>]
+                }, {
+                    name: 'خەرجییەکان',
                     type: 'column',
                     data: [<?php echo implode(',', array_map(function ($item) {
                                 return $item['expenses'];
@@ -1557,11 +1563,11 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     }
                 },
                 stroke: {
-                    width: [0, 0, 3],
+                    width: [0, 0, 0, 3],
                     curve: 'smooth',
                     lineCap: 'round'
                 },
-                colors: ['#4361ee', '#ff6b6b', '#2ecc71'],
+                colors: ['#4361ee', '#f1c40f', '#ff6b6b', '#2ecc71'],
                 xaxis: {
                     categories: [<?php echo "'" . implode("','", array_map(function ($item) {
                                         return $item['month'];
@@ -1608,7 +1614,10 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         }
                     }
                 }, {
-                    seriesName: 'خەرجی',
+                    seriesName: 'نرخی کاڵاکان',
+                    show: false
+                }, {
+                    seriesName: 'خەرجییەکان',
                     show: false
                 }, {
                     opposite: true,
