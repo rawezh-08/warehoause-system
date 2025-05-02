@@ -109,14 +109,14 @@ class Customer {
             
             // Add debt transactions if initial debts exist
             if ($debitOnBusiness > 0) {
-                $debtResult = $this->addDebtTransaction($customerId, $debitOnBusiness, 'business', null, 'بڕی سەرەتایی قەرز بەسەر کڕیار');
+                $debtResult = $this->addDebtTransaction($customerId, $debitOnBusiness, 'sale', null, 'بڕی سەرەتایی قەرز بەسەر کڕیار');
                 if (!$debtResult) {
                     throw new Exception("Failed to add debt transaction for customer debt");
                 }
             }
             
             if ($debtOnCustomer > 0) {
-                $debtResult = $this->addDebtTransaction($customerId, $debtOnCustomer, 'customer', null, 'بڕی سەرەتایی قەرزی کڕیار لەسەر من');
+                $debtResult = $this->addDebtTransaction($customerId, $debtOnCustomer, 'payment', null, 'بڕی سەرەتایی قەرزی کڕیار لەسەر من');
                 if (!$debtResult) {
                     throw new Exception("Failed to add debt transaction for debt on customer");
                 }
@@ -139,7 +139,7 @@ class Customer {
      * Add a debt transaction
      * @param int $customerId Customer ID
      * @param float $amount Transaction amount
-     * @param string $type Transaction type ('business' for customer debt, 'myself' for our debt)
+     * @param string $type Transaction type ('sale', 'payment', etc)
      * @param int|null $referenceId Reference ID
      * @param string $notes Transaction notes
      * @return bool Success status
@@ -171,8 +171,8 @@ class Customer {
             }
             
             // Now update the customer's debt balance based on type
-            if ($type === 'business') {
-                // Customer debt (debit_on_business)
+            if ($type === 'sale') {
+                // Customer debt (debit_on_business) - increased when a sale is made
                 $updateStmt = $this->conn->prepare("
                     UPDATE customers SET 
                     debit_on_business = :amount 
@@ -180,17 +180,8 @@ class Customer {
                 ");
                 $updateStmt->bindParam(':amount', $amount);
                 $updateStmt->bindParam(':customer_id', $customerId);
-            } else if ($type === 'myself') {
-                // Our debt (debit_on_myself)
-                $updateStmt = $this->conn->prepare("
-                    UPDATE customers SET 
-                    debit_on_myself = :amount 
-                    WHERE id = :customer_id
-                ");
-                $updateStmt->bindParam(':amount', $amount);
-                $updateStmt->bindParam(':customer_id', $customerId);
-            } else if ($type === 'customer') {
-                // Customer's debt to us (debt_on_customer)
+            } else if ($type === 'payment') {
+                // Update the debt_on_customer field (customer's debt to us)
                 $updateStmt = $this->conn->prepare("
                     UPDATE customers SET 
                     debt_on_customer = :amount 
@@ -198,23 +189,31 @@ class Customer {
                 ");
                 $updateStmt->bindParam(':amount', $amount);
                 $updateStmt->bindParam(':customer_id', $customerId);
+            } else if ($type === 'collection') {
+                // Decrease customer debt
+                $updateStmt = $this->conn->prepare("
+                    UPDATE customers SET 
+                    debit_on_business = debit_on_business - :amount 
+                    WHERE id = :customer_id
+                ");
+                $updateStmt->bindParam(':amount', $amount);
+                $updateStmt->bindParam(':customer_id', $customerId);
+            } else if ($type === 'purchase') {
+                // For purchases, may adjust other fields
+                $updateStmt = $this->conn->prepare("
+                    UPDATE customers SET 
+                    debit_on_business = debit_on_business + :amount 
+                    WHERE id = :customer_id
+                ");
+                $updateStmt->bindParam(':amount', $amount);
+                $updateStmt->bindParam(':customer_id', $customerId);
             } else {
-                // Handle traditional transaction types (payment/collection)
-                if ($type === 'payment') {
-                    // Increase customer debt
-                    $updateStmt = $this->conn->prepare("
-                        UPDATE customers SET 
-                        debit_on_business = debit_on_business + :amount 
-                        WHERE id = :customer_id
-                    ");
-                } else if ($type === 'collection') {
-                    // Decrease customer debt
-                    $updateStmt = $this->conn->prepare("
-                        UPDATE customers SET 
-                        debit_on_business = debit_on_business - :amount 
-                        WHERE id = :customer_id
-                    ");
-                }
+                // Default case for other transaction types
+                $updateStmt = $this->conn->prepare("
+                    UPDATE customers SET 
+                    debit_on_business = debit_on_business + :amount 
+                    WHERE id = :customer_id
+                ");
                 $updateStmt->bindParam(':amount', $amount);
                 $updateStmt->bindParam(':customer_id', $customerId);
             }
@@ -339,7 +338,7 @@ class Customer {
             // Check if debt values have changed
             if ($currentCustomer['debit_on_business'] != $debitOnBusiness) {
                 // Delete existing debt transactions for this customer
-                $deleteStmt = $this->conn->prepare("DELETE FROM debt_transactions WHERE customer_id = :customer_id AND transaction_type = 'business'");
+                $deleteStmt = $this->conn->prepare("DELETE FROM debt_transactions WHERE customer_id = :customer_id AND transaction_type = 'sale'");
                 $deleteStmt->bindParam(':customer_id', $id);
                 $deleteStmt->execute();
                 
@@ -347,7 +346,7 @@ class Customer {
                 $this->addDebtTransaction(
                     $id,
                     $debitOnBusiness,
-                    'business',
+                    'sale',
                     null,
                     'تازەکردنەوەی قەرزی کڕیار'
                 );
@@ -356,7 +355,7 @@ class Customer {
             // Check if customer debt to us has changed
             if ($currentCustomer['debt_on_customer'] != $debtOnCustomer) {
                 // Delete existing debt transactions for this customer debt to us
-                $deleteStmt = $this->conn->prepare("DELETE FROM debt_transactions WHERE customer_id = :customer_id AND transaction_type = 'customer'");
+                $deleteStmt = $this->conn->prepare("DELETE FROM debt_transactions WHERE customer_id = :customer_id AND transaction_type = 'payment'");
                 $deleteStmt->bindParam(':customer_id', $id);
                 $deleteStmt->execute();
                 
@@ -364,7 +363,7 @@ class Customer {
                 $this->addDebtTransaction(
                     $id,
                     $debtOnCustomer,
-                    'customer',
+                    'payment',
                     null,
                     'تازەکردنەوەی قەرزی کڕیار لەسەر من'
                 );
