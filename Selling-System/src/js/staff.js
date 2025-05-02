@@ -1223,3 +1223,66 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize employee pagination
     applyEmployeePagination(1);
 });
+
+// Business Partners Tab Functionality
+function initializeBusinessPartnersTab() {
+    // Table functionality
+    initializeDataTable('partner');
+    
+    // Filter functionality
+    $('#partnerName, #partnerPhone').on('change keyup', function() {
+        filterPartnerTable();
+    });
+    
+    // Reset filter button
+    $('#partnerResetFilter').on('click', function() {
+        $('#partnerName').val('');
+        $('#partnerPhone').val('');
+        filterPartnerTable();
+    });
+    
+    // Refresh button
+    $('#business-partner-content .refresh-btn').on('click', function() {
+        location.reload();
+    });
+}
+
+// Filter partners table based on selected criteria
+function filterPartnerTable() {
+    const nameFilter = $('#partnerName').val().toLowerCase();
+    const phoneFilter = $('#partnerPhone').val().toLowerCase();
+    
+    $('#partnerTable tbody tr').each(function() {
+        const name = $(this).find('td:eq(1)').text().toLowerCase();
+        const phone = $(this).find('td:eq(2)').text().toLowerCase();
+        
+        // Show row if it matches all selected filters
+        const nameMatch = nameFilter === '' || name.includes(nameFilter);
+        const phoneMatch = phoneFilter === '' || phone.includes(phoneFilter);
+        
+        if (nameMatch && phoneMatch) {
+            $(this).show();
+        } else {
+            $(this).hide();
+        }
+    });
+    
+    // Update pagination after filtering
+    updateTableInfo('partner');
+}
+
+// Initialize all tabs when document ready
+$(document).ready(function() {
+    // Initialize existing tabs
+    initializeEmployeeTab();
+    initializeCustomerTab();
+    initializeSupplierTab();
+    
+    // Initialize new business partners tab
+    initializeBusinessPartnersTab();
+    
+    // Make sure the table is responsive
+    $(window).resize(function() {
+        updateTableInfo('partner');
+    });
+});

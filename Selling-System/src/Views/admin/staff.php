@@ -88,6 +88,13 @@ $suppliers = $supplierModel->getAll();
                                     <i class="fas fa-truck me-2"></i>دابینکەرەکان
                                 </button>
                             </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="business-partner-tab" data-bs-toggle="tab"
+                                    data-bs-target="#business-partner-content" type="button" role="tab"
+                                    aria-controls="business-partner-content" aria-selected="false">
+                                    <i class="fas fa-handshake me-2"></i>کڕیار و دابینکەرەکان
+                                </button>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -574,6 +581,260 @@ $suppliers = $supplierModel->getAll();
                                                             </div>
                                                             <button id="supplierNextPageBtn"
                                                                 class="btn btn-sm btn-outline-primary rounded-circle">
+                                                                <i class="fas fa-chevron-left"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Business Partners Tab -->
+                    <div class="tab-pane fade" id="business-partner-content" role="tabpanel" aria-labelledby="business-partner-tab">
+                        <!-- Business Partners Filter -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card shadow-sm card-qiuck-style">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-4">فلتەر بەپێی ناو</h5>
+                                        <form id="partnerFilterForm" class="row g-3">
+                                            <div class="col-md-4">
+                                                <label for="partnerName" class="form-label">ناوی کڕیار و دابینکەر</label>
+                                                <select class="form-select" id="partnerName">
+                                                    <option value="">هەموو کڕیار و دابینکەرەکان</option>
+                                                    <?php 
+                                                    // Fetch all business partners
+                                                    $query = "SELECT DISTINCT name FROM (
+                                                        SELECT name FROM customers WHERE is_business_partner = 1
+                                                        UNION 
+                                                        SELECT name FROM suppliers WHERE is_business_partner = 1
+                                                    ) AS partners ORDER BY name ASC";
+                                                    
+                                                    $stmt = $conn->prepare($query);
+                                                    $stmt->execute();
+                                                    $businessPartners = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                                    
+                                                    foreach ($businessPartners as $partner): ?>
+                                                        <option value="<?php echo htmlspecialchars($partner['name']); ?>"><?php echo htmlspecialchars($partner['name']); ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="partnerPhone" class="form-label">ژمارەی مۆبایل</label>
+                                                <input type="text" class="form-control auto-filter" id="partnerPhone">
+                                            </div>
+                                            <div class="col-md-2 d-flex align-items-end">
+                                                <button type="button" class="btn btn-outline-secondary w-100"
+                                                    id="partnerResetFilter">
+                                                    <i class="fas fa-redo me-2"></i> ڕیسێت
+                                                </button>
+                                            </div>
+                                            <div class="col-md-2 d-flex align-items-end">
+                                                <a href="addStaff.php?tab=business-partner" class="btn btn-primary w-100">
+                                                    <i class="fas fa-plus me-2"></i> زیادکردن
+                                                </a>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Business Partners Table -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card shadow-sm card-qiuck-style">
+                                    <div
+                                        class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                                        <h5 class="card-title mb-0">لیستی کڕیار و دابینکەرەکان</h5>
+                                        <div>
+                                            <button class="btn btn-sm btn-outline-primary refresh-btn me-2">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-container">
+                                            <!-- Table Controls -->
+                                            <div class="table-controls mb-3">
+                                                <div class="row align-items-center">
+                                                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
+                                                        <div class="records-per-page">
+                                                            <label class="me-2">نیشاندان:</label>
+                                                            <div class="custom-select-wrapper">
+                                                                <select id="partnerRecordsPerPage"
+                                                                    class="form-select form-select-sm rounded-pill">
+                                                                    <option value="5">5</option>
+                                                                    <option value="10" selected>10</option>
+                                                                    <option value="25">25</option>
+                                                                    <option value="50">50</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-8 col-sm-6">
+                                                        <div class="search-container">
+                                                            <div class="input-group">
+                                                                <input type="text" id="partnerTableSearch"
+                                                                    class="form-control rounded-pill-start table-search-input"
+                                                                    placeholder="گەڕان لە تەیبڵدا...">
+                                                                <span
+                                                                    class="input-group-text rounded-pill-end bg-light">
+                                                                    <img src="../../assets/icons/search-purple.svg" alt="">
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Table Content -->
+                                            <div class="table-responsive">
+                                                <table id="partnerTable"
+                                                    class="table table-bordered custom-table table-hover">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>#</th>
+                                                            <th>ناو</th>
+                                                            <th>ژمارەی مۆبایل</th>
+                                                            <th>ژمارەی مۆبایلی دووەم</th>
+                                                            <th>قەرز بەسەر کڕیار</th>
+                                                            <th>قەرز لەسەر خۆم</th>
+                                                            <th>تێبینی</th>
+                                                            <th>کردارەکان</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <?php
+                                                        // Get business partners data
+                                                        $partnersQuery = "
+                                                            SELECT 
+                                                                p.id,
+                                                                p.name,
+                                                                p.phone1,
+                                                                p.phone2,
+                                                                p.customer_id,
+                                                                p.supplier_id,
+                                                                p.customer_debt,
+                                                                p.supplier_debt,
+                                                                p.notes
+                                                            FROM (
+                                                                SELECT 
+                                                                    c.id as id,
+                                                                    c.name as name,
+                                                                    c.phone1 as phone1,
+                                                                    c.phone2 as phone2,
+                                                                    c.id as customer_id,
+                                                                    c.supplier_id as supplier_id,
+                                                                    c.debit_on_business as customer_debt,
+                                                                    CASE WHEN s.debt_on_myself IS NOT NULL THEN s.debt_on_myself ELSE 0 END as supplier_debt,
+                                                                    c.notes as notes
+                                                                FROM customers c
+                                                                LEFT JOIN suppliers s ON c.supplier_id = s.id
+                                                                WHERE c.is_business_partner = 1
+                                                                
+                                                                UNION
+                                                                
+                                                                SELECT 
+                                                                    s.id as id,
+                                                                    s.name as name,
+                                                                    s.phone1 as phone1,
+                                                                    s.phone2 as phone2,
+                                                                    NULL as customer_id,
+                                                                    s.id as supplier_id,
+                                                                    0 as customer_debt,
+                                                                    s.debt_on_myself as supplier_debt,
+                                                                    s.notes as notes
+                                                                FROM suppliers s
+                                                                LEFT JOIN customers c ON s.id = c.supplier_id
+                                                                WHERE s.is_business_partner = 1 AND c.id IS NULL
+                                                            ) as p
+                                                            ORDER BY p.name ASC
+                                                        ";
+                                                        
+                                                        $partnersStmt = $conn->prepare($partnersQuery);
+                                                        $partnersStmt->execute();
+                                                        $partners = $partnersStmt->fetchAll(PDO::FETCH_ASSOC);
+                                                        
+                                                        foreach ($partners as $index => $partner): ?>
+                                                            <tr data-id="<?php echo $partner['id']; ?>">
+                                                                <td><?php echo $index + 1; ?></td>
+                                                                <td><?php echo htmlspecialchars($partner['name'] ?? '-'); ?></td>
+                                                                <td><?php echo htmlspecialchars($partner['phone1'] ?? '-'); ?></td>
+                                                                <td><?php echo htmlspecialchars($partner['phone2'] ? $partner['phone2'] : '-'); ?></td>
+                                                                <td>
+                                                                    <?php if ($partner['customer_debt'] > 0): ?>
+                                                                        <span class="text-danger">
+                                                                            <?php echo number_format($partner['customer_debt'], 0, '.', ','); ?> دینار
+                                                                        </span>
+                                                                    <?php else: ?>
+                                                                        <span class="text-success">0 دینار</span>
+                                                                    <?php endif; ?>
+                                                                </td>
+                                                                <td>
+                                                                    <?php if ($partner['supplier_debt'] > 0): ?>
+                                                                        <span class="text-danger">
+                                                                            <?php echo number_format($partner['supplier_debt'], 0, '.', ','); ?> دینار
+                                                                        </span>
+                                                                    <?php else: ?>
+                                                                        <span class="text-success">0 دینار</span>
+                                                                    <?php endif; ?>
+                                                                </td>
+                                                                <td><?php echo htmlspecialchars($partner['notes'] ? $partner['notes'] : '-'); ?></td>
+                                                                <td>
+                                                                    <div class="action-buttons">
+                                                                        <?php if ($partner['customer_id']): ?>
+                                                                        <a href="customerProfile.php?id=<?php echo $partner['customer_id']; ?>" class="btn btn-sm btn-outline-primary rounded-circle" title="پرۆفایلی کڕیار">
+                                                                            <i class="fas fa-user"></i>
+                                                                        </a>
+                                                                        <?php endif; ?>
+                                                                        
+                                                                        <?php if ($partner['supplier_id']): ?>
+                                                                        <a href="supplierProfile.php?id=<?php echo $partner['supplier_id']; ?>" class="btn btn-sm btn-outline-success rounded-circle" title="پرۆفایلی دابینکەر">
+                                                                            <i class="fas fa-truck"></i>
+                                                                        </a>
+                                                                        <?php endif; ?>
+                                                                        
+                                                                        <?php if ($partner['customer_id']): ?>
+                                                                        <a href="../../Views/receipt/customer_history_receipt.php?customer_id=<?php echo $partner['customer_id']; ?>" class="btn btn-sm btn-outline-warning rounded-circle" target="_blank" title="بینینی مێژووی کڕیار">
+                                                                            <i class="fas fa-history"></i>
+                                                                        </a>
+                                                                        <?php endif; ?>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        <?php endforeach; ?>
+                                                        <?php if (empty($partners)): ?>
+                                                            <tr>
+                                                                <td colspan="8" class="text-center">هیچ کڕیار و دابینکەرێک نەدۆزرایەوە</td>
+                                                            </tr>
+                                                        <?php endif; ?>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            <!-- Table Pagination -->
+                                            <div class="table-pagination mt-3">
+                                                <div class="row align-items-center">
+                                                    <div class="col-md-6 mb-2 mb-md-0">
+                                                        <div class="pagination-info">
+                                                            نیشاندانی <span id="partnerStartRecord">1</span> تا <span id="partnerEndRecord"><?php echo count($partners); ?></span> لە کۆی <span id="partnerTotalRecords"><?php echo count($partners); ?></span> تۆمار
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="pagination-controls d-flex justify-content-md-end">
+                                                            <button id="partnerPrevPageBtn" class="btn btn-sm btn-outline-primary rounded-circle me-2" disabled>
+                                                                <i class="fas fa-chevron-right"></i>
+                                                            </button>
+                                                            <div id="partnerPaginationNumbers" class="pagination-numbers d-flex">
+                                                                <button class="btn btn-sm btn-primary rounded-circle me-2 active">1</button>
+                                                            </div>
+                                                            <button id="partnerNextPageBtn" class="btn btn-sm btn-outline-primary rounded-circle">
                                                                 <i class="fas fa-chevron-left"></i>
                                                             </button>
                                                         </div>
