@@ -954,92 +954,115 @@ function formatNumberWithCommas(number) {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-// Business Partner Form Handling
-const businessPartnerForm = document.getElementById('businessPartnerForm');
-if (businessPartnerForm) {
-    businessPartnerForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        if (!this.checkValidity()) {
-            e.stopPropagation();
-            this.classList.add('was-validated');
-            return;
-        }
-
-        try {
-            // Show loading state
-            await Swal.fire({
-                title: 'تکایە چاوەڕێ بکە...',
-                text: 'زیادکردنی کڕیار و دابینکەر بەردەوامە',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
+// Business Partner Form Submission
+document.addEventListener("DOMContentLoaded", function() {
+    // Get the business partner form
+    const businessPartnerForm = document.getElementById('businessPartnerForm');
+    
+    if (businessPartnerForm) {
+        businessPartnerForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            const formData = new FormData(this);
+            // Validate form
+            if (!this.checkValidity()) {
+                e.stopPropagation();
+                this.classList.add('was-validated');
+                return;
+            }
             
-            const response = await fetch(this.action, {
-                method: 'POST',
-                body: formData
-            });
-            
-            const result = await response.json();
-            
-            if (result.status === 'success') {
-                await Swal.fire({
-                    title: 'سەرکەوتوو بوو!',
-                    text: result.message,
-                    icon: 'success',
-                    confirmButtonText: 'باشە'
+            try {
+                // Show loading dialog
+                Swal.fire({
+                    title: 'تکایە چاوەڕێ بکە...',
+                    text: 'زیادکردنی کڕیار و دابینکەر بەردەوامە',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
                 });
                 
-                // Reset form
-                this.reset();
-                this.classList.remove('was-validated');
-            } else {
+                // Create form data
+                const formData = new FormData(this);
+                
+                // Send form data to server
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const responseText = await response.text();
+                console.log("Response text:", responseText);
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    console.error("JSON parse error:", e);
+                    throw new Error(`Failed to parse server response: ${responseText}`);
+                }
+                
+                // Close loading dialog
+                Swal.close();
+                
+                // Show success/error message
+                if (data.status === 'success') {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'سەرکەوتوو بوو!',
+                        text: data.message,
+                        confirmButtonText: 'باشە'
+                    });
+                    
+                    // Reset form
+                    this.reset();
+                    this.classList.remove('was-validated');
+                } else {
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە!',
+                        text: data.message || 'هەڵەیەک ڕوویدا',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                
+                // Show error message
                 await Swal.fire({
-                    title: 'هەڵە!',
-                    text: result.message,
                     icon: 'error',
+                    title: 'هەڵە!',
+                    text: 'هەڵەیەک ڕوویدا لە کاتی ناردنی داواکاری: ' + error.message,
                     confirmButtonText: 'باشە'
                 });
             }
-        } catch (error) {
-            console.error('Error:', error);
-            await Swal.fire({
-                title: 'هەڵە!',
-                text: 'هەڵەیەک ڕوویدا لە کاتی ناردنی داواکاری',
-                icon: 'error',
-                confirmButtonText: 'باشە'
-            });
-        }
-    });
-}
-
-// Reset Business Partner Form
-const resetBusinessPartnerForm = document.getElementById('resetBusinessPartnerForm');
-if (resetBusinessPartnerForm) {
-    resetBusinessPartnerForm.addEventListener('click', async function() {
-        const result = await Swal.fire({
-            title: 'دڵنیای؟',
-            text: 'هەموو زانیارییەکان دەسڕدرێنەوە',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'بەڵێ',
-            cancelButtonText: 'نەخێر'
         });
-
-        if (result.isConfirmed) {
-            businessPartnerForm.reset();
-            businessPartnerForm.classList.remove('was-validated');
-            
-            await Swal.fire({
-                title: 'سەرکەوتوو بوو!',
-                text: 'فۆرمەکە بە سەرکەوتوویی ڕیسێت کرا',
-                icon: 'success',
-                confirmButtonText: 'باشە'
+        
+        // Reset button
+        const resetBtn = document.getElementById('resetBusinessPartnerForm');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', async function() {
+                const result = await Swal.fire({
+                    title: 'دڵنیای؟',
+                    text: 'هەموو زانیارییەکان دەسڕدرێنەوە',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'بەڵێ',
+                    cancelButtonText: 'نەخێر'
+                });
+                
+                if (result.isConfirmed) {
+                    businessPartnerForm.reset();
+                    businessPartnerForm.classList.remove('was-validated');
+                    
+                    await Swal.fire({
+                        title: 'سەرکەوتوو بوو!',
+                        text: 'فۆرمەکە بە سەرکەوتوویی ڕیسێت کرا',
+                        icon: 'success',
+                        confirmButtonText: 'باشە'
+                    });
+                }
             });
         }
-    });
-}
+    }
+});
