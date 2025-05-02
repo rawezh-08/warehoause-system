@@ -179,24 +179,7 @@ require_once '../../includes/auth.php';
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <div class="form-check mb-3">
-                                                        <input class="form-check-input" type="checkbox" id="isBusinessPartner" name="isBusinessPartner">
-                                                        <label class="form-check-label" for="isBusinessPartner">
-                                                            ئەم کڕیارە دابینکەریشە
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label for="customerAddress" class="form-label">ناونیشان</label>
-                                                    <textarea class="form-control" id="customerAddress" name="customerAddress" rows="2" placeholder="ناونیشانی کڕیار"></textarea>
-                                                </div>
-                                               
-                                            
-
-                                             
-                                                
-                                                <div class="col-6">
+                                                <div class="col-12">
                                                     <label for="customerNotes" class="form-label">تێبینی</label>
                                                     <textarea class="form-control" id="customerNotes" name="customerNotes" rows="2" placeholder="تێبینی لەسەر کڕیار"></textarea>
                                                 </div>
@@ -259,15 +242,6 @@ require_once '../../includes/auth.php';
                                                         <span class="input-group-text">د.ع</span>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <div class="form-check mb-3">
-                                                        <input class="form-check-input" type="checkbox" id="isBusinessPartnerSupplier" name="isBusinessPartnerSupplier">
-                                                        <label class="form-check-label" for="isBusinessPartnerSupplier">
-                                                            ئەم دابینکەرە کڕیاریشە
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                              
                                                 <div class="col-12">
                                                     <label for="supplierNotes" class="form-label">تێبینی</label>
                                                     <textarea class="form-control" id="supplierNotes" name="supplierNotes" rows="2" placeholder="تێبینی لەسەر دابینکەر"></textarea>

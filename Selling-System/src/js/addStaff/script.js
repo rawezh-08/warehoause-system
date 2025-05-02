@@ -957,7 +957,7 @@ function formatNumberWithCommas(number) {
 // Business Partner Form Handling
 const businessPartnerForm = document.getElementById('businessPartnerForm');
 if (businessPartnerForm) {
-    businessPartnerForm.addEventListener('submit', function(e) {
+    businessPartnerForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         if (!this.checkValidity()) {
@@ -966,78 +966,80 @@ if (businessPartnerForm) {
             return;
         }
 
-        // Show loading state
-        Swal.fire({
-            title: 'تکایە چاوەڕێ بکە...',
-            text: 'زیادکردنی کڕیار و دابینکەر بەردەوامە',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-        
-        const formData = new FormData(this);
-        
-        fetch(this.action, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(result => {
+        try {
+            // Show loading state
+            await Swal.fire({
+                title: 'تکایە چاوەڕێ بکە...',
+                text: 'زیادکردنی کڕیار و دابینکەر بەردەوامە',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            const formData = new FormData(this);
+            
+            const response = await fetch(this.action, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
             if (result.status === 'success') {
-                Swal.fire({
+                await Swal.fire({
                     title: 'سەرکەوتوو بوو!',
                     text: result.message,
                     icon: 'success',
                     confirmButtonText: 'باشە'
-                }).then(() => {
-                    // Reset form
-                    businessPartnerForm.reset();
-                    businessPartnerForm.classList.remove('was-validated');
                 });
+                
+                // Reset form
+                this.reset();
+                this.classList.remove('was-validated');
             } else {
-                Swal.fire({
+                await Swal.fire({
                     title: 'هەڵە!',
                     text: result.message,
                     icon: 'error',
                     confirmButtonText: 'باشە'
                 });
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error:', error);
-            Swal.fire({
+            await Swal.fire({
                 title: 'هەڵە!',
                 text: 'هەڵەیەک ڕوویدا لە کاتی ناردنی داواکاری',
                 icon: 'error',
                 confirmButtonText: 'باشە'
             });
-        });
+        }
     });
 }
 
 // Reset Business Partner Form
 const resetBusinessPartnerForm = document.getElementById('resetBusinessPartnerForm');
 if (resetBusinessPartnerForm) {
-    resetBusinessPartnerForm.addEventListener('click', function() {
-        Swal.fire({
+    resetBusinessPartnerForm.addEventListener('click', async function() {
+        const result = await Swal.fire({
             title: 'دڵنیای؟',
             text: 'هەموو زانیارییەکان دەسڕدرێنەوە',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'بەڵێ',
             cancelButtonText: 'نەخێر'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                businessPartnerForm.reset();
-                businessPartnerForm.classList.remove('was-validated');
-                Swal.fire({
-                    title: 'سەرکەوتوو بوو!',
-                    text: 'فۆرمەکە بە سەرکەوتوویی ڕیسێت کرا',
-                    icon: 'success',
-                    confirmButtonText: 'باشە'
-                });
-            }
         });
+
+        if (result.isConfirmed) {
+            businessPartnerForm.reset();
+            businessPartnerForm.classList.remove('was-validated');
+            
+            await Swal.fire({
+                title: 'سەرکەوتوو بوو!',
+                text: 'فۆرمەکە بە سەرکەوتوویی ڕیسێت کرا',
+                icon: 'success',
+                confirmButtonText: 'باشە'
+            });
+        }
     });
 }
