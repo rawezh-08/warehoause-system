@@ -185,8 +185,29 @@ $warehouseExpenses = $result['total_warehouse_expenses'];
 // Get warehouse losses - Assuming there's no separate category in expenses table
 $warehouseLosses = 0;
 
-// Calculate net profit (simple calculation)
-$netProfit = $totalSales - $totalPurchases - $warehouseExpenses - $employeeExpenses - $warehouseLosses;
+// Calculate the cost of goods sold
+$stmt = $conn->prepare("
+    SELECT 
+        COALESCE(SUM(si.pieces_count * p.purchase_price), 0) as total_cost_of_goods_sold
+    FROM 
+        sale_items si
+    JOIN 
+        products p ON si.product_id = p.id
+    JOIN 
+        sales s ON si.sale_id = s.id
+    WHERE 
+        s.is_draft = 0
+        " . ($dateCondition ? ' AND ' . substr($dateCondition, 6) : '') . "
+");
+$stmt->execute();
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
+$costOfGoodsSold = $result['total_cost_of_goods_sold'];
+
+// Calculate gross profit (Sales - Cost of Goods Sold)
+$grossProfit = $totalSales - $costOfGoodsSold;
+
+// Calculate net profit (Gross Profit - Expenses)
+$netProfit = $grossProfit - $warehouseExpenses - $employeeExpenses - $warehouseLosses;
 
 // Calculate available cash (from sales minus expenses and purchases)
 $stmt = $conn->prepare("
@@ -1098,6 +1119,16 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     </div>
                                     <h6 class="stat-title">قازانجی خاوێن</h6>
                                     <h3 class="stat-value"><?php echo number_format($netProfit); ?> د.ع</h3>
+                                    
+                                    <div class="mt-2 small">
+                                        <div class="text-success mb-1">
+                                            <i class="fas fa-arrow-up"></i> قازانجی سەرەتایی: <?php echo number_format($grossProfit); ?> د.ع
+                                        </div>
+                                        <div class="text-muted mb-1">
+                                            <i class="fas fa-minus"></i> خەرجی: <?php echo number_format($warehouseExpenses + $employeeExpenses + $warehouseLosses); ?> د.ع
+                                        </div>
+                                    </div>
+                                    
                                     <div class="stat-status <?php echo $netProfit >= 0 ? 'text-success' : 'text-danger'; ?> fw-bold">
                                         <?php echo $netProfit >= 0 ? 'قازانج' : 'زەرەر'; ?>
                                     </div>
