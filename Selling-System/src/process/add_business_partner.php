@@ -2,7 +2,8 @@
 require_once '../config/database.php';
 require_once '../includes/auth.php';
 
-header('Content-Type: application/json; charset=utf-8');
+// Set header for JSON response
+header('Content-Type: application/json');
 
 // Check if the request is POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -16,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Get form data
         $name = $_POST['partnerName'];
         $phone1 = $_POST['partnerPhone1'];
+        // Use empty string instead of null for optional fields
         $phone2 = !empty($_POST['partnerPhone2']) ? $_POST['partnerPhone2'] : '';
         $address = !empty($_POST['partnerAddress']) ? $_POST['partnerAddress'] : '';
         $notes = !empty($_POST['partnerNotes']) ? $_POST['partnerNotes'] : '';
@@ -84,13 +86,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Commit transaction
         $conn->commit();
         
-        // Return success response
-        die(json_encode([
-            'success' => true,
+        // Return success response with proper encoding
+        $response = [
+            'status' => 'success',
             'message' => 'کڕیار و دابینکەر بە سەرکەوتوویی زیادکرا',
             'customer_id' => $customerId,
             'supplier_id' => $supplierId
-        ]));
+        ];
+        
+        echo json_encode($response, JSON_UNESCAPED_UNICODE);
         
     } catch (Exception $e) {
         // Rollback transaction on error
@@ -99,15 +103,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Return error response
-        die(json_encode([
-            'success' => false,
+        $response = [
+            'status' => 'error',
             'message' => 'هەڵەیەک ڕوویدا: ' . $e->getMessage()
-        ]));
+        ];
+        
+        echo json_encode($response, JSON_UNESCAPED_UNICODE);
     }
 } else {
     // Return error for non-POST requests
-    die(json_encode([
-        'success' => false,
+    $response = [
+        'status' => 'error',
         'message' => 'تەنها داواکاری POST قبوڵ دەکرێت'
-    ]));
+    ];
+    
+    echo json_encode($response, JSON_UNESCAPED_UNICODE);
 } 
