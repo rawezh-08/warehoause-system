@@ -443,6 +443,12 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_sale_return` (IN `p_sale_id` IN
     SELECT 'success' AS 'result';
 END$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `add_sale_with_advance` (
+    IN `p_invoice_number` VARCHAR(50), 
+    IN `p_customer_id` INT, 
+    IN `p_date` TIMESTAMP, 
+    IN `p_payment_type` ENUM('cash','credit'), 
+    IN `p_discount` DECIMAL(10,2), 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `add_sale_with_advance` (IN `p_invoice_number` VARCHAR(50), IN `p_customer_id` INT, IN `p_date` TIMESTAMP, IN `p_payment_type` ENUM('cash','credit'), IN `p_discount` DECIMAL(10,2), IN `p_paid_amount` DECIMAL(10,2), IN `p_price_type` ENUM('single','wholesale'), IN `p_shipping_cost` DECIMAL(10,2), IN `p_other_costs` DECIMAL(10,2), IN `p_notes` TEXT, IN `p_created_by` INT, IN `p_products` JSON, IN `p_is_delivery` TINYINT(1), IN `p_delivery_address` TEXT)   BEGIN
     DECLARE sale_id INT;
     DECLARE i INT DEFAULT 0;
