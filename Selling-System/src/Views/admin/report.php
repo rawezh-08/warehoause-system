@@ -68,11 +68,21 @@ $totalSuppliers = getCount('suppliers');
 // Get sales data - Using correct column names from the database
 $stmt = $conn->prepare("
     SELECT 
-        COALESCE(SUM(si.total_price), 0) as total_sales 
+        COALESCE(SUM(si.total_price), 0) as total_sales,
+        COALESCE(SUM(
+            CASE 
+                WHEN p.pieces_per_box > 0 THEN 
+                    (si.pieces_count / p.pieces_per_box) * p.purchase_price
+                ELSE 
+                    si.pieces_count * p.purchase_price
+            END
+        ), 0) as total_cost
     FROM 
-        sales s
+        sale_items si
     JOIN 
-        sale_items si ON s.id = si.sale_id
+        products p ON si.product_id = p.id
+    JOIN 
+        sales s ON si.sale_id = s.id
     WHERE 
         s.is_draft = 0
         " . ($dateCondition ? ' AND ' . substr($dateCondition, 6) : '') . "
@@ -80,6 +90,7 @@ $stmt = $conn->prepare("
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalSales = $result['total_sales'];
+$totalCost = $result['total_cost'];
 
 // Get cash and credit sales
 $stmt = $conn->prepare("
@@ -192,7 +203,15 @@ $netProfit = $totalSales - $totalPurchases - $warehouseExpenses - $employeeExpen
 // Get the actual profit margin by calculating the difference between sales and cost of goods
 $stmt = $conn->prepare("
     SELECT 
-        COALESCE(SUM(si.total_price - (p.purchase_price * si.pieces_count)), 0) as total_profit_margin
+        COALESCE(SUM(si.total_price), 0) as total_sales,
+        COALESCE(SUM(
+            CASE 
+                WHEN p.pieces_per_box > 0 THEN 
+                    (si.pieces_count / p.pieces_per_box) * p.purchase_price
+                ELSE 
+                    si.pieces_count * p.purchase_price
+            END
+        ), 0) as total_cost
     FROM 
         sale_items si
     JOIN 
@@ -205,10 +224,11 @@ $stmt = $conn->prepare("
 ");
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
-$profitMargin = $result['total_profit_margin'];
+$totalSales = $result['total_sales'];
+$totalCost = $result['total_cost'];
 
 // Calculate true net profit by considering the profit margin minus expenses
-$netProfit = $profitMargin - $warehouseExpenses - $employeeExpenses - $warehouseLosses;
+$netProfit = $totalSales - $totalCost - $warehouseExpenses - $employeeExpenses - $warehouseLosses;
 
 // Calculate available cash (from sales minus expenses and purchases)
 $stmt = $conn->prepare("
@@ -513,7 +533,14 @@ $stmt = $conn->prepare("
     SELECT
         DATE_FORMAT(s.date, '%Y-%m') as month,
         COALESCE(SUM(si.total_price), 0) as sales_revenue,
-        COALESCE(SUM(p.purchase_price * si.pieces_count), 0) as cost_of_goods_sold,
+        COALESCE(SUM(
+            CASE 
+                WHEN p.pieces_per_box > 0 THEN 
+                    (si.pieces_count / p.pieces_per_box) * p.purchase_price
+                ELSE 
+                    si.pieces_count * p.purchase_price
+            END
+        ), 0) as cost_of_goods_sold,
         (
             SELECT COALESCE(SUM(amount), 0)
             FROM expenses
@@ -1123,7 +1150,9 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <?php echo $netProfit >= 0 ? 'قازانج' : 'زەرەر'; ?>
                                     </div>
                                     <div class="small text-muted mt-2">
-                                        <i class="fas fa-info-circle"></i> قازانجی نرخی فرۆشتن - نرخی کڕین - خەرجییەکان
+                                        <i class="fas fa-info-circle"></i> قازانج هەژمار کراوە بەم شێوەیە:<br>
+                                        داهاتی فرۆشتن - نرخی کڕینی کاڵاکان - خەرجییەکان<br>
+                                        <small>(نرخی کڕین بەپێی دانەکان و کارتۆنەکان حیساب دەکرێت)</small>
                                     </div>
                                 </div>
                             </div>
@@ -1322,10 +1351,9 @@ $topDebtors = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <h5 class="card-title mb-4">قازانج و زەرەر بەپێی مانگ</h5>
                                 <div id="monthlyProfitChart" style="height: 350px;"></div>
                                 <div class="small text-muted mt-3">
-                                    <i class="fas fa-info-circle"></i> قازانج هەژمار کراوە بەم شێوەیە: (داهاتی فرۆشتن - نرخی کڕینی کاڵاکان - خەرجییەکان)
-                                </div>
-                                <div class="small text-muted mt-1">
-                                    <i class="fas fa-calculator"></i> بۆ نموونە: کاڵایەک بە 24000د.ع دەفرۆشرێت کە نرخی کڕینی 20500د.ع بووە = 3500د.ع قازانج
+                                    <i class="fas fa-info-circle"></i> قازانج هەژمار کراوە بەم شێوەیە:<br>
+                                    داهاتی فرۆشتن - نرخی کڕینی کاڵاکان - خەرجییەکان<br>
+                                    <small>(نرخی کڕین بەپێی دانەکان و کارتۆنەکان حیساب دەکرێت)</small>
                                 </div>
                             </div>
                         </div>
