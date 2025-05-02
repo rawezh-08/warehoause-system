@@ -68,14 +68,11 @@ $totalSuppliers = getCount('suppliers');
 // Get sales data - Using correct column names from the database
 $stmt = $conn->prepare("
     SELECT 
-        COALESCE(SUM(si.total_price), 0) as total_sales,
-        COALESCE(SUM(si.pieces_count * p.purchase_price), 0) as total_cost
+        COALESCE(SUM(si.total_price), 0) as total_sales 
     FROM 
         sales s
     JOIN 
         sale_items si ON s.id = si.sale_id
-    JOIN
-        products p ON si.product_id = p.id
     WHERE 
         s.is_draft = 0
         " . ($dateCondition ? ' AND ' . substr($dateCondition, 6) : '') . "
@@ -83,7 +80,6 @@ $stmt = $conn->prepare("
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalSales = $result['total_sales'];
-$totalSalesCost = $result['total_cost'];
 
 // Get cash and credit sales
 $stmt = $conn->prepare("
@@ -121,8 +117,7 @@ $totalCreditSales = $result['total_credit_sales'];
 // Get purchases data
 $stmt = $conn->prepare("
     SELECT 
-        COALESCE(SUM(pi.total_price), 0) as total_purchases,
-        COALESCE(SUM(pi.pieces_count * pi.purchase_price), 0) as total_purchase_cost
+        COALESCE(SUM(pi.total_price), 0) as total_purchases 
     FROM 
         purchases p
     JOIN 
@@ -132,7 +127,6 @@ $stmt = $conn->prepare("
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalPurchases = $result['total_purchases'];
-$totalPurchaseCost = $result['total_purchase_cost'];
 
 // Get cash and credit purchases
 $stmt = $conn->prepare("
@@ -191,9 +185,8 @@ $warehouseExpenses = $result['total_warehouse_expenses'];
 // Get warehouse losses - Assuming there's no separate category in expenses table
 $warehouseLosses = 0;
 
-// Calculate net profit (detailed calculation)
-$grossProfit = $totalSales - $totalSalesCost; // قازانجی کەلوەک
-$netProfit = $grossProfit - $warehouseExpenses - $employeeExpenses - $warehouseLosses;
+// Calculate net profit (simple calculation)
+$netProfit = $totalSales - $totalPurchases - $warehouseExpenses - $employeeExpenses - $warehouseLosses;
 
 // Calculate available cash (from sales minus expenses and purchases)
 $stmt = $conn->prepare("
