@@ -701,8 +701,12 @@ $suppliers = $supplierModel->getAllNonBusinessPartners();
                                                         <tr>
                                                             <th>#</th>
                                                             <th>ناو</th>
+                                                            <th>جۆر</th>
                                                             <th>ژمارەی مۆبایل</th>
                                                             <th>ژمارەی مۆبایلی دووەم</th>
+                                                            <th>ناونیشان</th>
+                                                            <th>ناوی کەفیل</th>
+                                                            <th>ژمارەی کەفیل</th>
                                                             <th>قەرز بەسەر کڕیار</th>
                                                             <th>قەرز لەسەر خۆم</th>
                                                             <th>تێبینی</th>
@@ -722,6 +726,10 @@ $suppliers = $supplierModel->getAllNonBusinessPartners();
                                                                 p.supplier_id,
                                                                 p.customer_debt,
                                                                 p.supplier_debt,
+                                                                p.address,
+                                                                p.guarantor_name,
+                                                                p.guarantor_phone,
+                                                                p.type,
                                                                 p.notes
                                                             FROM (
                                                                 SELECT 
@@ -733,6 +741,13 @@ $suppliers = $supplierModel->getAllNonBusinessPartners();
                                                                     c.supplier_id as supplier_id,
                                                                     c.debit_on_business as customer_debt,
                                                                     CASE WHEN s.debt_on_myself IS NOT NULL THEN s.debt_on_myself ELSE 0 END as supplier_debt,
+                                                                    c.address as address,
+                                                                    c.guarantor_name as guarantor_name,
+                                                                    c.guarantor_phone as guarantor_phone,
+                                                                    CASE 
+                                                                        WHEN s.id IS NOT NULL THEN 'کڕیار و دابینکەر'
+                                                                        ELSE 'کڕیار'
+                                                                    END as type,
                                                                     c.notes as notes
                                                                 FROM customers c
                                                                 LEFT JOIN suppliers s ON c.supplier_id = s.id
@@ -749,6 +764,10 @@ $suppliers = $supplierModel->getAllNonBusinessPartners();
                                                                     s.id as supplier_id,
                                                                     0 as customer_debt,
                                                                     s.debt_on_myself as supplier_debt,
+                                                                    '' as address,
+                                                                    '' as guarantor_name,
+                                                                    '' as guarantor_phone,
+                                                                    'دابینکەر' as type,
                                                                     s.notes as notes
                                                                 FROM suppliers s
                                                                 LEFT JOIN customers c ON s.id = c.supplier_id
@@ -765,8 +784,12 @@ $suppliers = $supplierModel->getAllNonBusinessPartners();
                                                             <tr data-id="<?php echo $partner['id']; ?>">
                                                                 <td><?php echo $index + 1; ?></td>
                                                                 <td><?php echo htmlspecialchars($partner['name'] ?? '-'); ?></td>
+                                                                <td><?php echo htmlspecialchars($partner['type'] ?? '-'); ?></td>
                                                                 <td><?php echo htmlspecialchars($partner['phone1'] ?? '-'); ?></td>
                                                                 <td><?php echo htmlspecialchars($partner['phone2'] ? $partner['phone2'] : '-'); ?></td>
+                                                                <td><?php echo htmlspecialchars($partner['address'] ? $partner['address'] : '-'); ?></td>
+                                                                <td><?php echo htmlspecialchars($partner['guarantor_name'] ? $partner['guarantor_name'] : '-'); ?></td>
+                                                                <td><?php echo htmlspecialchars($partner['guarantor_phone'] ? $partner['guarantor_phone'] : '-'); ?></td>
                                                                 <td>
                                                                     <?php if ($partner['customer_debt'] > 0): ?>
                                                                         <span class="text-danger">
@@ -811,7 +834,7 @@ $suppliers = $supplierModel->getAllNonBusinessPartners();
                                                         <?php endforeach; ?>
                                                         <?php if (empty($partners)): ?>
                                                             <tr>
-                                                                <td colspan="8" class="text-center">هیچ کڕیار و دابینکەرێک نەدۆزرایەوە</td>
+                                                                <td colspan="12" class="text-center">هیچ کڕیار و دابینکەرێک نەدۆزرایەوە</td>
                                                             </tr>
                                                         <?php endif; ?>
                                                     </tbody>
