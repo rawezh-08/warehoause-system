@@ -57,14 +57,20 @@ class Customer {
                 }
             }
             
-            // Insert customer data
+            // Handle business partner relationship
+            $isBusinessPartner = isset($data['is_business_partner']) ? 1 : 0;
+            $supplierId = isset($data['supplier_id']) ? $data['supplier_id'] : null;
+            
+            // Insert customer data with business partner fields
             $stmt = $this->conn->prepare("
                 INSERT INTO customers (
                     name, phone1, phone2, guarantor_name, guarantor_phone, 
-                    address, debit_on_business, debt_on_customer, notes
+                    address, debit_on_business, debt_on_customer, notes,
+                    is_business_partner, supplier_id
                 ) VALUES (
                     :name, :phone1, :phone2, :guarantor_name, :guarantor_phone,
-                    :address, :debit_on_business, :debt_on_customer, :notes
+                    :address, :debit_on_business, :debt_on_customer, :notes,
+                    :is_business_partner, :supplier_id
                 )
             ");
 
@@ -86,6 +92,8 @@ class Customer {
             $stmt->bindParam(':debit_on_business', $debitOnBusiness);
             $stmt->bindParam(':debt_on_customer', $debtOnCustomer);
             $stmt->bindParam(':notes', $data['notes']);
+            $stmt->bindParam(':is_business_partner', $isBusinessPartner, PDO::PARAM_INT);
+            $stmt->bindParam(':supplier_id', $supplierId, PDO::PARAM_INT);
             
             if (!$stmt->execute()) {
                 $errorInfo = $stmt->errorInfo();

@@ -29,18 +29,33 @@ class Supplier {
             // Begin transaction
             $this->conn->beginTransaction();
             
-            // Insert supplier data
-            $sql = "INSERT INTO suppliers (name, phone1, phone2, debt_on_myself, debt_on_supplier, notes) 
-                    VALUES (:name, :phone1, :phone2, :debt_on_myself, :debt_on_supplier, :notes)";
+            // Prepare SQL statement with business partner fields
+            $sql = "INSERT INTO suppliers (
+                      name, phone1, phone2, debt_on_myself, 
+                      debt_on_supplier, notes, is_business_partner,
+                      customer_id
+                    ) VALUES (
+                      :name, :phone1, :phone2, :debt_on_myself, 
+                      :debt_on_supplier, :notes, :is_business_partner,
+                      :customer_id
+                    )";
             
             $stmt = $this->conn->prepare($sql);
+            
+            // Handle business partner relationship
+            $isBusinessPartner = isset($data['is_business_partner']) ? 1 : 0;
+            $customerId = isset($data['customer_id']) ? $data['customer_id'] : null;
+            
+            // Execute statement with all parameters
             $stmt->execute([
                 ':name' => $data['name'],
                 ':phone1' => $data['phone1'],
                 ':phone2' => $data['phone2'] ?? '',
                 ':debt_on_myself' => $data['debt_on_myself'] ?? 0,
                 ':debt_on_supplier' => $data['debt_on_supplier'] ?? 0,
-                ':notes' => $data['notes'] ?? null
+                ':notes' => $data['notes'] ?? null,
+                ':is_business_partner' => $isBusinessPartner,
+                ':customer_id' => $customerId
             ]);
             
             // Get the new supplier ID
