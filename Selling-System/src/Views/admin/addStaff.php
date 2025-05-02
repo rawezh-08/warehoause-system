@@ -301,9 +301,7 @@ require_once '../../includes/auth.php';
                                                 </div>
 
                                                 <!-- Customer Information -->
-                                                <div class="col-12 mt-4">
-                                                    <h6 class="mb-3">زانیاری کڕیار</h6>
-                                                </div>
+                                               
                                                 <div class="col-md-6">
                                                     <label for="guarantorName" class="form-label">ناوی کەفیل</label>
                                                     <input type="text" class="form-control" id="guarantorName" name="guarantorName" placeholder="ناوی کەفیل">
@@ -328,9 +326,7 @@ require_once '../../includes/auth.php';
                                                 </div>
 
                                                 <!-- Supplier Information -->
-                                                <div class="col-12 mt-4">
-                                                    <h6 class="mb-3">زانیاری دابینکەر</h6>
-                                                </div>
+                                               
                                                 <div class="col-md-6 mb-4">
                                                     <label for="debt_on_myself" class="form-label">ئەو بڕە پارەی قەرزارم</label>
                                                     <div class="input-group">
