@@ -2,6 +2,8 @@
 require_once '../config/database.php';
 require_once '../includes/auth.php';
 
+header('Content-Type: application/json; charset=utf-8');
+
 // Check if the request is POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
@@ -14,7 +16,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Get form data
         $name = $_POST['partnerName'];
         $phone1 = $_POST['partnerPhone1'];
-        // Use empty string instead of null for optional fields
         $phone2 = !empty($_POST['partnerPhone2']) ? $_POST['partnerPhone2'] : '';
         $address = !empty($_POST['partnerAddress']) ? $_POST['partnerAddress'] : '';
         $notes = !empty($_POST['partnerNotes']) ? $_POST['partnerNotes'] : '';
@@ -84,12 +85,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn->commit();
         
         // Return success response
-        echo json_encode([
-            'status' => 'success',
+        die(json_encode([
+            'success' => true,
             'message' => 'کڕیار و دابینکەر بە سەرکەوتوویی زیادکرا',
             'customer_id' => $customerId,
             'supplier_id' => $supplierId
-        ]);
+        ]));
         
     } catch (Exception $e) {
         // Rollback transaction on error
@@ -98,15 +99,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Return error response
-        echo json_encode([
-            'status' => 'error',
+        die(json_encode([
+            'success' => false,
             'message' => 'هەڵەیەک ڕوویدا: ' . $e->getMessage()
-        ]);
+        ]));
     }
 } else {
     // Return error for non-POST requests
-    echo json_encode([
-        'status' => 'error',
+    die(json_encode([
+        'success' => false,
         'message' => 'تەنها داواکاری POST قبوڵ دەکرێت'
-    ]);
+    ]));
 } 

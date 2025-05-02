@@ -968,7 +968,7 @@ if (businessPartnerForm) {
 
         try {
             // Show loading state
-            await Swal.fire({
+            Swal.fire({
                 title: 'تکایە چاوەڕێ بکە...',
                 text: 'زیادکردنی کڕیار و دابینکەر بەردەوامە',
                 allowOutsideClick: false,
@@ -986,7 +986,10 @@ if (businessPartnerForm) {
             
             const result = await response.json();
             
-            if (result.status === 'success') {
+            // Close the loading dialog
+            Swal.close();
+            
+            if (result.success) {
                 await Swal.fire({
                     title: 'سەرکەوتوو بوو!',
                     text: result.message,
@@ -1007,6 +1010,9 @@ if (businessPartnerForm) {
             }
         } catch (error) {
             console.error('Error:', error);
+            // Close the loading dialog
+            Swal.close();
+            
             await Swal.fire({
                 title: 'هەڵە!',
                 text: 'هەڵەیەک ڕوویدا لە کاتی ناردنی داواکاری',
