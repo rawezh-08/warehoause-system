@@ -22,6 +22,18 @@ $businessPartners = array();
 
 // Add customers with their supplier info
 foreach ($customers as $customer) {
+    $partnerData = array(
+        'id' => $customer['id'],
+        'name' => $customer['name'],
+        'phone1' => $customer['phone1'],
+        'phone2' => $customer['phone2'],
+        'customer_id' => $customer['id'],
+        'supplier_id' => null,
+        'customer_debt' => $customer['debit_on_business'],
+        'supplier_debt' => 0,
+        'notes' => $customer['notes']
+    );
+
     if (!empty($customer['supplier_id'])) {
         // Get the linked supplier information
         $supplierQuery = "SELECT * FROM suppliers WHERE id = :supplier_id";
@@ -31,20 +43,44 @@ foreach ($customers as $customer) {
         $supplierInfo = $supplierStmt->fetch(PDO::FETCH_ASSOC);
         
         if ($supplierInfo) {
-            $businessPartners[] = array(
-                'id' => $customer['id'],
-                'name' => $customer['name'],
-                'phone1' => $customer['phone1'],
-                'phone2' => $customer['phone2'],
-                'customer_id' => $customer['id'],
-                'supplier_id' => $supplierInfo['id'],
-                'customer_debt' => $customer['debit_on_business'],
-                'supplier_debt' => $supplierInfo['debt_on_myself'],
-                'notes' => $customer['notes']
-            );
+            $partnerData['supplier_id'] = $supplierInfo['id'];
+            $partnerData['supplier_debt'] = $supplierInfo['debt_on_myself'];
         }
     }
+
+    $businessPartners[] = $partnerData;
 }
+
+// Add suppliers that don't have a customer link
+foreach ($suppliers as $supplier) {
+    // Check if this supplier is already added through a customer
+    $isAlreadyAdded = false;
+    foreach ($businessPartners as $partner) {
+        if ($partner['supplier_id'] == $supplier['id']) {
+            $isAlreadyAdded = true;
+            break;
+        }
+    }
+
+    if (!$isAlreadyAdded) {
+        $businessPartners[] = array(
+            'id' => $supplier['id'],
+            'name' => $supplier['name'],
+            'phone1' => $supplier['phone1'],
+            'phone2' => $supplier['phone2'],
+            'customer_id' => null,
+            'supplier_id' => $supplier['id'],
+            'customer_debt' => 0,
+            'supplier_debt' => $supplier['debt_on_myself'],
+            'notes' => $supplier['notes']
+        );
+    }
+}
+
+// Sort business partners by name
+usort($businessPartners, function($a, $b) {
+    return strcmp($a['name'], $b['name']);
+});
 
 // Calculate summary statistics
 $totalPartners = count($businessPartners);
@@ -314,15 +350,23 @@ foreach ($businessPartners as $partner) {
                                                         <td><?php echo !empty($partner['notes']) ? htmlspecialchars($partner['notes']) : '-'; ?></td>
                                                         <td>
                                                             <div class="action-buttons">
+                                                                <?php if ($partner['customer_id']): ?>
                                                                 <a href="customerProfile.php?id=<?php echo $partner['customer_id']; ?>" class="btn btn-sm btn-outline-primary rounded-circle" title="پرۆفایلی کڕیار">
                                                                     <i class="fas fa-user"></i>
                                                                 </a>
+                                                                <?php endif; ?>
+                                                                
+                                                                <?php if ($partner['supplier_id']): ?>
                                                                 <a href="supplierProfile.php?id=<?php echo $partner['supplier_id']; ?>" class="btn btn-sm btn-outline-success rounded-circle" title="پرۆفایلی دابینکەر">
                                                                     <i class="fas fa-truck"></i>
                                                                 </a>
+                                                                <?php endif; ?>
+                                                                
+                                                                <?php if ($partner['customer_id']): ?>
                                                                 <a href="../../Views/receipt/customer_history_receipt.php?customer_id=<?php echo $partner['customer_id']; ?>" class="btn btn-sm btn-outline-warning rounded-circle" target="_blank" title="بینینی مێژووی کڕیار">
                                                                     <i class="fas fa-history"></i>
                                                                 </a>
+                                                                <?php endif; ?>
                                                             </div>
                                                         </td>
                                                     </tr>
