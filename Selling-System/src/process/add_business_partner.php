@@ -14,19 +14,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Get form data
         $name = $_POST['partnerName'];
         $phone1 = $_POST['partnerPhone1'];
-        $phone2 = $_POST['partnerPhone2'] ?? null;
-        $address = $_POST['partnerAddress'] ?? null;
-        $notes = $_POST['partnerNotes'] ?? null;
+        $phone2 = !empty($_POST['partnerPhone2']) ? $_POST['partnerPhone2'] : null;
+        $address = !empty($_POST['partnerAddress']) ? $_POST['partnerAddress'] : null;
+        $notes = !empty($_POST['partnerNotes']) ? $_POST['partnerNotes'] : null;
         
         // Customer specific data
-        $guarantorName = $_POST['guarantorName'] ?? null;
-        $guarantorPhone = $_POST['guarantorPhone'] ?? null;
-        $debitOnBusiness = str_replace(',', '', $_POST['debitOnBusiness']) ?? 0;
-        $debtOnCustomer = str_replace(',', '', $_POST['debt_on_customer']) ?? 0;
+        $guarantorName = !empty($_POST['guarantorName']) ? $_POST['guarantorName'] : null;
+        $guarantorPhone = !empty($_POST['guarantorPhone']) ? $_POST['guarantorPhone'] : null;
         
-        // Supplier specific data
-        $debtOnMyself = str_replace(',', '', $_POST['debt_on_myself']) ?? 0;
-        $debtOnSupplier = str_replace(',', '', $_POST['debt_on_supplier']) ?? 0;
+        // Handle empty or invalid numeric values
+        $debitOnBusiness = !empty($_POST['debitOnBusiness']) ? str_replace(',', '', $_POST['debitOnBusiness']) : 0;
+        $debtOnCustomer = !empty($_POST['debt_on_customer']) ? str_replace(',', '', $_POST['debt_on_customer']) : 0;
+        $debtOnMyself = !empty($_POST['debt_on_myself']) ? str_replace(',', '', $_POST['debt_on_myself']) : 0;
+        $debtOnSupplier = !empty($_POST['debt_on_supplier']) ? str_replace(',', '', $_POST['debt_on_supplier']) : 0;
+        
+        // Convert to float to ensure valid decimal values
+        $debitOnBusiness = floatval($debitOnBusiness);
+        $debtOnCustomer = floatval($debtOnCustomer);
+        $debtOnMyself = floatval($debtOnMyself);
+        $debtOnSupplier = floatval($debtOnSupplier);
         
         // Insert into customers table
         $customerQuery = "INSERT INTO customers (name, phone1, phone2, address, guarantor_name, guarantor_phone, 
