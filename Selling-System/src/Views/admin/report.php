@@ -68,14 +68,11 @@ $totalSuppliers = getCount('suppliers');
 // Get sales data - Using correct column names from the database
 $stmt = $conn->prepare("
     SELECT 
-        COALESCE(SUM(si.total_price), 0) as total_sales,
-        COALESCE(SUM(si.pieces_count * p.purchase_price), 0) as total_cost
+        COALESCE(SUM(si.total_price), 0) as total_sales 
     FROM 
         sales s
     JOIN 
         sale_items si ON s.id = si.sale_id
-    JOIN
-        products p ON si.product_id = p.id
     WHERE 
         s.is_draft = 0
         " . ($dateCondition ? ' AND ' . substr($dateCondition, 6) : '') . "
@@ -83,13 +80,6 @@ $stmt = $conn->prepare("
 $stmt->execute();
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 $totalSales = $result['total_sales'];
-$totalCost = $result['total_cost'];
-
-// Calculate gross profit
-$grossProfit = $totalSales - $totalCost;
-
-// Calculate net profit (gross profit minus expenses)
-$netProfit = $grossProfit - $warehouseExpenses - $employeeExpenses - $warehouseLosses;
 
 // Get cash and credit sales
 $stmt = $conn->prepare("
@@ -194,6 +184,9 @@ $warehouseExpenses = $result['total_warehouse_expenses'];
 
 // Get warehouse losses - Assuming there's no separate category in expenses table
 $warehouseLosses = 0;
+
+// Calculate net profit (simple calculation)
+$netProfit = $totalSales - $totalPurchases - $warehouseExpenses - $employeeExpenses - $warehouseLosses;
 
 // Calculate available cash (from sales minus expenses and purchases)
 $stmt = $conn->prepare("
