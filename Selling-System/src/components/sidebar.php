@@ -90,8 +90,9 @@
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="deptsSubmenu">
-                    <li><a href="customerProfile.php">کڕیارەکان</a></li>
+                    <li><a href="customers.php">کڕیارەکان</a></li>
                     <li><a href="suppliers.php">دابینکەرەکان</a></li>
+                    <li><a href="business_partners.php">کڕیار و دابینکەر</a></li>
                 </ul>
             </li>
 
