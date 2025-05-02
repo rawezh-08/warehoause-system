@@ -1436,7 +1436,7 @@ $tabs = [
                         <input type="hidden" name="customer_id" value="<?php echo $customerId; ?>">
                         <div class="mb-3">
                             <label for="amount" class="form-label">بڕی پارە</label>
-                            <input type="number" class="form-control" id="amount" name="amount" required>
+                            <input type="text" class="form-control" id="amount" name="amount" required>
                         </div>
                         <div class="mb-3">
                             <label for="notes" class="form-label">تێبینی</label>
@@ -1465,7 +1465,7 @@ $tabs = [
                         <input type="hidden" name="customer_id" value="<?php echo $customerId; ?>">
                         <div class="mb-3">
                             <label for="collection_amount" class="form-label">بڕی پارە</label>
-                            <input type="number" class="form-control" id="collection_amount" name="amount" required>
+                            <input type="text" class="form-control" id="collection_amount" name="amount" required>
                         </div>
                         <div class="mb-3">
                             <label for="collection_notes" class="form-label">تێبینی</label>
@@ -1496,7 +1496,7 @@ $tabs = [
                         <input type="hidden" name="supplier_id" value="<?php echo $supplierId; ?>">
                         <div class="mb-3">
                             <label for="supplier_amount" class="form-label">بڕی پارە</label>
-                            <input type="number" class="form-control" id="supplier_amount" name="amount" required>
+                            <input type="text" class="form-control" id="supplier_amount" name="amount" required>
                         </div>
                         <div class="mb-3">
                             <label for="supplier_notes" class="form-label">تێبینی</label>
@@ -1525,7 +1525,7 @@ $tabs = [
                         <input type="hidden" name="supplier_id" value="<?php echo $supplierId; ?>">
                         <div class="mb-3">
                             <label for="supplier_collection_amount" class="form-label">بڕی پارە</label>
-                            <input type="number" class="form-control" id="supplier_collection_amount" name="amount" required>
+                            <input type="text" class="form-control" id="supplier_collection_amount" name="amount" required>
                         </div>
                         <div class="mb-3">
                             <label for="supplier_collection_notes" class="form-label">تێبینی</label>
