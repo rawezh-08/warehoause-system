@@ -6,13 +6,13 @@ $db = new Database();
 $conn = $db->getConnection();
 
 // Get all customers that are business partners
-$query = "SELECT * FROM customers WHERE is_business_partner = 1 ORDER BY name ASC";
+$query = "SELECT * FROM customers";
 $stmt = $conn->prepare($query);
 $stmt->execute();
 $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get all suppliers that are business partners
-$query = "SELECT * FROM suppliers WHERE is_business_partner = 1 ORDER BY name ASC";
+$query = "SELECT * FROM suppliers";
 $stmt = $conn->prepare($query);
 $stmt->execute();
 $suppliers = $stmt->fetchAll(PDO::FETCH_ASSOC);
