@@ -52,7 +52,9 @@ try {
         'address' => $_POST['customerAddress'] ?? null,
         'debit_on_business' => $debitOnBusiness,
         'debt_on_customer' => $debtOnCustomer,
-        'notes' => $_POST['customerNotes'] ?? null
+        'notes' => $_POST['customerNotes'] ?? null,
+        'is_business_partner' => isset($_POST['is_business_partner']) ? 1 : 0,
+        'supplier_id' => isset($_POST['supplier_id']) ? $_POST['supplier_id'] : null
     ];
 
     // Add customer
