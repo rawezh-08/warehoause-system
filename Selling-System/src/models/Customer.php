@@ -243,6 +243,18 @@ class Customer {
     }
     
     /**
+     * Get all customers excluding business partners
+     * @return array List of customers who are not business partners
+     */
+    public function getAllNonBusinessPartners() {
+        $query = "SELECT * FROM customers WHERE is_business_partner = 0 OR is_business_partner IS NULL ORDER BY name";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    /**
      * Get a customer by ID
      * @param int $id Customer ID
      * @return array|bool Customer data or false

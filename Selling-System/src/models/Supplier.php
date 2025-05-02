@@ -125,6 +125,22 @@ class Supplier {
     }
     
     /**
+     * Get all suppliers excluding business partners
+     * 
+     * @return array Array of suppliers who are not business partners
+     */
+    public function getAllNonBusinessPartners() {
+        try {
+            $sql = "SELECT * FROM suppliers WHERE is_business_partner = 0 OR is_business_partner IS NULL ORDER BY name ASC";
+            $stmt = $this->conn->query($sql);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Error getting non-business partner suppliers: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
      * Get a supplier by ID
      * 
      * @param int $id Supplier ID

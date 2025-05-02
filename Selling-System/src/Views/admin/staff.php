@@ -14,11 +14,11 @@ $customerModel = new Customer($conn);
 // Create Supplier model instance
 $supplierModel = new Supplier($conn);
 
-// Get all customers
-$customers = $customerModel->getAll();
+// Get all customers (excluding business partners)
+$customers = $customerModel->getAllNonBusinessPartners();
 
-// Get all suppliers
-$suppliers = $supplierModel->getAll();
+// Get all suppliers (excluding business partners)
+$suppliers = $supplierModel->getAllNonBusinessPartners();
 
 // You can add PHP logic here if needed
 ?>
