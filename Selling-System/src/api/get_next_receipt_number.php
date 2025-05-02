@@ -5,18 +5,42 @@ require_once '../config/database.php';
 header('Content-Type: application/json');
 
 try {
-    // Get the highest receipt number from both sales and receipt_drafts tables
+    // First, get the last used receipt number from sales table
     $stmt = $conn->query("
-        SELECT MAX(CAST(SUBSTRING(invoice_number, 3) AS UNSIGNED)) as max_number 
-        FROM (
-            SELECT invoice_number FROM sales WHERE invoice_number REGEXP '^[A-Z]-[0-9]+$'
-            UNION
-            SELECT invoice_number FROM receipt_drafts WHERE invoice_number REGEXP '^[A-Z]-[0-9]+$'
-        ) AS combined_receipts
+        SELECT invoice_number 
+        FROM sales 
+        WHERE invoice_number REGEXP '^[A-Z]-[0-9]+$'
+        ORDER BY CAST(SUBSTRING(invoice_number, 3) AS UNSIGNED) DESC 
+        LIMIT 1
     ");
     
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    $maxNumber = $result['max_number'] ?? 0;
+    $lastSale = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    // Then get the last used receipt number from receipt_drafts table
+    $stmt = $conn->query("
+        SELECT invoice_number 
+        FROM receipt_drafts 
+        WHERE invoice_number REGEXP '^[A-Z]-[0-9]+$'
+        ORDER BY CAST(SUBSTRING(invoice_number, 3) AS UNSIGNED) DESC 
+        LIMIT 1
+    ");
+    
+    $lastDraft = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    // Initialize variables
+    $maxNumber = 0;
+    
+    // Check sales table
+    if ($lastSale && !empty($lastSale['invoice_number'])) {
+        $number = intval(substr($lastSale['invoice_number'], 2));
+        $maxNumber = max($maxNumber, $number);
+    }
+    
+    // Check receipt_drafts table
+    if ($lastDraft && !empty($lastDraft['invoice_number'])) {
+        $number = intval(substr($lastDraft['invoice_number'], 2));
+        $maxNumber = max($maxNumber, $number);
+    }
     
     // Increment the number
     $nextNumber = $maxNumber + 1;
