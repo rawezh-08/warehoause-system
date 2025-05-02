@@ -1422,6 +1422,192 @@ $tabs = [
     
     <!-- Modals for payment actions will be implemented here -->
     
+    <!-- Customer Payment Modal -->
+    <?php if ($customer): ?>
+    <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="paymentModalLabel">پارەدان بۆ کڕیار</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="customerPaymentForm">
+                        <input type="hidden" name="customer_id" value="<?php echo $customerId; ?>">
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">بڕی پارە</label>
+                            <input type="number" class="form-control" id="amount" name="amount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">تێبینی</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" id="saveCustomerPayment">پاشەکەوت</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collect Customer Debt Modal -->
+    <div class="modal fade" id="collectDebtModal" tabindex="-1" aria-labelledby="collectDebtModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="collectDebtModalLabel">وەرگرتنی قەرز لە کڕیار</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="collectCustomerDebtForm">
+                        <input type="hidden" name="customer_id" value="<?php echo $customerId; ?>">
+                        <div class="mb-3">
+                            <label for="collection_amount" class="form-label">بڕی پارە</label>
+                            <input type="number" class="form-control" id="collection_amount" name="amount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="collection_notes" class="form-label">تێبینی</label>
+                            <textarea class="form-control" id="collection_notes" name="notes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-warning" id="saveCustomerCollection">پاشەکەوت</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- Supplier Payment Modal -->
+    <?php if ($supplier): ?>
+    <div class="modal fade" id="supplierPaymentModal" tabindex="-1" aria-labelledby="supplierPaymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="supplierPaymentModalLabel">پارەدان بۆ دابینکەر</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="supplierPaymentForm">
+                        <input type="hidden" name="supplier_id" value="<?php echo $supplierId; ?>">
+                        <div class="mb-3">
+                            <label for="supplier_amount" class="form-label">بڕی پارە</label>
+                            <input type="number" class="form-control" id="supplier_amount" name="amount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="supplier_notes" class="form-label">تێبینی</label>
+                            <textarea class="form-control" id="supplier_notes" name="notes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-success" id="saveSupplierPayment">پاشەکەوت</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collect Supplier Debt Modal -->
+    <div class="modal fade" id="collectSupplierDebtModal" tabindex="-1" aria-labelledby="collectSupplierDebtModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="collectSupplierDebtModalLabel">وەرگرتنی قەرز لە دابینکەر</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="collectSupplierDebtForm">
+                        <input type="hidden" name="supplier_id" value="<?php echo $supplierId; ?>">
+                        <div class="mb-3">
+                            <label for="supplier_collection_amount" class="form-label">بڕی پارە</label>
+                            <input type="number" class="form-control" id="supplier_collection_amount" name="amount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="supplier_collection_notes" class="form-label">تێبینی</label>
+                            <textarea class="form-control" id="supplier_collection_notes" name="notes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-info" id="saveSupplierCollection">پاشەکەوت</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- Edit Partner Modal -->
+    <div class="modal fade" id="editPartnerModal" tabindex="-1" aria-labelledby="editPartnerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editPartnerModalLabel">دەستکاری زانیاری <?php echo htmlspecialchars($partnerName); ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editPartnerForm">
+                        <div class="row">
+                            <?php if ($customer): ?>
+                            <input type="hidden" name="customer_id" value="<?php echo $customerId; ?>">
+                            <?php endif; ?>
+                            
+                            <?php if ($supplier): ?>
+                            <input type="hidden" name="supplier_id" value="<?php echo $supplierId; ?>">
+                            <?php endif; ?>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="partner_name" class="form-label">ناو</label>
+                                <input type="text" class="form-control" id="partner_name" name="name" value="<?php echo htmlspecialchars($partnerName); ?>" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="partner_phone1" class="form-label">ژمارەی مۆبایل</label>
+                                <input type="text" class="form-control" id="partner_phone1" name="phone1" value="<?php echo $customer ? htmlspecialchars($customer['phone1']) : htmlspecialchars($supplier['phone1']); ?>" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="partner_phone2" class="form-label">ژمارەی مۆبایل ٢</label>
+                                <input type="text" class="form-control" id="partner_phone2" name="phone2" value="<?php echo $customer ? htmlspecialchars($customer['phone2'] ?? '') : htmlspecialchars($supplier['phone2'] ?? ''); ?>">
+                            </div>
+                            
+                            <?php if ($customer): ?>
+                            <div class="col-md-6 mb-3">
+                                <label for="partner_address" class="form-label">ناونیشان</label>
+                                <input type="text" class="form-control" id="partner_address" name="address" value="<?php echo htmlspecialchars($customer['address'] ?? ''); ?>">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="guarantor_name" class="form-label">ناوی کەفیل</label>
+                                <input type="text" class="form-control" id="guarantor_name" name="guarantor_name" value="<?php echo htmlspecialchars($customer['guarantor_name'] ?? ''); ?>">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="guarantor_phone" class="form-label">ژمارەی مۆبایلی کەفیل</label>
+                                <input type="text" class="form-control" id="guarantor_phone" name="guarantor_phone" value="<?php echo htmlspecialchars($customer['guarantor_phone'] ?? ''); ?>">
+                            </div>
+                            <?php endif; ?>
+                            
+                            <div class="col-12 mb-3">
+                                <label for="partner_notes" class="form-label">تێبینی</label>
+                                <textarea class="form-control" id="partner_notes" name="notes" rows="3"><?php echo $customer ? htmlspecialchars($customer['notes'] ?? '') : htmlspecialchars($supplier['notes'] ?? ''); ?></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
+                    <button type="button" class="btn btn-primary" id="savePartnerChanges">پاشەکەوت</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Bootstrap JS and Popper.js -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
@@ -1602,6 +1788,256 @@ $tabs = [
                 // Initialize table on page load
                 updateTable();
             }
+
+            // Handle customer payment form submission
+            $('#saveCustomerPayment').on('click', function() {
+                const formData = $('#customerPaymentForm').serialize();
+                
+                $.ajax({
+                    url: '../../process/add_customer_payment.php',
+                    type: 'POST',
+                    data: formData,
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                title: 'سەرکەوتوو بوو!',
+                                text: response.message,
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false,
+                                customClass: {
+                                    container: 'toast-container-rtl'
+                                }
+                            }).then(function() {
+                                location.reload(); // Reload page to update data
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: response.message,
+                                icon: 'error',
+                                customClass: {
+                                    container: 'toast-container-rtl'
+                                }
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە کاتی ناردنی داواکاری',
+                            icon: 'error',
+                            customClass: {
+                                container: 'toast-container-rtl'
+                            }
+                        });
+                    }
+                });
+                
+                $('#paymentModal').modal('hide');
+            });
+
+            // Handle collect customer debt form submission
+            $('#saveCustomerCollection').on('click', function() {
+                const formData = $('#collectCustomerDebtForm').serialize();
+                
+                $.ajax({
+                    url: '../../process/collect_customer_debt.php',
+                    type: 'POST',
+                    data: formData,
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                title: 'سەرکەوتوو بوو!',
+                                text: response.message,
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false,
+                                customClass: {
+                                    container: 'toast-container-rtl'
+                                }
+                            }).then(function() {
+                                location.reload(); // Reload page to update data
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: response.message,
+                                icon: 'error',
+                                customClass: {
+                                    container: 'toast-container-rtl'
+                                }
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە کاتی ناردنی داواکاری',
+                            icon: 'error',
+                            customClass: {
+                                container: 'toast-container-rtl'
+                            }
+                        });
+                    }
+                });
+                
+                $('#collectDebtModal').modal('hide');
+            });
+
+            // Handle supplier payment form submission
+            $('#saveSupplierPayment').on('click', function() {
+                const formData = $('#supplierPaymentForm').serialize();
+                
+                $.ajax({
+                    url: '../../process/add_supplier_payment.php',
+                    type: 'POST',
+                    data: formData,
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                title: 'سەرکەوتوو بوو!',
+                                text: response.message,
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false,
+                                customClass: {
+                                    container: 'toast-container-rtl'
+                                }
+                            }).then(function() {
+                                location.reload(); // Reload page to update data
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: response.message,
+                                icon: 'error',
+                                customClass: {
+                                    container: 'toast-container-rtl'
+                                }
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە کاتی ناردنی داواکاری',
+                            icon: 'error',
+                            customClass: {
+                                container: 'toast-container-rtl'
+                            }
+                        });
+                    }
+                });
+                
+                $('#supplierPaymentModal').modal('hide');
+            });
+
+            // Handle collect supplier debt form submission
+            $('#saveSupplierCollection').on('click', function() {
+                const formData = $('#collectSupplierDebtForm').serialize();
+                
+                $.ajax({
+                    url: '../../process/collect_supplier_debt.php',
+                    type: 'POST',
+                    data: formData,
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                title: 'سەرکەوتوو بوو!',
+                                text: response.message,
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false,
+                                customClass: {
+                                    container: 'toast-container-rtl'
+                                }
+                            }).then(function() {
+                                location.reload(); // Reload page to update data
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: response.message,
+                                icon: 'error',
+                                customClass: {
+                                    container: 'toast-container-rtl'
+                                }
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە کاتی ناردنی داواکاری',
+                            icon: 'error',
+                            customClass: {
+                                container: 'toast-container-rtl'
+                            }
+                        });
+                    }
+                });
+                
+                $('#collectSupplierDebtModal').modal('hide');
+            });
+
+            // Handle edit partner form submission
+            $('#savePartnerChanges').on('click', function() {
+                const formData = $('#editPartnerForm').serialize();
+                
+                $.ajax({
+                    url: '../../process/update_business_partner.php',
+                    type: 'POST',
+                    data: formData,
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                title: 'سەرکەوتوو بوو!',
+                                text: response.message,
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false,
+                                customClass: {
+                                    container: 'toast-container-rtl'
+                                }
+                            }).then(function() {
+                                location.reload(); // Reload page to update data
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'هەڵە!',
+                                text: response.message,
+                                icon: 'error',
+                                customClass: {
+                                    container: 'toast-container-rtl'
+                                }
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە کاتی ناردنی داواکاری',
+                            icon: 'error',
+                            customClass: {
+                                container: 'toast-container-rtl'
+                            }
+                        });
+                    }
+                });
+                
+                $('#editPartnerModal').modal('hide');
+            });
+
+            // Clear form fields when modals are closed
+            $('.modal').on('hidden.bs.modal', function() {
+                $(this).find('form')[0].reset();
+            });
         });
     </script>
 </body>
