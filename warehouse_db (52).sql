@@ -449,7 +449,16 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_sale_with_advance` (
     IN `p_date` TIMESTAMP, 
     IN `p_payment_type` ENUM('cash','credit'), 
     IN `p_discount` DECIMAL(10,2), 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `add_sale_with_advance` (IN `p_invoice_number` VARCHAR(50), IN `p_customer_id` INT, IN `p_date` TIMESTAMP, IN `p_payment_type` ENUM('cash','credit'), IN `p_discount` DECIMAL(10,2), IN `p_paid_amount` DECIMAL(10,2), IN `p_price_type` ENUM('single','wholesale'), IN `p_shipping_cost` DECIMAL(10,2), IN `p_other_costs` DECIMAL(10,2), IN `p_notes` TEXT, IN `p_created_by` INT, IN `p_products` JSON, IN `p_is_delivery` TINYINT(1), IN `p_delivery_address` TEXT)   BEGIN
+    IN `p_paid_amount` DECIMAL(10,2),
+    IN `p_price_type` ENUM('single','wholesale'),
+    IN `p_shipping_cost` DECIMAL(10,2),
+    IN `p_other_costs` DECIMAL(10,2),
+    IN `p_notes` TEXT,
+    IN `p_created_by` INT,
+    IN `p_products` JSON,
+    IN `p_is_delivery` TINYINT(1),
+    IN `p_delivery_address` TEXT
+)   BEGIN
     DECLARE sale_id INT;
     DECLARE i INT DEFAULT 0;
     DECLARE product_count INT;
@@ -1520,6 +1529,122 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `use_supplier_advance_payment` (IN `
     
     SELECT 'success' AS 'result', amount_to_use AS 'amount_used';
 END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `pay_customer_debt_fifo` (
+    IN `p_customer_id` INT,
+    IN `p_amount` DECIMAL(10,2),
+    IN `p_notes` TEXT,
+    IN `p_created_by` INT,
+    IN `p_payment_method` VARCHAR(20)
+)
+BEGIN
+    DECLARE v_remaining_payment DECIMAL(10,2);
+    DECLARE v_sale_id INT;
+    DECLARE v_sale_remaining DECIMAL(10,2);
+    DECLARE v_amount_to_pay DECIMAL(10,2);
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE current_debt DECIMAL(10,2);
+    
+    -- Get current total debt
+    SELECT debit_on_business INTO current_debt 
+    FROM customers 
+    WHERE id = p_customer_id;
+    
+    -- Validate payment amount
+    IF p_amount <= 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'بڕی پارەی دراو دەبێت گەورەتر بێت لە سفر';
+    END IF;
+    
+    IF p_amount > current_debt THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'بڕی پارەی دراو گەورەترە لە قەرز';
+    END IF;
+    
+    -- Declare cursor for unpaid sales ordered by date (FIFO)
+    DECLARE sales_cursor CURSOR FOR 
+        SELECT id, remaining_amount 
+        FROM sales 
+        WHERE customer_id = p_customer_id 
+        AND payment_type = 'credit' 
+        AND remaining_amount > 0 
+        ORDER BY date ASC;
+    
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+    
+    START TRANSACTION;
+    
+    SET v_remaining_payment = p_amount;
+    
+    -- Open cursor and loop through unpaid sales
+    OPEN sales_cursor;
+    
+    read_loop: LOOP
+        FETCH sales_cursor INTO v_sale_id, v_sale_remaining;
+        
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+        
+        -- Calculate amount to pay for this sale
+        IF v_remaining_payment >= v_sale_remaining THEN
+            SET v_amount_to_pay = v_sale_remaining;
+        ELSE
+            SET v_amount_to_pay = v_remaining_payment;
+        END IF;
+        
+        -- Update sale
+        UPDATE sales 
+        SET paid_amount = paid_amount + v_amount_to_pay,
+            remaining_amount = remaining_amount - v_amount_to_pay
+        WHERE id = v_sale_id;
+        
+        -- Create debt transaction record with JSON notes
+        INSERT INTO debt_transactions (
+            customer_id,
+            amount,
+            transaction_type,
+            reference_id,
+            notes,
+            created_by
+        ) VALUES (
+            p_customer_id,
+            v_amount_to_pay,
+            'collection',
+            v_sale_id,
+            JSON_OBJECT(
+                'payment_method', p_payment_method,
+                'notes', p_notes,
+                'original_amount', p_amount
+            ),
+            p_created_by
+        );
+        
+        SET v_remaining_payment = v_remaining_payment - v_amount_to_pay;
+        
+        IF v_remaining_payment <= 0 THEN
+            LEAVE read_loop;
+        END IF;
+    END LOOP;
+    
+    CLOSE sales_cursor;
+    
+    -- Update customer's total debt
+    UPDATE customers 
+    SET debit_on_business = debit_on_business - p_amount
+    WHERE id = p_customer_id;
+    
+    COMMIT;
+    
+    -- Return success with details
+    SELECT 
+        'success' AS status,
+        p_amount AS paid_amount,
+        current_debt - p_amount AS remaining_debt;
+        
+END$$
+
+DELIMITER ;
 
 --
 -- Functions

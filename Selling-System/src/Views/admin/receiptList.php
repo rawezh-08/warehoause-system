@@ -1004,6 +1004,215 @@ function translateUnitType($unitType) {
             'returns': 'returnsTable'
         };
         
+        // Variables used by all tables
+        let currentPageMap = {
+            'sales': 1,
+            'delivery': 1,
+            'drafts': 1,
+            'returns': 1
+        };
+        
+        let itemsPerPageMap = {
+            'sales': 10,
+            'delivery': 10,
+            'drafts': 10,
+            'returns': 10
+        };
+        
+        // Global functions to allow access from tab switching handler
+        function globalShowPage(tableId, page) {
+            const actualTableId = tableMap[tableId];
+            const tableBody = $(`#${actualTableId} tbody`);
+            const allRows = tableBody.find('tr');
+            
+            // Important: First remove any existing no-records-row
+            tableBody.find('.no-records-row').remove();
+            
+            // Reset visibility - make all rows visible before filtering
+            allRows.show();
+            
+            // Apply current search filter
+            applySearchFilter(tableId);
+            
+            // Get truly visible rows (not hidden by search/filter)
+            const visibleRows = tableBody.find('tr:visible');
+            
+            // If no visible rows, show "no records" message
+            if (visibleRows.length === 0) {
+                // Add a "no records" message row
+                const colCount = $(`#${actualTableId} thead th`).length;
+                const noRecordsRow = $(`<tr class="no-records-row"><td colspan="${colCount}" class="text-center py-4">هیچ پسووڵەیەک نەدۆزرایەوە</td></tr>`);
+                tableBody.append(noRecordsRow);
+                
+                // Update pagination
+                const totalItems = 0;
+                const totalPages = 0;
+                updatePagination(tableId, totalItems, totalPages);
+                return;
+            }
+            
+            // Calculate start and end indexes
+            const itemsPerPage = itemsPerPageMap[tableId];
+            const startIndex = (page - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            
+            // Hide all visible rows first
+            visibleRows.hide();
+            
+            // Show only rows for current page
+            visibleRows.slice(startIndex, endIndex).show();
+            
+            // Update pagination buttons and counts
+            const totalItems = visibleRows.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            
+            // Make sure current page is valid
+            if (page > totalPages) {
+                page = totalPages || 1;
+                currentPageMap[tableId] = page;
+            }
+            
+            // Update pagination
+            updatePagination(tableId, totalItems, totalPages);
+            
+            // Update next/prev button states
+            $(`#${tableId}PrevPage`).prop('disabled', page === 1);
+            $(`#${tableId}NextPage`).prop('disabled', page === totalPages || totalPages === 0);
+        }
+        
+        function applySearchFilter(tableId) {
+            const actualTableId = tableMap[tableId];
+            const searchTerm = $(`#${tableId}SearchInput`).val().toLowerCase();
+            
+            // Apply current filters from filter form using the correct table ID
+            applyCustomerFilter(actualTableId);
+            applyPaymentTypeFilter(actualTableId);
+            
+            // Skip filtering if search is empty to show all rows
+            if (!searchTerm) return; 
+            
+            const allRows = $(`#${actualTableId} tbody tr`).not('.no-records-row');
+            
+            allRows.each(function() {
+                const rowText = $(this).text().toLowerCase();
+                const match = rowText.indexOf(searchTerm) > -1;
+                $(this).toggle(match);
+            });
+        }
+        
+        function applyCustomerFilter(tableId) {
+            const customerFilter = $('#customerFilter').val();
+            if (!customerFilter) return; // Skip if no customer selected
+            
+            // Apply to current table only
+            const allRows = $(`#${tableId} tbody tr`).not('.no-records-row');
+            
+            allRows.each(function() {
+                const customerName = $(this).find('td:eq(3)').text().trim();
+                const match = customerName === customerFilter;
+                $(this).toggle(match);
+            });
+        }
+        
+        function applyPaymentTypeFilter(tableId) {
+            const paymentTypeFilter = $('#paymentTypeFilter').val();
+            if (!paymentTypeFilter) return; // Skip if no payment type selected
+            
+            // Apply to current table only
+            const allRows = $(`#${tableId} tbody tr`).not('.no-records-row');
+            
+            allRows.each(function() {
+                // Payment type is in a badge in column with the "naqd" or "qarz" text
+                const paymentType = $(this).text().toLowerCase();
+                let match = true;
+                
+                if (paymentTypeFilter === 'cash' && paymentType.indexOf('نەقد') === -1) {
+                    match = false;
+                } else if (paymentTypeFilter === 'debt' && paymentType.indexOf('قەرز') === -1) {
+                    match = false;
+                }
+                
+                $(this).toggle(match);
+            });
+        }
+        
+        function updatePagination(tableId, totalItems, totalPages) {
+            const pagination = $(`#${tableId}Pagination`);
+            pagination.empty();
+            
+            // Current page from map
+            const currentPage = currentPageMap[tableId];
+
+            // Don't show pagination if there are no pages
+            if (totalPages === 0) {
+                $(`#${tableId}PrevPage`).prop('disabled', true);
+                $(`#${tableId}NextPage`).prop('disabled', true);
+                return;
+            }
+            
+            // Limit number of page buttons to display
+            const maxPagesToShow = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+            if (endPage - startPage + 1 < maxPagesToShow && startPage > 1) {
+                startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            }
+
+            // Add first page button if not visible
+            if (startPage > 1) {
+                const firstPageBtn = $('<button class="btn btn-sm btn-outline-secondary rounded-circle">١</button>');
+                firstPageBtn.on('click', function() {
+                    currentPageMap[tableId] = 1;
+                    globalShowPage(tableId, 1);
+                });
+                pagination.append(firstPageBtn);
+                
+                // Add ellipsis if there's a gap
+                if (startPage > 2) {
+                    pagination.append('<span class="px-1">...</span>');
+                }
+            }
+
+            // Add page buttons
+            for (let i = startPage; i <= endPage; i++) {
+                // Convert to Kurdish numerals
+                const kurdishNum = convertToKurdishNumerals(i);
+                const pageButton = $('<button class="btn btn-sm ' + (i === currentPage ? 'btn-primary' : 'btn-outline-secondary') + ' rounded-circle">' + kurdishNum + '</button>');
+                pageButton.on('click', function() {
+                    currentPageMap[tableId] = i;
+                    globalShowPage(tableId, i);
+                });
+                pagination.append(pageButton);
+            }
+
+            // Add last page button if not visible
+            if (endPage < totalPages) {
+                // Add ellipsis if there's a gap
+                if (endPage < totalPages - 1) {
+                    pagination.append('<span class="px-1">...</span>');
+                }
+                
+                const lastPageBtn = $('<button class="btn btn-sm btn-outline-secondary rounded-circle">' + convertToKurdishNumerals(totalPages) + '</button>');
+                lastPageBtn.on('click', function() {
+                    currentPageMap[tableId] = totalPages;
+                    globalShowPage(tableId, totalPages);
+                });
+                pagination.append(lastPageBtn);
+            }
+
+            $(`#${tableId}PrevPage`).prop('disabled', currentPage === 1);
+            $(`#${tableId}NextPage`).prop('disabled', currentPage === totalPages);
+        }
+        
+        // Convert numbers to Kurdish numerals
+        function convertToKurdishNumerals(num) {
+            const kurdishDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+            return num.toString().split('').map(digit => 
+                isNaN(parseInt(digit)) ? digit : kurdishDigits[parseInt(digit)]
+            ).join('');
+        }
+        
         // Initialize all tables
         initializeTable('sales');
         initializeTable('drafts');
@@ -1031,16 +1240,10 @@ function translateUnitType($unitType) {
                 $(`#${tableId}SearchInput`).val('');
                 
                 // Reset to page 1
-                const actualTableId = tableMap[tableId];
-                const table = $(`#${actualTableId}`);
-                const tableBody = table.find('tbody');
+                currentPageMap[tableId] = 1;
                 
-                // Make all rows visible
-                tableBody.find('tr').show();
-                
-                // Update pagination for this table
-                showPage(tableId, 1);
-                updatePagination(tableId);
+                // Update display
+                globalShowPage(tableId, 1);
             }
         });
 
@@ -1049,249 +1252,51 @@ function translateUnitType($unitType) {
             const table = $(`#${actualTableId}`);
             const tableBody = table.find('tbody');
             const rows = tableBody.find('tr');
-            let itemsPerPage = parseInt($(`#${tableId}RecordsPerPage`).val());
-            let currentPage = 1;
+            
+            // Set initial values
+            itemsPerPageMap[tableId] = parseInt($(`#${tableId}RecordsPerPage`).val());
             let totalItems = rows.length;
-            let totalPages = Math.ceil(totalItems / itemsPerPage);
+            let totalPages = Math.ceil(totalItems / itemsPerPageMap[tableId]);
 
             // Initial pagination setup
-            updatePagination(tableId);
-            showPage(tableId, 1);
+            updatePagination(tableId, totalItems, totalPages);
+            globalShowPage(tableId, 1);
 
             // Handle records per page change
             $(`#${tableId}RecordsPerPage`).on('change', function() {
-                itemsPerPage = parseInt($(this).val());
-                currentPage = 1;
+                itemsPerPageMap[tableId] = parseInt($(this).val());
+                currentPageMap[tableId] = 1;
                 
-                // Count visible rows after filtering
-                const visibleRows = $(`#${actualTableId} tbody tr:visible`);
-                totalItems = visibleRows.length;
-                totalPages = Math.ceil(totalItems / itemsPerPage);
-                
-                updatePagination(tableId);
-                showPage(tableId, 1);
+                globalShowPage(tableId, 1);
             });
-
-            // Show specific page
-            function showPage(tableId, page) {
-                const actualTableId = tableMap[tableId];
-                const tableBody = $(`#${actualTableId} tbody`);
-                const allRows = tableBody.find('tr');
-                
-                // Important: First remove any existing no-records-row
-                tableBody.find('.no-records-row').remove();
-                
-                // Reset visibility - make all rows visible before filtering
-                allRows.show();
-                
-                // Apply current search filter
-                applySearchFilter(tableId);
-                
-                // Get truly visible rows (not hidden by search/filter)
-                const visibleRows = tableBody.find('tr:visible');
-                
-                // If no visible rows, show "no records" message
-                if (visibleRows.length === 0) {
-                    // Add a "no records" message row
-                    const colCount = $(`#${actualTableId} thead th`).length;
-                    const noRecordsRow = $(`<tr class="no-records-row"><td colspan="${colCount}" class="text-center py-4">هیچ پسووڵەیەک نەدۆزرایەوە</td></tr>`);
-                    tableBody.append(noRecordsRow);
-                    
-                    // Update pagination
-                    totalItems = 0;
-                    totalPages = 0;
-                    return;
-                }
-                
-                // Calculate start and end indexes
-                const startIndex = (page - 1) * itemsPerPage;
-                const endIndex = startIndex + itemsPerPage;
-                
-                // Hide all visible rows first
-                visibleRows.hide();
-                
-                // Show only rows for current page
-                visibleRows.slice(startIndex, endIndex).show();
-                
-                // Update pagination buttons and counts
-                totalItems = visibleRows.length;
-                totalPages = Math.ceil(totalItems / itemsPerPage);
-                
-                // Make sure current page is valid
-                if (currentPage > totalPages) {
-                    currentPage = totalPages || 1;
-                }
-                
-                // Update next/prev button states
-                $(`#${tableId}PrevPage`).prop('disabled', currentPage === 1);
-                $(`#${tableId}NextPage`).prop('disabled', currentPage === totalPages || totalPages === 0);
-            }
-            
-            // Function to apply search filter
-            function applySearchFilter(tableId) {
-                const actualTableId = tableMap[tableId];
-                const searchTerm = $(`#${tableId}SearchInput`).val().toLowerCase();
-                
-                // Apply current filters from filter form using the correct table ID
-                applyCustomerFilter(actualTableId);
-                applyPaymentTypeFilter(actualTableId);
-                
-                // Skip filtering if search is empty to show all rows
-                if (!searchTerm) return; 
-                
-                const allRows = $(`#${actualTableId} tbody tr`).not('.no-records-row');
-                
-                allRows.each(function() {
-                    const rowText = $(this).text().toLowerCase();
-                    const match = rowText.indexOf(searchTerm) > -1;
-                    $(this).toggle(match);
-                });
-            }
-            
-            // Function to apply customer filter
-            function applyCustomerFilter(tableId) {
-                const customerFilter = $('#customerFilter').val();
-                if (!customerFilter) return; // Skip if no customer selected
-                
-                // Apply to current table only
-                const allRows = $(`#${tableId} tbody tr`).not('.no-records-row');
-                
-                allRows.each(function() {
-                    const customerName = $(this).find('td:eq(3)').text().trim();
-                    const match = customerName === customerFilter;
-                    $(this).toggle(match);
-                });
-            }
-            
-            // Function to apply payment type filter
-            function applyPaymentTypeFilter(tableId) {
-                const paymentTypeFilter = $('#paymentTypeFilter').val();
-                if (!paymentTypeFilter) return; // Skip if no payment type selected
-                
-                // Apply to current table only
-                const allRows = $(`#${tableId} tbody tr`).not('.no-records-row');
-                
-                allRows.each(function() {
-                    // Payment type is in a badge in column with the "naqd" or "qarz" text
-                    const paymentType = $(this).text().toLowerCase();
-                    let match = true;
-                    
-                    if (paymentTypeFilter === 'cash' && paymentType.indexOf('نەقد') === -1) {
-                        match = false;
-                    } else if (paymentTypeFilter === 'debt' && paymentType.indexOf('قەرز') === -1) {
-                        match = false;
-                    }
-                    
-                    $(this).toggle(match);
-                });
-            }
-
-            // Update pagination info and buttons
-            function updatePagination(tableId) {
-                const pagination = $(`#${tableId}Pagination`);
-                pagination.empty();
-
-                // Don't show pagination if there are no pages
-                if (totalPages === 0) {
-                    $(`#${tableId}PrevPage`).prop('disabled', true);
-                    $(`#${tableId}NextPage`).prop('disabled', true);
-                    return;
-                }
-                
-                // Limit number of page buttons to display
-                const maxPagesToShow = 5;
-                let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-                let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-
-                if (endPage - startPage + 1 < maxPagesToShow && startPage > 1) {
-                    startPage = Math.max(1, endPage - maxPagesToShow + 1);
-                }
-
-                // Add first page button if not visible
-                if (startPage > 1) {
-                    const firstPageBtn = $('<button class="btn btn-sm btn-outline-secondary rounded-circle">١</button>');
-                    firstPageBtn.on('click', function() {
-                        currentPage = 1;
-                        showPage(tableId, 1);
-                        updatePagination(tableId);
-                    });
-                    pagination.append(firstPageBtn);
-                    
-                    // Add ellipsis if there's a gap
-                    if (startPage > 2) {
-                        pagination.append('<span class="px-1">...</span>');
-                    }
-                }
-
-                // Add page buttons
-                for (let i = startPage; i <= endPage; i++) {
-                    // Convert to Kurdish numerals
-                    const kurdishNum = convertToKurdishNumerals(i);
-                    const pageButton = $('<button class="btn btn-sm ' + (i === currentPage ? 'btn-primary' : 'btn-outline-secondary') + ' rounded-circle">' + kurdishNum + '</button>');
-                    pageButton.on('click', function() {
-                        currentPage = i;
-                        showPage(tableId, i);
-                        updatePagination(tableId);
-                    });
-                    pagination.append(pageButton);
-                }
-
-                // Add last page button if not visible
-                if (endPage < totalPages) {
-                    // Add ellipsis if there's a gap
-                    if (endPage < totalPages - 1) {
-                        pagination.append('<span class="px-1">...</span>');
-                    }
-                    
-                    const lastPageBtn = $('<button class="btn btn-sm btn-outline-secondary rounded-circle">' + convertToKurdishNumerals(totalPages) + '</button>');
-                    lastPageBtn.on('click', function() {
-                        currentPage = totalPages;
-                        showPage(tableId, totalPages);
-                        updatePagination(tableId);
-                    });
-                    pagination.append(lastPageBtn);
-                }
-
-                $(`#${tableId}PrevPage`).prop('disabled', currentPage === 1);
-                $(`#${tableId}NextPage`).prop('disabled', currentPage === totalPages);
-            }
-
-            // Convert numbers to Kurdish numerals
-            function convertToKurdishNumerals(num) {
-                const kurdishDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-                return num.toString().split('').map(digit => 
-                    isNaN(parseInt(digit)) ? digit : kurdishDigits[parseInt(digit)]
-                ).join('');
-            }
 
             // Previous page button
             $(`#${tableId}PrevPage`).on('click', function() {
-                if (currentPage > 1) {
-                    currentPage--;
-                    showPage(tableId, currentPage);
-                    updatePagination(tableId);
+                if (currentPageMap[tableId] > 1) {
+                    currentPageMap[tableId]--;
+                    globalShowPage(tableId, currentPageMap[tableId]);
                 }
             });
 
             // Next page button
             $(`#${tableId}NextPage`).on('click', function() {
-                if (currentPage < totalPages) {
-                    currentPage++;
-                    showPage(tableId, currentPage);
-                    updatePagination(tableId);
+                const visibleRows = $(`#${actualTableId} tbody tr:visible`).not('.no-records-row');
+                const totalItems = visibleRows.length;
+                const totalPages = Math.ceil(totalItems / itemsPerPageMap[tableId]);
+                
+                if (currentPageMap[tableId] < totalPages) {
+                    currentPageMap[tableId]++;
+                    globalShowPage(tableId, currentPageMap[tableId]);
                 }
             });
 
             // Search functionality with improved handling
             $(`#${tableId}SearchInput`).on('keyup', function() {
                 // Reset to first page when searching
-                currentPage = 1;
+                currentPageMap[tableId] = 1;
                 
                 // Apply filter and show first page
-                showPage(tableId, 1);
-                
-                // Update pagination
-                updatePagination(tableId);
+                globalShowPage(tableId, 1);
             });
             
             // Also listen for filter changes in customer and payment type
@@ -1299,9 +1304,8 @@ function translateUnitType($unitType) {
                 // This will use our global search function from receipt-filters.js
                 // But we need to update pagination afterward
                 setTimeout(function() {
-                    currentPage = 1;
-                    showPage(tableId, 1);
-                    updatePagination(tableId);
+                    currentPageMap[tableId] = 1;
+                    globalShowPage(tableId, 1);
                 }, 100);
             });
             
@@ -1309,9 +1313,8 @@ function translateUnitType($unitType) {
             $('#resetFilters').on('click', function() {
                 // Wait a moment for the filters to reset
                 setTimeout(function() {
-                    currentPage = 1;
-                    showPage(tableId, 1);
-                    updatePagination(tableId);
+                    currentPageMap[tableId] = 1;
+                    globalShowPage(tableId, 1);
                 }, 100);
             });
         }

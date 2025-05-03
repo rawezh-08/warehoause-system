@@ -963,7 +963,6 @@ foreach ($debtTransactions as $debtTransaction) {
                                     </div>
                                     <form id="debtReturnForm">
                                         <input type="hidden" name="customer_id" value="<?php echo $customer['id']; ?>">
-                                        <input type="hidden" name="transaction_type" value="collection">
 
                                         <div class="mb-3">
                                             <label for="returnAmount" class="form-label">بڕی پارەی گەڕاوە</label>
@@ -986,23 +985,17 @@ foreach ($debtTransactions as $debtTransaction) {
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="returnDate" class="form-label">بەرواری گەڕانەوە</label>
-                                            <input type="date" class="form-control" id="returnDate" name="return_date"
-                                                value="<?php echo date('Y-m-d'); ?>" required>
+                                            <label for="paymentMethod" class="form-label">شێوازی پارەدان</label>
+                                            <select class="form-select" id="paymentMethod" name="payment_method" required>
+                                                <option value="cash">نەقد</option>
+                                                <option value="transfer">FIB یان FastPay</option>
+                                            </select>
                                         </div>
 
                                         <div class="mb-3">
                                             <label for="returnNotes" class="form-label">تێبینی</label>
                                             <textarea class="form-control" id="returnNotes" name="notes"
                                                 rows="3"></textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="paymentMethod" class="form-label">شێوازی پارەدان</label>
-                                            <select class="form-select" id="paymentMethod" name="payment_method">
-                                                <option value="cash">نەقد</option>
-                                                <option value="transfer">FIB یان FastPay</option>
-                                            </select>
                                         </div>
 
                                         <div class="text-end">
@@ -1850,35 +1843,32 @@ foreach ($debtTransactions as $debtTransaction) {
                     return;
                 }
 
+                // Show loading state
+                const saveButton = $(this);
+                const originalText = saveButton.html();
+                saveButton.prop('disabled', true);
+                saveButton.html('<i class="fas fa-spinner fa-spin me-2"></i> تۆمارکردن...');
+
                 // Prepare form data
                 const formData = new FormData();
                 formData.append('customer_id', <?php echo $customer['id']; ?>);
-                formData.append('transaction_type', 'collection');
                 formData.append('amount', returnAmount);
-
-                // Create JSON notes to store additional information
-                const notesObj = {
-                    payment_method: $('#paymentMethod').val(),
-                    reference_number: $('#referenceNumber').val(),
-                    notes: $('#returnNotes').val(),
-                    return_date: $('#returnDate').val()
-                };
-
-                formData.append('notes', JSON.stringify(notesObj));
+                formData.append('payment_method', $('#paymentMethod').val());
+                formData.append('notes', $('#returnNotes').val());
 
                 // Send AJAX request
                 $.ajax({
-                    url: '../../ajax/save_debt_transaction.php',
+                    url: '../../ajax/save_debt_payment_fifo.php',
                     type: 'POST',
                     data: formData,
                     processData: false,
                     contentType: false,
-                    success: function (response) {
+                    success: function(response) {
                         const data = JSON.parse(response);
                         if (data.success) {
                             Swal.fire({
                                 title: 'سەرکەوتوو بوو!',
-                                text: 'گەڕانەوەی قەرز بەسەرکەوتوویی تۆمارکرا',
+                                text: data.message,
                                 icon: 'success',
                                 confirmButtonText: 'باشە'
                             }).then(() => {
@@ -1887,19 +1877,25 @@ foreach ($debtTransactions as $debtTransaction) {
                         } else {
                             Swal.fire({
                                 title: 'هەڵە!',
-                                text: data.message || 'هەڵەیەک ڕوویدا لە تۆمارکردنی گەڕانەوەی قەرز',
+                                text: data.message,
                                 icon: 'error',
                                 confirmButtonText: 'باشە'
                             });
+                            // Reset button state
+                            saveButton.prop('disabled', false);
+                            saveButton.html(originalText);
                         }
                     },
-                    error: function () {
+                    error: function() {
                         Swal.fire({
                             title: 'هەڵە!',
                             text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
                             icon: 'error',
                             confirmButtonText: 'باشە'
                         });
+                        // Reset button state
+                        saveButton.prop('disabled', false);
+                        saveButton.html(originalText);
                     }
                 });
             });
