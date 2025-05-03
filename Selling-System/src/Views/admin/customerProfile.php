@@ -3819,6 +3819,121 @@ foreach ($debtTransactions as $debtTransaction) {
             </div>
         </div>
     </div>
+
+    <!-- Initialize debt history pagination -->
+    <script>
+    // Initialize debt history pagination
+    function initDebtHistoryPagination() {
+        // Get all visible rows in the debt history table
+        const allRows = $("#debtHistoryTable tbody tr:visible");
+        const totalRows = allRows.length;
+        const recordsPerPage = parseInt($("#debtHistoryRecordsPerPage").val());
+        
+        // Calculate page information
+        const totalPages = Math.ceil(totalRows / recordsPerPage);
+        const currentPage = 1; // Start on first page
+        
+        // Update pagination numbers UI
+        let paginationHtml = '';
+        for (let i = 1; i <= totalPages; i++) {
+            paginationHtml += `<button class="btn btn-sm ${i === 1 ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2" data-page="${i}">${i}</button>`;
+        }
+        $("#debtHistoryPaginationNumbers").html(paginationHtml);
+        
+        // Show first page only
+        allRows.hide();
+        allRows.slice(0, recordsPerPage).show();
+        
+        // Update counters
+        $("#debtHistoryStartRecord").text(totalRows > 0 ? 1 : 0);
+        $("#debtHistoryEndRecord").text(Math.min(recordsPerPage, totalRows));
+        $("#debtHistoryTotalRecords").text(totalRows);
+        
+        // Disable/enable pagination buttons
+        $("#debtHistoryPrevPageBtn").prop('disabled', true);
+        $("#debtHistoryNextPageBtn").prop('disabled', totalPages <= 1);
+        
+        // Add click handlers for pagination numbers
+        $("#debtHistoryPaginationNumbers").off('click').on('click', 'button', function() {
+            const page = parseInt($(this).data('page'));
+            goToDebtHistoryPage(page);
+        });
+        
+        // Add handlers for prev/next buttons
+        $("#debtHistoryPrevPageBtn").off('click').on('click', function() {
+            const currentPage = parseInt($("#debtHistoryPaginationNumbers button.btn-primary").data('page'));
+            if (currentPage > 1) {
+                goToDebtHistoryPage(currentPage - 1);
+            }
+        });
+        
+        $("#debtHistoryNextPageBtn").off('click').on('click', function() {
+            const currentPage = parseInt($("#debtHistoryPaginationNumbers button.btn-primary").data('page'));
+            if (currentPage < totalPages) {
+                goToDebtHistoryPage(currentPage + 1);
+            }
+        });
+        
+        // Records per page change handler
+        $("#debtHistoryRecordsPerPage").off('change').on('change', function() {
+            initDebtHistoryPagination();
+        });
+        
+        // Search input handler
+        $("#debtHistoryTableSearch").off('keyup').on('keyup', function() {
+            const value = $(this).val().toLowerCase();
+            $("#debtHistoryTable tbody tr").filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+            });
+            initDebtHistoryPagination();
+        });
+    }
+
+    // Function to navigate to a specific page in debt history
+    function goToDebtHistoryPage(page) {
+        const recordsPerPage = parseInt($("#debtHistoryRecordsPerPage").val());
+        const allRows = $("#debtHistoryTable tbody tr:visible");
+        const totalRows = allRows.length;
+        const totalPages = Math.ceil(totalRows / recordsPerPage);
+        
+        // Calculate start and end indices
+        const startIndex = (page - 1) * recordsPerPage;
+        const endIndex = Math.min(startIndex + recordsPerPage, totalRows);
+        
+        // Hide all rows first
+        allRows.hide();
+        
+        // Show only rows for current page
+        allRows.slice(startIndex, endIndex).show();
+        
+        // Update pagination UI
+        $("#debtHistoryPaginationNumbers button").removeClass('btn-primary').addClass('btn-outline-primary');
+        $("#debtHistoryPaginationNumbers button[data-page='" + page + "']").removeClass('btn-outline-primary').addClass('btn-primary');
+        
+        // Update counters
+        $("#debtHistoryStartRecord").text(totalRows > 0 ? startIndex + 1 : 0);
+        $("#debtHistoryEndRecord").text(endIndex);
+        
+        // Disable/enable pagination buttons
+        $("#debtHistoryPrevPageBtn").prop('disabled', page === 1);
+        $("#debtHistoryNextPageBtn").prop('disabled', page === totalPages);
+    }
+
+    // Then add this to your document ready function:
+    $(document).ready(function() {
+        // ... existing code ...
+        
+        // Initialize debt history pagination when the debt history tab is shown
+        $('#debt-history-tab').on('shown.bs.tab', function() {
+            initDebtHistoryPagination();
+        });
+        
+        // Initial pagination setup if starting on the debt history tab
+        if ($('#debt-history-tab').hasClass('active')) {
+            initDebtHistoryPagination();
+        }
+    });
+    </script>
 </body>
 
 </html>
