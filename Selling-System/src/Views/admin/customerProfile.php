@@ -3685,9 +3685,9 @@ foreach ($debtTransactions as $debtTransaction) {
     function updateTable(tableId, page) {
         const recordsPerPage = parseInt(document.getElementById(`${tableId}RecordsPerPage`).value);
         const searchTerm = document.getElementById(`${tableId}TableSearch`).value;
-        const startDate = document.getElementById('startDate').value;
-        const endDate = document.getElementById('endDate').value;
-        const paymentType = document.getElementById('paymentTypeFilter').value;
+        const startDate = document.getElementById('startDate')?.value;
+        const endDate = document.getElementById('endDate')?.value;
+        const paymentType = document.getElementById('paymentTypeFilter')?.value;
 
         // Update the table based on the tableId
         switch(tableId) {
@@ -3698,7 +3698,18 @@ foreach ($debtTransactions as $debtTransaction) {
                 loadDebtData(page, recordsPerPage, searchTerm, startDate, endDate);
                 break;
             case 'debtHistory':
-                loadDebtHistoryData(page, recordsPerPage, searchTerm, startDate, endDate);
+                // Use the advanced pagination instead
+                initAdvancedTablePagination({
+                    tableId: 'debtHistoryReturnTable',
+                    recordsPerPageId: 'debtHistoryRecordsPerPage',
+                    paginationNumbersId: 'debtHistoryPaginationNumbers',
+                    prevBtnId: 'debtHistoryPrevPageBtn',
+                    nextBtnId: 'debtHistoryNextPageBtn',
+                    startRecordId: 'debtHistoryStartRecord',
+                    endRecordId: 'debtHistoryEndRecord',
+                    totalRecordsId: 'debtHistoryTotalRecords',
+                    searchInputId: 'debtHistoryTableSearch'
+                });
                 break;
             // Add other cases as needed
         }
