@@ -781,11 +781,11 @@ $dir = $lang === 'ar' ? 'rtl' : 'rtl';
                                 <img src="<?php echo htmlspecialchars($image_url); ?>" 
                                      alt="<?php echo htmlspecialchars($product['product_name']); ?>" 
                                      class="product-thumb"
-                                     onerror="this.onerror=null; this.src='<?php echo htmlspecialchars(get_correct_image_path('pro-1.png')); ?>';">
+                                     onerror="this.onerror=null; this.src='<?php echo htmlspecialchars('../../assets/images/no-image.png'); ?>';">
                             <?php else: ?>
-                                <div class="no-image-placeholder">
-                                    <i class="fas fa-box"></i>
-                                </div>
+                                <img src="../../assets/images/no-image.png" 
+                                     alt="<?php echo htmlspecialchars($product['product_name']); ?>" 
+                                     class="product-thumb">
                             <?php endif; ?>
                         </td>
                         <td><?php echo $product['product_code']; ?></td>
