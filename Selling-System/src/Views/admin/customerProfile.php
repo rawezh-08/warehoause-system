@@ -1046,6 +1046,7 @@ foreach ($debtTransactions as $debtTransaction) {
                                                         <option value="10" selected>10</option>
                                                         <option value="25">25</option>
                                                         <option value="50">50</option>
+                                                        <option value="100">100</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -1067,7 +1068,7 @@ foreach ($debtTransactions as $debtTransaction) {
 
                                 <!-- Table Content -->
                                 <div class="table-responsive">
-                                    <table id="debtHistoryTable" class="table table-bordered custom-table table-hover">
+                                    <table id="debtHistoryReturnTable" class="table table-bordered custom-table table-hover">
                                         <thead class="table-light">
                                             <tr>
                                                 <th>#</th>
@@ -1617,9 +1618,20 @@ foreach ($debtTransactions as $debtTransaction) {
     <script>
         $(document).ready(function () {
             // Initialize pagination for tables
+            initAdvancedTablePagination({
+                tableId: 'debtHistoryReturnTable',
+                recordsPerPageId: 'debtHistoryRecordsPerPage',
+                paginationNumbersId: 'debtHistoryPaginationNumbers',
+                prevBtnId: 'debtHistoryPrevPageBtn',
+                nextBtnId: 'debtHistoryNextPageBtn',
+                startRecordId: 'debtHistoryStartRecord',
+                endRecordId: 'debtHistoryEndRecord',
+                totalRecordsId: 'debtHistoryTotalRecords',
+                searchInputId: 'debtHistoryTableSearch'
+            });
+            
             initBasicTablePagination('sales');
             initBasicTablePagination('debt');
-            initBasicTablePagination('debtHistory');
 
             // Table search functionality
             $('#salesTableSearch, #debtTableSearch, #debtHistoryTableSearch').on('keyup', function () {
