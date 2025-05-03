@@ -1226,8 +1226,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Business Partners Tab Functionality
 function initializeBusinessPartnersTab() {
-    // Table functionality
-    initializeDataTable('partner');
+    // Search functionality
+    $('#partnerTableSearch').on('input', function() {
+        filterPartnerTable();
+    });
+    
+    // Records per page
+    $('#partnerRecordsPerPage').on('change', function() {
+        applyPartnerPagination(1);
+    });
+    
+    // Pagination controls
+    $('#partnerPrevPageBtn').on('click', function() {
+        const currentActivePage = $('#partnerPaginationNumbers .btn-primary');
+        if (currentActivePage.length) {
+            const currentPage = parseInt(currentActivePage.text());
+            applyPartnerPagination(currentPage - 1);
+        }
+    });
+    
+    $('#partnerNextPageBtn').on('click', function() {
+        const currentActivePage = $('#partnerPaginationNumbers .btn-primary');
+        if (currentActivePage.length) {
+            const currentPage = parseInt(currentActivePage.text());
+            applyPartnerPagination(currentPage + 1);
+        }
+    });
     
     // Filter functionality
     $('#partnerName, #partnerPhone').on('change keyup', function() {
@@ -1245,118 +1269,48 @@ function initializeBusinessPartnersTab() {
     $('#business-partner-content .refresh-btn').on('click', function() {
         location.reload();
     });
-
-    // Add partner table search functionality
-    document.getElementById('partnerTableSearch').addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        const partnerRows = document.querySelectorAll('#partnerTable tbody tr');
-        
-        partnerRows.forEach(row => {
-            let match = false;
-            // Search in all cells except the last one (actions column)
-            for (let i = 1; i < row.cells.length - 1; i++) {
-                const cellText = row.cells[i].textContent.toLowerCase();
-                if (cellText.includes(searchTerm)) {
-                    match = true;
-                    break;
-                }
-            }
-            
-            row.dataset.searchMatch = match ? 'true' : 'false';
-            applyPartnerFilters();
-        });
-    });
-
-    // Add records per page change handler
-    document.getElementById('partnerRecordsPerPage').addEventListener('change', function() {
-        applyPartnerPagination(1);
-    });
-
-    // Add pagination next/prev button handlers
-    document.getElementById('partnerPrevPageBtn').addEventListener('click', function() {
-        const currentActivePage = document.querySelector('#partnerPaginationNumbers .btn-primary');
-        if (currentActivePage) {
-            const currentPage = parseInt(currentActivePage.textContent);
-            applyPartnerPagination(currentPage - 1);
-        }
-    });
-
-    document.getElementById('partnerNextPageBtn').addEventListener('click', function() {
-        const currentActivePage = document.querySelector('#partnerPaginationNumbers .btn-primary');
-        if (currentActivePage) {
-            const currentPage = parseInt(currentActivePage.textContent);
-            applyPartnerPagination(currentPage + 1);
-        }
-    });
-
-    // Add partner name filter functionality
-    document.getElementById('partnerName').addEventListener('change', function() {
-        const nameFilter = this.value.toLowerCase();
-        const partnerRows = document.querySelectorAll('#partnerTable tbody tr');
-        
-        partnerRows.forEach(row => {
-            const name = row.cells[1].textContent.toLowerCase();
-            row.dataset.nameFilterMatch = name.includes(nameFilter) ? 'true' : 'false';
-            applyPartnerFilters();
-        });
-    });
-
-    // Add partner phone filter functionality
-    document.getElementById('partnerPhone').addEventListener('input', function() {
-        const phoneFilter = this.value.toLowerCase();
-        const partnerRows = document.querySelectorAll('#partnerTable tbody tr');
-        
-        partnerRows.forEach(row => {
-            const phone = row.cells[3].textContent.toLowerCase();
-            row.dataset.phoneFilterMatch = phone.includes(phoneFilter) ? 'true' : 'false';
-            applyPartnerFilters();
-        });
-    });
-
-    // Add partner reset filter functionality
-    document.getElementById('partnerResetFilter').addEventListener('click', function() {
-        // Reset name filter
-        document.getElementById('partnerName').value = '';
-        
-        // Reset phone filter
-        document.getElementById('partnerPhone').value = '';
-        
-        // Reset table search
-        document.getElementById('partnerTableSearch').value = '';
-        
-        // Reset all rows to visible
-        const partnerRows = document.querySelectorAll('#partnerTable tbody tr');
-        partnerRows.forEach(row => {
-            row.dataset.filterMatch = 'true';
-            row.dataset.searchMatch = 'true';
-            row.style.display = '';
-        });
-        
-        // Reapply pagination
-        applyPartnerPagination(1);
-    });
-
-    // Initialize partner pagination
+    
+    // Initialize pagination
     applyPartnerPagination(1);
 }
 
-// Function to apply all partner filters
-function applyPartnerFilters() {
-    const partnerRows = document.querySelectorAll('#partnerTable tbody tr');
-    let visibleCount = 0;
+// Filter partners table based on selected criteria
+function filterPartnerTable() {
+    const nameFilter = $('#partnerName').val().toLowerCase();
+    const phoneFilter = $('#partnerPhone').val().toLowerCase();
+    const searchFilter = $('#partnerTableSearch').val().toLowerCase();
     
-    partnerRows.forEach(row => {
-        // Default all filters to true if not set
-        const nameMatch = row.dataset.nameFilterMatch !== 'false';
-        const phoneMatch = row.dataset.phoneFilterMatch !== 'false';
-        const searchMatch = row.dataset.searchMatch !== 'false';
+    $('#partnerTable tbody tr').each(function() {
+        const name = $(this).find('td:eq(1)').text().toLowerCase();
+        const type = $(this).find('td:eq(2)').text().toLowerCase();
+        const phone = $(this).find('td:eq(3)').text().toLowerCase();
+        const phone2 = $(this).find('td:eq(4)').text().toLowerCase();
+        const address = $(this).find('td:eq(5)').text().toLowerCase();
+        const guarantorName = $(this).find('td:eq(6)').text().toLowerCase();
+        const guarantorPhone = $(this).find('td:eq(7)').text().toLowerCase();
+        const customerDebt = $(this).find('td:eq(8)').text().toLowerCase();
+        const supplierDebt = $(this).find('td:eq(9)').text().toLowerCase();
+        const notes = $(this).find('td:eq(10)').text().toLowerCase();
         
-        // Show row only if it matches all filters
-        const isVisible = nameMatch && phoneMatch && searchMatch;
-        row.style.display = isVisible ? '' : 'none';
+        // Show row if it matches all selected filters
+        const nameMatch = nameFilter === '' || name.includes(nameFilter);
+        const phoneMatch = phoneFilter === '' || phone.includes(phoneFilter) || phone2.includes(phoneFilter);
+        const searchMatch = searchFilter === '' || 
+                          name.includes(searchFilter) || 
+                          type.includes(searchFilter) || 
+                          phone.includes(searchFilter) || 
+                          phone2.includes(searchFilter) || 
+                          address.includes(searchFilter) ||
+                          guarantorName.includes(searchFilter) ||
+                          guarantorPhone.includes(searchFilter) ||
+                          customerDebt.includes(searchFilter) ||
+                          supplierDebt.includes(searchFilter) ||
+                          notes.includes(searchFilter);
         
-        if (isVisible) {
-            visibleCount++;
+        if (nameMatch && phoneMatch && searchMatch) {
+            $(this).show();
+        } else {
+            $(this).hide();
         }
     });
     
@@ -1364,12 +1318,11 @@ function applyPartnerFilters() {
     applyPartnerPagination(1);
 }
 
-// Function to apply partner pagination
+// Function to apply pagination to the partners table
 function applyPartnerPagination(page) {
-    const recordsPerPage = parseInt(document.getElementById('partnerRecordsPerPage').value);
-    const partnerRows = document.querySelectorAll('#partnerTable tbody tr');
-    const visibleRows = Array.from(partnerRows).filter(row => row.style.display !== 'none');
-    const totalVisibleRecords = visibleRows.length;
+    const recordsPerPage = parseInt($('#partnerRecordsPerPage').val());
+    const partnerRows = $('#partnerTable tbody tr:visible');
+    const totalVisibleRecords = partnerRows.length;
     
     // Calculate total pages
     const totalPages = Math.ceil(totalVisibleRecords / recordsPerPage);
@@ -1378,38 +1331,40 @@ function applyPartnerPagination(page) {
     page = Math.min(Math.max(1, page), totalPages || 1);
     
     // Show only rows for current page
-    visibleRows.forEach((row, index) => {
+    partnerRows.each(function(index) {
         const startIndex = (page - 1) * recordsPerPage;
         const endIndex = startIndex + recordsPerPage - 1;
         
-        row.style.display = (index >= startIndex && index <= endIndex) ? '' : 'none';
+        $(this).css('display', (index >= startIndex && index <= endIndex) ? '' : 'none');
     });
     
     // Update pagination info
     const startRecord = totalVisibleRecords > 0 ? (page - 1) * recordsPerPage + 1 : 0;
     const endRecord = Math.min(page * recordsPerPage, totalVisibleRecords);
     
-    document.getElementById('partnerStartRecord').textContent = startRecord;
-    document.getElementById('partnerEndRecord').textContent = endRecord;
-    document.getElementById('partnerTotalRecords').textContent = totalVisibleRecords;
+    $('#partnerStartRecord').text(startRecord);
+    $('#partnerEndRecord').text(endRecord);
+    $('#partnerTotalRecords').text(totalVisibleRecords);
     
     // Update pagination buttons
-    const prevPageBtn = document.getElementById('partnerPrevPageBtn');
-    const nextPageBtn = document.getElementById('partnerNextPageBtn');
+    const prevPageBtn = $('#partnerPrevPageBtn');
+    const nextPageBtn = $('#partnerNextPageBtn');
     
-    prevPageBtn.disabled = page === 1;
-    nextPageBtn.disabled = page === totalPages || totalPages === 0;
+    prevPageBtn.prop('disabled', page === 1);
+    nextPageBtn.prop('disabled', page === totalPages || totalPages === 0);
     
     // Update pagination numbers
-    const paginationNumbers = document.getElementById('partnerPaginationNumbers');
-    paginationNumbers.innerHTML = '';
+    const paginationNumbers = $('#partnerPaginationNumbers');
+    paginationNumbers.empty();
     
     for (let i = 1; i <= totalPages; i++) {
-        const pageBtn = document.createElement('button');
-        pageBtn.className = `btn btn-sm ${i === page ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2`;
-        pageBtn.textContent = i;
-        pageBtn.addEventListener('click', () => applyPartnerPagination(i));
-        paginationNumbers.appendChild(pageBtn);
+        const pageBtn = $('<button>')
+            .addClass(`btn btn-sm ${i === page ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2`)
+            .text(i)
+            .on('click', function() {
+                applyPartnerPagination(i);
+            });
+        paginationNumbers.append(pageBtn);
     }
     
     return page;
