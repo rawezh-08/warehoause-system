@@ -260,6 +260,9 @@ require_once '../../config/database.php';
                                 <label class="total-label">کۆی گشتی</label>
                                 <div class="input-group">
                                     <input type="number" class="form-control grand-total" step="1" readonly>
+                                    <button type="button" class="btn btn-outline-primary round-total" title="خڕکردنەوەی بڕی پارە">
+                                        <i class="fas fa-calculator"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -276,7 +279,9 @@ require_once '../../config/database.php';
                         <button type="button" class="btn btn-outline-info price-profit-btn ms-2">
                             <i class="fas fa-calculator"></i> نرخ و قازانج
                         </button>
-                        <button type="button" class="btn btn-primary" id="saveReceipt" onclick="roundTotalAndSave()">پاشەکەوتکردن</button>
+                        <button type="button" class="btn btn-primary save-btn cta-btn ms-2">
+                            پاشەکەوتکردن <i class="fas fa-save"></i>
+                        </button>
                     </div>
                 </div>
             </div>

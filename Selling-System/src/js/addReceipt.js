@@ -2585,17 +2585,4 @@ $(document).ready(function() {
     
     // دەستپێکردنی فەنکشنی گۆڕینی یەکە
     handleUnitTypeChange();
-
-    function roundTotalAndSave() {
-        // Get the grand total input
-        const grandTotalInput = document.querySelector('.grand-total');
-        if (grandTotalInput) {
-            // Round the value to the nearest integer
-            const currentValue = parseFloat(grandTotalInput.value);
-            const roundedValue = Math.round(currentValue);
-            grandTotalInput.value = roundedValue;
-        }
-        // Call the existing save function
-        saveReceipt();
-    }
 });
