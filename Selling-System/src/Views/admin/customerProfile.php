@@ -1143,7 +1143,15 @@ foreach ($debtTransactions as $debtTransaction) {
                                             <div class="pagination-info">
                                                 نیشاندانی <span id="debtHistoryStartRecord">1</span> تا <span
                                                     id="debtHistoryEndRecord">10</span> لە کۆی <span
-                                                    id="debtHistoryTotalRecords"><?php echo count($debtTransactions); ?></span>
+                                                    id="debtHistoryTotalRecords"><?php 
+                                                    $debtReturnCount = 0;
+                                                    foreach ($debtTransactions as $transaction) {
+                                                        if ($transaction['transaction_type'] === 'collection') {
+                                                            $debtReturnCount++;
+                                                        }
+                                                    }
+                                                    echo $debtReturnCount; 
+                                                    ?></span>
                                                 تۆمار
                                             </div>
                                         </div>
@@ -1355,6 +1363,43 @@ foreach ($debtTransactions as $debtTransaction) {
                                         <?php endif; ?>
                                     </tbody>
                                 </table>
+                            </div>
+                            
+                            <!-- Table Pagination for Advance Payment History -->
+                            <div class="table-pagination mt-3">
+                                <div class="row align-items-center">
+                                    <div class="col-md-4 col-sm-6 mb-2 mb-md-0">
+                                        <div class="records-per-page">
+                                            <label class="me-2">نیشاندان:</label>
+                                            <div class="custom-select-wrapper">
+                                                <select id="advanceHistoryRecordsPerPage" class="form-select form-select-sm rounded-pill">
+                                                    <option value="5">5</option>
+                                                    <option value="10" selected>10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8 col-sm-6">
+                                        <div class="d-flex justify-content-md-end">
+                                            <div class="pagination-info me-3">
+                                                نیشاندانی <span id="advanceHistoryStartRecord">1</span> تا <span id="advanceHistoryEndRecord">10</span> لە کۆی <span id="advanceHistoryTotalRecords"><?php echo count($advanceTransactions); ?></span> تۆمار
+                                            </div>
+                                            <div class="pagination-controls d-flex">
+                                                <button id="advanceHistoryPrevPageBtn" class="btn btn-sm btn-outline-primary rounded-circle me-2" disabled>
+                                                    <i class="fas fa-chevron-right"></i>
+                                                </button>
+                                                <div id="advanceHistoryPaginationNumbers" class="pagination-numbers d-flex">
+                                                    <!-- Will be populated by JavaScript -->
+                                                </div>
+                                                <button id="advanceHistoryNextPageBtn" class="btn btn-sm btn-outline-primary rounded-circle">
+                                                    <i class="fas fa-chevron-left"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -1620,6 +1665,31 @@ foreach ($debtTransactions as $debtTransaction) {
             initBasicTablePagination('sales');
             initBasicTablePagination('debt');
             initBasicTablePagination('debtHistory');
+
+            // Initialize advanced pagination for additional tables
+            initAdvancedTablePagination({
+                tableId: 'debtHistoryTable',
+                recordsPerPageId: 'debtHistoryRecordsPerPage',
+                paginationNumbersId: 'debtHistoryPaginationNumbers',
+                prevBtnId: 'debtHistoryPrevPageBtn',
+                nextBtnId: 'debtHistoryNextPageBtn',
+                startRecordId: 'debtHistoryStartRecord',
+                endRecordId: 'debtHistoryEndRecord',
+                totalRecordsId: 'debtHistoryTotalRecords',
+                searchInputId: 'debtHistoryTableSearch'
+            });
+            
+            initAdvancedTablePagination({
+                tableId: 'advancePaymentTable',
+                recordsPerPageId: 'advanceHistoryRecordsPerPage',
+                paginationNumbersId: 'advanceHistoryPaginationNumbers',
+                prevBtnId: 'advanceHistoryPrevPageBtn',
+                nextBtnId: 'advanceHistoryNextPageBtn',
+                startRecordId: 'advanceHistoryStartRecord',
+                endRecordId: 'advanceHistoryEndRecord',
+                totalRecordsId: 'advanceHistoryTotalRecords',
+                searchInputId: null // No search input for this table
+            });
 
             // Table search functionality
             $('#salesTableSearch, #debtTableSearch, #debtHistoryTableSearch').on('keyup', function () {
@@ -3704,6 +3774,19 @@ foreach ($debtTransactions as $debtTransaction) {
             document.getElementById(`${tableId}RecordsPerPage`).addEventListener('change', function() {
                 updateTable(tableId, 1);
             });
+        });
+        
+        // Initialize pagination for advance payment history
+        initAdvancedTablePagination({
+            tableId: 'advancePaymentTable',
+            recordsPerPageId: 'advanceHistoryRecordsPerPage',
+            paginationNumbersId: 'advanceHistoryPaginationNumbers',
+            prevBtnId: 'advanceHistoryPrevPageBtn',
+            nextBtnId: 'advanceHistoryNextPageBtn',
+            startRecordId: 'advanceHistoryStartRecord',
+            endRecordId: 'advanceHistoryEndRecord',
+            totalRecordsId: 'advanceHistoryTotalRecords',
+            searchInputId: null // No search input for advance payment table
         });
     });
     </script>
