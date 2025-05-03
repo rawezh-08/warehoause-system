@@ -1545,6 +1545,17 @@ BEGIN
     DECLARE done INT DEFAULT FALSE;
     DECLARE current_debt DECIMAL(10,2);
     
+    -- Declare cursor for unpaid sales ordered by date (FIFO)
+    DECLARE sales_cursor CURSOR FOR 
+        SELECT id, remaining_amount 
+        FROM sales 
+        WHERE customer_id = p_customer_id 
+        AND payment_type = 'credit' 
+        AND remaining_amount > 0 
+        ORDER BY date ASC;
+    
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+    
     -- Get current total debt
     SELECT debit_on_business INTO current_debt 
     FROM customers 
@@ -1560,17 +1571,6 @@ BEGIN
         SIGNAL SQLSTATE '45000' 
         SET MESSAGE_TEXT = 'بڕی پارەی دراو گەورەترە لە قەرز';
     END IF;
-    
-    -- Declare cursor for unpaid sales ordered by date (FIFO)
-    DECLARE sales_cursor CURSOR FOR 
-        SELECT id, remaining_amount 
-        FROM sales 
-        WHERE customer_id = p_customer_id 
-        AND payment_type = 'credit' 
-        AND remaining_amount > 0 
-        ORDER BY date ASC;
-    
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
     
     START TRANSACTION;
     
