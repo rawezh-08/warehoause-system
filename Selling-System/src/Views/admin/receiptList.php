@@ -6,15 +6,23 @@ $db = new Database();
 $conn = $db->getConnection();
 
 // Get all sales with details
-$salesQuery = "SELECT s.id, s.invoice_number, s.date, s.shipping_cost, s.other_costs, s.discount, s.payment_type,
-               c.name as customer_name,
-               COUNT(DISTINCT si.product_id) as product_count,
-               SUM(si.total_price) as total_amount
+$salesQuery = "SELECT s.*, 
+               p.name as product_name,
+               p.code as product_code,
+               si.quantity,
+               si.unit_type,
+               si.unit_price,
+               si.total_price,
+               s.shipping_cost,
+               s.other_costs,
+               s.discount,
+               s.payment_type,
+               c.name as customer_name
                FROM sales s 
                LEFT JOIN sale_items si ON s.id = si.sale_id
+               LEFT JOIN products p ON si.product_id = p.id
                LEFT JOIN customers c ON s.customer_id = c.id
                WHERE s.is_draft = 0 AND s.is_delivery = 0
-               GROUP BY s.id, s.invoice_number, s.date, s.shipping_cost, s.other_costs, s.discount, s.payment_type, c.name
                ORDER BY s.date DESC";
 $salesStmt = $conn->prepare($salesQuery);
 $salesStmt->execute();
@@ -564,7 +572,11 @@ function translateUnitType($unitType) {
                                                 <th style="background-color: #cde1ff; border: none;">ژمارەی پسووڵە</th>
                                                 <th style="background-color: #cde1ff; border: none;">بەروار</th>
                                                 <th style="background-color: #cde1ff; border: none;">ناوی کڕیار</th>
-                                                <th style="background-color: #cde1ff; border: none;">ژمارەی کاڵاکان</th>
+                                                <th style="background-color: #cde1ff; border: none;">ناوی کاڵا</th>
+                                                <th style="background-color: #cde1ff; border: none;">کۆدی کاڵا</th>
+                                                <th style="background-color: #cde1ff; border: none;">بڕ</th>
+                                                <th style="background-color: #cde1ff; border: none;">یەکە</th>
+                                                <th style="background-color: #cde1ff; border: none;">نرخی تاک</th>
                                                 <th style="background-color: #cde1ff; border: none;">نرخی گشتی</th>
                                                 <th style="background-color: #cde1ff; border: none;">کرێی گواستنەوە</th>
                                                 <th style="background-color: #cde1ff; border: none;">خەرجی تر</th>
@@ -576,17 +588,30 @@ function translateUnitType($unitType) {
                                         <tbody>
                                             <?php if(empty($sales)): ?>
                                             <tr>
-                                                <td colspan="11" class="text-center py-4">هیچ پسووڵەیەک نەدۆزرایەوە</td>
+                                                <td colspan="15" class="text-center py-4">هیچ پسووڵەیەک نەدۆزرایەوە</td>
                                             </tr>
                                             <?php else: ?>
                                                 <?php foreach($sales as $index => $sale): ?>
+                                                    <?php 
+                                                        $total = $sale['total_price'] ?? 0;
+                                                        $paymentStatus = 'unpaid';
+                                                        if ($sale['payment_type'] == 'cash' || $sale['paid_amount'] >= $total) {
+                                                            $paymentStatus = 'paid';
+                                                        } elseif ($sale['paid_amount'] > 0) {
+                                                            $paymentStatus = 'partial';
+                                                        }
+                                                    ?>
                                                     <tr>
                                                         <td><?= $index + 1 ?></td>
                                                         <td><?= htmlspecialchars($sale['invoice_number']) ?></td>
                                                         <td><?= formatDate($sale['date']) ?></td>
                                                         <td><?= htmlspecialchars($sale['customer_name'] ?? '-') ?></td>
-                                                        <td><?= htmlspecialchars($sale['product_count']) ?></td>
-                                                        <td><?= number_format($sale['total_amount'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td><?= htmlspecialchars($sale['product_name'] ?? '-') ?></td>
+                                                        <td><?= htmlspecialchars($sale['product_code'] ?? '-') ?></td>
+                                                        <td><?= htmlspecialchars($sale['quantity'] ?? '-') ?></td>
+                                                        <td><?= translateUnitType($sale['unit_type']) ?></td>
+                                                        <td><?= number_format($sale['unit_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td><?= number_format($sale['total_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
                                                         <td><?= number_format($sale['shipping_cost'] ?? 0, 0, '.', ',') ?> د.ع</td>
                                                         <td><?= number_format($sale['other_costs'] ?? 0, 0, '.', ',') ?> د.ع</td>
                                                         <td><?= number_format($sale['discount'] ?? 0, 0, '.', ',') ?> د.ع</td>
@@ -598,19 +623,21 @@ function translateUnitType($unitType) {
                                                             <?php endif; ?>
                                                         </td>
                                                         <td>
-                                                            <div class="action-buttons">
-                                                                <a href="../../Views/receipt/print_receipt.php?sale_id=<?= $sale['id'] ?>"
-                                                                    class="btn btn-sm btn-outline-success rounded-circle"
-                                                                    title="چاپکردن">
-                                                                    <i class="fas fa-print"></i>
-                                                                </a>
-                                                                <button type="button" 
-                                                                    class="btn btn-sm btn-outline-info rounded-circle show-receipt-items"
-                                                                    data-invoice="<?php echo $sale['invoice_number']; ?>"
-                                                                    title="بینینی هەموو کاڵاکان">
-                                                                    <i class="fas fa-list"></i>
-                                                                </button>
-                                                            </div>
+                                                        <div class="action-buttons">
+                                                                    <a href="<?php echo (isset($sale['is_delivery']) && $sale['is_delivery'] == 1) ? 
+                                                                        '../../Views/receipt/delivery_receipt.php?sale_id=' . $sale['id'] : 
+                                                                        '../../Views/receipt/print_receipt.php?sale_id=' . $sale['id']; ?>"
+                                                                        class="btn btn-sm btn-outline-success rounded-circle"
+                                                                        title="چاپکردن">
+                                                                        <i class="fas fa-print"></i>
+                                                                    </a>
+                                                                    <button type="button" 
+                                                                        class="btn btn-sm btn-outline-info rounded-circle show-receipt-items"
+                                                                        data-invoice="<?php echo $sale['invoice_number']; ?>"
+                                                                        title="بینینی هەموو کاڵاکان">
+                                                                        <i class="fas fa-list"></i>
+                                                                    </button>
+                                                                </div>
                                                         </td>
                                                     </tr>
                                                 <?php endforeach; ?>
