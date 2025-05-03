@@ -982,6 +982,47 @@ $tabs = [
                                                 <i class="fas fa-sync-alt"></i>
                                             </button>
                                         </div>
+                                        
+                                        <!-- Summary Cards for Debt History -->
+                                        <div class="row mb-4">
+                                            <div class="col-md-6">
+                                                <div class="card summary-card bg-white border-0">
+                                                    <div class="card-body d-flex align-items-center">
+                                                        <div class="icon-bg bg-danger me-3">
+                                                            <i class="fas fa-money-bill-wave"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h5 class="card-title mb-0">کۆی قەرزی ئێمە</h5>
+                                                            <p class="card-value mb-0"><?php echo number_format($supplier['debt_on_myself']); ?> دینار</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="card summary-card bg-white border-0">
+                                                    <div class="card-body d-flex align-items-center">
+                                                        <div class="icon-bg bg-success me-3">
+                                                            <i class="fas fa-hand-holding-dollar"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h5 class="card-title mb-0">کۆی گەڕاندنەوەی قەرزەکان</h5>
+                                                            <?php
+                                                            // Calculate total debt payments
+                                                            $totalDebtPaymentsQuery = "SELECT SUM(amount) as total FROM supplier_debt_transactions 
+                                                                                WHERE supplier_id = :supplier_id 
+                                                                                AND transaction_type = 'payment'";
+                                                            $totalDebtPaymentsStmt = $conn->prepare($totalDebtPaymentsQuery);
+                                                            $totalDebtPaymentsStmt->bindParam(':supplier_id', $supplierId);
+                                                            $totalDebtPaymentsStmt->execute();
+                                                            $totalDebtPayments = $totalDebtPaymentsStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
+                                                            ?>
+                                                            <p class="card-value mb-0"><?php echo number_format($totalDebtPayments); ?> دینار</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
                                         <div class="table-responsive">
                                             <table id="debtPaymentTable" class="table table-bordered custom-table table-hover">
                                                 <thead class="table-light">
