@@ -1299,14 +1299,21 @@ function deleteBusinessPartner(partnerId, customerId, supplierId, partnerName) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    // Remove the partner row from the table
+                    const partnerRow = $(`#partnerTable tr[data-id="${partnerId}"]`);
+                    if (partnerRow.length) {
+                        partnerRow.fadeOut('slow', function() {
+                            $(this).remove();
+                            // Update pagination and table info
+                            updateTableInfo('partner');
+                        });
+                    }
+
                     Swal.fire({
                         icon: 'success',
                         title: 'سەرکەوتوو بوو!',
                         text: data.message || 'کڕیار و دابینکەر بە سەرکەوتوویی سڕایەوە',
                         confirmButtonText: 'باشە'
-                    }).then(() => {
-                        // Refresh the page to show updated data
-                        location.reload();
                     });
                 } else {
                     Swal.fire({
