@@ -1377,18 +1377,22 @@ require_once '../../config/database.php';
 
             // Handle round total button click
             $(document).on('click', '.round-total', function() {
-                const $container = $(this).closest('.receipt-container');
-                const currentTotal = parseFloat($container.find('.grand-total').val()) || 0;
+                autoRoundTotal($(this).closest('.receipt-container'));
+            });
+            
+            // Function to automatically round totals
+            function autoRoundTotal(container) {
+                const currentTotal = parseFloat(container.find('.grand-total').val()) || 0;
                 const roundedTotal = roundDownToNearest(currentTotal);
                 const difference = currentTotal - roundedTotal;
                 
                 if (difference > 0) {
                     // Get current discount
-                    const currentDiscount = parseFloat($container.find('.discount').val()) || 0;
+                    const currentDiscount = parseFloat(container.find('.discount').val()) || 0;
                     
                     // Update discount with rounded difference
                     const newDiscount = currentDiscount + difference;
-                    $container.find('.discount').val(newDiscount.toFixed(0)).trigger('change');
+                    container.find('.discount').val(newDiscount.toFixed(0)).trigger('change');
                     
                     // Show notification
                     Swal.fire({
@@ -1402,6 +1406,15 @@ require_once '../../config/database.php';
                         confirmButtonText: 'باشە'
                     });
                 }
+            }
+            
+            // Automatically round totals whenever they change
+            $(document).on('change', '.grand-total, .unit-price, .quantity, .shipping-cost, .other-cost', function() {
+                // Wait a short moment to ensure all calculations are complete
+                setTimeout(() => {
+                    const container = $(this).closest('.receipt-container');
+                    autoRoundTotal(container);
+                }, 100);
             });
         });
     </script>

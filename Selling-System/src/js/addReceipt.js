@@ -952,6 +952,15 @@ $(document).ready(function() {
             updateRemainingAmount(tabPane);
         }
         
+        // Automatically trigger round total functionality
+        // Use setTimeout to ensure the grand total value has been set before rounding
+        setTimeout(() => {
+            // Check if the autoRoundTotal function exists (it's defined in addReceipt.php)
+            if (typeof autoRoundTotal === 'function') {
+                autoRoundTotal(tabPane);
+            }
+        }, 100);
+        
         return grandTotal;
     }
 
