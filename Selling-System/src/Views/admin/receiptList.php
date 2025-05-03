@@ -993,7 +993,6 @@ function translateUnitType($unitType) {
     <!-- Page Script -->
     <script src="../../js/include-components.js"></script>
     <script src="../../js/ajax-config.js"></script>
-    <script src="../../js/receipt-search.js"></script>
     <script src="../../js/receipt-filters.js"></script>
     <script>
     $(document).ready(function() {
@@ -1048,6 +1047,9 @@ function translateUnitType($unitType) {
                 // Reset visibility - make all rows visible before filtering
                 allRows.css('display', '');
                 
+                // Apply current search filter
+                applySearchFilter(tableId);
+                
                 // Get truly visible rows (not hidden by search/filter)
                 const visibleRows = tableBody.find('tr:visible');
                 
@@ -1094,6 +1096,22 @@ function translateUnitType($unitType) {
                 // Update next/prev button states
                 $(`#${tableId}PrevPage`).prop('disabled', currentPage === 1);
                 $(`#${tableId}NextPage`).prop('disabled', currentPage === totalPages || totalPages === 0);
+            }
+            
+            // Function to apply search filter
+            function applySearchFilter(tableId) {
+                const actualTableId = tableMap[tableId];
+                const searchTerm = $(`#${tableId}SearchInput`).val().toLowerCase();
+                
+                if (!searchTerm) return; // Skip if search is empty
+                
+                const allRows = $(`#${actualTableId} tbody tr`).not('.no-records-row');
+                
+                allRows.each(function() {
+                    const rowText = $(this).text().toLowerCase();
+                    const match = rowText.indexOf(searchTerm) > -1;
+                    $(this).toggle(match);
+                });
             }
 
             // Update pagination info and buttons
@@ -1192,28 +1210,27 @@ function translateUnitType($unitType) {
                 }
             });
 
-            // Search functionality is now handled in receipt-search.js
-            // But add direct event handlers here for proper pagination
+            // Search functionality with improved handling
             $(`#${tableId}SearchInput`).on('keyup', function() {
-                const searchTerm = $(this).val().toLowerCase();
-                const allRows = $(`#${actualTableId} tbody tr`);
-                
-                allRows.each(function() {
-                    const rowText = $(this).text().toLowerCase();
-                    const shouldShow = rowText.indexOf(searchTerm) > -1;
-                    $(this).toggle(shouldShow);
-                });
-                
                 // Reset to first page when searching
                 currentPage = 1;
                 
-                // Update pagination
-                const visibleRows = $(`#${actualTableId} tbody tr:visible`);
-                totalItems = visibleRows.length;
-                totalPages = Math.ceil(totalItems / itemsPerPage);
-                
-                updatePagination(tableId);
+                // Apply filter and show first page
                 showPage(tableId, 1);
+                
+                // Update pagination
+                updatePagination(tableId);
+            });
+            
+            // Also listen for filter changes in customer and payment type
+            $('#customerFilter, #paymentTypeFilter').on('change', function() {
+                // This will use our global search function from receipt-filters.js
+                // But we need to update pagination afterward
+                setTimeout(function() {
+                    currentPage = 1;
+                    showPage(tableId, 1);
+                    updatePagination(tableId);
+                }, 100);
             });
             
             // Also connect to the filter reset button
@@ -1221,27 +1238,8 @@ function translateUnitType($unitType) {
                 // Wait a moment for the filters to reset
                 setTimeout(function() {
                     currentPage = 1;
-                    const visibleRows = $(`#${actualTableId} tbody tr:visible`);
-                    totalItems = visibleRows.length;
-                    totalPages = Math.ceil(totalItems / itemsPerPage);
-                    
-                    updatePagination(tableId);
                     showPage(tableId, 1);
-                }, 100);
-            });
-
-            // Also listen for filter changes in customer and payment type
-            $('#customerFilter, #paymentTypeFilter').on('change', function() {
-                // This will use our global search function from receipt-filters.js
-                // But we need to update pagination afterward
-                setTimeout(function() {
-                    currentPage = 1;
-                    const visibleRows = $(`#${actualTableId} tbody tr:visible`);
-                    totalItems = visibleRows.length;
-                    totalPages = Math.ceil(totalItems / itemsPerPage);
-                    
                     updatePagination(tableId);
-                    showPage(tableId, 1);
                 }, 100);
             });
         }
