@@ -41,8 +41,8 @@ try {
             throw new Exception('ناتوانیت ئەم کڕیارە بسڕیتەوە چونکە فرۆشتنی بۆ تۆمارکراوە');
         }
         
-        // Check for payments
-        $checkPaymentsStmt = $conn->prepare("SELECT id FROM payments WHERE customer_id = ? LIMIT 1");
+        // Check for payments - using debt_transactions table instead of non-existent payments table
+        $checkPaymentsStmt = $conn->prepare("SELECT id FROM debt_transactions WHERE customer_id = ? AND transaction_type = 'payment' LIMIT 1");
         $checkPaymentsStmt->execute([$customerId]);
         
         if ($checkPaymentsStmt->rowCount() > 0) {
@@ -69,8 +69,8 @@ try {
             throw new Exception('ناتوانیت ئەم دابینکەرە بسڕیتەوە چونکە کڕینی لێکراوە');
         }
         
-        // Check for supplier payments
-        $checkSupplierPaymentsStmt = $conn->prepare("SELECT id FROM supplier_payments WHERE supplier_id = ? LIMIT 1");
+        // Check for supplier payments - using supplier_debt_transactions table instead of non-existent supplier_payments table
+        $checkSupplierPaymentsStmt = $conn->prepare("SELECT id FROM supplier_debt_transactions WHERE supplier_id = ? AND transaction_type IN ('payment', 'supplier_payment') LIMIT 1");
         $checkSupplierPaymentsStmt->execute([$supplierId]);
         
         if ($checkSupplierPaymentsStmt->rowCount() > 0) {
