@@ -258,12 +258,7 @@ require_once '../../config/database.php';
                             </div>
                             <div class="col-md-3">
                                 <label class="total-label">کۆی گشتی</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control grand-total" step="1" readonly>
-                                    <button type="button" class="btn btn-outline-primary round-total" title="خڕکردنەوەی بڕی پارە">
-                                        <i class="fas fa-calculator"></i>
-                                    </button>
-                                </div>
+                                <input type="number" class="form-control grand-total" step="1" readonly>
                             </div>
                         </div>
                     </div>
@@ -642,7 +637,12 @@ require_once '../../config/database.php';
                     </div>
                     <div class="col-md-3">
                         <label class="total-label">کۆی گشتی</label>
-                        <input type="number" class="form-control grand-total" step="1" readonly>
+                        <div class="input-group">
+                            <input type="number" class="form-control grand-total" step="1" readonly>
+                            <button type="button" class="btn btn-outline-primary round-total" title="خڕکردنەوەی بڕی پارە">
+                                <i class="fas fa-calculator"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
