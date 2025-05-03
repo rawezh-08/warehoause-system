@@ -379,6 +379,7 @@ require_once '../../includes/auth.php';
     <script src="../../js/ajax-config.js"></script>
     <!-- Custom JavaScript -->
     <script src="../../js/addStaff/script.js"></script>
+    <script src="../../js/addStaff/phone-validation.js"></script>
     <script src="../../js/include-components.js"></script>
     
     <script>
