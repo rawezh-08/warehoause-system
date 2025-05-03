@@ -993,6 +993,12 @@ foreach ($debtTransactions as $debtTransaction) {
                                         </div>
 
                                         <div class="mb-3">
+                                            <label for="paymentDate" class="form-label">بەرواری پارەدان</label>
+                                            <input type="date" class="form-control" id="paymentDate" name="payment_date"
+                                                value="<?php echo date('Y-m-d'); ?>" required>
+                                        </div>
+
+                                        <div class="mb-3">
                                             <label for="returnNotes" class="form-label">تێبینی</label>
                                             <textarea class="form-control" id="returnNotes" name="notes"
                                                 rows="3"></textarea>
@@ -1854,6 +1860,7 @@ foreach ($debtTransactions as $debtTransaction) {
                 formData.append('customer_id', <?php echo $customer['id']; ?>);
                 formData.append('amount', returnAmount);
                 formData.append('payment_method', $('#paymentMethod').val());
+                formData.append('payment_date', $('#paymentDate').val());
                 formData.append('notes', $('#returnNotes').val());
 
                 // Send AJAX request

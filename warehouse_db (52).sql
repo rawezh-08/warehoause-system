@@ -1535,7 +1535,8 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `pay_customer_debt_fifo` (
     IN `p_amount` DECIMAL(10,2),
     IN `p_notes` TEXT,
     IN `p_created_by` INT,
-    IN `p_payment_method` VARCHAR(20)
+    IN `p_payment_method` VARCHAR(20),
+    IN `p_payment_date` DATE
 )
 BEGIN
     DECLARE v_remaining_payment DECIMAL(10,2);
@@ -1606,7 +1607,8 @@ BEGIN
             transaction_type,
             reference_id,
             notes,
-            created_by
+            created_by,
+            created_at
         ) VALUES (
             p_customer_id,
             v_amount_to_pay,
@@ -1615,9 +1617,11 @@ BEGIN
             JSON_OBJECT(
                 'payment_method', p_payment_method,
                 'notes', p_notes,
+                'payment_date', p_payment_date,
                 'original_amount', p_amount
             ),
-            p_created_by
+            p_created_by,
+            p_payment_date
         );
         
         SET v_remaining_payment = v_remaining_payment - v_amount_to_pay;
