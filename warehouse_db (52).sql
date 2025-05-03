@@ -394,7 +394,13 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_sale` (
     SELECT sale_id AS 'result';
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `add_sale_return` (IN `p_sale_id` INT, IN `p_notes` TEXT, IN `p_created_by` INT, IN `p_return_items` JSON)   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `add_sale_return` (
+    IN `p_sale_id` INT, 
+    IN `p_notes` TEXT, 
+    IN `p_created_by` INT, 
+    IN `p_return_items` JSON
+)
+BEGIN
     DECLARE i INT DEFAULT 0;
     DECLARE item_count INT;
     DECLARE v_product_id INT;
@@ -403,15 +409,32 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_sale_return` (IN `p_sale_id` IN
     DECLARE v_pieces_count INT;
     DECLARE v_pieces_per_box INT;
     DECLARE v_boxes_per_set INT;
+    DECLARE v_customer_id INT;
+    DECLARE v_sale_payment_type VARCHAR(10);
+    DECLARE v_sale_remaining_amount DECIMAL(10,2);
+    DECLARE v_return_amount DECIMAL(10,2) DEFAULT 0;
+    DECLARE v_unit_price DECIMAL(10,2);
+    
+    -- Get sale information
+    SELECT customer_id, payment_type, remaining_amount 
+    INTO v_customer_id, v_sale_payment_type, v_sale_remaining_amount
+    FROM sales 
+    WHERE id = p_sale_id;
     
     SET item_count = JSON_LENGTH(p_return_items);
+    
+    START TRANSACTION;
     
     -- Process return items
     WHILE i < item_count DO
         -- Extract item data
         SET v_product_id = JSON_EXTRACT(p_return_items, CONCAT('$[', i, '].product_id'));
         SET v_quantity = JSON_EXTRACT(p_return_items, CONCAT('$[', i, '].quantity'));
-        SET v_unit_type = JSON_EXTRACT(p_return_items, CONCAT('$[', i, '].unit_type'));
+        SET v_unit_type = JSON_UNQUOTE(JSON_EXTRACT(p_return_items, CONCAT('$[', i, '].unit_type')));
+        SET v_unit_price = JSON_EXTRACT(p_return_items, CONCAT('$[', i, '].unit_price'));
+        
+        -- Calculate return amount
+        SET v_return_amount = v_return_amount + (v_quantity * v_unit_price);
         
         -- Calculate actual pieces count based on unit type
         IF v_unit_type = 'piece' THEN
@@ -440,7 +463,58 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_sale_return` (IN `p_sale_id` IN
         SET i = i + 1;
     END WHILE;
     
-    SELECT 'success' AS 'result';
+    -- If sale was fully paid (remaining_amount = 0), create negative debt for customer
+    IF v_sale_remaining_amount = 0 THEN
+        -- Update customer's debt (negative means company owes customer)
+        UPDATE customers 
+        SET debit_on_business = debit_on_business - v_return_amount
+        WHERE id = v_customer_id;
+        
+        -- Record debt transaction
+        INSERT INTO debt_transactions (
+            customer_id,
+            amount,
+            transaction_type,
+            reference_id,
+            notes,
+            created_by
+        ) VALUES (
+            v_customer_id,
+            -v_return_amount, -- Negative amount means company owes customer
+            'return',
+            p_sale_id,
+            JSON_OBJECT(
+                'notes', p_notes,
+                'return_amount', v_return_amount,
+                'type', 'fully_paid_return'
+            ),
+            p_created_by
+        );
+    ELSE
+        -- For unpaid or partially paid sales, just reduce the remaining amount
+        UPDATE sales 
+        SET remaining_amount = remaining_amount - v_return_amount
+        WHERE id = p_sale_id;
+    END IF;
+    
+    -- Record the return in product_returns table
+    INSERT INTO product_returns (
+        receipt_id,
+        receipt_type,
+        return_date,
+        reason,
+        notes
+    ) VALUES (
+        p_sale_id,
+        'selling',
+        NOW(),
+        'customer_request',
+        p_notes
+    );
+    
+    COMMIT;
+    
+    SELECT 'success' AS 'result', v_return_amount AS 'return_amount';
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `add_sale_with_advance` (
