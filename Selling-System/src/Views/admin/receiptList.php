@@ -1009,6 +1009,40 @@ function translateUnitType($unitType) {
         initializeTable('drafts');
         initializeTable('delivery');
         initializeTable('returns');
+        
+        // Handle tab switching to reset pagination
+        $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+            const targetId = $(e.target).attr('id');
+            let tableId;
+            
+            // Determine which table to reset based on the tab
+            if (targetId === 'sales-tab') {
+                tableId = 'sales';
+            } else if (targetId === 'delivery-tab') {
+                tableId = 'delivery';
+            } else if (targetId === 'drafts-tab') {
+                tableId = 'drafts';
+            } else if (targetId === 'returns-tab') {
+                tableId = 'returns';
+            }
+            
+            if (tableId) {
+                // Clear search input
+                $(`#${tableId}SearchInput`).val('');
+                
+                // Reset to page 1
+                const actualTableId = tableMap[tableId];
+                const table = $(`#${actualTableId}`);
+                const tableBody = table.find('tbody');
+                
+                // Make all rows visible
+                tableBody.find('tr').show();
+                
+                // Update pagination for this table
+                showPage(tableId, 1);
+                updatePagination(tableId);
+            }
+        });
 
         function initializeTable(tableId) {
             const actualTableId = tableMap[tableId];
@@ -1044,8 +1078,11 @@ function translateUnitType($unitType) {
                 const tableBody = $(`#${actualTableId} tbody`);
                 const allRows = tableBody.find('tr');
                 
+                // Important: First remove any existing no-records-row
+                tableBody.find('.no-records-row').remove();
+                
                 // Reset visibility - make all rows visible before filtering
-                allRows.css('display', '');
+                allRows.show();
                 
                 // Apply current search filter
                 applySearchFilter(tableId);
@@ -1055,23 +1092,15 @@ function translateUnitType($unitType) {
                 
                 // If no visible rows, show "no records" message
                 if (visibleRows.length === 0) {
-                    // Check if we already have a "no records" message
-                    if (!tableBody.find('.no-records-row').length) {
-                        // Add a "no records" message row
-                        const colCount = $(`#${actualTableId} thead th`).length;
-                        const noRecordsRow = $(`<tr class="no-records-row"><td colspan="${colCount}" class="text-center py-4">هیچ پسووڵەیەک نەدۆزرایەوە</td></tr>`);
-                        tableBody.append(noRecordsRow);
-                    }
-                    // Make sure the "no records" row is visible
-                    tableBody.find('.no-records-row').show();
+                    // Add a "no records" message row
+                    const colCount = $(`#${actualTableId} thead th`).length;
+                    const noRecordsRow = $(`<tr class="no-records-row"><td colspan="${colCount}" class="text-center py-4">هیچ پسووڵەیەک نەدۆزرایەوە</td></tr>`);
+                    tableBody.append(noRecordsRow);
                     
                     // Update pagination
                     totalItems = 0;
                     totalPages = 0;
                     return;
-                } else {
-                    // Remove any "no records" message if records exist
-                    tableBody.find('.no-records-row').remove();
                 }
                 
                 // Calculate start and end indexes
@@ -1090,7 +1119,7 @@ function translateUnitType($unitType) {
                 
                 // Make sure current page is valid
                 if (currentPage > totalPages) {
-                    currentPage = totalPages;
+                    currentPage = totalPages || 1;
                 }
                 
                 // Update next/prev button states
@@ -1103,13 +1132,56 @@ function translateUnitType($unitType) {
                 const actualTableId = tableMap[tableId];
                 const searchTerm = $(`#${tableId}SearchInput`).val().toLowerCase();
                 
-                if (!searchTerm) return; // Skip if search is empty
+                // Apply current filters from filter form using the correct table ID
+                applyCustomerFilter(actualTableId);
+                applyPaymentTypeFilter(actualTableId);
+                
+                // Skip filtering if search is empty to show all rows
+                if (!searchTerm) return; 
                 
                 const allRows = $(`#${actualTableId} tbody tr`).not('.no-records-row');
                 
                 allRows.each(function() {
                     const rowText = $(this).text().toLowerCase();
                     const match = rowText.indexOf(searchTerm) > -1;
+                    $(this).toggle(match);
+                });
+            }
+            
+            // Function to apply customer filter
+            function applyCustomerFilter(tableId) {
+                const customerFilter = $('#customerFilter').val();
+                if (!customerFilter) return; // Skip if no customer selected
+                
+                // Apply to current table only
+                const allRows = $(`#${tableId} tbody tr`).not('.no-records-row');
+                
+                allRows.each(function() {
+                    const customerName = $(this).find('td:eq(3)').text().trim();
+                    const match = customerName === customerFilter;
+                    $(this).toggle(match);
+                });
+            }
+            
+            // Function to apply payment type filter
+            function applyPaymentTypeFilter(tableId) {
+                const paymentTypeFilter = $('#paymentTypeFilter').val();
+                if (!paymentTypeFilter) return; // Skip if no payment type selected
+                
+                // Apply to current table only
+                const allRows = $(`#${tableId} tbody tr`).not('.no-records-row');
+                
+                allRows.each(function() {
+                    // Payment type is in a badge in column with the "naqd" or "qarz" text
+                    const paymentType = $(this).text().toLowerCase();
+                    let match = true;
+                    
+                    if (paymentTypeFilter === 'cash' && paymentType.indexOf('نەقد') === -1) {
+                        match = false;
+                    } else if (paymentTypeFilter === 'debt' && paymentType.indexOf('قەرز') === -1) {
+                        match = false;
+                    }
+                    
                     $(this).toggle(match);
                 });
             }
