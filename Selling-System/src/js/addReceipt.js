@@ -758,7 +758,7 @@ $(document).ready(function() {
         productCell.html(`<select class="form-control product-select" id="${uniqueId}" style="width: 100%"></select>`);
         
         // Clear product image
-        newRow.find('.product-image-cell').empty();
+        newRow.find('.product-image-cell').html('<div class="product-image-container"><div class="no-image-placeholder"><i class="fas fa-box"></i></div></div>');
         
         // Remove any existing info button
         newRow.find('.product-info-btn').remove();
@@ -1339,7 +1339,7 @@ $(document).ready(function() {
         // Clear first row
         firstRow.find('input').val('');
         firstRow.find('select.product-select').val(null).trigger('change');
-        firstRow.find('.product-image-cell').empty();
+        firstRow.find('.product-image-cell').html('<div class="product-image-container"><div class="no-image-placeholder"><i class="fas fa-box"></i></div></div>');
         
         // Remove other rows
         tbody.find('tr:not(:first)').remove();
@@ -1489,7 +1489,7 @@ $(document).ready(function() {
         const stockStatus = parseInt(product.current_quantity) > 10 ? 'in-stock' : (parseInt(product.current_quantity) > 0 ? 'low-stock' : 'out-of-stock');
         const stockLabel = stockStatus === 'in-stock' ? 'بەردەستە' : (stockStatus === 'low-stock' ? 'کەمە' : 'نەماوە');
         
-        const imageUrl = product.image ? `../../api/product_image.php?filename=${encodeURIComponent(product.image.split('/').pop())}` : null;
+        const imageUrl = product.image || null;
         
         return $(
             `<div class="product-option-container">

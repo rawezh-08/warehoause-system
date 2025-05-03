@@ -845,7 +845,7 @@ require_once '../../config/database.php';
                 if (data.image) {
                     row.find('.product-image-cell').html(`<img src="${data.image}" alt="${data.text}" class="img-thumbnail">`);
                 } else {
-                    row.find('.product-image-cell').html('<i class="fas fa-image text-muted"></i>');
+                    row.find('.product-image-cell').html('<i class="fas fa-box"></i>');
                 }
                 
                 // Set product price based on price type
@@ -903,7 +903,7 @@ require_once '../../config/database.php';
                 // Reset all inputs and selects in the new row
                 newRow.find('input').val('');
                 newRow.find('select').val(null).trigger('change');
-                newRow.find('.product-image-cell').empty();
+                newRow.find('.product-image-cell').html('<i class="fas fa-box"></i>');
                 newRow.find('td:first').text(newRowNum);
                 
                 // Re-initialize select2 for the new row
@@ -953,7 +953,7 @@ require_once '../../config/database.php';
                     // Just clear the inputs if it's the only row
                     row.find('input').val('');
                     row.find('select').val(null).trigger('change');
-                    row.find('.product-image-cell').empty();
+                    row.find('.product-image-cell').html('<i class="fas fa-box"></i>');
                     updateTotals(tbody.closest('.receipt-container'));
                 }
             });
@@ -1358,7 +1358,7 @@ require_once '../../config/database.php';
             // Clear first row
             firstRow.find('input').val('');
             firstRow.find('select.product-select').val(null).trigger('change');
-            firstRow.find('.product-image-cell').empty();
+            firstRow.find('.product-image-cell').html('<i class="fas fa-box"></i>');
             
             // Remove other rows
             tbody.find('tr:not(:first)').remove();
