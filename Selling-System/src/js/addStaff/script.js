@@ -302,7 +302,8 @@ function initializeCustomerForm() {
             }
 
             // Check if this customer is also a business partner (supplier)
-            const isBusinessPartner = document.getElementById('isBusinessPartner').checked;
+            const isBusinessPartnerElement = document.getElementById('isBusinessPartner');
+            const isBusinessPartner = isBusinessPartnerElement ? isBusinessPartnerElement.checked : false;
             
             if (isBusinessPartner) {
                 // Handle as business partner (both customer and supplier)
@@ -451,7 +452,8 @@ function initializeSupplierForm() {
             }
 
             // Check if this supplier is also a business partner (customer)
-            const isBusinessPartner = document.getElementById('isBusinessPartnerSupplier').checked;
+            const isBusinessPartnerElement = document.getElementById('isBusinessPartnerSupplier');
+            const isBusinessPartner = isBusinessPartnerElement ? isBusinessPartnerElement.checked : false;
             
             if (isBusinessPartner) {
                 // Handle as business partner (both supplier and customer)
