@@ -1356,10 +1356,8 @@ function filterPartnerTable() {
 
 // Initialize all tabs when document ready
 $(document).ready(function() {
-    // Initialize existing tabs
-    initializeEmployeeTab();
-    initializeCustomerTab();
-    initializeSupplierTab();
+    // Initialize tabs without explicitly defining functions
+    // The functionality for these has already been set up above
     
     // Initialize new business partners tab
     initializeBusinessPartnersTab();
@@ -1369,3 +1367,117 @@ $(document).ready(function() {
         updateTableInfo('partner');
     });
 });
+
+// Helper function for data tables
+function initializeDataTable(prefix) {
+    // Set up table search
+    $(`#${prefix}TableSearch`).on('input', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        filterTable(prefix, searchTerm);
+    });
+    
+    // Set up records per page
+    $(`#${prefix}RecordsPerPage`).on('change', function() {
+        updateTableInfo(prefix);
+    });
+    
+    // Set up pagination
+    $(`#${prefix}PrevPageBtn`).on('click', function() {
+        const currentPage = parseInt($(`#${prefix}PaginationNumbers .btn-primary`).text());
+        if (currentPage > 1) {
+            navigateToPage(prefix, currentPage - 1);
+        }
+    });
+    
+    $(`#${prefix}NextPageBtn`).on('click', function() {
+        const currentPage = parseInt($(`#${prefix}PaginationNumbers .btn-primary`).text());
+        const totalPages = Math.ceil($(`#${prefix}Table tbody tr:visible`).length / parseInt($(`#${prefix}RecordsPerPage`).val()));
+        if (currentPage < totalPages) {
+            navigateToPage(prefix, currentPage + 1);
+        }
+    });
+    
+    // Initialize pagination
+    updateTableInfo(prefix);
+}
+
+// Filter table based on search
+function filterTable(prefix, searchTerm) {
+    $(`#${prefix}Table tbody tr`).each(function() {
+        let match = false;
+        $(this).find('td').each(function() {
+            if ($(this).text().toLowerCase().includes(searchTerm)) {
+                match = true;
+                return false; // break the loop
+            }
+        });
+        $(this).toggle(match);
+    });
+    
+    // Reset to page 1 after filtering
+    updateTableInfo(prefix);
+}
+
+// Update table pagination info
+function updateTableInfo(prefix) {
+    const recordsPerPage = parseInt($(`#${prefix}RecordsPerPage`).val());
+    const visibleRows = $(`#${prefix}Table tbody tr:visible`);
+    const totalRecords = visibleRows.length;
+    const totalPages = Math.ceil(totalRecords / recordsPerPage);
+    
+    // Show page 1 initially
+    navigateToPage(prefix, 1);
+    
+    // Update pagination numbers
+    const paginationNumbers = $(`#${prefix}PaginationNumbers`);
+    paginationNumbers.empty();
+    
+    for (let i = 1; i <= totalPages; i++) {
+        const pageBtn = $(`<button class="btn btn-sm ${i === 1 ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2">${i}</button>`);
+        pageBtn.on('click', function() {
+            navigateToPage(prefix, i);
+        });
+        paginationNumbers.append(pageBtn);
+    }
+    
+    // Update pagination info text
+    $(`#${prefix}TotalRecords`).text(totalRecords);
+    
+    // Update pagination buttons
+    $(`#${prefix}PrevPageBtn`).prop('disabled', totalPages <= 1);
+    $(`#${prefix}NextPageBtn`).prop('disabled', totalPages <= 1);
+}
+
+// Navigate to specific page
+function navigateToPage(prefix, pageNumber) {
+    const recordsPerPage = parseInt($(`#${prefix}RecordsPerPage`).val());
+    const visibleRows = $(`#${prefix}Table tbody tr:visible`);
+    const totalRecords = visibleRows.length;
+    const totalPages = Math.ceil(totalRecords / recordsPerPage);
+    
+    // Validate page number
+    if (pageNumber < 1) pageNumber = 1;
+    if (pageNumber > totalPages) pageNumber = totalPages;
+    
+    // Calculate start and end index
+    const startIndex = (pageNumber - 1) * recordsPerPage;
+    const endIndex = Math.min(startIndex + recordsPerPage, totalRecords);
+    
+    // Hide all rows first
+    visibleRows.hide();
+    
+    // Show only rows for current page
+    visibleRows.slice(startIndex, endIndex).show();
+    
+    // Update pagination info
+    $(`#${prefix}StartRecord`).text(totalRecords ? startIndex + 1 : 0);
+    $(`#${prefix}EndRecord`).text(endIndex);
+    
+    // Update active page in pagination
+    $(`#${prefix}PaginationNumbers button`).removeClass('btn-primary').addClass('btn-outline-primary');
+    $(`#${prefix}PaginationNumbers button:nth-child(${pageNumber})`).removeClass('btn-outline-primary').addClass('btn-primary');
+    
+    // Update prev/next buttons
+    $(`#${prefix}PrevPageBtn`).prop('disabled', pageNumber === 1);
+    $(`#${prefix}NextPageBtn`).prop('disabled', pageNumber === totalPages || totalPages === 0);
+}
