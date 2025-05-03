@@ -41,7 +41,7 @@ try {
         'debt_on_myself' => $debtOnMyself,
         'debt_on_supplier' => $debtOnSupplier,
         'notes' => $_POST['supplierNotes'] ?? null,
-        'is_business_partner' => isset($_POST['is_business_partner']) ? 1 : 0,
+        'is_business_partner' => 0,
         'customer_id' => isset($_POST['customer_id']) ? $_POST['customer_id'] : null
     ];
 
