@@ -203,7 +203,7 @@ require_once '../../process/products_logic.php';
                                                          title="<?php echo htmlspecialchars($product['name']); ?>">
                                                 <?php else: ?>
                                                     <div class="no-image-placeholder">
-                                                        <i class="fas fa-image"></i>
+                                                        <i class="fas fa-box"></i>
                                                     </div>
                                                 <?php endif; ?>
                                             </td>
