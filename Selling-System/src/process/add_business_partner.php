@@ -22,50 +22,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $address = !empty($_POST['partnerAddress']) ? $_POST['partnerAddress'] : '';
         $notes = !empty($_POST['partnerNotes']) ? $_POST['partnerNotes'] : '';
         
-        // First check if phone already exists as a non-business partner (regular customer or supplier)
-        $checkRegularQuery = "SELECT id FROM (
-                            SELECT id FROM customers WHERE (phone1 = :phone OR phone2 = :phone) AND (is_business_partner = 0 OR is_business_partner IS NULL)
-                            UNION
-                            SELECT id FROM suppliers WHERE (phone1 = :phone OR phone2 = :phone) AND (is_business_partner = 0 OR is_business_partner IS NULL)
-                            ) AS existing_phones
-                            LIMIT 1";
+        // Check if phone1 exists in customers table
+        $checkCustomerPhone1 = "SELECT id, is_business_partner FROM customers WHERE phone1 = :phone OR phone2 = :phone LIMIT 1";
+        $checkCustomerStmt = $conn->prepare($checkCustomerPhone1);
+        $checkCustomerStmt->execute([':phone' => $phone1]);
+        $existingCustomer = $checkCustomerStmt->fetch(PDO::FETCH_ASSOC);
         
-        $checkRegularStmt = $conn->prepare($checkRegularQuery);
-        $checkRegularStmt->execute([':phone' => $phone1]);
+        // Check if phone1 exists in suppliers table
+        $checkSupplierPhone1 = "SELECT id, is_business_partner FROM suppliers WHERE phone1 = :phone OR phone2 = :phone LIMIT 1";
+        $checkSupplierStmt = $conn->prepare($checkSupplierPhone1);
+        $checkSupplierStmt->execute([':phone' => $phone1]);
+        $existingSupplier = $checkSupplierStmt->fetch(PDO::FETCH_ASSOC);
         
-        if ($checkRegularStmt->rowCount() > 0) {
-            // Phone number already exists as a regular customer or supplier
-            throw new Exception('ژمارەی مۆبایل پێشتر بەکارهێنراوە وەک کڕیار یان دابینکەری ئاسایی');
-        }
-        
-        // Then check if phone already exists as a business partner
-        $checkPartnerQuery = "SELECT id FROM (
-                            SELECT id FROM customers WHERE (phone1 = :phone OR phone2 = :phone) AND is_business_partner = 1
-                            UNION
-                            SELECT id FROM suppliers WHERE (phone1 = :phone OR phone2 = :phone) AND is_business_partner = 1
-                            ) AS existing_partners
-                            LIMIT 1";
-        
-        $checkPartnerStmt = $conn->prepare($checkPartnerQuery);
-        $checkPartnerStmt->execute([':phone' => $phone1]);
-        
-        if ($checkPartnerStmt->rowCount() > 0) {
-            // Phone number already exists as a business partner
-            throw new Exception('ژمارەی مۆبایل پێشتر بەکارهێنراوە وەک کڕیار و دابینکەر');
-        }
-        
-        // If a second phone number is provided, check that as well
-        if (!empty($phone2)) {
-            // Check regular customers/suppliers
-            $checkRegularStmt->execute([':phone' => $phone2]);
-            if ($checkRegularStmt->rowCount() > 0) {
-                throw new Exception('ژمارەی مۆبایلی دووەم پێشتر بەکارهێنراوە وەک کڕیار یان دابینکەری ئاسایی');
+        // If phone exists in either table, throw appropriate exception
+        if ($existingCustomer || $existingSupplier) {
+            if (($existingCustomer && $existingCustomer['is_business_partner'] == 1) || 
+                ($existingSupplier && $existingSupplier['is_business_partner'] == 1)) {
+                throw new Exception('ژمارەی مۆبایل پێشتر بەکارهێنراوە وەک کڕیار و دابینکەر');
+            } else {
+                throw new Exception('ژمارەی مۆبایل پێشتر بەکارهێنراوە وەک کڕیار یان دابینکەری ئاسایی');
             }
+        }
+        
+        // If a second phone number is provided, check it too
+        if (!empty($phone2)) {
+            // Check phone2 in customers
+            $checkCustomerStmt->execute([':phone' => $phone2]);
+            $existingCustomer = $checkCustomerStmt->fetch(PDO::FETCH_ASSOC);
             
-            // Check business partners
-            $checkPartnerStmt->execute([':phone' => $phone2]);
-            if ($checkPartnerStmt->rowCount() > 0) {
-                throw new Exception('ژمارەی مۆبایلی دووەم پێشتر بەکارهێنراوە وەک کڕیار و دابینکەر');
+            // Check phone2 in suppliers
+            $checkSupplierStmt->execute([':phone' => $phone2]);
+            $existingSupplier = $checkSupplierStmt->fetch(PDO::FETCH_ASSOC);
+            
+            // If phone2 exists in either table, throw appropriate exception
+            if ($existingCustomer || $existingSupplier) {
+                if (($existingCustomer && $existingCustomer['is_business_partner'] == 1) || 
+                    ($existingSupplier && $existingSupplier['is_business_partner'] == 1)) {
+                    throw new Exception('ژمارەی مۆبایلی دووەم پێشتر بەکارهێنراوە وەک کڕیار و دابینکەر');
+                } else {
+                    throw new Exception('ژمارەی مۆبایلی دووەم پێشتر بەکارهێنراوە وەک کڕیار یان دابینکەری ئاسایی');
+                }
             }
         }
         
