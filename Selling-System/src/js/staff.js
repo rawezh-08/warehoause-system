@@ -1245,30 +1245,174 @@ function initializeBusinessPartnersTab() {
     $('#business-partner-content .refresh-btn').on('click', function() {
         location.reload();
     });
+
+    // Add partner table search functionality
+    document.getElementById('partnerTableSearch').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const partnerRows = document.querySelectorAll('#partnerTable tbody tr');
+        
+        partnerRows.forEach(row => {
+            let match = false;
+            // Search in all cells except the last one (actions column)
+            for (let i = 1; i < row.cells.length - 1; i++) {
+                const cellText = row.cells[i].textContent.toLowerCase();
+                if (cellText.includes(searchTerm)) {
+                    match = true;
+                    break;
+                }
+            }
+            
+            row.dataset.searchMatch = match ? 'true' : 'false';
+            applyPartnerFilters();
+        });
+    });
+
+    // Add records per page change handler
+    document.getElementById('partnerRecordsPerPage').addEventListener('change', function() {
+        applyPartnerPagination(1);
+    });
+
+    // Add pagination next/prev button handlers
+    document.getElementById('partnerPrevPageBtn').addEventListener('click', function() {
+        const currentActivePage = document.querySelector('#partnerPaginationNumbers .btn-primary');
+        if (currentActivePage) {
+            const currentPage = parseInt(currentActivePage.textContent);
+            applyPartnerPagination(currentPage - 1);
+        }
+    });
+
+    document.getElementById('partnerNextPageBtn').addEventListener('click', function() {
+        const currentActivePage = document.querySelector('#partnerPaginationNumbers .btn-primary');
+        if (currentActivePage) {
+            const currentPage = parseInt(currentActivePage.textContent);
+            applyPartnerPagination(currentPage + 1);
+        }
+    });
+
+    // Add partner name filter functionality
+    document.getElementById('partnerName').addEventListener('change', function() {
+        const nameFilter = this.value.toLowerCase();
+        const partnerRows = document.querySelectorAll('#partnerTable tbody tr');
+        
+        partnerRows.forEach(row => {
+            const name = row.cells[1].textContent.toLowerCase();
+            row.dataset.nameFilterMatch = name.includes(nameFilter) ? 'true' : 'false';
+            applyPartnerFilters();
+        });
+    });
+
+    // Add partner phone filter functionality
+    document.getElementById('partnerPhone').addEventListener('input', function() {
+        const phoneFilter = this.value.toLowerCase();
+        const partnerRows = document.querySelectorAll('#partnerTable tbody tr');
+        
+        partnerRows.forEach(row => {
+            const phone = row.cells[3].textContent.toLowerCase();
+            row.dataset.phoneFilterMatch = phone.includes(phoneFilter) ? 'true' : 'false';
+            applyPartnerFilters();
+        });
+    });
+
+    // Add partner reset filter functionality
+    document.getElementById('partnerResetFilter').addEventListener('click', function() {
+        // Reset name filter
+        document.getElementById('partnerName').value = '';
+        
+        // Reset phone filter
+        document.getElementById('partnerPhone').value = '';
+        
+        // Reset table search
+        document.getElementById('partnerTableSearch').value = '';
+        
+        // Reset all rows to visible
+        const partnerRows = document.querySelectorAll('#partnerTable tbody tr');
+        partnerRows.forEach(row => {
+            row.dataset.filterMatch = 'true';
+            row.dataset.searchMatch = 'true';
+            row.style.display = '';
+        });
+        
+        // Reapply pagination
+        applyPartnerPagination(1);
+    });
+
+    // Initialize partner pagination
+    applyPartnerPagination(1);
 }
 
-// Filter partners table based on selected criteria
-function filterPartnerTable() {
-    const nameFilter = $('#partnerName').val().toLowerCase();
-    const phoneFilter = $('#partnerPhone').val().toLowerCase();
+// Function to apply all partner filters
+function applyPartnerFilters() {
+    const partnerRows = document.querySelectorAll('#partnerTable tbody tr');
+    let visibleCount = 0;
     
-    $('#partnerTable tbody tr').each(function() {
-        const name = $(this).find('td:eq(1)').text().toLowerCase();
-        const phone = $(this).find('td:eq(2)').text().toLowerCase();
+    partnerRows.forEach(row => {
+        // Default all filters to true if not set
+        const nameMatch = row.dataset.nameFilterMatch !== 'false';
+        const phoneMatch = row.dataset.phoneFilterMatch !== 'false';
+        const searchMatch = row.dataset.searchMatch !== 'false';
         
-        // Show row if it matches all selected filters
-        const nameMatch = nameFilter === '' || name.includes(nameFilter);
-        const phoneMatch = phoneFilter === '' || phone.includes(phoneFilter);
+        // Show row only if it matches all filters
+        const isVisible = nameMatch && phoneMatch && searchMatch;
+        row.style.display = isVisible ? '' : 'none';
         
-        if (nameMatch && phoneMatch) {
-            $(this).show();
-        } else {
-            $(this).hide();
+        if (isVisible) {
+            visibleCount++;
         }
     });
     
     // Update pagination after filtering
-    updateTableInfo('partner');
+    applyPartnerPagination(1);
+}
+
+// Function to apply partner pagination
+function applyPartnerPagination(page) {
+    const recordsPerPage = parseInt(document.getElementById('partnerRecordsPerPage').value);
+    const partnerRows = document.querySelectorAll('#partnerTable tbody tr');
+    const visibleRows = Array.from(partnerRows).filter(row => row.style.display !== 'none');
+    const totalVisibleRecords = visibleRows.length;
+    
+    // Calculate total pages
+    const totalPages = Math.ceil(totalVisibleRecords / recordsPerPage);
+    
+    // Ensure page is within bounds
+    page = Math.min(Math.max(1, page), totalPages || 1);
+    
+    // Show only rows for current page
+    visibleRows.forEach((row, index) => {
+        const startIndex = (page - 1) * recordsPerPage;
+        const endIndex = startIndex + recordsPerPage - 1;
+        
+        row.style.display = (index >= startIndex && index <= endIndex) ? '' : 'none';
+    });
+    
+    // Update pagination info
+    const startRecord = totalVisibleRecords > 0 ? (page - 1) * recordsPerPage + 1 : 0;
+    const endRecord = Math.min(page * recordsPerPage, totalVisibleRecords);
+    
+    document.getElementById('partnerStartRecord').textContent = startRecord;
+    document.getElementById('partnerEndRecord').textContent = endRecord;
+    document.getElementById('partnerTotalRecords').textContent = totalVisibleRecords;
+    
+    // Update pagination buttons
+    const prevPageBtn = document.getElementById('partnerPrevPageBtn');
+    const nextPageBtn = document.getElementById('partnerNextPageBtn');
+    
+    prevPageBtn.disabled = page === 1;
+    nextPageBtn.disabled = page === totalPages || totalPages === 0;
+    
+    // Update pagination numbers
+    const paginationNumbers = document.getElementById('partnerPaginationNumbers');
+    paginationNumbers.innerHTML = '';
+    
+    for (let i = 1; i <= totalPages; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `btn btn-sm ${i === page ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2`;
+        pageBtn.textContent = i;
+        pageBtn.addEventListener('click', () => applyPartnerPagination(i));
+        paginationNumbers.appendChild(pageBtn);
+    }
+    
+    return page;
 }
 
 // Initialize all tabs when document ready
@@ -1283,6 +1427,6 @@ $(document).ready(function() {
     
     // Make sure the table is responsive
     $(window).resize(function() {
-        updateTableInfo('partner');
+        applyPartnerPagination(1);
     });
 });
