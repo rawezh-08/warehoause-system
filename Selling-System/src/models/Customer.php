@@ -58,7 +58,7 @@ class Customer {
             }
             
             // Handle business partner relationship
-            $isBusinessPartner = isset($data['is_business_partner']) ? 1 : 0;
+            $isBusinessPartner = isset($data['is_business_partner']) ? (int)$data['is_business_partner'] : 0;
             $supplierId = isset($data['supplier_id']) ? $data['supplier_id'] : null;
             
             // Insert customer data with business partner fields

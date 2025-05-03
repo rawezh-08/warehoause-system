@@ -43,7 +43,7 @@ class Supplier {
             $stmt = $this->conn->prepare($sql);
             
             // Handle business partner relationship
-            $isBusinessPartner = isset($data['is_business_partner']) ? 1 : 0;
+            $isBusinessPartner = isset($data['is_business_partner']) ? (int)$data['is_business_partner'] : 0;
             $customerId = isset($data['customer_id']) ? $data['customer_id'] : null;
             
             // Execute statement with all parameters
