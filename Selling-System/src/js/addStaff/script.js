@@ -6,6 +6,7 @@ $(document).ready(function() {
     initializeEmployeeForm();
     initializeCustomerForm();
     initializeSupplierForm();
+    initializeBusinessPartnerForm();
     
     // Setup tab click handlers
     setupTabHandlers();
@@ -1066,3 +1067,138 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 });
+
+/**
+ * Initialize business partner form with phone number validation
+ */
+function initializeBusinessPartnerForm() {
+    // Get form elements
+    const businessPartnerForm = document.getElementById('businessPartnerForm');
+    const resetBusinessPartnerForm = document.getElementById('resetBusinessPartnerForm');
+    
+    if (businessPartnerForm) {
+        // Add phone number validation with server check
+        const partnerPhone1Input = document.getElementById('partnerPhone1');
+        if (partnerPhone1Input) {
+            partnerPhone1Input.addEventListener('blur', function() {
+                // First validate format
+                if (this.value && !/^07\d{9}$/.test(this.value)) {
+                    this.classList.add('is-invalid');
+                    if (!this.nextElementSibling || !this.nextElementSibling.classList.contains('invalid-feedback')) {
+                        const feedback = document.createElement('div');
+                        feedback.className = 'invalid-feedback';
+                        feedback.textContent = 'ژمارە مۆبایل دەبێت بە 07 دەست پێبکات و 11 ژمارە بێت';
+                        this.parentNode.appendChild(feedback);
+                    } else {
+                        this.nextElementSibling.textContent = 'ژمارە مۆبایل دەبێت بە 07 دەست پێبکات و 11 ژمارە بێت';
+                    }
+                    return;
+                }
+                
+                // Then check if number already exists in database
+                if (this.value) {
+                    fetch('../../process/check_phone_exists.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: 'phone=' + encodeURIComponent(this.value)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.exists) {
+                            this.classList.add('is-invalid');
+                            if (!this.nextElementSibling || !this.nextElementSibling.classList.contains('invalid-feedback')) {
+                                const feedback = document.createElement('div');
+                                feedback.className = 'invalid-feedback';
+                                feedback.textContent = 'ژمارەی مۆبایل پێشتر بەکارهێنراوە';
+                                this.parentNode.appendChild(feedback);
+                            } else {
+                                this.nextElementSibling.textContent = 'ژمارەی مۆبایل پێشتر بەکارهێنراوە';
+                            }
+                        } else {
+                            this.classList.remove('is-invalid');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking phone number:', error);
+                    });
+                }
+            });
+        }
+        
+        // Add submit event handler
+        businessPartnerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validate form
+            if (!this.checkValidity()) {
+                e.stopPropagation();
+                this.classList.add('was-validated');
+                return;
+            }
+            
+            // Check if phone is invalid
+            if (partnerPhone1Input && partnerPhone1Input.classList.contains('is-invalid')) {
+                return;
+            }
+            
+            // Show loading state
+            Swal.fire({
+                title: 'تکایە چاوەڕێ بکە...',
+                text: 'زیادکردنی کڕیار و دابینکەر بەردەوامە',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Submit form
+            fetch(this.action, {
+                method: 'POST',
+                body: new FormData(this)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'سەرکەوتوو بوو!',
+                        text: data.message,
+                        confirmButtonText: 'باشە'
+                    }).then(() => {
+                        // Reset form
+                        businessPartnerForm.reset();
+                        businessPartnerForm.classList.remove('was-validated');
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە!',
+                        text: data.message,
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە!',
+                    text: 'هەڵەیەک ڕوویدا لە کاتی ناردنی زانیاریەکان',
+                    confirmButtonText: 'باشە'
+                });
+            });
+        });
+    }
+    
+    // Add reset form handler
+    if (resetBusinessPartnerForm) {
+        resetBusinessPartnerForm.addEventListener('click', function() {
+            businessPartnerForm.reset();
+            businessPartnerForm.classList.remove('was-validated');
+            const invalidInputs = businessPartnerForm.querySelectorAll('.is-invalid');
+            invalidInputs.forEach(input => input.classList.remove('is-invalid'));
+        });
+    }
+}

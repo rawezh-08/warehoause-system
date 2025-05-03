@@ -22,6 +22,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $address = !empty($_POST['partnerAddress']) ? $_POST['partnerAddress'] : '';
         $notes = !empty($_POST['partnerNotes']) ? $_POST['partnerNotes'] : '';
         
+        // Check if phone1 already exists in customers or suppliers table
+        $checkPhoneQuery = "SELECT c.id AS customer_id, s.id AS supplier_id 
+                           FROM customers c 
+                           LEFT JOIN suppliers s ON s.phone1 = :phone OR s.phone2 = :phone 
+                           WHERE c.phone1 = :phone OR c.phone2 = :phone 
+                           LIMIT 1";
+        
+        $checkPhoneStmt = $conn->prepare($checkPhoneQuery);
+        $checkPhoneStmt->execute([':phone' => $phone1]);
+        
+        if ($checkPhoneStmt->rowCount() > 0) {
+            // Phone number already exists, throw an error
+            throw new Exception('ژمارەی مۆبایل پێشتر بەکارهێنراوە');
+        }
+        
         // Customer specific data
         $guarantorName = !empty($_POST['guarantorName']) ? $_POST['guarantorName'] : '';
         $guarantorPhone = !empty($_POST['guarantorPhone']) ? $_POST['guarantorPhone'] : '';
