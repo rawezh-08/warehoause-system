@@ -965,34 +965,28 @@ $(document).ready(function() {
 
     // Function to save receipt (either as draft or normal)
     function saveReceipt(tabId, tabType, isDraft = false) {
-        console.log(`Saving ${tabType} receipt in tab ${tabId}`);
-        
-        // Get tab pane element
+        console.log(`Saving ${tabType} receipt ${tabId}. Is draft: ${isDraft}`);
         const tabPane = $(`#${tabId}`);
         
-        // Validate required fields
-        if (!validateReceiptForm(tabPane, tabType)) {
+        // Only allow drafts for selling receipts
+        if (isDraft && tabType !== RECEIPT_TYPES.SELLING) {
+            console.error('Drafts are only allowed for selling receipts');
             return;
         }
         
-        // Automatically round the total before saving
-        autoRoundTotal(tabPane);
+        // Collect data from the form
+        let receiptData = collectReceiptData(tabPane, tabType);
         
-        // Show loading state
-        const saveButton = tabPane.find('.save-btn');
-        const originalSaveBtnHtml = saveButton.html();
-        saveButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> چاوەڕێ بکە...');
-        
-        // Collect receipt data
-        const receiptData = collectReceiptData(tabPane, tabType);
-        
-        // Set draft status
-        if (isDraft) {
-            receiptData.is_draft = true;
+        if (!receiptData) {
+            console.error('Failed to collect form data');
+            return;
         }
         
-        // Debug
-        console.log('Receipt data:', receiptData);
+        // Set the draft flag if needed (only for selling receipts)
+        if (isDraft && tabType === RECEIPT_TYPES.SELLING) {
+            receiptData.is_draft = true;
+            console.log('Setting receipt as DRAFT');
+        }
         
         // Convert to JSON
         const jsonData = JSON.stringify(receiptData);
@@ -2592,45 +2586,16 @@ $(document).ready(function() {
     // دەستپێکردنی فەنکشنی گۆڕینی یەکە
     handleUnitTypeChange();
 
-    // Function to automatically round the total amount
-    function autoRoundTotal(tabPane) {
-        const currentTotal = parseFloat(tabPane.find('.grand-total').val()) || 0;
-        
-        // Define valid Iraqi Dinar denominations
-        const denominations = [250, 500, 750, 1000];
-        
-        // Find the largest denomination that's less than or equal to the number
-        let roundedTotal = 0;
-        for (let i = denominations.length - 1; i >= 0; i--) {
-            const quotient = Math.floor(currentTotal / denominations[i]);
-            if (quotient > 0) {
-                roundedTotal = quotient * denominations[i];
-                const remainder = currentTotal - roundedTotal;
-                
-                // If there's a remainder, check if we can add smaller denominations
-                if (remainder > 0) {
-                    for (let j = i - 1; j >= 0; j--) {
-                        if (remainder >= denominations[j]) {
-                            roundedTotal += denominations[j];
-                            break;
-                        }
-                    }
-                }
-                break;
-            }
+    function roundTotalAndSave() {
+        // Get the grand total input
+        const grandTotalInput = document.querySelector('.grand-total');
+        if (grandTotalInput) {
+            // Round the value to the nearest integer
+            const currentValue = parseFloat(grandTotalInput.value);
+            const roundedValue = Math.round(currentValue);
+            grandTotalInput.value = roundedValue;
         }
-        
-        const difference = currentTotal - roundedTotal;
-        
-        if (difference > 0) {
-            // Get current discount
-            const currentDiscount = parseFloat(tabPane.find('.discount').val()) || 0;
-            
-            // Update discount with rounded difference
-            const newDiscount = currentDiscount + difference;
-            tabPane.find('.discount').val(newDiscount.toFixed(0)).trigger('change');
-            
-            console.log(`Auto-rounded total: ${currentTotal} → ${roundedTotal}, added discount: ${difference}`);
-        }
+        // Call the existing save function
+        saveReceipt();
     }
 });
