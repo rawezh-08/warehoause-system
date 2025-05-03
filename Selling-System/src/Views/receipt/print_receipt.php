@@ -167,9 +167,28 @@ if (isset($_GET['sale_id']) && !empty($_GET['sale_id'])) {
         // Calculate amount after discount
         $after_discount = $total_amount - $discount;
         
-        // Get paid and remaining amounts directly from the database
+        // Get paid amount from database
         $paid_amount = floatval($sale['paid_amount']);
-        $remaining_balance = floatval($sale['remaining_amount']);
+        
+        // Calculate remaining amount based on current values
+        if ($sale['payment_type'] === 'credit') {
+            $remaining_balance = $after_discount - $paid_amount;
+            $remaining_balance = max(0, $remaining_balance); // Ensure it's not negative
+        } else {
+            $remaining_balance = 0;
+        }
+        
+        // Update the sale's remaining amount in the database
+        $stmt = $conn->prepare("
+            UPDATE sales 
+            SET remaining_amount = :remaining_amount,
+                updated_at = NOW()
+            WHERE id = :sale_id
+        ");
+        $stmt->execute([
+            ':remaining_amount' => $remaining_balance,
+            ':sale_id' => $sale['id']
+        ]);
         
         // Get previous balance (all previous debt except this sale)
         $stmt = $conn->prepare("

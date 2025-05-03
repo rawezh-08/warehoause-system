@@ -414,10 +414,16 @@ BEGIN
     DECLARE v_sale_remaining_amount DECIMAL(10,2);
     DECLARE v_return_amount DECIMAL(10,2) DEFAULT 0;
     DECLARE v_unit_price DECIMAL(10,2);
+    DECLARE v_shipping_cost DECIMAL(10,2);
+    DECLARE v_other_costs DECIMAL(10,2);
+    DECLARE v_discount DECIMAL(10,2);
+    DECLARE v_paid_amount DECIMAL(10,2);
     
     -- Get sale information
-    SELECT customer_id, payment_type, remaining_amount 
-    INTO v_customer_id, v_sale_payment_type, v_sale_remaining_amount
+    SELECT customer_id, payment_type, remaining_amount, 
+           shipping_cost, other_costs, discount, paid_amount
+    INTO v_customer_id, v_sale_payment_type, v_sale_remaining_amount,
+         v_shipping_cost, v_other_costs, v_discount, v_paid_amount
     FROM sales 
     WHERE id = p_sale_id;
     
@@ -453,6 +459,12 @@ BEGIN
         SET current_quantity = current_quantity + v_pieces_count 
         WHERE id = v_product_id;
         
+        -- Update sale_items returned quantity and total_price
+        UPDATE sale_items 
+        SET returned_quantity = COALESCE(returned_quantity, 0) + v_quantity,
+            total_price = (quantity - (COALESCE(returned_quantity, 0) + v_quantity)) * unit_price
+        WHERE sale_id = p_sale_id AND product_id = v_product_id;
+        
         -- Record in inventory table
         INSERT INTO inventory (
             product_id, quantity, reference_type, reference_id
@@ -463,39 +475,47 @@ BEGIN
         SET i = i + 1;
     END WHILE;
     
-    -- If sale was fully paid (remaining_amount = 0), create negative debt for customer
-    IF v_sale_remaining_amount = 0 THEN
-        -- Update customer's debt (negative means company owes customer)
-        UPDATE customers 
-        SET debit_on_business = debit_on_business - v_return_amount
-        WHERE id = v_customer_id;
-        
-        -- Record debt transaction
-        INSERT INTO debt_transactions (
-            customer_id,
-            amount,
-            transaction_type,
-            reference_id,
-            notes,
-            created_by
-        ) VALUES (
-            v_customer_id,
-            -v_return_amount, -- Negative amount means company owes customer
-            'return',
-            p_sale_id,
-            JSON_OBJECT(
-                'notes', p_notes,
-                'return_amount', v_return_amount,
-                'type', 'fully_paid_return'
-            ),
-            p_created_by
-        );
-    ELSE
-        -- For unpaid or partially paid sales, just reduce the remaining amount
-        UPDATE sales 
-        SET remaining_amount = remaining_amount - v_return_amount
-        WHERE id = p_sale_id;
-    END IF;
+    -- Calculate new total amount
+    SELECT COALESCE(SUM(total_price), 0) INTO @new_subtotal 
+    FROM sale_items 
+    WHERE sale_id = p_sale_id;
+    
+    SET @new_total = @new_subtotal + v_shipping_cost + v_other_costs - v_discount;
+    SET @new_remaining = GREATEST(0, @new_total - v_paid_amount);
+    
+    -- Update sale with new remaining amount
+    UPDATE sales 
+    SET remaining_amount = @new_remaining
+    WHERE id = p_sale_id;
+    
+    -- Update customer's debt
+    UPDATE customers 
+    SET debit_on_business = debit_on_business - v_return_amount
+    WHERE id = v_customer_id;
+    
+    -- Record debt transaction
+    INSERT INTO debt_transactions (
+        customer_id,
+        amount,
+        transaction_type,
+        reference_id,
+        notes,
+        created_by
+    ) VALUES (
+        v_customer_id,
+        -v_return_amount,
+        'return',
+        p_sale_id,
+        JSON_OBJECT(
+            'notes', p_notes,
+            'return_amount', v_return_amount,
+            'type', CASE 
+                WHEN v_sale_remaining_amount = 0 THEN 'fully_paid_return'
+                ELSE 'partial_paid_return'
+            END
+        ),
+        p_created_by
+    );
     
     -- Record the return in product_returns table
     INSERT INTO product_returns (
