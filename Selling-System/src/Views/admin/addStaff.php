@@ -379,7 +379,6 @@ require_once '../../includes/auth.php';
     <script src="../../js/ajax-config.js"></script>
     <!-- Custom JavaScript -->
     <script src="../../js/addStaff/script.js"></script>
-    <script src="../../js/addStaff/phone-validation.js"></script>
     <script src="../../js/include-components.js"></script>
     
     <script>
@@ -401,6 +400,139 @@ require_once '../../includes/auth.php';
             }
             
             // Remove checkbox event listeners since they are removed from HTML
+        });
+
+        // Function to check phone number uniqueness
+        async function checkPhoneNumber(phoneInput) {
+            const phone = phoneInput.value.trim();
+            if (!phone) return true;
+
+            try {
+                const response = await fetch('../../process/check_phone.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `phone=${encodeURIComponent(phone)}`
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: data.error
+                    });
+                    return false;
+                }
+
+                if (data.exists) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە',
+                        text: data.message
+                    });
+                    phoneInput.setCustomValidity(data.message);
+                    return false;
+                }
+
+                phoneInput.setCustomValidity('');
+                return true;
+            } catch (error) {
+                console.error('Error checking phone number:', error);
+                return false;
+            }
+        }
+
+        // Add validation to customer form
+        const customerForm = document.getElementById('customerForm');
+        const customerPhone1 = document.getElementById('phone1');
+        const customerPhone2 = document.getElementById('phone2');
+
+        customerPhone1.addEventListener('blur', async function() {
+            await checkPhoneNumber(this);
+        });
+
+        customerPhone2.addEventListener('blur', async function() {
+            if (this.value.trim()) {
+                await checkPhoneNumber(this);
+            }
+        });
+
+        customerForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const phone1Valid = await checkPhoneNumber(customerPhone1);
+            let phone2Valid = true;
+            
+            if (customerPhone2.value.trim()) {
+                phone2Valid = await checkPhoneNumber(customerPhone2);
+            }
+
+            if (phone1Valid && phone2Valid) {
+                this.submit();
+            }
+        });
+
+        // Add validation to supplier form
+        const supplierForm = document.getElementById('supplierForm');
+        const supplierPhone1 = document.getElementById('supplierPhone');
+        const supplierPhone2 = document.getElementById('supplierPhone2');
+
+        supplierPhone1.addEventListener('blur', async function() {
+            await checkPhoneNumber(this);
+        });
+
+        supplierPhone2.addEventListener('blur', async function() {
+            if (this.value.trim()) {
+                await checkPhoneNumber(this);
+            }
+        });
+
+        supplierForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const phone1Valid = await checkPhoneNumber(supplierPhone1);
+            let phone2Valid = true;
+            
+            if (supplierPhone2.value.trim()) {
+                phone2Valid = await checkPhoneNumber(supplierPhone2);
+            }
+
+            if (phone1Valid && phone2Valid) {
+                this.submit();
+            }
+        });
+
+        // Add validation to business partner form
+        const businessPartnerForm = document.getElementById('businessPartnerForm');
+        const partnerPhone1 = document.getElementById('partnerPhone1');
+        const partnerPhone2 = document.getElementById('partnerPhone2');
+
+        partnerPhone1.addEventListener('blur', async function() {
+            await checkPhoneNumber(this);
+        });
+
+        partnerPhone2.addEventListener('blur', async function() {
+            if (this.value.trim()) {
+                await checkPhoneNumber(this);
+            }
+        });
+
+        businessPartnerForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const phone1Valid = await checkPhoneNumber(partnerPhone1);
+            let phone2Valid = true;
+            
+            if (partnerPhone2.value.trim()) {
+                phone2Valid = await checkPhoneNumber(partnerPhone2);
+            }
+
+            if (phone1Valid && phone2Valid) {
+                this.submit();
+            }
         });
     </script>
    
