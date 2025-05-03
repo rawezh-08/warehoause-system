@@ -6,23 +6,15 @@ $db = new Database();
 $conn = $db->getConnection();
 
 // Get all sales with details
-$salesQuery = "SELECT s.*, 
-               p.name as product_name,
-               p.code as product_code,
-               si.quantity,
-               si.unit_type,
-               si.unit_price,
-               si.total_price,
-               s.shipping_cost,
-               s.other_costs,
-               s.discount,
-               s.payment_type,
-               c.name as customer_name
+$salesQuery = "SELECT s.id, s.invoice_number, s.date, s.customer_id, 
+               s.shipping_cost, s.other_costs, s.discount, s.payment_type, 
+               s.paid_amount, s.remaining_amount, s.is_draft, s.is_delivery, 
+               c.name as customer_name,
+               (SELECT SUM(total_price) FROM sale_items WHERE sale_id = s.id) as total_amount
                FROM sales s 
-               LEFT JOIN sale_items si ON s.id = si.sale_id
-               LEFT JOIN products p ON si.product_id = p.id
                LEFT JOIN customers c ON s.customer_id = c.id
                WHERE s.is_draft = 0 AND s.is_delivery = 0
+               GROUP BY s.id
                ORDER BY s.date DESC";
 $salesStmt = $conn->prepare($salesQuery);
 $salesStmt->execute();
@@ -113,6 +105,23 @@ $wastingItemsQuery = "SELECT w.id as wasting_id, w.date,
 $wastingItemsStmt = $conn->prepare($wastingItemsQuery);
 $wastingItemsStmt->execute();
 $wastingItems = $wastingItemsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get all sale items with product details for modal display
+$saleItemsQuery = "SELECT s.id as sale_id, s.invoice_number, 
+                   p.name as product_name,
+                   p.code as product_code,
+                   si.quantity,
+                   si.unit_type,
+                   si.unit_price,
+                   si.total_price
+                   FROM sales s 
+                   JOIN sale_items si ON s.id = si.sale_id
+                   JOIN products p ON si.product_id = p.id
+                   WHERE s.is_draft = 0 AND s.is_delivery = 0
+                   ORDER BY s.date DESC";
+$saleItemsStmt = $conn->prepare($saleItemsQuery);
+$saleItemsStmt->execute();
+$saleItems = $saleItemsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Function to calculate the total for a sale
 function calculateSaleTotal($saleId, $conn) {
@@ -572,11 +581,6 @@ function translateUnitType($unitType) {
                                                 <th style="background-color: #cde1ff; border: none;">ژمارەی پسووڵە</th>
                                                 <th style="background-color: #cde1ff; border: none;">بەروار</th>
                                                 <th style="background-color: #cde1ff; border: none;">ناوی کڕیار</th>
-                                                <th style="background-color: #cde1ff; border: none;">ناوی کاڵا</th>
-                                                <th style="background-color: #cde1ff; border: none;">کۆدی کاڵا</th>
-                                                <th style="background-color: #cde1ff; border: none;">بڕ</th>
-                                                <th style="background-color: #cde1ff; border: none;">یەکە</th>
-                                                <th style="background-color: #cde1ff; border: none;">نرخی تاک</th>
                                                 <th style="background-color: #cde1ff; border: none;">نرخی گشتی</th>
                                                 <th style="background-color: #cde1ff; border: none;">کرێی گواستنەوە</th>
                                                 <th style="background-color: #cde1ff; border: none;">خەرجی تر</th>
@@ -588,12 +592,12 @@ function translateUnitType($unitType) {
                                         <tbody>
                                             <?php if(empty($sales)): ?>
                                             <tr>
-                                                <td colspan="15" class="text-center py-4">هیچ پسووڵەیەک نەدۆزرایەوە</td>
+                                                <td colspan="10" class="text-center py-4">هیچ پسووڵەیەک نەدۆزرایەوە</td>
                                             </tr>
                                             <?php else: ?>
                                                 <?php foreach($sales as $index => $sale): ?>
                                                     <?php 
-                                                        $total = $sale['total_price'] ?? 0;
+                                                        $total = $sale['total_amount'] ?? 0;
                                                         $paymentStatus = 'unpaid';
                                                         if ($sale['payment_type'] == 'cash' || $sale['paid_amount'] >= $total) {
                                                             $paymentStatus = 'paid';
@@ -606,12 +610,7 @@ function translateUnitType($unitType) {
                                                         <td><?= htmlspecialchars($sale['invoice_number']) ?></td>
                                                         <td><?= formatDate($sale['date']) ?></td>
                                                         <td><?= htmlspecialchars($sale['customer_name'] ?? '-') ?></td>
-                                                        <td><?= htmlspecialchars($sale['product_name'] ?? '-') ?></td>
-                                                        <td><?= htmlspecialchars($sale['product_code'] ?? '-') ?></td>
-                                                        <td><?= htmlspecialchars($sale['quantity'] ?? '-') ?></td>
-                                                        <td><?= translateUnitType($sale['unit_type']) ?></td>
-                                                        <td><?= number_format($sale['unit_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
-                                                        <td><?= number_format($sale['total_price'] ?? 0, 0, '.', ',') ?> د.ع</td>
+                                                        <td><?= number_format($total, 0, '.', ',') ?> د.ع</td>
                                                         <td><?= number_format($sale['shipping_cost'] ?? 0, 0, '.', ',') ?> د.ع</td>
                                                         <td><?= number_format($sale['other_costs'] ?? 0, 0, '.', ',') ?> د.ع</td>
                                                         <td><?= number_format($sale['discount'] ?? 0, 0, '.', ',') ?> د.ع</td>
@@ -1172,7 +1171,7 @@ function translateUnitType($unitType) {
                 modalTitle = `بەفیڕۆچووەکان - ئایدی: ${wastingId}`;
             } else {
                 // Handle regular items by invoice number
-                const invoiceItems = <?php echo json_encode(array_merge($sales, $draftItems, $deliveryItems)); ?>;
+                const invoiceItems = <?php echo json_encode(array_merge($saleItems ?? [], $draftItems, $deliveryItems)); ?>;
                 items = invoiceItems.filter(item => item.invoice_number === invoiceNumber);
                 modalTitle = `کاڵاکانی پسووڵە ${invoiceNumber || ''}`;
             }
