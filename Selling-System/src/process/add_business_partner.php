@@ -22,19 +22,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $address = !empty($_POST['partnerAddress']) ? $_POST['partnerAddress'] : '';
         $notes = !empty($_POST['partnerNotes']) ? $_POST['partnerNotes'] : '';
         
-        // Check if phone1 already exists in customers or suppliers table
-        $checkPhoneQuery = "SELECT c.id AS customer_id, s.id AS supplier_id 
-                           FROM customers c 
-                           LEFT JOIN suppliers s ON s.phone1 = :phone OR s.phone2 = :phone 
-                           WHERE c.phone1 = :phone OR c.phone2 = :phone 
-                           LIMIT 1";
+        // First check if phone already exists as a non-business partner (regular customer or supplier)
+        $checkRegularQuery = "SELECT id FROM (
+                            SELECT id FROM customers WHERE (phone1 = :phone OR phone2 = :phone) AND (is_business_partner = 0 OR is_business_partner IS NULL)
+                            UNION
+                            SELECT id FROM suppliers WHERE (phone1 = :phone OR phone2 = :phone) AND (is_business_partner = 0 OR is_business_partner IS NULL)
+                            ) AS existing_phones
+                            LIMIT 1";
         
-        $checkPhoneStmt = $conn->prepare($checkPhoneQuery);
-        $checkPhoneStmt->execute([':phone' => $phone1]);
+        $checkRegularStmt = $conn->prepare($checkRegularQuery);
+        $checkRegularStmt->execute([':phone' => $phone1]);
         
-        if ($checkPhoneStmt->rowCount() > 0) {
-            // Phone number already exists, throw an error
-            throw new Exception('ژمارەی مۆبایل پێشتر بەکارهێنراوە');
+        if ($checkRegularStmt->rowCount() > 0) {
+            // Phone number already exists as a regular customer or supplier
+            throw new Exception('ژمارەی مۆبایل پێشتر بەکارهێنراوە وەک کڕیار یان دابینکەری ئاسایی');
+        }
+        
+        // Then check if phone already exists as a business partner
+        $checkPartnerQuery = "SELECT id FROM (
+                            SELECT id FROM customers WHERE (phone1 = :phone OR phone2 = :phone) AND is_business_partner = 1
+                            UNION
+                            SELECT id FROM suppliers WHERE (phone1 = :phone OR phone2 = :phone) AND is_business_partner = 1
+                            ) AS existing_partners
+                            LIMIT 1";
+        
+        $checkPartnerStmt = $conn->prepare($checkPartnerQuery);
+        $checkPartnerStmt->execute([':phone' => $phone1]);
+        
+        if ($checkPartnerStmt->rowCount() > 0) {
+            // Phone number already exists as a business partner
+            throw new Exception('ژمارەی مۆبایل پێشتر بەکارهێنراوە وەک کڕیار و دابینکەر');
+        }
+        
+        // If a second phone number is provided, check that as well
+        if (!empty($phone2)) {
+            // Check regular customers/suppliers
+            $checkRegularStmt->execute([':phone' => $phone2]);
+            if ($checkRegularStmt->rowCount() > 0) {
+                throw new Exception('ژمارەی مۆبایلی دووەم پێشتر بەکارهێنراوە وەک کڕیار یان دابینکەری ئاسایی');
+            }
+            
+            // Check business partners
+            $checkPartnerStmt->execute([':phone' => $phone2]);
+            if ($checkPartnerStmt->rowCount() > 0) {
+                throw new Exception('ژمارەی مۆبایلی دووەم پێشتر بەکارهێنراوە وەک کڕیار و دابینکەر');
+            }
         }
         
         // Customer specific data
