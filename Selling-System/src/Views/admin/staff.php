@@ -15,10 +15,16 @@ $customerModel = new Customer($conn);
 $supplierModel = new Supplier($conn);
 
 // Get all customers (excluding business partners)
-$customers = $customerModel->getAllNonBusinessPartners();
+$query = "SELECT * FROM customers WHERE is_business_partner = 0 OR is_business_partner IS NULL ORDER BY name ASC";
+$stmt = $conn->prepare($query);
+$stmt->execute();
+$customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get all suppliers (excluding business partners)
-$suppliers = $supplierModel->getAllNonBusinessPartners();
+$query = "SELECT * FROM suppliers WHERE is_business_partner = 0 OR is_business_partner IS NULL ORDER BY name ASC";
+$stmt = $conn->prepare($query);
+$stmt->execute();
+$suppliers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // You can add PHP logic here if needed
 ?>
