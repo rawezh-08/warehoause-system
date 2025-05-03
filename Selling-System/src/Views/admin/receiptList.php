@@ -1042,19 +1042,58 @@ function translateUnitType($unitType) {
             // Show specific page
             function showPage(tableId, page) {
                 const actualTableId = tableMap[tableId];
+                const tableBody = $(`#${actualTableId} tbody`);
+                const allRows = tableBody.find('tr');
                 
-                // Only operate on visible rows (after filtering)
-                const visibleRows = $(`#${actualTableId} tbody tr:visible`);
+                // Reset visibility - make all rows visible before filtering
+                allRows.css('display', '');
+                
+                // Get truly visible rows (not hidden by search/filter)
+                const visibleRows = tableBody.find('tr:visible');
+                
+                // If no visible rows, show "no records" message
+                if (visibleRows.length === 0) {
+                    // Check if we already have a "no records" message
+                    if (!tableBody.find('.no-records-row').length) {
+                        // Add a "no records" message row
+                        const colCount = $(`#${actualTableId} thead th`).length;
+                        const noRecordsRow = $(`<tr class="no-records-row"><td colspan="${colCount}" class="text-center py-4">هیچ پسووڵەیەک نەدۆزرایەوە</td></tr>`);
+                        tableBody.append(noRecordsRow);
+                    }
+                    // Make sure the "no records" row is visible
+                    tableBody.find('.no-records-row').show();
+                    
+                    // Update pagination
+                    totalItems = 0;
+                    totalPages = 0;
+                    return;
+                } else {
+                    // Remove any "no records" message if records exist
+                    tableBody.find('.no-records-row').remove();
+                }
                 
                 // Calculate start and end indexes
                 const startIndex = (page - 1) * itemsPerPage;
                 const endIndex = startIndex + itemsPerPage;
                 
-                // Hide all rows first
+                // Hide all visible rows first
                 visibleRows.hide();
                 
                 // Show only rows for current page
                 visibleRows.slice(startIndex, endIndex).show();
+                
+                // Update pagination buttons and counts
+                totalItems = visibleRows.length;
+                totalPages = Math.ceil(totalItems / itemsPerPage);
+                
+                // Make sure current page is valid
+                if (currentPage > totalPages) {
+                    currentPage = totalPages;
+                }
+                
+                // Update next/prev button states
+                $(`#${tableId}PrevPage`).prop('disabled', currentPage === 1);
+                $(`#${tableId}NextPage`).prop('disabled', currentPage === totalPages || totalPages === 0);
             }
 
             // Update pagination info and buttons
@@ -1154,6 +1193,57 @@ function translateUnitType($unitType) {
             });
 
             // Search functionality is now handled in receipt-search.js
+            // But add direct event handlers here for proper pagination
+            $(`#${tableId}SearchInput`).on('keyup', function() {
+                const searchTerm = $(this).val().toLowerCase();
+                const allRows = $(`#${actualTableId} tbody tr`);
+                
+                allRows.each(function() {
+                    const rowText = $(this).text().toLowerCase();
+                    const shouldShow = rowText.indexOf(searchTerm) > -1;
+                    $(this).toggle(shouldShow);
+                });
+                
+                // Reset to first page when searching
+                currentPage = 1;
+                
+                // Update pagination
+                const visibleRows = $(`#${actualTableId} tbody tr:visible`);
+                totalItems = visibleRows.length;
+                totalPages = Math.ceil(totalItems / itemsPerPage);
+                
+                updatePagination(tableId);
+                showPage(tableId, 1);
+            });
+            
+            // Also connect to the filter reset button
+            $('#resetFilters').on('click', function() {
+                // Wait a moment for the filters to reset
+                setTimeout(function() {
+                    currentPage = 1;
+                    const visibleRows = $(`#${actualTableId} tbody tr:visible`);
+                    totalItems = visibleRows.length;
+                    totalPages = Math.ceil(totalItems / itemsPerPage);
+                    
+                    updatePagination(tableId);
+                    showPage(tableId, 1);
+                }, 100);
+            });
+
+            // Also listen for filter changes in customer and payment type
+            $('#customerFilter, #paymentTypeFilter').on('change', function() {
+                // This will use our global search function from receipt-filters.js
+                // But we need to update pagination afterward
+                setTimeout(function() {
+                    currentPage = 1;
+                    const visibleRows = $(`#${actualTableId} tbody tr:visible`);
+                    totalItems = visibleRows.length;
+                    totalPages = Math.ceil(totalItems / itemsPerPage);
+                    
+                    updatePagination(tableId);
+                    showPage(tableId, 1);
+                }, 100);
+            });
         }
 
         // Show receipt items in modal (for all tables)
