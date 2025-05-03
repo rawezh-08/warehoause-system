@@ -1046,7 +1046,6 @@ foreach ($debtTransactions as $debtTransaction) {
                                                         <option value="10" selected>10</option>
                                                         <option value="25">25</option>
                                                         <option value="50">50</option>
-                                                        <option value="100">100</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -1626,13 +1625,9 @@ foreach ($debtTransactions as $debtTransaction) {
             $('#salesTableSearch, #debtTableSearch, #debtHistoryTableSearch').on('keyup', function () {
                 const tableId = $(this).attr('id').replace('TableSearch', '');
                 const value = $(this).val().toLowerCase();
-                
-                // Use the correct table selector based on the ID
-                const tableSelector = tableId + 'HistoryTable';
-                $(`#${tableSelector} tbody tr`).filter(function () {
+                $(`#${tableId}HistoryTable tbody tr, #${tableId}ReturnTable tbody tr`).filter(function () {
                     $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
                 });
-                
                 updatePagination(tableId);
             });
 
@@ -1644,8 +1639,7 @@ foreach ($debtTransactions as $debtTransaction) {
             });
 
             function showAllRows(tableId) {
-                // Always use the tableId + HistoryTable format for consistency
-                const tableSelector = `#${tableId}HistoryTable`;
+                const tableSelector = tableId === 'debtHistory' ? `#${tableId}ReturnTable` : `#${tableId}HistoryTable`;
                 $(`${tableSelector} tbody tr`).show();
             }
 
@@ -1678,7 +1672,7 @@ foreach ($debtTransactions as $debtTransaction) {
 
             function updatePagination(tableId) {
                 const recordsPerPage = parseInt($(`#${tableId}RecordsPerPage`).val());
-                const tableSelector = `#${tableId}HistoryTable`;
+                const tableSelector = tableId === 'debtHistory' ? `#${tableId}ReturnTable` : `#${tableId}HistoryTable`;
                 const allRows = $(`${tableSelector} tbody tr`);
                 const totalRows = allRows.length;
                 const totalPages = Math.ceil(totalRows / recordsPerPage);
@@ -1696,7 +1690,7 @@ foreach ($debtTransactions as $debtTransaction) {
 
             function goToPage(tableId, page) {
                 const recordsPerPage = parseInt($(`#${tableId}RecordsPerPage`).val());
-                const tableSelector = `#${tableId}HistoryTable`;
+                const tableSelector = tableId === 'debtHistory' ? `#${tableId}ReturnTable` : `#${tableId}HistoryTable`;
                 const allRows = $(`${tableSelector} tbody tr`);
 
                 // First show all rows to ensure we can access them all
@@ -1720,6 +1714,18 @@ foreach ($debtTransactions as $debtTransaction) {
                 console.log('End Index:', endIndex);
                 console.log('Rows shown:', allRows.slice(startIndex, endIndex).length);
 
+                // Update debug div
+                $(`#debug-${tableId}`).html(`
+                    <strong>Debug Info for ${tableId}:</strong><br>
+                    Table: ${tableSelector}<br>
+                    Records Per Page: ${recordsPerPage}<br>
+                    Total Rows: ${allRows.length}<br>
+                    Total Pages: ${Math.ceil(allRows.length / recordsPerPage)}<br>
+                    Current Page: ${page}<br>
+                    Showing rows ${startIndex + 1} to ${Math.min(endIndex, allRows.length)}<br>
+                    Rows shown on this page: ${allRows.slice(startIndex, endIndex).length}
+                `);
+
                 // Update pagination UI
                 $(`#${tableId}PaginationNumbers button`).removeClass('btn-primary active').addClass('btn-outline-primary');
                 $(`#${tableId}PaginationNumbers button[data-page="${page}"]`).removeClass('btn-outline-primary').addClass('btn-primary active');
@@ -1734,7 +1740,7 @@ foreach ($debtTransactions as $debtTransaction) {
                 // Update prev/next buttons
                 const totalPages = Math.ceil(allRows.length / recordsPerPage);
                 $(`#${tableId}PrevPageBtn`).prop('disabled', page === 1);
-                $(`#${tableId}NextPageBtn`).prop('disabled', page === totalPages || totalPages === 0);
+                $(`#${tableId}NextPageBtn`).prop('disabled', page === totalPages);
             }
 
             // Add tab change handler to reinitialize pagination
