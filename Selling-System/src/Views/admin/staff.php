@@ -828,6 +828,24 @@ $suppliers = $supplierModel->getAllNonBusinessPartners();
                                                                             <i class="fas fa-history"></i>
                                                                         </a>
                                                                         <?php endif; ?>
+                                                                        
+                                                                        <?php
+                                                                        // Check if partner has transactions, debt or payments
+                                                                        $has_transactions = false;
+                                                                        if (($partner['customer_debt'] > 0) || ($partner['supplier_debt'] > 0)) {
+                                                                            $has_transactions = true;
+                                                                        }
+                                                                        ?>
+                                                                        
+                                                                        <button type="button" 
+                                                                            class="btn btn-sm btn-outline-danger rounded-circle delete-partner-btn" 
+                                                                            data-id="<?php echo $partner['id']; ?>"
+                                                                            data-customer-id="<?php echo $partner['customer_id']; ?>"
+                                                                            data-supplier-id="<?php echo $partner['supplier_id']; ?>"
+                                                                            data-name="<?php echo htmlspecialchars($partner['name']); ?>"
+                                                                            <?php echo $has_transactions ? 'disabled title="ناتوانیت ئەم کەسە بسڕیتەوە چونکە مامەڵەی هەیە"' : 'title="سڕینەوە"'; ?>>
+                                                                            <i class="fas fa-trash-alt"></i>
+                                                                        </button>
                                                                     </div>
                                                                 </td>
                                                             </tr>

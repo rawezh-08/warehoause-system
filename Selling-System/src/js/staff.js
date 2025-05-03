@@ -1226,32 +1226,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Business Partners Tab Functionality
 function initializeBusinessPartnersTab() {
-    // Search functionality
-    $('#partnerTableSearch').on('input', function() {
-        filterPartnerTable();
-    });
-    
-    // Records per page
-    $('#partnerRecordsPerPage').on('change', function() {
-        applyPartnerPagination(1);
-    });
-    
-    // Pagination controls
-    $('#partnerPrevPageBtn').on('click', function() {
-        const currentActivePage = $('#partnerPaginationNumbers .btn-primary');
-        if (currentActivePage.length) {
-            const currentPage = parseInt(currentActivePage.text());
-            applyPartnerPagination(currentPage - 1);
-        }
-    });
-    
-    $('#partnerNextPageBtn').on('click', function() {
-        const currentActivePage = $('#partnerPaginationNumbers .btn-primary');
-        if (currentActivePage.length) {
-            const currentPage = parseInt(currentActivePage.text());
-            applyPartnerPagination(currentPage + 1);
-        }
-    });
+    // Table functionality
+    initializeDataTable('partner');
     
     // Filter functionality
     $('#partnerName, #partnerPhone').on('change keyup', function() {
@@ -1270,44 +1246,104 @@ function initializeBusinessPartnersTab() {
         location.reload();
     });
     
-    // Initialize pagination
-    applyPartnerPagination(1);
+    // Add delete functionality for business partners
+    $('.delete-partner-btn').on('click', function() {
+        const partnerId = $(this).data('id');
+        const customerId = $(this).data('customer-id');
+        const supplierId = $(this).data('supplier-id');
+        const partnerName = $(this).data('name');
+        
+        deleteBusinessPartner(partnerId, customerId, supplierId, partnerName);
+    });
+}
+
+// Function to delete a business partner
+function deleteBusinessPartner(partnerId, customerId, supplierId, partnerName) {
+    Swal.fire({
+        title: 'دڵنیای لە سڕینەوەی ئەم کڕیار و دابینکەرە؟',
+        text: `دەتەوێت "${partnerName}" بسڕیتەوە؟ ئەم کردارە ناتوانرێت گەڕێنرێتەوە!`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'بەڵێ، بسڕەوە',
+        cancelButtonText: 'نەخێر'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show loading
+            Swal.fire({
+                title: 'تکایە چاوەڕێ بکە...',
+                text: 'سڕینەوەی کڕیار و دابینکەر بەردەوامە',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Prepare data to send
+            const data = {
+                id: partnerId
+            };
+            
+            if (customerId) data.customer_id = customerId;
+            if (supplierId) data.supplier_id = supplierId;
+            
+            // Send delete request
+            fetch('../../process/delete_business_partner.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'سەرکەوتوو بوو!',
+                        text: data.message || 'کڕیار و دابینکەر بە سەرکەوتوویی سڕایەوە',
+                        confirmButtonText: 'باشە'
+                    }).then(() => {
+                        // Refresh the page to show updated data
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'هەڵە!',
+                        text: data.message || 'هەڵەیەک ڕوویدا لە کاتی سڕینەوەی کڕیار و دابینکەر',
+                        confirmButtonText: 'باشە'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'هەڵە!',
+                    text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەرەوە',
+                    confirmButtonText: 'باشە'
+                });
+            });
+        }
+    });
 }
 
 // Filter partners table based on selected criteria
 function filterPartnerTable() {
     const nameFilter = $('#partnerName').val().toLowerCase();
     const phoneFilter = $('#partnerPhone').val().toLowerCase();
-    const searchFilter = $('#partnerTableSearch').val().toLowerCase();
     
     $('#partnerTable tbody tr').each(function() {
         const name = $(this).find('td:eq(1)').text().toLowerCase();
-        const type = $(this).find('td:eq(2)').text().toLowerCase();
-        const phone = $(this).find('td:eq(3)').text().toLowerCase();
-        const phone2 = $(this).find('td:eq(4)').text().toLowerCase();
-        const address = $(this).find('td:eq(5)').text().toLowerCase();
-        const guarantorName = $(this).find('td:eq(6)').text().toLowerCase();
-        const guarantorPhone = $(this).find('td:eq(7)').text().toLowerCase();
-        const customerDebt = $(this).find('td:eq(8)').text().toLowerCase();
-        const supplierDebt = $(this).find('td:eq(9)').text().toLowerCase();
-        const notes = $(this).find('td:eq(10)').text().toLowerCase();
+        const phone = $(this).find('td:eq(2)').text().toLowerCase();
         
         // Show row if it matches all selected filters
         const nameMatch = nameFilter === '' || name.includes(nameFilter);
-        const phoneMatch = phoneFilter === '' || phone.includes(phoneFilter) || phone2.includes(phoneFilter);
-        const searchMatch = searchFilter === '' || 
-                          name.includes(searchFilter) || 
-                          type.includes(searchFilter) || 
-                          phone.includes(searchFilter) || 
-                          phone2.includes(searchFilter) || 
-                          address.includes(searchFilter) ||
-                          guarantorName.includes(searchFilter) ||
-                          guarantorPhone.includes(searchFilter) ||
-                          customerDebt.includes(searchFilter) ||
-                          supplierDebt.includes(searchFilter) ||
-                          notes.includes(searchFilter);
+        const phoneMatch = phoneFilter === '' || phone.includes(phoneFilter);
         
-        if (nameMatch && phoneMatch && searchMatch) {
+        if (nameMatch && phoneMatch) {
             $(this).show();
         } else {
             $(this).hide();
@@ -1315,59 +1351,7 @@ function filterPartnerTable() {
     });
     
     // Update pagination after filtering
-    applyPartnerPagination(1);
-}
-
-// Function to apply pagination to the partners table
-function applyPartnerPagination(page) {
-    const recordsPerPage = parseInt($('#partnerRecordsPerPage').val());
-    const partnerRows = $('#partnerTable tbody tr:visible');
-    const totalVisibleRecords = partnerRows.length;
-    
-    // Calculate total pages
-    const totalPages = Math.ceil(totalVisibleRecords / recordsPerPage);
-    
-    // Ensure page is within bounds
-    page = Math.min(Math.max(1, page), totalPages || 1);
-    
-    // Show only rows for current page
-    partnerRows.each(function(index) {
-        const startIndex = (page - 1) * recordsPerPage;
-        const endIndex = startIndex + recordsPerPage - 1;
-        
-        $(this).css('display', (index >= startIndex && index <= endIndex) ? '' : 'none');
-    });
-    
-    // Update pagination info
-    const startRecord = totalVisibleRecords > 0 ? (page - 1) * recordsPerPage + 1 : 0;
-    const endRecord = Math.min(page * recordsPerPage, totalVisibleRecords);
-    
-    $('#partnerStartRecord').text(startRecord);
-    $('#partnerEndRecord').text(endRecord);
-    $('#partnerTotalRecords').text(totalVisibleRecords);
-    
-    // Update pagination buttons
-    const prevPageBtn = $('#partnerPrevPageBtn');
-    const nextPageBtn = $('#partnerNextPageBtn');
-    
-    prevPageBtn.prop('disabled', page === 1);
-    nextPageBtn.prop('disabled', page === totalPages || totalPages === 0);
-    
-    // Update pagination numbers
-    const paginationNumbers = $('#partnerPaginationNumbers');
-    paginationNumbers.empty();
-    
-    for (let i = 1; i <= totalPages; i++) {
-        const pageBtn = $('<button>')
-            .addClass(`btn btn-sm ${i === page ? 'btn-primary' : 'btn-outline-primary'} rounded-circle me-2`)
-            .text(i)
-            .on('click', function() {
-                applyPartnerPagination(i);
-            });
-        paginationNumbers.append(pageBtn);
-    }
-    
-    return page;
+    updateTableInfo('partner');
 }
 
 // Initialize all tabs when document ready
@@ -1382,6 +1366,6 @@ $(document).ready(function() {
     
     // Make sure the table is responsive
     $(window).resize(function() {
-        applyPartnerPagination(1);
+        updateTableInfo('partner');
     });
 });
