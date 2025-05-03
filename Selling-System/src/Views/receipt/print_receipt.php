@@ -777,10 +777,16 @@ $dir = $lang === 'ar' ? 'rtl' : 'rtl';
                     <tr>
                         <td><?php echo $count; ?></td>
                         <td class="product-image">
-                            <img src="<?php echo htmlspecialchars($image_url); ?>" 
-                                 alt="<?php echo htmlspecialchars($product['product_name']); ?>" 
-                                 class="product-thumb"
-                                 onerror="this.onerror=null; this.src='<?php echo htmlspecialchars(get_correct_image_path('pro-1.png')); ?>';">
+                            <?php if (!empty($product['product_image'])): ?>
+                                <img src="<?php echo htmlspecialchars($image_url); ?>" 
+                                     alt="<?php echo htmlspecialchars($product['product_name']); ?>" 
+                                     class="product-thumb"
+                                     onerror="this.onerror=null; this.src='<?php echo htmlspecialchars(get_correct_image_path('pro-1.png')); ?>';">
+                            <?php else: ?>
+                                <div class="no-image-placeholder">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                            <?php endif; ?>
                         </td>
                         <td><?php echo $product['product_code']; ?></td>
                         <td class="product-name-cell">
