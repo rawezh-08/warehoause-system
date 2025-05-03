@@ -301,16 +301,8 @@ function initializeCustomerForm() {
                 return;
             }
 
-            // Check if this customer is also a business partner (supplier)
-            const isBusinessPartner = document.getElementById('isBusinessPartner').checked;
-            
-            if (isBusinessPartner) {
-                // Handle as business partner (both customer and supplier)
-                submitAsBusinessPartner('customer');
-            } else {
-                // Handle as customer only
-                submitCustomerForm();
-            }
+            // Handle as customer only
+            submitCustomerForm();
         });
     }
     
@@ -450,16 +442,8 @@ function initializeSupplierForm() {
                 return;
             }
 
-            // Check if this supplier is also a business partner (customer)
-            const isBusinessPartner = document.getElementById('isBusinessPartnerSupplier').checked;
-            
-            if (isBusinessPartner) {
-                // Handle as business partner (both supplier and customer)
-                submitAsBusinessPartner('supplier');
-            } else {
-                // Handle as supplier only
-                submitSupplierForm();
-            }
+            // Handle as supplier only
+            submitSupplierForm();
         });
     }
     
@@ -528,142 +512,6 @@ function submitSupplierForm() {
             icon: 'error',
             title: 'هەڵە!',
             text: 'هەڵەیەک ڕوویدا لە کاتی ناردنی زانیاریەکان',
-            confirmButtonText: 'باشە'
-        });
-    });
-}
-
-/**
- * Submit both customer and supplier forms as a business partner
- * @param {string} primaryFormType - Which form to treat as primary ('customer' or 'supplier')
- */
-function submitAsBusinessPartner(primaryFormType) {
-    // Get forms
-    const customerForm = document.getElementById('customerForm');
-    const supplierForm = document.getElementById('supplierForm');
-    
-    // Show loading state
-    Swal.fire({
-        title: 'تکایە چاوەڕێ بکە...',
-        text: 'زیادکردنی هەژمار بەردەوامە',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
-
-    // Determine which form to submit first (primary form)
-    let primaryFormPath = '../../process/add_customer.php';
-    let primaryForm = customerForm;
-    let secondaryFormPath = '../../process/add_supplier.php';
-    let secondaryForm = supplierForm;
-    
-    if (primaryFormType === 'supplier') {
-        primaryFormPath = '../../process/add_supplier.php';
-        primaryForm = supplierForm;
-        secondaryFormPath = '../../process/add_customer.php';
-        secondaryForm = customerForm;
-    }
-
-    // Step 1: Submit the primary form
-    fetch(primaryFormPath, {
-        method: 'POST',
-        body: new FormData(primaryForm)
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(primaryData => {
-        if (primaryData.success) {
-            console.log(`${primaryFormType} created successfully with ID:`, primaryData);
-            
-            // Step 2: Create FormData from secondary form
-            const secondaryFormData = new FormData(secondaryForm);
-            
-            // Add the partner ID to link the records
-            if (primaryFormType === 'customer') {
-                // We just created a customer, now adding the customer_id to supplier
-                secondaryFormData.append('is_business_partner', '1');
-                secondaryFormData.append('customer_id', primaryData.customer_id);
-            } else {
-                // We just created a supplier, now adding the supplier_id to customer
-                secondaryFormData.append('is_business_partner', '1');
-                secondaryFormData.append('supplier_id', primaryData.supplier_id);
-            }
-            
-            // Step 3: Submit the secondary form with the ID of the primary entity
-            return fetch(secondaryFormPath, {
-                method: 'POST',
-                body: secondaryFormData
-            });
-        } else {
-            throw new Error(primaryData.message || 'Error creating primary entity');
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Error submitting second form');
-        }
-        return response.json();
-    })
-    .then(secondaryData => {
-        if (secondaryData.success) {
-            console.log('Secondary entity created successfully:', secondaryData);
-            
-            // Step 4: Update the first entity to link it back to the second entity
-            const updateData = new FormData();
-            
-            if (primaryFormType === 'customer') {
-                // Update customer with supplier_id
-                updateData.append('id', primaryData.customer_id);
-                updateData.append('supplier_id', secondaryData.supplier_id);
-                return fetch('../../process/update_customer_supplier_link.php', {
-                    method: 'POST',
-                    body: updateData
-                });
-            } else {
-                // Update supplier with customer_id
-                updateData.append('id', primaryData.supplier_id);
-                updateData.append('customer_id', secondaryData.customer_id);
-                return fetch('../../process/update_supplier_customer_link.php', {
-                    method: 'POST',
-                    body: updateData
-                });
-            }
-        } else {
-            throw new Error(secondaryData.message || 'Error creating secondary entity');
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Error updating relationship');
-        }
-        return response.json();
-    })
-    .then(updateData => {
-        // Show success message
-        Swal.fire({
-            icon: 'success',
-            title: 'سەرکەوتوو بوو!',
-            text: 'هەژمار بە سەرکەوتوویی وەک کڕیار و دابینکەر زیاد کرا',
-            confirmButtonText: 'باشە'
-        }).then(() => {
-            // Reset both forms
-            customerForm.reset();
-            supplierForm.reset();
-            customerForm.classList.remove('was-validated');
-            supplierForm.classList.remove('was-validated');
-        });
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'هەڵە!',
-            text: 'هەڵەیەک ڕوویدا: ' + error.message,
             confirmButtonText: 'باشە'
         });
     });
