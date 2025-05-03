@@ -1068,7 +1068,7 @@ foreach ($debtTransactions as $debtTransaction) {
 
                                 <!-- Table Content -->
                                 <div class="table-responsive">
-                                    <table id="debtHistoryReturnTable" class="table table-bordered custom-table table-hover">
+                                    <table id="debtHistoryTable" class="table table-bordered custom-table table-hover">
                                         <thead class="table-light">
                                             <tr>
                                                 <th>#</th>
@@ -1618,28 +1618,21 @@ foreach ($debtTransactions as $debtTransaction) {
     <script>
         $(document).ready(function () {
             // Initialize pagination for tables
-            initAdvancedTablePagination({
-                tableId: 'debtHistoryReturnTable',
-                recordsPerPageId: 'debtHistoryRecordsPerPage',
-                paginationNumbersId: 'debtHistoryPaginationNumbers',
-                prevBtnId: 'debtHistoryPrevPageBtn',
-                nextBtnId: 'debtHistoryNextPageBtn',
-                startRecordId: 'debtHistoryStartRecord',
-                endRecordId: 'debtHistoryEndRecord',
-                totalRecordsId: 'debtHistoryTotalRecords',
-                searchInputId: 'debtHistoryTableSearch'
-            });
-            
             initBasicTablePagination('sales');
             initBasicTablePagination('debt');
+            initBasicTablePagination('debtHistory');
 
             // Table search functionality
             $('#salesTableSearch, #debtTableSearch, #debtHistoryTableSearch').on('keyup', function () {
                 const tableId = $(this).attr('id').replace('TableSearch', '');
                 const value = $(this).val().toLowerCase();
-                $(`#${tableId}HistoryTable tbody tr, #${tableId}ReturnTable tbody tr`).filter(function () {
+                
+                // Use the correct table selector based on the ID
+                const tableSelector = tableId + 'HistoryTable';
+                $(`#${tableSelector} tbody tr`).filter(function () {
                     $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
                 });
+                
                 updatePagination(tableId);
             });
 
@@ -1651,7 +1644,8 @@ foreach ($debtTransactions as $debtTransaction) {
             });
 
             function showAllRows(tableId) {
-                const tableSelector = tableId === 'debtHistory' ? `#${tableId}ReturnTable` : `#${tableId}HistoryTable`;
+                // Always use the tableId + HistoryTable format for consistency
+                const tableSelector = `#${tableId}HistoryTable`;
                 $(`${tableSelector} tbody tr`).show();
             }
 
@@ -1684,7 +1678,7 @@ foreach ($debtTransactions as $debtTransaction) {
 
             function updatePagination(tableId) {
                 const recordsPerPage = parseInt($(`#${tableId}RecordsPerPage`).val());
-                const tableSelector = tableId === 'debtHistory' ? `#${tableId}ReturnTable` : `#${tableId}HistoryTable`;
+                const tableSelector = `#${tableId}HistoryTable`;
                 const allRows = $(`${tableSelector} tbody tr`);
                 const totalRows = allRows.length;
                 const totalPages = Math.ceil(totalRows / recordsPerPage);
@@ -1702,7 +1696,7 @@ foreach ($debtTransactions as $debtTransaction) {
 
             function goToPage(tableId, page) {
                 const recordsPerPage = parseInt($(`#${tableId}RecordsPerPage`).val());
-                const tableSelector = tableId === 'debtHistory' ? `#${tableId}ReturnTable` : `#${tableId}HistoryTable`;
+                const tableSelector = `#${tableId}HistoryTable`;
                 const allRows = $(`${tableSelector} tbody tr`);
 
                 // First show all rows to ensure we can access them all
@@ -1726,18 +1720,6 @@ foreach ($debtTransactions as $debtTransaction) {
                 console.log('End Index:', endIndex);
                 console.log('Rows shown:', allRows.slice(startIndex, endIndex).length);
 
-                // Update debug div
-                $(`#debug-${tableId}`).html(`
-                    <strong>Debug Info for ${tableId}:</strong><br>
-                    Table: ${tableSelector}<br>
-                    Records Per Page: ${recordsPerPage}<br>
-                    Total Rows: ${allRows.length}<br>
-                    Total Pages: ${Math.ceil(allRows.length / recordsPerPage)}<br>
-                    Current Page: ${page}<br>
-                    Showing rows ${startIndex + 1} to ${Math.min(endIndex, allRows.length)}<br>
-                    Rows shown on this page: ${allRows.slice(startIndex, endIndex).length}
-                `);
-
                 // Update pagination UI
                 $(`#${tableId}PaginationNumbers button`).removeClass('btn-primary active').addClass('btn-outline-primary');
                 $(`#${tableId}PaginationNumbers button[data-page="${page}"]`).removeClass('btn-outline-primary').addClass('btn-primary active');
@@ -1752,7 +1734,7 @@ foreach ($debtTransactions as $debtTransaction) {
                 // Update prev/next buttons
                 const totalPages = Math.ceil(allRows.length / recordsPerPage);
                 $(`#${tableId}PrevPageBtn`).prop('disabled', page === 1);
-                $(`#${tableId}NextPageBtn`).prop('disabled', page === totalPages);
+                $(`#${tableId}NextPageBtn`).prop('disabled', page === totalPages || totalPages === 0);
             }
 
             // Add tab change handler to reinitialize pagination
@@ -3685,9 +3667,9 @@ foreach ($debtTransactions as $debtTransaction) {
     function updateTable(tableId, page) {
         const recordsPerPage = parseInt(document.getElementById(`${tableId}RecordsPerPage`).value);
         const searchTerm = document.getElementById(`${tableId}TableSearch`).value;
-        const startDate = document.getElementById('startDate')?.value;
-        const endDate = document.getElementById('endDate')?.value;
-        const paymentType = document.getElementById('paymentTypeFilter')?.value;
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        const paymentType = document.getElementById('paymentTypeFilter').value;
 
         // Update the table based on the tableId
         switch(tableId) {
@@ -3698,18 +3680,7 @@ foreach ($debtTransactions as $debtTransaction) {
                 loadDebtData(page, recordsPerPage, searchTerm, startDate, endDate);
                 break;
             case 'debtHistory':
-                // Use the advanced pagination instead
-                initAdvancedTablePagination({
-                    tableId: 'debtHistoryReturnTable',
-                    recordsPerPageId: 'debtHistoryRecordsPerPage',
-                    paginationNumbersId: 'debtHistoryPaginationNumbers',
-                    prevBtnId: 'debtHistoryPrevPageBtn',
-                    nextBtnId: 'debtHistoryNextPageBtn',
-                    startRecordId: 'debtHistoryStartRecord',
-                    endRecordId: 'debtHistoryEndRecord',
-                    totalRecordsId: 'debtHistoryTotalRecords',
-                    searchInputId: 'debtHistoryTableSearch'
-                });
+                loadDebtHistoryData(page, recordsPerPage, searchTerm, startDate, endDate);
                 break;
             // Add other cases as needed
         }
