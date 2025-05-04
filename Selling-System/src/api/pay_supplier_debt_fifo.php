@@ -106,9 +106,7 @@ try {
     
     echo json_encode([
         'success' => true,
-        'message' => 'پارەدانی قەرز بۆ دابینکەر "' . $supplierName . '" بە شێوازی FIFO بە سەرکەوتوویی ئەنجام درا',
-        'paid_amount' => number_format($amount) . ' دینار',
-        'remaining_debt' => number_format($newDebt) . ' دینار',
+        'message' => 'بەسەرکەوتوویی قەرزەکە درایەوە',
         'supplier_name' => $supplierName
     ]);
     

@@ -65,7 +65,7 @@ $tabs = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پڕۆفایلی دابینکەر - سیستەمی بەڕێوەبردنی کۆگا</title>
+    <title>پڕۆفایلی دابینکەر: <?php echo htmlspecialchars($supplier['name']); ?> - سیستەمی بەڕێوەبردنی کۆگا</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -424,7 +424,7 @@ $tabs = [
             <div class="container-fluid">
                 <div class="row mb-4">
                     <div class="col-12 d-flex justify-content-between align-items-center">
-                        <h3 class="page-title">پڕۆفایلی دابینکەر</h3>
+                        <h3 class="page-title">پڕۆفایلی دابینکەر: <?php echo htmlspecialchars($supplier['name']); ?></h3>
                         <div>
                             <a href="addStaff.php?tab=supplier" class="btn btn-primary me-2">
                                 <i class="fas fa-plus me-2"></i> زیادکردنی دابینکەری نوێ
@@ -1021,14 +1021,7 @@ $tabs = [
                                                 </select>
                                             </div>
                                             
-                                            <div class="mb-3">
-                                                <label for="paymentStrategy" class="form-label">ستراتیژی پارەدان</label>
-                                                <select class="form-select" id="paymentStrategy" name="payment_strategy">
-                                                    <option value="regular">ئاسایی</option>
-                                                    <option value="fifo">FIFO (پارەدانی کۆنترین قەرزەکان یەکەم)</option>
-                                                </select>
-                                                <div class="form-text">پارەدانی FIFO بە شێوەی ئۆتۆماتیکی قەرزە کۆنەکان دەداتەوە بەپێی ڕیزبەندی کاتی.</div>
-                                            </div>
+                                            <input type="hidden" name="payment_strategy" value="fifo">
                                             
                                             <div class="text-end">
                                                 <button type="reset" class="btn btn-outline-secondary me-2">
@@ -1628,7 +1621,7 @@ $tabs = [
                 }
 
                 // Get payment strategy
-                const paymentStrategy = $('#paymentStrategy').val();
+                const paymentStrategy = 'fifo'; // Always use FIFO
                 
                 // Get form data
                 const formData = {
@@ -1639,11 +1632,8 @@ $tabs = [
                     payment_method: $('#paymentMethod').val()
                 };
 
-                // Determine which API endpoint to use based on payment strategy
-                let apiEndpoint = '../../api/business_pay_supplier.php';
-                if (paymentStrategy === 'fifo') {
-                    apiEndpoint = '../../api/pay_supplier_debt_fifo.php';
-                }
+                // Use FIFO payment API
+                let apiEndpoint = '../../api/pay_supplier_debt_fifo.php';
                 
                 // Show loading indicator
                 Swal.fire({
@@ -1661,20 +1651,9 @@ $tabs = [
                     data: formData,
                     success: function(response) {
                         if (response.success) {
-                            let successMessage = response.message;
-                            
-                            // Display additional information if available
-                            let additionalInfo = '';
-                            if (response.paid_amount) {
-                                additionalInfo += '<div class="mt-2">بڕی پارە: ' + response.paid_amount + '</div>';
-                            }
-                            if (response.remaining_debt) {
-                                additionalInfo += '<div>قەرزی ماوە: ' + response.remaining_debt + '</div>';
-                            }
-                            
                             Swal.fire({
                                 title: 'سەرکەوتوو بوو!',
-                                html: successMessage + additionalInfo,
+                                text: response.message,
                                 icon: 'success',
                                 confirmButtonText: 'باشە'
                             }).then(() => {
