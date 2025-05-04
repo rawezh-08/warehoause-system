@@ -1,4 +1,5 @@
 <?php
+require_once '../../includes/auth.php';
 require_once '../../config/database.php';
 
 // Get receipt ID from URL - handle both id and sale_id parameters

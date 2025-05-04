@@ -1,5 +1,6 @@
 <?php
 // Include database connection
+require_once '../../includes/auth.php';
 require_once '../../config/database.php';
 
 // Check if we need to create a test sale

@@ -1,5 +1,6 @@
 <?php
-require_once '../../includes/auth.php';
+// Start session
+session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['admin_id'])) {
@@ -9,7 +10,8 @@ if (!isset($_SESSION['admin_id'])) {
 }
 
 // Include database connection
-require_once '../../config/database.php';
+require_once '../../process/db_connection.php';
+require_once '../../process/auth_helper.php';
 
 // Check if the admin has permission to manage roles
 $admin_id = $_SESSION['admin_id'];
@@ -98,11 +100,11 @@ if ($permissions_result->num_rows > 0) {
     </style>
 </head>
 <body class="bg-light">
-    <?php include '../../components/admin_navbar.php'; ?>
+    <?php include '../components/admin_navbar.php'; ?>
 
     <div class="container-fluid mt-4">
         <div class="row">
-            <?php include '../../components/admin_sidebar.php'; ?>
+            <?php include '../components/admin_sidebar.php'; ?>
             
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
