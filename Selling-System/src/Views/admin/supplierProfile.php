@@ -1114,15 +1114,15 @@ $tabs = [
                                                         $counter = 1;
                                                         foreach ($debtPayments as $payment):
                                                             $notesData = json_decode($payment['notes'], true);
-                                                            $paymentMethod = isset($notesData['paymentMethod']) ? $notesData['paymentMethod'] : 'cash';
-                                                            $displayNotes = isset($notesData['originalNotes']) ? $notesData['originalNotes'] : $payment['notes'];
+                                                            $paymentMethod = isset($notesData['payment_method']) ? $notesData['payment_method'] : 'cash';
+                                                            $displayNotes = isset($notesData['notes']) && !empty($notesData['notes']) ? $notesData['notes'] : '-';
                                                             ?>
                                                             <tr>
                                                                 <td><?php echo $counter++; ?></td>
                                                                 <td><?php echo date('Y/m/d', strtotime($payment['created_at'])); ?></td>
                                                                 <td class="text-success">
                                                                     <?php echo number_format($payment['amount']); ?> دینار</td>
-                                                                <td><?php echo !empty($displayNotes) ? htmlspecialchars($displayNotes) : '-'; ?></td>
+                                                                <td><?php echo htmlspecialchars($displayNotes); ?></td>
                                                                 <td>
                                                                     <?php
                                                                     switch ($paymentMethod) {
@@ -1627,7 +1627,10 @@ $tabs = [
                 const formData = {
                     supplier_id: form.find('input[name="supplier_id"]').val(),
                     amount: amount,
-                    notes: $('#paymentNotes').val(),
+                    notes: JSON.stringify({
+                        notes: $('#paymentNotes').val(),
+                        payment_method: $('#paymentMethod').val()
+                    }),
                     payment_date: $('#paymentDate').val(),
                     payment_method: $('#paymentMethod').val()
                 };
