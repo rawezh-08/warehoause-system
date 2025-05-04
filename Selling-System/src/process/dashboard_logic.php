@@ -374,27 +374,15 @@ try {
     $expensesPercentage = $previousExpenses > 0 ?
         round((($totalExpenses - $previousExpenses) / $previousExpenses) * 100, 1) : 0;
 
-    // Calculate total profit using actual purchase prices
+    // Calculate total profit with proper accounting
     $profitQuery = "SELECT 
         COALESCE(SUM(si.total_price), 0) as sales_revenue,
         COALESCE(SUM(
             CASE 
                 WHEN p.pieces_per_box > 0 THEN 
-                    (si.pieces_count / p.pieces_per_box) * (
-                        SELECT AVG(pi.unit_price)  -- Use average purchase price
-                        FROM purchase_items pi 
-                        JOIN purchases pu ON pi.purchase_id = pu.id
-                        WHERE pi.product_id = p.id 
-                        AND pu.date <= s.date  -- Only consider purchases before the sale
-                    )
+                    (si.pieces_count / p.pieces_per_box) * p.purchase_price
                 ELSE 
-                    si.pieces_count * (
-                        SELECT AVG(pi.unit_price)  -- Use average purchase price
-                        FROM purchase_items pi 
-                        JOIN purchases pu ON pi.purchase_id = pu.id
-                        WHERE pi.product_id = p.id 
-                        AND pu.date <= s.date  -- Only consider purchases before the sale
-                    )
+                    si.pieces_count * p.purchase_price
             END
         ), 0) as cost_of_goods_sold,
         (
@@ -424,27 +412,15 @@ try {
     // Calculate net profit
     $totalProfit = $profitData['sales_revenue'] - $profitData['cost_of_goods_sold'] - $profitData['expenses'] - $profitData['employee_expenses'];
 
-    // Calculate previous period profit with actual purchase prices
+    // Calculate previous period profit
     $previousProfitQuery = "SELECT 
         COALESCE(SUM(si.total_price), 0) as sales_revenue,
         COALESCE(SUM(
             CASE 
                 WHEN p.pieces_per_box > 0 THEN 
-                    (si.pieces_count / p.pieces_per_box) * (
-                        SELECT AVG(pi.unit_price)  -- Use average purchase price
-                        FROM purchase_items pi 
-                        JOIN purchases pu ON pi.purchase_id = pu.id
-                        WHERE pi.product_id = p.id 
-                        AND pu.date <= s.date  -- Only consider purchases before the sale
-                    )
+                    (si.pieces_count / p.pieces_per_box) * p.purchase_price
                 ELSE 
-                    si.pieces_count * (
-                        SELECT AVG(pi.unit_price)  -- Use average purchase price
-                        FROM purchase_items pi 
-                        JOIN purchases pu ON pi.purchase_id = pu.id
-                        WHERE pi.product_id = p.id 
-                        AND pu.date <= s.date  -- Only consider purchases before the sale
-                    )
+                    si.pieces_count * p.purchase_price
             END
         ), 0) as cost_of_goods_sold,
         (
