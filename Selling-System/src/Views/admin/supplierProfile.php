@@ -989,6 +989,11 @@ $tabs = [
                                         <form id="supplierPaymentForm">
                                             <input type="hidden" name="supplier_id" value="<?php echo $supplier['id']; ?>">
                                             
+                                            <div class="alert alert-info mb-3">
+                                                <i class="fas fa-info-circle me-2"></i>
+                                                دابینکەر: <strong><?php echo htmlspecialchars($supplier['name']); ?></strong>
+                                            </div>
+                                            
                                             <div class="mb-3">
                                                 <label for="paymentAmount" class="form-label">بڕی پارە</label>
                                                 <div class="input-group">
@@ -1656,9 +1661,20 @@ $tabs = [
                     data: formData,
                     success: function(response) {
                         if (response.success) {
+                            let successMessage = response.message;
+                            
+                            // Display additional information if available
+                            let additionalInfo = '';
+                            if (response.paid_amount) {
+                                additionalInfo += '<div class="mt-2">بڕی پارە: ' + response.paid_amount + '</div>';
+                            }
+                            if (response.remaining_debt) {
+                                additionalInfo += '<div>قەرزی ماوە: ' + response.remaining_debt + '</div>';
+                            }
+                            
                             Swal.fire({
                                 title: 'سەرکەوتوو بوو!',
-                                text: response.message,
+                                html: successMessage + additionalInfo,
                                 icon: 'success',
                                 confirmButtonText: 'باشە'
                             }).then(() => {
