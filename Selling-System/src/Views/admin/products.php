@@ -1,6 +1,10 @@
 <?php
 require_once '../../includes/auth.php';
+require_once '../../includes/check_permission.php';
 require_once '../../process/products_logic.php';
+
+// Check if user has permission to view products
+checkPermission('view_products');
 ?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">

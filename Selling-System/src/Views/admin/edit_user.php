@@ -6,8 +6,8 @@ require_once '../../models/Employee.php';
 require_once '../../models/Permission.php';
 
 // Check if user has permission to edit accounts
-// require_once '../../includes/check_permission.php';
-// checkPermission('manage_accounts');
+require_once '../../includes/check_permission.php';
+checkPermission('manage_accounts');
 
 // Check if user ID is provided
 if (!isset($_GET['id']) || empty($_GET['id'])) {
