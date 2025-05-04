@@ -3,10 +3,15 @@
 require_once '../../config/database.php';
 require_once '../../models/User.php';
 require_once '../../includes/auth.php';
+require_once '../../models/Permission.php';
 
 // Check if user has permission
-if (!hasPermission('manage_accounts')) {
-    exit(json_encode(['status' => 'error', 'message' => 'دەسەڵاتت نییە بۆ زیادکردنی بەکارهێنەر']));
+$database = new Database();
+$db = $database->getConnection();
+$permissionModel = new Permission($db);
+
+if (!isset($_SESSION['user_id']) || !$permissionModel->userHasPermission($_SESSION['user_id'], 'manage_accounts')) {
+    exit(json_encode(['status' => 'error', 'message' => 'ڕێگەپێنەدراوە - دەسەڵاتی پێویست نییە']));
 }
 
 // Check if the request is POST
@@ -41,11 +46,7 @@ if (strlen($password) < 8) {
 }
 
 // Get current user ID
-$created_by = $_SESSION['user_id'] ?? $_SESSION['admin_id'] ?? null;
-
-if (!$created_by) {
-    exit(json_encode(['status' => 'error', 'message' => 'هەڵەی ناوخۆیی: ناسنامەی بەکارهێنەر نەدۆزرایەوە']));
-}
+$created_by = $_SESSION['user_id'] ?? 1; // Default to admin if session not available
 
 try {
     // Create database connection

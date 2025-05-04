@@ -1,15 +1,11 @@
-<?php
-require_once '../includes/auth.php';
-?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>دەسەڵات نییە - سیستەمی کۆگا</title>
+    <title>دەسەڵاتت نییە - سیستەمی کۆگا</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../assets/css/custom.css">
     <style>
         @font-face {
             font-family: 'Rabar_021';
@@ -30,34 +26,31 @@ require_once '../includes/auth.php';
         }
 
         body {
+            background-color: #f8f9fa;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #f8f9fa;
+            padding: 20px;
         }
 
         .access-denied-container {
+            width: 100%;
+            max-width: 600px;
             text-align: center;
-            padding: 2rem;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            max-width: 500px;
-            width: 90%;
+            background-color: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
 
-        .icon-large {
-            font-size: 5rem;
-            color: #dc3545;
-            margin-bottom: 1rem;
+        .error-icon {
+            color: var(--danger-color);
+            font-size: 80px;
+            margin-bottom: 20px;
         }
 
-        .back-button {
-            margin-top: 1.5rem;
-        }
-
-        h2 {
+        h1 {
             color: var(--primary-color);
             margin-bottom: 20px;
             font-weight: bold;
@@ -91,19 +84,15 @@ require_once '../includes/auth.php';
 </head>
 <body>
     <div class="access-denied-container">
-        <i class="fas fa-exclamation-circle icon-large"></i>
-        <h2 class="mb-4">دەسەڵات نییە</h2>
-        <p class="mb-4">ببورە، تۆ دەسەڵاتی بینینی ئەم پەڕەیەت نییە.</p>
-        <div class="back-button">
-            <a href="javascript:history.back()" class="btn btn-primary">
-                <i class="fas fa-arrow-right me-2"></i>
-                گەڕانەوە
-            </a>
-            <a href="/Selling-System/src/views/admin/dashboard.php" class="btn btn-outline-primary">
-                <i class="fas fa-home me-2"></i>
-                سەرەکی
-            </a>
-        </div>
+        <i class="fas fa-exclamation-circle error-icon"></i>
+        <h1>دەسەڵاتت نییە</h1>
+        <p>
+            ببورە، تۆ دەسەڵاتت نییە بۆ بینینی ئەم پەڕەیە. 
+            تکایە پەیوەندی بکە بە بەڕێوەبەری سیستەم بۆ وەرگرتنی ڕێگەپێدان.
+        </p>
+        <a href="../views/admin/dashboard.php" class="btn btn-back">
+            <i class="fas fa-arrow-right ml-2"></i> گەڕانەوە بۆ بەشی سەرەکی
+        </a>
     </div>
 </body>
 </html> 
