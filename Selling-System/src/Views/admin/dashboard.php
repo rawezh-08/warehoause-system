@@ -169,14 +169,13 @@ require_once '../../process/dashboard_logic.php';
                                     </div>
                                 </div>
                                 <div class="kpi-content">
-                                    <div class="kpi-value"><?php echo number_format($totalCustomerDebt, 0, '.', ','); ?> <span class="currency">د.ع</span></div>
+                                    <div class="kpi-value"><?php echo number_format(max(0, $totalCustomerDebt)); ?> <span class="currency">د.ع</span></div>
                                     <div class="kpi-comparison <?php echo $customerDebtPercentage >= 0 ? 'positive' : 'negative'; ?>">
                                         <i class="fas fa-arrow-<?php echo $customerDebtPercentage >= 0 ? 'up' : 'down'; ?>"></i> <?php echo abs($customerDebtPercentage); ?>%
                                     </div>
                                 </div>
                             </div>
                         </div>
-
 
                         <!-- KPI Card 6 - Supplier Debt -->
                         <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
@@ -188,9 +187,27 @@ require_once '../../process/dashboard_logic.php';
                                     </div>
                                 </div>
                                 <div class="kpi-content">
-                                    <div class="kpi-value"><?php echo number_format($totalSupplierDebt, 0, '.', ','); ?> <span class="currency">د.ع</span></div>
+                                    <div class="kpi-value"><?php echo number_format(max(0, $totalSupplierDebt)); ?> <span class="currency">د.ع</span></div>
                                     <div class="kpi-comparison <?php echo $supplierDebtPercentage >= 0 ? 'positive' : 'negative'; ?>">
                                         <i class="fas fa-arrow-<?php echo $supplierDebtPercentage >= 0 ? 'up' : 'down'; ?>"></i> <?php echo abs($supplierDebtPercentage); ?>%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI Card 6.5 - Total Debt We Owe -->
+                        <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
+                            <div class="kpi-card h-100">
+                                <div class="kpi-icon-wrapper">
+                                    <h3 class="kpi-title">کۆی قەرزی ئێمە</h3>
+                                    <div class="kpi-icon red">
+                                        <img src="../../assets/icons/money-owe.svg" alt="">
+                                    </div>
+                                </div>
+                                <div class="kpi-content">
+                                    <div class="kpi-value"><?php echo number_format(max(0, $totalSupplierDebt + $totalCustomerDebt)); ?> <span class="currency">د.ع</span></div>
+                                    <div class="kpi-comparison <?php echo ($supplierDebtPercentage + $customerDebtPercentage) >= 0 ? 'positive' : 'negative'; ?>">
+                                        <i class="fas fa-arrow-<?php echo ($supplierDebtPercentage + $customerDebtPercentage) >= 0 ? 'up' : 'down'; ?>"></i> <?php echo abs($supplierDebtPercentage + $customerDebtPercentage); ?>%
                                     </div>
                                 </div>
                             </div>
