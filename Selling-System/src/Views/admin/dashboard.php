@@ -4,6 +4,9 @@ require_once '../../includes/auth.php';
 
 // Include the dashboard logic file
 require_once '../../process/dashboard_logic.php';
+
+// Authentication already checked in auth.php, 
+// no need for specific permission check for dashboard as everyone should see it
 ?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
