@@ -350,24 +350,23 @@ try {
         error_log("JSON encoding error: " . $jsonError);
     }
 
-    // Calculate total expenses (employee payments + expenses)
-    $totalExpensesQuery = "SELECT 
-        (SELECT COALESCE(SUM(amount), 0) FROM employee_payments WHERE created_at >= :startDate) +
-        (SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE created_at >= :startDate) as total";
-    $stmt = $conn->prepare($totalExpensesQuery);
+    // Calculate total expenses for the period
+    $expensesQuery = "SELECT COALESCE(SUM(amount), 0) as total 
+                      FROM expenses 
+                      WHERE expense_date >= :startDate";
+    $stmt = $conn->prepare($expensesQuery);
     $stmt->execute(['startDate' => $startDate]);
     $totalExpenses = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-    // Get previous period expenses for percentage calculation
-    $previousExpensesQuery = "SELECT 
-        (SELECT COALESCE(SUM(amount), 0) FROM employee_payments 
-         WHERE created_at >= :previousPeriodStart AND created_at < :startDate) +
-        (SELECT COALESCE(SUM(amount), 0) FROM expenses 
-         WHERE created_at >= :previousPeriodStart AND created_at < :startDate) as total";
+    // Calculate previous period expenses
+    $previousExpensesQuery = "SELECT COALESCE(SUM(amount), 0) as total 
+                             FROM expenses 
+                             WHERE expense_date >= :previousPeriodStart
+                             AND expense_date <= :previousPeriodEnd";
     $stmt = $conn->prepare($previousExpensesQuery);
     $stmt->execute([
-        'startDate' => $startDate,
-        'previousPeriodStart' => $previousPeriodStart
+        'previousPeriodStart' => $previousPeriodStart,
+        'previousPeriodEnd' => $previousPeriodEnd
     ]);
     $previousExpenses = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
@@ -375,54 +374,159 @@ try {
     $expensesPercentage = $previousExpenses > 0 ?
         round((($totalExpenses - $previousExpenses) / $previousExpenses) * 100, 1) : 0;
 
-    // Calculate total profit
-    // Total Sales - (Total Purchases + Total Expenses)
-    $totalProfitQuery = "SELECT 
-        (SELECT COALESCE(SUM(si.total_price), 0) 
-         FROM sales s 
-         JOIN sale_items si ON s.id = si.sale_id 
-         WHERE s.date >= :startDate) -
-        ((SELECT COALESCE(SUM(pi.total_price), 0) 
-          FROM purchases p 
-          JOIN purchase_items pi ON p.id = pi.purchase_id 
-          WHERE p.date >= :startDate) +
-         (SELECT COALESCE(SUM(amount), 0) 
-          FROM expenses 
-          WHERE created_at >= :startDate) +
-         (SELECT COALESCE(SUM(amount), 0) 
-          FROM employee_payments 
-          WHERE created_at >= :startDate)) as total";
-    $stmt = $conn->prepare($totalProfitQuery);
-    $stmt->execute(['startDate' => $startDate]);
-    $totalProfit = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    // Calculate total profit using the same method as the report page
+    $profitQuery = "SELECT 
+        COALESCE(SUM(si.total_price), 0) as sales_revenue,
+        COALESCE(SUM(
+            CASE 
+                WHEN p.pieces_per_box > 0 THEN 
+                    (si.pieces_count / p.pieces_per_box) * p.purchase_price
+                ELSE 
+                    si.pieces_count * p.purchase_price
+            END
+        ), 0) as cost_of_goods_sold,
+        (
+            SELECT COALESCE(SUM(amount), 0)
+            FROM expenses
+            WHERE expense_date >= :startDate
+        ) as expenses,
+        (
+            SELECT COALESCE(SUM(amount), 0)
+            FROM employee_payments
+            WHERE payment_date >= :startDate
+        ) as employee_expenses
+    FROM
+        sales s
+    JOIN
+        sale_items si ON s.id = si.sale_id
+    JOIN
+        products p ON si.product_id = p.id
+    WHERE
+        s.date >= :startDate
+        AND s.is_draft = 0";
 
-    // Get previous period profit for percentage calculation
+    $stmt = $conn->prepare($profitQuery);
+    $stmt->execute(['startDate' => $startDate]);
+    $profitData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Calculate net profit
+    $totalProfit = $profitData['sales_revenue'] - $profitData['cost_of_goods_sold'] - $profitData['expenses'] - $profitData['employee_expenses'];
+
+    // Calculate previous period profit
     $previousProfitQuery = "SELECT 
-        (SELECT COALESCE(SUM(si.total_price), 0) 
-         FROM sales s 
-         JOIN sale_items si ON s.id = si.sale_id 
-         WHERE s.date >= :previousPeriodStart AND s.date < :startDate) -
-        ((SELECT COALESCE(SUM(pi.total_price), 0) 
-          FROM purchases p 
-          JOIN purchase_items pi ON p.id = pi.purchase_id 
-          WHERE p.date >= :previousPeriodStart AND p.date < :startDate) +
-         (SELECT COALESCE(SUM(amount), 0) 
-          FROM expenses 
-          WHERE created_at >= :previousPeriodStart AND created_at < :startDate) +
-         (SELECT COALESCE(SUM(amount), 0) 
-          FROM employee_payments 
-          WHERE created_at >= :previousPeriodStart AND created_at < :startDate)) as total";
+        COALESCE(SUM(si.total_price), 0) as sales_revenue,
+        COALESCE(SUM(
+            CASE 
+                WHEN p.pieces_per_box > 0 THEN 
+                    (si.pieces_count / p.pieces_per_box) * p.purchase_price
+                ELSE 
+                    si.pieces_count * p.purchase_price
+            END
+        ), 0) as cost_of_goods_sold,
+        (
+            SELECT COALESCE(SUM(amount), 0)
+            FROM expenses
+            WHERE expense_date >= :previousPeriodStart
+            AND expense_date <= :previousPeriodEnd
+        ) as expenses,
+        (
+            SELECT COALESCE(SUM(amount), 0)
+            FROM employee_payments
+            WHERE payment_date >= :previousPeriodStart
+            AND payment_date <= :previousPeriodEnd
+        ) as employee_expenses
+    FROM
+        sales s
+    JOIN
+        sale_items si ON s.id = si.sale_id
+    JOIN
+        products p ON si.product_id = p.id
+    WHERE
+        s.date >= :previousPeriodStart
+        AND s.date <= :previousPeriodEnd
+        AND s.is_draft = 0";
+
     $stmt = $conn->prepare($previousProfitQuery);
     $stmt->execute([
-        'startDate' => $startDate,
-        'previousPeriodStart' => $previousPeriodStart
+        'previousPeriodStart' => $previousPeriodStart,
+        'previousPeriodEnd' => $previousPeriodEnd
     ]);
-    $previousProfit = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    $previousProfitData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Calculate previous period net profit
+    $previousProfit = $previousProfitData['sales_revenue'] - $previousProfitData['cost_of_goods_sold'] - $previousProfitData['expenses'] - $previousProfitData['employee_expenses'];
 
     // Calculate profit percentage change
-    $profitPercentage = $previousProfit > 0 ?
-        round((($totalProfit - $previousProfit) / $previousProfit) * 100, 1) : 0;
+    $profitPercentage = $previousProfit != 0 ?
+        round((($totalProfit - $previousProfit) / abs($previousProfit)) * 100, 1) : 0;
+
+    // Prepare chart data
+    $chartMonths = [];
+    $salesValues = [];
+    $purchasesValues = [];
+
+    // Get last 6 months data
+    for ($i = 5; $i >= 0; $i--) {
+        $month = date('Y-m', strtotime("-$i months"));
+        $chartMonths[] = date('M Y', strtotime($month));
+        
+        // Get sales for this month
+        $monthSalesQuery = "SELECT COALESCE(SUM(si.total_price), 0) as total 
+                           FROM sales s 
+                           JOIN sale_items si ON s.id = si.sale_id 
+                           WHERE DATE_FORMAT(s.date, '%Y-%m') = :month
+                           AND s.is_draft = 0";
+        $stmt = $conn->prepare($monthSalesQuery);
+        $stmt->execute(['month' => $month]);
+        $salesValues[] = (float)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        
+        // Get purchases for this month
+        $monthPurchasesQuery = "SELECT COALESCE(SUM(pi.total_price), 0) as total 
+                               FROM purchases p 
+                               JOIN purchase_items pi ON p.id = pi.purchase_id 
+                               WHERE DATE_FORMAT(p.date, '%Y-%m') = :month";
+        $stmt = $conn->prepare($monthPurchasesQuery);
+        $stmt->execute(['month' => $month]);
+        $purchasesValues[] = (float)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    }
+
+    // Convert chart data to JSON for JavaScript
+    $chartMonthsJson = json_encode($chartMonths);
+    $salesValuesJson = json_encode($salesValues);
+    $purchasesValuesJson = json_encode($purchasesValues);
+
+    // Calculate sales and purchases percentages for pie chart
+    $totalTransactions = array_sum($salesValues) + array_sum($purchasesValues);
+    $salesPercentage = $totalTransactions > 0 ? round((array_sum($salesValues) / $totalTransactions) * 100) : 0;
+    $purchasesPercentage = $totalTransactions > 0 ? round((array_sum($purchasesValues) / $totalTransactions) * 100) : 0;
+
 } catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
+    // Log error and set default values
+    error_log("Error in dashboard_logic.php: " . $e->getMessage());
+    
+    // Set default values for all variables
+    $cashSales = 0;
+    $creditSales = 0;
+    $cashPurchases = 0;
+    $creditPurchases = 0;
+    $totalCustomerDebt = 0;
+    $totalSupplierDebt = 0;
+    $totalExpenses = 0;
+    $totalProfit = 0;
+    $cashSalesPercentage = 0;
+    $creditSalesPercentage = 0;
+    $cashPurchasesPercentage = 0;
+    $creditPurchasesPercentage = 0;
+    $customerDebtPercentage = 0;
+    $supplierDebtPercentage = 0;
+    $expensesPercentage = 0;
+    $profitPercentage = 0;
+    $lowStockProducts = [];
+    $topSellingProducts = [];
+    $chartMonthsJson = '[]';
+    $salesValuesJson = '[]';
+    $purchasesValuesJson = '[]';
+    $salesPercentage = 0;
+    $purchasesPercentage = 0;
 }
 ?> 
