@@ -1742,6 +1742,124 @@ BEGIN
         
 END$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `pay_supplier_debt_fifo` (
+    IN `p_supplier_id` INT,
+    IN `p_amount` DECIMAL(10,2),
+    IN `p_notes` TEXT,
+    IN `p_created_by` INT,
+    IN `p_payment_method` VARCHAR(20),
+    IN `p_payment_date` DATE
+)
+BEGIN
+    DECLARE v_remaining_payment DECIMAL(10,2);
+    DECLARE v_purchase_id INT;
+    DECLARE v_purchase_remaining DECIMAL(10,2);
+    DECLARE v_amount_to_pay DECIMAL(10,2);
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE current_debt DECIMAL(10,2);
+    
+    -- Declare cursor for unpaid purchases ordered by date (FIFO)
+    DECLARE purchases_cursor CURSOR FOR 
+        SELECT id, remaining_amount 
+        FROM purchases 
+        WHERE supplier_id = p_supplier_id 
+        AND payment_type = 'credit' 
+        AND remaining_amount > 0 
+        ORDER BY date ASC;
+    
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+    
+    -- Get current total debt
+    SELECT debt_on_myself INTO current_debt 
+    FROM suppliers 
+    WHERE id = p_supplier_id;
+    
+    -- Validate payment amount
+    IF p_amount <= 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'بڕی پارەی دراو دەبێت گەورەتر بێت لە سفر';
+    END IF;
+    
+    IF p_amount > current_debt THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'بڕی پارەی دراو گەورەترە لە قەرز';
+    END IF;
+    
+    START TRANSACTION;
+    
+    SET v_remaining_payment = p_amount;
+    
+    -- Open cursor and loop through unpaid purchases
+    OPEN purchases_cursor;
+    
+    read_loop: LOOP
+        FETCH purchases_cursor INTO v_purchase_id, v_purchase_remaining;
+        
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+        
+        -- Calculate amount to pay for this purchase
+        IF v_remaining_payment >= v_purchase_remaining THEN
+            SET v_amount_to_pay = v_purchase_remaining;
+        ELSE
+            SET v_amount_to_pay = v_remaining_payment;
+        END IF;
+        
+        -- Update purchase
+        UPDATE purchases 
+        SET paid_amount = paid_amount + v_amount_to_pay,
+            remaining_amount = remaining_amount - v_amount_to_pay
+        WHERE id = v_purchase_id;
+        
+        -- Create supplier debt transaction record with JSON notes
+        INSERT INTO supplier_debt_transactions (
+            supplier_id,
+            amount,
+            transaction_type,
+            reference_id,
+            notes,
+            created_by,
+            created_at
+        ) VALUES (
+            p_supplier_id,
+            v_amount_to_pay,
+            'payment',
+            v_purchase_id,
+            JSON_OBJECT(
+                'payment_method', p_payment_method,
+                'notes', p_notes,
+                'payment_date', p_payment_date,
+                'original_amount', p_amount
+            ),
+            p_created_by,
+            p_payment_date
+        );
+        
+        SET v_remaining_payment = v_remaining_payment - v_amount_to_pay;
+        
+        IF v_remaining_payment <= 0 THEN
+            LEAVE read_loop;
+        END IF;
+    END LOOP;
+    
+    CLOSE purchases_cursor;
+    
+    -- Update supplier's total debt
+    UPDATE suppliers 
+    SET debt_on_myself = debt_on_myself - p_amount
+    WHERE id = p_supplier_id;
+    
+    COMMIT;
+    
+    -- Return success with details
+    SELECT 
+        'success' AS status,
+        p_amount AS paid_amount,
+        current_debt - p_amount AS remaining_debt;
+        
+END$$
+
 DELIMITER ;
 
 --

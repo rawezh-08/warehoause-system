@@ -1016,6 +1016,15 @@ $tabs = [
                                                 </select>
                                             </div>
                                             
+                                            <div class="mb-3">
+                                                <label for="paymentStrategy" class="form-label">ستراتیژی پارەدان</label>
+                                                <select class="form-select" id="paymentStrategy" name="payment_strategy">
+                                                    <option value="regular">ئاسایی</option>
+                                                    <option value="fifo">FIFO (پارەدانی کۆنترین قەرزەکان یەکەم)</option>
+                                                </select>
+                                                <div class="form-text">پارەدانی FIFO بە شێوەی ئۆتۆماتیکی قەرزە کۆنەکان دەداتەوە بەپێی ڕیزبەندی کاتی.</div>
+                                            </div>
+                                            
                                             <div class="text-end">
                                                 <button type="reset" class="btn btn-outline-secondary me-2">
                                                     <i class="fas fa-undo me-2"></i> ڕیسێت
@@ -1602,94 +1611,79 @@ $tabs = [
                 const form = $('#supplierPaymentForm');
 
                 // Basic validation
-                if (!form[0].checkValidity()) {
-                    form.addClass('was-validated');
-                    return;
-                }
-
-                // Get form data
-                const supplierId = form.find('input[name="supplier_id"]').val();
-                const amount = form.find('input[name="amount"]').val();
-                const paymentDate = form.find('input[name="payment_date"]').val();
-                const notes = form.find('textarea[name="notes"]').val();
-                const paymentMethod = form.find('select[name="payment_method"]').val();
-
-                // Check if amount is greater than total debt
-                const totalDebt = <?php echo $supplier['debt_on_myself']; ?>;
-                if (parseFloat(amount) > totalDebt) {
+                const amount = $('#paymentAmount').val();
+                if (!amount || isNaN(amount) || Number(amount) <= 0) {
                     Swal.fire({
+                        title: 'هەڵە!',
+                        text: 'تکایە بڕی پارەی دروست داخل بکە',
                         icon: 'error',
-                        title: 'هەڵە',
-                        text: 'بڕی پارەی پێدراو نابێت لە کۆی قەرز زیاتر بێت',
                         confirmButtonText: 'باشە'
                     });
                     return;
                 }
 
-                // Prepare metadata as JSON for storing in notes field
-                const metadata = {
-                    paymentMethod: paymentMethod,
-                    originalNotes: notes || ''
-                };
-
-                // Prepare request data
-                const requestData = {
-                    supplier_id: supplierId,
+                // Get payment strategy
+                const paymentStrategy = $('#paymentStrategy').val();
+                
+                // Get form data
+                const formData = {
+                    supplier_id: form.find('input[name="supplier_id"]').val(),
                     amount: amount,
-                    transaction_date: paymentDate,
-                    transaction_type: 'payment', // This is for supplier debt payment
-                    notes: JSON.stringify(metadata) // Store metadata as JSON
+                    notes: $('#paymentNotes').val(),
+                    payment_date: $('#paymentDate').val(),
+                    payment_method: $('#paymentMethod').val()
                 };
 
-                // Submit via AJAX
+                // Determine which API endpoint to use based on payment strategy
+                let apiEndpoint = '../../api/business_pay_supplier.php';
+                if (paymentStrategy === 'fifo') {
+                    apiEndpoint = '../../api/pay_supplier_debt_fifo.php';
+                }
+                
+                // Show loading indicator
+                Swal.fire({
+                    title: 'تکایە چاوەڕێ بکە...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Submit form data
                 $.ajax({
-                    url: '../../ajax/save_supplier_debt_transaction.php',
-                    method: 'POST',
-                    data: requestData,
-                    dataType: 'json',
+                    url: apiEndpoint,
+                    type: 'POST',
+                    data: formData,
                     success: function(response) {
                         if (response.success) {
                             Swal.fire({
+                                title: 'سەرکەوتوو بوو!',
+                                text: response.message,
                                 icon: 'success',
-                                title: 'سەرکەوتوو',
-                                text: 'پارەدانی قەرز بە سەرکەوتوویی تۆمارکرا',
                                 confirmButtonText: 'باشە'
                             }).then(() => {
                                 // Reset form
                                 form[0].reset();
-                                form.removeClass('was-validated');
-                                
-                                // Refresh the page to update all data
-                                window.location.reload();
+                                // Reload page to update debt information
+                                location.reload();
                             });
                         } else {
                             Swal.fire({
+                                title: 'هەڵە!',
+                                text: response.message,
                                 icon: 'error',
-                                title: 'هەڵە',
-                                text: response.message || 'هەڵەیەک ڕوویدا لە کاتی تۆمارکردنی پارەدانی قەرز',
                                 confirmButtonText: 'باشە'
                             });
                         }
                     },
                     error: function(xhr, status, error) {
-                        console.error('Error details:', {xhr, status, error});
-                        let errorMessage = 'هەڵەیەک ڕوویدا لە کاتی پەیوەندیکردن بە سێرڤەر';
-                        
-                        try {
-                            const response = JSON.parse(xhr.responseText);
-                            if (response && response.message) {
-                                errorMessage = response.message;
-                            }
-                        } catch (e) {
-                            console.error('Error parsing response:', e);
-                        }
-                        
                         Swal.fire({
+                            title: 'هەڵە!',
+                            text: 'هەڵەیەک ڕوویدا لە پەیوەندیکردن بە سێرڤەر',
                             icon: 'error',
-                            title: 'هەڵە',
-                            text: errorMessage,
                             confirmButtonText: 'باشە'
                         });
+                        console.error(xhr, status, error);
                     }
                 });
             });
