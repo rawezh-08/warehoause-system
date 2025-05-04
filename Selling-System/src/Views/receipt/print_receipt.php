@@ -1,5 +1,6 @@
 <?php
 // Include database connection
+require_once '../../includes/auth.php';
 require_once '../../config/database.php';
 
 // Function to get correct image path without duplication
