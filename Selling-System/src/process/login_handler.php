@@ -33,7 +33,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($username) || empty($password)) {
         $error = "تکایە هەموو خانەکان پڕ بکەرەوە";
     } else {
-        // Prepare statement to prevent SQL injection
+        // First check admin_accounts
         $stmt = $db->prepare("SELECT id, username, password_hash FROM admin_accounts WHERE username = ?");
         $stmt->bind_param("s", $username);
         $stmt->execute();
@@ -66,7 +66,53 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $error = "ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە";
             }
         } else {
-            $error = "ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە";
+            // If not found in admin_accounts, check user_accounts
+            $stmt->close();
+            
+            $stmt = $db->prepare("SELECT id, username, password_hash, is_active, role_id FROM user_accounts WHERE username = ?");
+            $stmt->bind_param("s", $username);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if ($result->num_rows == 1) {
+                $user = $result->fetch_assoc();
+                
+                if ($user['is_active'] != 1) {
+                    $error = "ئەم هەژمارە چالاک نییە";
+                } elseif (password_verify($password, $user['password_hash'])) {
+                    // Update last login time
+                    $update_stmt = $db->prepare("UPDATE user_accounts SET last_login = NOW() WHERE id = ?");
+                    $update_stmt->bind_param("i", $user['id']);
+                    $update_stmt->execute();
+                    $update_stmt->close();
+                    
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['username'] = $user['username'];
+                    $_SESSION['role_id'] = $user['role_id'];
+                    $_SESSION['last_activity'] = time(); // Set initial activity time
+                    
+                    // Set a session cookie that expires when browser closes
+                    setcookie('user_id', session_id(), 0, '/', '', false, true);
+                    
+                    // Redirect to dashboard
+                    // Determine correct path based on script location
+                    $currentPath = $_SERVER['SCRIPT_NAME'];
+                    
+                    // Determine if we're in the main directory or a subdirectory
+                    if (basename(dirname($currentPath)) === 'process' && basename(dirname(dirname($currentPath))) === 'src') {
+                        // If we're in src/process/, use relative path
+                        header("Location: ../Views/admin/dashboard.php");
+                    } else {
+                        // Otherwise use the standard path from project root
+                        header("Location: Selling-System/src/Views/admin/dashboard.php");
+                    }
+                    exit();
+                } else {
+                    $error = "ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە";
+                }
+            } else {
+                $error = "ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە";
+            }
         }
         
         $stmt->close();
