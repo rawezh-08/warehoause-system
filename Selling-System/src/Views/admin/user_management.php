@@ -122,11 +122,14 @@ if ($users_result->num_rows > 0) {
     </style>
 </head>
 <body class="bg-light">
-    <?php include '../../components/admin_navbar.php'; ?>
+<div id="navbar-container"></div>
+
+<!-- Sidebar container - will be populated by JavaScript -->
+<div id="sidebar-container"></div>
 
     <div class="container-fluid mt-4">
         <div class="row">
-            <?php include '../../components/admin_sidebar.php'; ?>
+           
             
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
@@ -405,6 +408,8 @@ if ($users_result->num_rows > 0) {
     <!-- JavaScript Files -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <!-- Initialize common elements -->
+        <script src="../../js/include-components.js"></script>
     <script>
         $(document).ready(function() {
             // Edit user modal
