@@ -54,6 +54,27 @@ try {
             throw new Exception('پسووڵەی کڕین نەدۆزرایەوە - ID: ' . $receipt_id);
         }
         
+        // Check if there are any payments for this purchase
+        $paymentQuery = $conn->prepare("SELECT COUNT(*) as count FROM supplier_debt_transactions 
+                                        WHERE reference_id = ? 
+                                        AND transaction_type = 'payment'");
+        $paymentQuery->execute([$receipt_id]);
+        $paymentCount = $paymentQuery->fetch(PDO::FETCH_ASSOC)['count'];
+
+        if ($paymentCount > 0) {
+            throw new Exception('ناتوانرێت پسووڵەکە بسڕدرێتەوە چونکە پارەدانی هەیە');
+        }
+        
+        // Check if there are any product returns for this purchase
+        $returnQuery = $conn->prepare("SELECT COUNT(*) as count FROM product_returns 
+                                    WHERE receipt_id = ? AND receipt_type = 'buying'");
+        $returnQuery->execute([$receipt_id]);
+        $returnCount = $returnQuery->fetch(PDO::FETCH_ASSOC)['count'];
+
+        if ($returnCount > 0) {
+            throw new Exception('ناتوانرێت پسووڵەکە بسڕدرێتەوە چونکە گەڕاندنەوەی کاڵای هەیە');
+        }
+        
         // Get purchase items to update product quantities
         $stmt = $conn->prepare("SELECT * FROM purchase_items WHERE purchase_id = ?");
         $stmt->execute([$receipt_id]);

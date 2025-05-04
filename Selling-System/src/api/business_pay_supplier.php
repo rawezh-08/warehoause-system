@@ -118,7 +118,7 @@ try {
     // Return success response
     echo json_encode([
         'success' => true,
-        'message' => 'Payment to supplier recorded successfully',
+        'message' => 'پارەدان بۆ دابینکەر بە سەرکەوتوویی تۆمارکرا',
         'supplier_id' => $supplier_id,
         'amount' => $amount,
         'old_balance' => [
