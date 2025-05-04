@@ -2752,8 +2752,8 @@ foreach ($debtTransactions as $debtTransaction) {
                 const totalRecordsId = options.totalRecordsId || '';
                 const searchInputId = options.searchInputId || '';
                 
-                // Ensure all elements exist before proceeding
-                if (!$('#' + tableId).length) {
+                // Ensure all required elements exist before proceeding
+                if (!tableId || !$('#' + tableId).length) {
                     console.error('Table not found: ' + tableId);
                     return;
                 }
@@ -2763,43 +2763,52 @@ foreach ($debtTransactions as $debtTransaction) {
                 const rows = tbody.find('tr').not('.no-records');
                 
                 let currentPage = 1;
-                let recordsPerPage = parseInt($('#' + recordsPerPageId).val()) || 10;
+                const recordsPerPage = recordsPerPageId && $('#' + recordsPerPageId).length ? 
+                    parseInt($('#' + recordsPerPageId).val()) : 10;
                 
                 // Initialize
                 updatePagination();
                 
                 // Records per page change event
-                $('#' + recordsPerPageId).on('change', function() {
-                    recordsPerPage = parseInt($(this).val());
-                    currentPage = 1;
-                    updatePagination();
-                });
+                if (recordsPerPageId && $('#' + recordsPerPageId).length) {
+                    $('#' + recordsPerPageId).on('change', function() {
+                        currentPage = 1;
+                        updatePagination();
+                    });
+                }
                 
                 // Previous page button
-                $('#' + prevBtnId).on('click', function() {
-                    if (!$(this).prop('disabled')) {
-                        currentPage--;
-                        updatePagination();
-                    }
-                });
+                if (prevBtnId && $('#' + prevBtnId).length) {
+                    $('#' + prevBtnId).on('click', function() {
+                        if (!$(this).prop('disabled')) {
+                            currentPage--;
+                            updatePagination();
+                        }
+                    });
+                }
                 
                 // Next page button
-                $('#' + nextBtnId).on('click', function() {
-                    if (!$(this).prop('disabled')) {
-                        currentPage++;
-                        updatePagination();
-                    }
-                });
+                if (nextBtnId && $('#' + nextBtnId).length) {
+                    $('#' + nextBtnId).on('click', function() {
+                        if (!$(this).prop('disabled')) {
+                            currentPage++;
+                            updatePagination();
+                        }
+                    });
+                }
                 
                 // Search functionality
-                $('#' + searchInputId).on('keyup', function() {
-                    currentPage = 1;
-                    updatePagination();
-                });
+                if (searchInputId && $('#' + searchInputId).length) {
+                    $('#' + searchInputId).on('keyup', function() {
+                        currentPage = 1;
+                        updatePagination();
+                    });
+                }
                 
                 // Function to update pagination
                 function updatePagination() {
-                    const searchTerm = $('#' + searchInputId).val().toLowerCase();
+                    const searchTerm = searchInputId && $('#' + searchInputId).length ? 
+                        $('#' + searchInputId).val().toLowerCase() : '';
                     
                     // Filter rows based on search term
                     const filteredRows = rows.filter(function() {
@@ -2808,21 +2817,28 @@ foreach ($debtTransactions as $debtTransaction) {
                     });
                     
                     const totalRecords = filteredRows.length;
-                    const totalPages = Math.ceil(totalRecords / recordsPerPage);
+                    const totalPages = Math.ceil(totalRecords / recordsPerPage) || 1;
                     
                     // Update pagination info
-                    $('#' + totalRecordsId).text(totalRecords);
+                    if (totalRecordsId && $('#' + totalRecordsId).length) {
+                        $('#' + totalRecordsId).text(totalRecords);
+                    }
                     
                     // Ensure current page is valid
-                    currentPage = Math.max(1, Math.min(currentPage, totalPages || 1));
+                    currentPage = Math.max(1, Math.min(currentPage, totalPages));
                     
                     // Calculate start and end indices
                     const startIndex = (currentPage - 1) * recordsPerPage;
                     const endIndex = Math.min(startIndex + recordsPerPage - 1, totalRecords - 1);
                     
                     // Update pagination info
-                    $('#' + startRecordId).text(totalRecords > 0 ? startIndex + 1 : 0);
-                    $('#' + endRecordId).text(totalRecords > 0 ? endIndex + 1 : 0);
+                    if (startRecordId && $('#' + startRecordId).length) {
+                        $('#' + startRecordId).text(totalRecords > 0 ? startIndex + 1 : 0);
+                    }
+                    
+                    if (endRecordId && $('#' + endRecordId).length) {
+                        $('#' + endRecordId).text(totalRecords > 0 ? endIndex + 1 : 0);
+                    }
                     
                     // Show/hide rows based on current page
                     tbody.find('tr').hide();
@@ -2844,8 +2860,13 @@ foreach ($debtTransactions as $debtTransaction) {
                     }
                     
                     // Update pagination controls
-                    $('#' + prevBtnId).prop('disabled', currentPage === 1);
-                    $('#' + nextBtnId).prop('disabled', currentPage === totalPages || totalPages === 0);
+                    if (prevBtnId && $('#' + prevBtnId).length) {
+                        $('#' + prevBtnId).prop('disabled', currentPage === 1);
+                    }
+                    
+                    if (nextBtnId && $('#' + nextBtnId).length) {
+                        $('#' + nextBtnId).prop('disabled', currentPage === totalPages || totalPages === 0);
+                    }
                     
                     // Update pagination numbers
                     updatePaginationNumbers();
@@ -2853,14 +2874,21 @@ foreach ($debtTransactions as $debtTransaction) {
                 
                 // Function to update pagination number buttons
                 function updatePaginationNumbers() {
+                    if (!paginationNumbersId || !$('#' + paginationNumbersId).length) {
+                        return;
+                    }
+                    
+                    const paginationNumbersContainer = $('#' + paginationNumbersId);
                     const totalRecords = rows.filter(function() {
-                        const rowText = $(this).text().toLowerCase();
-                        const searchTerm = $('#' + searchInputId).val().toLowerCase();
-                        return searchTerm === '' || rowText.indexOf(searchTerm) > -1;
+                        if (searchInputId && $('#' + searchInputId).length) {
+                            const rowText = $(this).text().toLowerCase();
+                            const searchTerm = $('#' + searchInputId).val().toLowerCase();
+                            return searchTerm === '' || rowText.indexOf(searchTerm) > -1;
+                        }
+                        return true;
                     }).length;
                     
-                    const totalPages = Math.ceil(totalRecords / recordsPerPage);
-                    const paginationNumbersContainer = $('#' + paginationNumbersId);
+                    const totalPages = Math.ceil(totalRecords / recordsPerPage) || 1;
                     
                     // Clear existing pagination numbers
                     paginationNumbersContainer.empty();
