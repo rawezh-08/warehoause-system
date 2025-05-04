@@ -319,7 +319,7 @@ if ($users_result->num_rows > 0) {
                     <h5 class="modal-title" id="editUserModalLabel">دەستکاریکردنی بەکارهێنەر</h5>
                     <button type="button" class="btn-close ms-0 me-2" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form action="../../process/update_user.php" method="post">
+                <form action="../../process/update_role.php" method="post">
                     <div class="modal-body">
                         <input type="hidden" id="edit_user_id" name="user_id">
                         <div class="mb-3">
@@ -370,7 +370,7 @@ if ($users_result->num_rows > 0) {
                     <p class="text-danger" id="delete_username_display"></p>
                 </div>
                 <div class="modal-footer">
-                    <form action="../../process/delete_user.php" method="post">
+                    <form action="../../process/delete_role.php" method="post">
                         <input type="hidden" id="delete_user_id" name="user_id">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">داخستن</button>
                         <button type="submit" class="btn btn-danger">سڕینەوە</button>
