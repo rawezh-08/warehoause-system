@@ -3,16 +3,10 @@
 require_once '../../config/database.php';
 require_once '../../models/User.php';
 require_once '../../includes/auth.php';
-require_once '../../models/Permission.php';
 
-// Check if user has permission
+// Create database connection
 $database = new Database();
 $db = $database->getConnection();
-$permissionModel = new Permission($db);
-
-if (!isset($_SESSION['user_id']) || !$permissionModel->userHasPermission($_SESSION['user_id'], 'manage_accounts')) {
-    exit(json_encode(['status' => 'error', 'message' => 'ڕێگەپێنەدراوە - دەسەڵاتی پێویست نییە']));
-}
 
 // Create user model
 $userModel = new User($db);

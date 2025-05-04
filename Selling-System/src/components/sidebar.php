@@ -1,28 +1,5 @@
 <?php
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../models/Permission.php';
-
-// Initialize database connection
-$database = new Database();
-$db = $database->getConnection();
-
-// Create permission model
-$permissionModel = new Permission($db);
-
-// Get current user ID from session
-$current_user_id = $_SESSION['user_id'] ?? 0;
-
-// Helper function to check permission
-function hasPermission($permission_code) {
-    global $permissionModel, $current_user_id;
-    if ($current_user_id) {
-        return $permissionModel->userHasPermission($current_user_id, $permission_code);
-    }
-    return false;
-}
-
-// For admin users, we'll show everything
-$is_admin = hasPermission('manage_accounts') && hasPermission('manage_roles');
+// You can add PHP logic here if needed
 ?>
 <!-- Sidebar -->
 <link rel="stylesheet" href="../../css/shared/sidebar.css">
@@ -40,8 +17,7 @@ $is_admin = hasPermission('manage_accounts') && hasPermission('manage_roles');
 
         <!-- Sidebar Menu -->
         <ul class="sidebar-menu">
-            <!-- Products - requires view_products permission -->
-            <?php if ($is_admin || hasPermission('view_products')): ?>
+            <!-- Products -->
             <li class="menu-item">
                 <a href="#productsSubmenu" class="item-link" data-toggle="collapse">
                     <div class="icon-cont">
@@ -51,16 +27,12 @@ $is_admin = hasPermission('manage_accounts') && hasPermission('manage_roles');
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="productsSubmenu">
-                    <?php if ($is_admin || hasPermission('add_product')): ?>
                     <li><a href="addProduct.php">زیادکردنی کاڵا</a></li>
-                    <?php endif; ?>
                     <li><a href="products.php">لیستی کاڵاکان</a></li>
                 </ul>
             </li>
-            <?php endif; ?>
 
-            <!-- Staff - requires manage_accounts permission -->
-            <?php if ($is_admin || hasPermission('manage_accounts')): ?>
+            <!-- Staff -->
             <li class="menu-item">
                 <a href="#staffSubmenu" class="item-link" data-toggle="collapse">
                     <div class="icon-cont">
@@ -72,13 +44,10 @@ $is_admin = hasPermission('manage_accounts') && hasPermission('manage_roles');
                 <ul class="submenu collapse" id="staffSubmenu">
                     <li><a href="addStaff.php">زیادکردنی هەژمار</a></li>
                     <li><a href="staff.php">لیستی هەژمارەکان</a></li>
-                    <li><a href="manage_users.php">بەڕێوەبردنی بەکارهێنەران</a></li>
                 </ul>
             </li>
-            <?php endif; ?>
 
-            <!-- Sales - requires view_sales or view_purchases permission -->
-            <?php if ($is_admin || hasPermission('view_sales') || hasPermission('view_purchases')): ?>
+            <!-- Sales -->
             <li class="menu-item">
                 <a href="#salesSubmenu" class="item-link" data-toggle="collapse">
                     <div class="icon-cont">
@@ -88,23 +57,14 @@ $is_admin = hasPermission('manage_accounts') && hasPermission('manage_roles');
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="salesSubmenu">
-                    <?php if ($is_admin || hasPermission('add_sale')): ?>
                     <li><a href="addReceipt.php">زیادکردنی پسوڵە</a></li>
-                    <?php endif; ?>
-                    
-                    <?php if ($is_admin || hasPermission('view_sales')): ?>
+
                     <li><a href="receiptList.php">پسووڵەکانی فرۆشتن</a></li>
-                    <?php endif; ?>
-                    
-                    <?php if ($is_admin || hasPermission('view_purchases')): ?>
                     <li><a href="purchaseList.php">پسووڵەکانی کڕین</a></li>
-                    <?php endif; ?>
                 </ul>
             </li>
-            <?php endif; ?>
 
-            <!-- Expenses - requires financial permissions -->
-            <?php if ($is_admin || hasPermission('view_financial_reports')): ?>
+            <!-- Expenses -->
             <li class="menu-item">
                 <a href="#expensesSubmenu" class="item-link" data-toggle="collapse">
                     <div class="icon-cont">
@@ -119,10 +79,8 @@ $is_admin = hasPermission('manage_accounts') && hasPermission('manage_roles');
                     <li><a href="cash_management.php">دەخیلە</a></li>
                 </ul>
             </li>
-            <?php endif; ?>
 
-            <!-- Debts - requires customer or supplier permissions -->
-            <?php if ($is_admin || hasPermission('view_customers') || hasPermission('view_suppliers')): ?>
+            <!-- Debts -->
             <li class="menu-item">
                 <a href="#deptsSubmenu" class="item-link" data-toggle="collapse">
                     <div class="icon-cont">
@@ -132,23 +90,13 @@ $is_admin = hasPermission('manage_accounts') && hasPermission('manage_roles');
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="deptsSubmenu">
-                    <?php if ($is_admin || hasPermission('view_customers')): ?>
                     <li><a href="customers.php">کڕیارەکان</a></li>
-                    <?php endif; ?>
-                    
-                    <?php if ($is_admin || hasPermission('view_suppliers')): ?>
                     <li><a href="suppliers.php">دابینکەرەکان</a></li>
-                    <?php endif; ?>
-                    
-                    <?php if ($is_admin || (hasPermission('view_customers') && hasPermission('view_suppliers'))): ?>
                     <li><a href="business_partners.php">کڕیار و دابینکەر</a></li>
-                    <?php endif; ?>
                 </ul>
             </li>
-            <?php endif; ?>
 
-            <!-- Reports - requires view_reports permission -->
-            <?php if ($is_admin || hasPermission('view_reports')): ?>
+            <!-- Reports -->
             <li class="menu-item">
                 <a href="report.php" class="item-link">
                     <div class="icon-cont">
@@ -157,7 +105,6 @@ $is_admin = hasPermission('manage_accounts') && hasPermission('manage_roles');
                     <span>ڕاپۆرتەکان</span>
                 </a>
             </li>
-            <?php endif; ?>
         </ul>
     </div>
 </div>
