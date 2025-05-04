@@ -270,7 +270,7 @@ if ($users_result->num_rows > 0) {
                     <h5 class="modal-title" id="addUserModalLabel">زیادکردنی بەکارهێنەر</h5>
                     <button type="button" class="btn-close ms-0 me-2" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form action="../../process/add_role.php" method="post">
+                <form action="../../process/add_user.php" method="post">
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="username" class="form-label">ناوی بەکارهێنەر</label>
