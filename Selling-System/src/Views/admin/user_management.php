@@ -122,10 +122,8 @@ if ($users_result->num_rows > 0) {
     </style>
 </head>
 <body class="bg-light">
-<div id="navbar-container"></div>
 
-<!-- Sidebar container - will be populated by JavaScript -->
-<div id="sidebar-container"></div>
+
 
     <div class="container-fluid mt-4">
         <div class="row">
@@ -409,7 +407,8 @@ if ($users_result->num_rows > 0) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <!-- Initialize common elements -->
-        <script src="../../js/include-components.js"></script>
+
+        
     <script>
         $(document).ready(function() {
             // Edit user modal
