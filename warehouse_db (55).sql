@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 04, 2025 at 07:25 PM
+-- Generation Time: May 04, 2025 at 08:35 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -875,6 +875,35 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_supplier_return` (IN `p_supplie
     SELECT 'success' AS 'result';
 END$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `add_user` (IN `p_username` VARCHAR(50), IN `p_password` VARCHAR(255), IN `p_employee_id` INT, IN `p_role_id` INT, IN `p_created_by` INT)   BEGIN
+    DECLARE user_exists INT;
+    
+    -- بپشکنە ئایا بەکارهێنەر بوونی هەیە
+    SELECT COUNT(*) INTO user_exists FROM user_accounts WHERE username = p_username;
+    
+    IF user_exists > 0 THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'ئەم ناوی بەکارهێنەرە پێشتر بەکارهاتووە';
+    END IF;
+    
+    -- زیادکردنی بەکارهێنەر
+    INSERT INTO user_accounts (
+        username, 
+        password_hash, 
+        employee_id, 
+        role_id, 
+        created_by
+    ) VALUES (
+        p_username, 
+        p_password, 
+        p_employee_id, 
+        p_role_id, 
+        p_created_by
+    );
+    
+    SELECT LAST_INSERT_ID() AS user_id;
+END$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `add_wasting` (IN `p_invoice_number` VARCHAR(50), IN `p_date` TIMESTAMP, IN `p_payment_type` ENUM('cash','credit'), IN `p_paid_amount` DECIMAL(10,2), IN `p_notes` TEXT, IN `p_created_by` INT, IN `p_products` JSON)   BEGIN
     DECLARE wasting_id INT;
     DECLARE i INT DEFAULT 0;
@@ -1040,6 +1069,21 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `business_pay_supplier` (IN `p_suppl
     );
     
     SELECT 'success' AS 'result';
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `check_user_permission` (IN `p_user_id` INT, IN `p_permission_code` VARCHAR(100))   BEGIN
+    DECLARE has_permission BOOLEAN;
+    
+    -- بپشکنە ئایا بەکارهێنەر دەسەڵاتی هەیە
+    SELECT EXISTS (
+        SELECT 1 FROM user_accounts ua
+        JOIN role_permissions rp ON ua.role_id = rp.role_id
+        JOIN permissions p ON rp.permission_id = p.id
+        WHERE ua.id = p_user_id AND p.code = p_permission_code
+    ) INTO has_permission;
+    
+    -- گەڕاندنەوەی ئەنجام
+    SELECT has_permission AS 'has_permission';
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `create_inventory_count` (IN `p_notes` TEXT, IN `p_created_by` INT, IN `p_count_items` JSON)   BEGIN
@@ -1986,6 +2030,55 @@ CREATE TABLE `inventory_count_items` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `permissions`
+--
+
+CREATE TABLE `permissions` (
+  `id` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `code` varchar(100) NOT NULL,
+  `description` text DEFAULT NULL,
+  `group` varchar(50) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `permissions`
+--
+
+INSERT INTO `permissions` (`id`, `name`, `code`, `description`, `group`) VALUES
+(1, 'بینینی کارمەندەکان', 'view_employees', 'توانای بینینی لیستی کارمەندەکان', 'کارمەندەکان'),
+(2, 'زیادکردنی کارمەند', 'add_employee', 'توانای زیادکردنی کارمەندی نوێ', 'کارمەندەکان'),
+(3, 'دەستکاریکردنی کارمەند', 'edit_employee', 'توانای دەستکاریکردنی زانیاری کارمەندەکان', 'کارمەندەکان'),
+(4, 'سڕینەوەی کارمەند', 'delete_employee', 'توانای سڕینەوەی کارمەندەکان', 'کارمەندەکان'),
+(5, 'بەڕێوەبردنی هەژمارەکان', 'manage_accounts', 'توانای زیادکردن و دەستکاریکردنی هەژماری بەکارهێنەران', 'کارگێڕی'),
+(6, 'بەڕێوەبردنی دەسەڵاتەکان', 'manage_roles', 'توانای دەستکاریکردنی ڕۆڵەکان و دەسەڵاتەکان', 'کارگێڕی'),
+(7, 'بینینی کڕینەکان', 'view_purchases', 'توانای بینینی پسولەکانی کڕین', 'کڕین'),
+(8, 'زیادکردنی کڕین', 'add_purchase', 'توانای زیادکردنی پسولەی کڕین', 'کڕین'),
+(9, 'دەستکاریکردنی کڕین', 'edit_purchase', 'توانای دەستکاریکردنی پسولەکانی کڕین', 'کڕین'),
+(10, 'سڕینەوەی کڕین', 'delete_purchase', 'توانای سڕینەوەی پسولەکانی کڕین', 'کڕین'),
+(11, 'بینینی فرۆشتنەکان', 'view_sales', 'توانای بینینی پسولەکانی فرۆشتن', 'فرۆشتن'),
+(12, 'زیادکردنی فرۆشتن', 'add_sale', 'توانای زیادکردنی پسولەی فرۆشتن', 'فرۆشتن'),
+(13, 'دەستکاریکردنی فرۆشتن', 'edit_sale', 'توانای دەستکاریکردنی پسولەکانی فرۆشتن', 'فرۆشتن'),
+(14, 'سڕینەوەی فرۆشتن', 'delete_sale', 'توانای سڕینەوەی پسولەکانی فرۆشتن', 'فرۆشتن'),
+(15, 'بینینی کاڵاکان', 'view_products', 'توانای بینینی لیستی کاڵاکان', 'کاڵاکان'),
+(16, 'زیادکردنی کاڵا', 'add_product', 'توانای زیادکردنی کاڵای نوێ', 'کاڵاکان'),
+(17, 'دەستکاریکردنی کاڵا', 'edit_product', 'توانای دەستکاریکردنی زانیاری کاڵاکان', 'کاڵاکان'),
+(18, 'سڕینەوەی کاڵا', 'delete_product', 'توانای سڕینەوەی کاڵاکان', 'کاڵاکان'),
+(19, 'بینینی موشتەرییەکان', 'view_customers', 'توانای بینینی لیستی موشتەرییەکان', 'موشتەرییەکان'),
+(20, 'زیادکردنی موشتەری', 'add_customer', 'توانای زیادکردنی موشتەری نوێ', 'موشتەرییەکان'),
+(21, 'دەستکاریکردنی موشتەری', 'edit_customer', 'توانای دەستکاریکردنی زانیاری موشتەرییەکان', 'موشتەرییەکان'),
+(22, 'سڕینەوەی موشتەری', 'delete_customer', 'توانای سڕینەوەی موشتەرییەکان', 'موشتەرییەکان'),
+(23, 'بینینی دابینکەران', 'view_suppliers', 'توانای بینینی لیستی دابینکەران', 'دابینکەران'),
+(24, 'زیادکردنی دابینکەر', 'add_supplier', 'توانای زیادکردنی دابینکەری نوێ', 'دابینکەران'),
+(25, 'دەستکاریکردنی دابینکەر', 'edit_supplier', 'توانای دەستکاریکردنی زانیاری دابینکەران', 'دابینکەران'),
+(26, 'سڕینەوەی دابینکەر', 'delete_supplier', 'توانای سڕینەوەی دابینکەران', 'دابینکەران'),
+(27, 'بینینی ڕاپۆرتەکان', 'view_reports', 'توانای بینینی ڕاپۆرتەکانی سیستەم', 'ڕاپۆرتەکان'),
+(28, 'بینینی ڕاپۆرتی دارایی', 'view_financial_reports', 'توانای بینینی ڕاپۆرتە داراییەکان', 'ڕاپۆرتەکان'),
+(29, 'بینینی ڕاپۆرتی کۆگا', 'view_inventory_reports', 'توانای بینینی ڕاپۆرتەکانی کۆگا', 'ڕاپۆرتەکان');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `products`
 --
 
@@ -2086,6 +2179,71 @@ CREATE TABLE `return_items` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `total_price` decimal(10,2) DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `role_permissions`
+--
+
+CREATE TABLE `role_permissions` (
+  `id` int(11) NOT NULL,
+  `role_id` int(11) NOT NULL,
+  `permission_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `role_permissions`
+--
+
+INSERT INTO `role_permissions` (`id`, `role_id`, `permission_id`) VALUES
+(22, 1, 1),
+(2, 1, 2),
+(14, 1, 3),
+(8, 1, 4),
+(19, 1, 5),
+(20, 1, 6),
+(26, 1, 7),
+(4, 1, 8),
+(16, 1, 9),
+(10, 1, 10),
+(28, 1, 11),
+(5, 1, 12),
+(17, 1, 13),
+(11, 1, 14),
+(25, 1, 15),
+(3, 1, 16),
+(15, 1, 17),
+(9, 1, 18),
+(21, 1, 19),
+(1, 1, 20),
+(13, 1, 21),
+(7, 1, 22),
+(29, 1, 23),
+(6, 1, 24),
+(18, 1, 25),
+(12, 1, 26),
+(27, 1, 27),
+(23, 1, 28),
+(24, 1, 29),
+(43, 2, 1),
+(46, 2, 7),
+(34, 2, 8),
+(39, 2, 9),
+(48, 2, 11),
+(35, 2, 12),
+(40, 2, 13),
+(45, 2, 15),
+(33, 2, 16),
+(38, 2, 17),
+(42, 2, 19),
+(32, 2, 20),
+(37, 2, 21),
+(49, 2, 23),
+(36, 2, 24),
+(41, 2, 25),
+(47, 2, 27),
+(44, 2, 29);
 
 -- --------------------------------------------------------
 
@@ -2195,6 +2353,49 @@ INSERT INTO `units` (`id`, `name`, `is_piece`, `is_box`, `is_set`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `user_accounts`
+--
+
+CREATE TABLE `user_accounts` (
+  `id` int(11) NOT NULL,
+  `username` varchar(50) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `employee_id` int(11) DEFAULT NULL,
+  `role_id` int(11) NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `last_login` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_roles`
+--
+
+CREATE TABLE `user_roles` (
+  `id` int(11) NOT NULL,
+  `name` varchar(50) NOT NULL,
+  `description` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `user_roles`
+--
+
+INSERT INTO `user_roles` (`id`, `name`, `description`, `created_at`) VALUES
+(1, 'بەڕێوەبەر', 'دەسەڵاتی تەواو بۆ هەموو بەشەکانی سیستەم', '2025-05-04 17:58:43'),
+(2, 'سەرپەرشتیار', 'دەسەڵاتی بەڕێوەبردنی بەشەکانی کڕین و فرۆشتن', '2025-05-04 17:58:43'),
+(3, 'خەزنەدار', 'دەسەڵاتی بەڕێوەبردنی پارە و ئەژمێریاری', '2025-05-04 17:58:43'),
+(4, 'فرۆشیار', 'دەسەڵاتی فرۆشتن و موشتەرییەکان', '2025-05-04 17:58:43'),
+(5, 'کارمەندی کۆگا', 'دەسەڵاتی بەڕێوەبردنی کۆگا و کاڵاکان', '2025-05-04 17:58:43');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `wastings`
 --
 
@@ -2297,6 +2498,13 @@ ALTER TABLE `inventory_count_items`
   ADD KEY `product_id` (`product_id`);
 
 --
+-- Indexes for table `permissions`
+--
+ALTER TABLE `permissions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `code` (`code`);
+
+--
 -- Indexes for table `products`
 --
 ALTER TABLE `products`
@@ -2336,6 +2544,14 @@ ALTER TABLE `return_items`
   ADD KEY `product_id` (`product_id`);
 
 --
+-- Indexes for table `role_permissions`
+--
+ALTER TABLE `role_permissions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `role_permission` (`role_id`,`permission_id`),
+  ADD KEY `permission_id` (`permission_id`);
+
+--
 -- Indexes for table `sales`
 --
 ALTER TABLE `sales`
@@ -2369,6 +2585,22 @@ ALTER TABLE `supplier_debt_transactions`
 -- Indexes for table `units`
 --
 ALTER TABLE `units`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `user_accounts`
+--
+ALTER TABLE `user_accounts`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `username` (`username`),
+  ADD KEY `employee_id` (`employee_id`),
+  ADD KEY `role_id` (`role_id`),
+  ADD KEY `created_by` (`created_by`);
+
+--
+-- Indexes for table `user_roles`
+--
+ALTER TABLE `user_roles`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -2450,6 +2682,12 @@ ALTER TABLE `inventory_count_items`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `permissions`
+--
+ALTER TABLE `permissions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+
+--
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
@@ -2480,6 +2718,12 @@ ALTER TABLE `return_items`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `role_permissions`
+--
+ALTER TABLE `role_permissions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
+
+--
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
@@ -2508,6 +2752,18 @@ ALTER TABLE `supplier_debt_transactions`
 --
 ALTER TABLE `units`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `user_accounts`
+--
+ALTER TABLE `user_accounts`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `user_roles`
+--
+ALTER TABLE `user_roles`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `wastings`
@@ -2578,6 +2834,13 @@ ALTER TABLE `return_items`
   ADD CONSTRAINT `return_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
 
 --
+-- Constraints for table `role_permissions`
+--
+ALTER TABLE `role_permissions`
+  ADD CONSTRAINT `role_permissions_ibfk_1` FOREIGN KEY (`role_id`) REFERENCES `user_roles` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `role_permissions_ibfk_2` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `sales`
 --
 ALTER TABLE `sales`
@@ -2601,6 +2864,14 @@ ALTER TABLE `suppliers`
 --
 ALTER TABLE `supplier_debt_transactions`
   ADD CONSTRAINT `supplier_debt_transactions_ibfk_1` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`id`);
+
+--
+-- Constraints for table `user_accounts`
+--
+ALTER TABLE `user_accounts`
+  ADD CONSTRAINT `user_accounts_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `user_accounts_ibfk_2` FOREIGN KEY (`role_id`) REFERENCES `user_roles` (`id`),
+  ADD CONSTRAINT `user_accounts_ibfk_3` FOREIGN KEY (`created_by`) REFERENCES `admin_accounts` (`id`);
 
 --
 -- Constraints for table `wasting_items`
