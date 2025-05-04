@@ -24,4 +24,38 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 
 
 // Update last activity time
 $_SESSION['last_activity'] = time();
+
+// Function to check if user has permission
+function hasPermission($permission_code) {
+    // Admin has all permissions
+    if (isset($_SESSION['admin_id'])) {
+        return true;
+    }
+    
+    // For regular users, check their role permissions
+    if (isset($_SESSION['user_id'])) {
+        require_once __DIR__ . '/../config/database.php';
+        require_once __DIR__ . '/../models/Permission.php';
+        
+        $database = new Database();
+        $db = $database->getConnection();
+        $permissionModel = new Permission($db);
+        
+        return $permissionModel->userHasPermission($_SESSION['user_id'], $permission_code);
+    }
+    
+    return false;
+}
+
+// Function to enforce permission check
+function requirePermission($permission_code) {
+    if (!hasPermission($permission_code)) {
+        // Store the current URL in session to redirect back after login
+        $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];
+        
+        // Redirect to access denied page
+        header("Location: /Selling-System/src/views/access_denied.php");
+        exit();
+    }
+}
 ?> 

@@ -4,6 +4,11 @@ require_once '../../config/database.php';
 require_once '../../models/User.php';
 require_once '../../includes/auth.php';
 
+// Check if user has permission
+if (!hasPermission('manage_accounts')) {
+    exit(json_encode(['status' => 'error', 'message' => 'دەسەڵاتت نییە بۆ دەستکاریکردنی بەکارهێنەر']));
+}
+
 // Check if the request is POST
 if ($_SERVER['REQUEST_METHOD'] != 'POST') {
     header('HTTP/1.1 405 Method Not Allowed');

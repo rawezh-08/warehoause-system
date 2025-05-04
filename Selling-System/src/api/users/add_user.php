@@ -4,6 +4,11 @@ require_once '../../config/database.php';
 require_once '../../models/User.php';
 require_once '../../includes/auth.php';
 
+// Check if user has permission
+if (!hasPermission('manage_accounts')) {
+    exit(json_encode(['status' => 'error', 'message' => 'دەسەڵاتت نییە بۆ زیادکردنی بەکارهێنەر']));
+}
+
 // Check if the request is POST
 if ($_SERVER['REQUEST_METHOD'] != 'POST') {
     header('HTTP/1.1 405 Method Not Allowed');
@@ -36,7 +41,11 @@ if (strlen($password) < 8) {
 }
 
 // Get current user ID
-$created_by = $_SESSION['user_id'] ?? 1; // Default to admin if session not available
+$created_by = $_SESSION['user_id'] ?? $_SESSION['admin_id'] ?? null;
+
+if (!$created_by) {
+    exit(json_encode(['status' => 'error', 'message' => 'هەڵەی ناوخۆیی: ناسنامەی بەکارهێنەر نەدۆزرایەوە']));
+}
 
 try {
     // Create database connection
