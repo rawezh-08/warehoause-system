@@ -4,6 +4,23 @@ require_once '../../includes/auth.php';
 
 // Include the dashboard logic file
 require_once '../../process/dashboard_logic.php';
+
+// Define a permission for the dashboard
+$canViewDashboard = true;
+
+// Check if the user is a regular user (not admin)
+if (isset($_SESSION['user_id']) && !isset($_SESSION['admin_id'])) {
+    // Create database connection and permission model
+    require_once '../../config/database.php';
+    require_once '../../models/Permission.php';
+    
+    $database = new Database();
+    $db = $database->getConnection();
+    $permissionModel = new Permission($db);
+    
+    // Check if the user has view_dashboard permission
+    $canViewDashboard = $permissionModel->userHasPermission($_SESSION['user_id'], 'view_dashboard');
+}
 ?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
@@ -41,6 +58,29 @@ require_once '../../process/dashboard_logic.php';
             margin: 0 5px;
             border-radius: 20px;
         }
+        .locked-dashboard {
+            text-align: center;
+            padding: 100px 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            margin: 100px auto;
+            max-width: 600px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .locked-dashboard i {
+            font-size: 80px;
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+        .locked-dashboard h3 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .locked-dashboard p {
+            font-size: 16px;
+            color: #666;
+        }
     </style>
 </head>
 
@@ -56,6 +96,8 @@ require_once '../../process/dashboard_logic.php';
 
         <!-- Main Content Area -->
         <div class="main-content">
+            <?php if ($canViewDashboard): ?>
+            <!-- Dashboard content starts here -->
             <div class="dashboard-container" id="content" style="margin: 0; margin-top: 65px">
                 <div class="container-fluid p-0">
                     <!-- Quick Access Section -->
@@ -89,7 +131,6 @@ require_once '../../process/dashboard_logic.php';
                             </div>
                         </div>
                     </div>
-           
                     
                     <!-- Period Filter -->
                     <div class="row g-3 mb-3">
@@ -428,6 +469,14 @@ require_once '../../process/dashboard_logic.php';
                     </div>
                 </div>
             </div>
+            <?php else: ?>
+            <!-- Locked dashboard message -->
+            <div class="locked-dashboard">
+                <i class="fas fa-lock"></i>
+                <h3>ڕێگەت پێ نەدراوە</h3>
+                <p>بەداخەوە، ڕێگەت پێ نەدراوە بۆ بینینی ناوەڕۆکی داشبۆرد. تکایە پەیوەندی بکە بە بەڕێوەبەری سیستەم بۆ زانیاری زیاتر.</p>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 

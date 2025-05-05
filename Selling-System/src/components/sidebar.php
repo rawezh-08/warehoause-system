@@ -170,19 +170,7 @@ function renderMenuLink($href, $text, $permission_code = null) {
             </li>
 
             <!-- Business Partners -->
-            <li class="menu-item">
-                <a href="#partnersSubmenu" class="item-link" data-toggle="collapse">
-                    <div class="icon-cont">
-                        <img src="../../assets/icons/business_partner.svg" alt="">
-                    </div>
-                    <span>هاوبەشەکان</span>
-                    <i class="fas fa-chevron-down dropdown-icon"></i>
-                </a>
-                <ul class="submenu collapse" id="partnersSubmenu">
-                    <li><?php echo renderMenuLink("business_partners.php", "لیستی هاوبەشەکان", "view_business_partners"); ?></li>
-                    <li><?php echo renderMenuLink("add_business_partner.php", "زیادکردنی هاوبەش", "add_business_partner"); ?></li>
-                </ul>
-            </li>
+        
 
             <!-- Reports -->
             <li class="menu-item">
