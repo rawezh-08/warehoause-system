@@ -1,4 +1,9 @@
 <?php
+session_start();
+if (!isset($_SESSION['admin_id'])) {
+    header('Location: ../views/access_denied.php');
+    exit;
+}
 // Include authentication check
 require_once '../../includes/auth.php';
 
