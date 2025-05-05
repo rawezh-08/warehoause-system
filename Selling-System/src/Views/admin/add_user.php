@@ -131,6 +131,9 @@ $roles = $permissionModel->getAllRoles();
                                                     <option value="<?php echo $role['id']; ?>"><?php echo $role['name']; ?></option>
                                                     <?php endforeach; ?>
                                                 </select>
+                                                <a href="manage_roles.php" class="btn btn-outline-secondary" title="بەڕێوەبردنی ڕۆڵەکان">
+                                                    <i class="fas fa-cog"></i>
+                                                </a>
                                                 <div class="invalid-feedback">
                                                     تکایە ڕۆڵی بەکارهێنەر هەڵبژێرە
                                                 </div>

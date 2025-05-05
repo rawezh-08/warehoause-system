@@ -47,6 +47,22 @@
                 </ul>
             </li>
 
+            <!-- Users -->
+            <li class="menu-item">
+                <a href="#usersSubmenu" class="item-link" data-toggle="collapse">
+                    <div class="icon-cont">
+                        <img src="../../assets/icons/accounts.svg" alt="">
+                    </div>
+                    <span>بەکارهێنەران</span>
+                    <i class="fas fa-chevron-down dropdown-icon"></i>
+                </a>
+                <ul class="submenu collapse" id="usersSubmenu">
+                    <li><a href="manage_users.php">بەڕێوەبردنی بەکارهێنەران</a></li>
+                    <li><a href="manage_roles.php">بەڕێوەبردنی ڕۆڵەکان</a></li>
+                    <li><a href="add_user.php">زیادکردنی بەکارهێنەر</a></li>
+                </ul>
+            </li>
+
             <!-- Sales -->
             <li class="menu-item">
                 <a href="#salesSubmenu" class="item-link" data-toggle="collapse">

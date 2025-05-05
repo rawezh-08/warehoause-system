@@ -56,9 +56,14 @@ $roles = $permissionModel->getAllRoles();
                 <div class="row mb-4">
                     <div class="col-12 d-flex justify-content-between align-items-center">
                         <h3 class="page-title">بەڕێوەبردنی بەکارهێنەران</h3>
-                        <a href="add_user.php" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i> زیادکردنی بەکارهێنەر
-                        </a>
+                        <div>
+                            <a href="manage_roles.php" class="btn btn-outline-primary me-2">
+                                <i class="fas fa-user-shield me-2"></i> بەڕێوەبردنی ڕۆڵەکان
+                            </a>
+                            <a href="add_user.php" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i> زیادکردنی بەکارهێنەر
+                            </a>
+                        </div>
                     </div>
                 </div>
 
