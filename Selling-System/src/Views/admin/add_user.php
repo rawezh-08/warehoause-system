@@ -2,6 +2,7 @@
 require_once '../../includes/auth.php';
 require_once '../../config/database.php';
 require_once '../../models/Permission.php';
+require_once '../../models/Employee.php';
 
 
 // Check if the user has permission to add users
