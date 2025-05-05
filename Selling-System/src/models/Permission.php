@@ -139,22 +139,16 @@ class Permission {
      * Delete role
      */
     public function deleteRole($id) {
-        // First check if role is associated with any user
-        $query = "SELECT COUNT(*) as count FROM user_accounts WHERE role_id = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-        
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($row['count'] > 0) {
-            // Role is associated with users, cannot delete
-            return false;
-        }
-        
         // Begin transaction
         $this->conn->beginTransaction();
         
         try {
+            // First, update any users that have this role to a default role (role_id = 1)
+            $query = "UPDATE user_accounts SET role_id = 1 WHERE role_id = :id";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            
             // Delete role permissions
             $query = "DELETE FROM " . $this->table_role_permissions . " WHERE role_id = :id";
             $stmt = $this->conn->prepare($query);

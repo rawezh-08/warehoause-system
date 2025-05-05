@@ -88,6 +88,21 @@ function renderMenuLink($href, $text, $permission_code = null) {
                 </ul>
             </li>
 
+            <li class="menu-item">
+                <a href="#salesSubmenu" class="item-link" data-toggle="collapse">
+                    <div class="icon-cont">
+                        <img src="../../assets/icons/owes.svg" alt="">
+                    </div>
+                    <span>پسوڵەکان</span>
+                    <i class="fas fa-chevron-down dropdown-icon"></i>
+                </a>
+                <ul class="submenu collapse" id="salesSubmenu">
+                    <li><?php echo renderMenuLink("addReceipt.php", "زیادکردنی پسوڵە", "add_sale"); ?></li>
+                    <li><?php echo renderMenuLink("receiptList.php", "پسووڵەکانی فرۆشتن", "view_sales"); ?></li>
+                    <li><?php echo renderMenuLink("purchaseList.php", "پسووڵەکانی کڕین", "view_purchases"); ?></li>
+                </ul>
+            </li>
+
             <!-- Staff -->
             <li class="menu-item">
                 <a href="#staffSubmenu" class="item-link" data-toggle="collapse">
@@ -120,20 +135,7 @@ function renderMenuLink($href, $text, $permission_code = null) {
             </li>
 
             <!-- Sales -->
-            <li class="menu-item">
-                <a href="#salesSubmenu" class="item-link" data-toggle="collapse">
-                    <div class="icon-cont">
-                        <img src="../../assets/icons/owes.svg" alt="">
-                    </div>
-                    <span>پسوڵەکان</span>
-                    <i class="fas fa-chevron-down dropdown-icon"></i>
-                </a>
-                <ul class="submenu collapse" id="salesSubmenu">
-                    <li><?php echo renderMenuLink("addReceipt.php", "زیادکردنی پسوڵە", "add_sale"); ?></li>
-                    <li><?php echo renderMenuLink("receiptList.php", "پسووڵەکانی فرۆشتن", "view_sales"); ?></li>
-                    <li><?php echo renderMenuLink("purchaseList.php", "پسووڵەکانی کڕین", "view_purchases"); ?></li>
-                </ul>
-            </li>
+        
 
             <!-- Expenses -->
             <li class="menu-item">

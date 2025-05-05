@@ -1,7 +1,8 @@
 <?php
+require_once '../../includes/auth.php';
 require_once '../../config/database.php';
 require_once '../../models/Permission.php';
-require_once '../../includes/auth.php';
+
 
 // Check if the user has permission to add users
 require_once '../../includes/check_permission.php';
