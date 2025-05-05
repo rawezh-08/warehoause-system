@@ -40,7 +40,7 @@ $user_id = isset($_SESSION['admin_id']) ? $_SESSION['admin_id'] : $_SESSION['use
 
 // If not admin, check if user has permission to manage roles
 if (!isset($_SESSION['admin_id'])) {
-    $hasPermission = $permissionModel->userHasPermission($user_id, 'manage_roles');
+    $hasPermission = $permissionModel->userHasPermission($user_id, 'بەڕێوەبردنی ڕۆڵەکان');
     
     if (!$hasPermission) {
         http_response_code(403); // Forbidden

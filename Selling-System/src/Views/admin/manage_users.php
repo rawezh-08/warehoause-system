@@ -7,7 +7,7 @@ require_once '../../models/Permission.php';
 
 // Check if the user has permission to manage users
 require_once '../../includes/check_permission.php';
-checkPermission('manage_users');
+checkPermission('بەڕێوەبردنی بەکارهێنەران');
 
 // Create a database connection
 $db = new Database();
