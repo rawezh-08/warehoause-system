@@ -83,7 +83,7 @@ function renderMenuLink($href, $text, $permission_code = null) {
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="productsSubmenu">
-                    <li><?php echo renderMenuLink("addProduct.php", "زیادکردنی کاڵا", "manage_products"); ?></li>
+                    <li><?php echo renderMenuLink("addProduct.php", "زیادکردنی کاڵا", "add_product"); ?></li>
                     <li><?php echo renderMenuLink("products.php", "لیستی کاڵاکان", "view_products"); ?></li>
                 </ul>
             </li>
@@ -98,8 +98,8 @@ function renderMenuLink($href, $text, $permission_code = null) {
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="staffSubmenu">
-                    <li><?php echo renderMenuLink("addStaff.php", "زیادکردنی هەژمار", "manage_employees"); ?></li>
-                    <li><?php echo renderMenuLink("staff.php", "لیستی هەژمارەکان", "view_employees"); ?></li>
+                    <li><?php echo renderMenuLink("addStaff.php", "زیادکردنی هەژمار", "add_staff"); ?></li>
+                    <li><?php echo renderMenuLink("staff.php", "لیستی هەژمارەکان", "view_staff"); ?></li>
                 </ul>
             </li>
 
@@ -115,7 +115,7 @@ function renderMenuLink($href, $text, $permission_code = null) {
                 <ul class="submenu collapse" id="usersSubmenu">
                     <li><?php echo renderMenuLink("manage_users.php", "بەڕێوەبردنی بەکارهێنەران", "manage_users"); ?></li>
                     <li><?php echo renderMenuLink("manage_roles.php", "بەڕێوەبردنی ڕۆڵەکان", "manage_roles"); ?></li>
-                    <li><?php echo renderMenuLink("add_user.php", "زیادکردنی بەکارهێنەر", "manage_users"); ?></li>
+                    <li><?php echo renderMenuLink("add_user.php", "زیادکردنی بەکارهێنەر", "add_user"); ?></li>
                 </ul>
             </li>
 
@@ -129,7 +129,7 @@ function renderMenuLink($href, $text, $permission_code = null) {
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="salesSubmenu">
-                    <li><?php echo renderMenuLink("addReceipt.php", "زیادکردنی پسوڵە", "manage_receipts"); ?></li>
+                    <li><?php echo renderMenuLink("addReceipt.php", "زیادکردنی پسوڵە", "add_receipt"); ?></li>
                     <li><?php echo renderMenuLink("receiptList.php", "پسووڵەکانی فرۆشتن", "view_sales"); ?></li>
                     <li><?php echo renderMenuLink("purchaseList.php", "پسووڵەکانی کڕین", "view_purchases"); ?></li>
                 </ul>
@@ -145,7 +145,7 @@ function renderMenuLink($href, $text, $permission_code = null) {
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="expensesSubmenu">
-                    <li><?php echo renderMenuLink("employeePayment.php", "زیادکردنی خەرجی", "manage_expenses"); ?></li>
+                    <li><?php echo renderMenuLink("employeePayment.php", "زیادکردنی خەرجی", "add_expense"); ?></li>
                     <li><?php echo renderMenuLink("expensesHistory.php", "لیستی خەرجییەکان", "view_expenses"); ?></li>
                     <li><?php echo renderMenuLink("cash_management.php", "دەخیلە", "manage_cash"); ?></li>
                 </ul>
