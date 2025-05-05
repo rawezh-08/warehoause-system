@@ -129,7 +129,7 @@ function renderMenuLink($href, $text, $permission_code = null) {
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="salesSubmenu">
-                    <li><?php echo renderMenuLink("addReceipt.php", "زیادکردنی پسوڵە", "add_receipt"); ?></li>
+                    <li><?php echo renderMenuLink("addReceipt.php", "زیادکردنی پسوڵە", "add_sale"); ?></li>
                     <li><?php echo renderMenuLink("receiptList.php", "پسووڵەکانی فرۆشتن", "view_sales"); ?></li>
                     <li><?php echo renderMenuLink("purchaseList.php", "پسووڵەکانی کڕین", "view_purchases"); ?></li>
                 </ul>
