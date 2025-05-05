@@ -3,6 +3,7 @@ require_once '../../includes/auth.php';
 require_once '../../config/database.php';
 require_once '../../models/Permission.php';
 require_once '../../models/Employee.php';
+require_once '../../models/User.php';
 
 
 // Check if the user has permission to add users
@@ -16,6 +17,7 @@ $conn = $db->getConnection();
 // Create models
 $employeeModel = new Employee($conn);
 $permissionModel = new Permission($conn);
+$userModel = new User($conn);
 
 // Get all employees
 $employees = $employeeModel->getAllEmployees();
@@ -178,8 +180,19 @@ $roles = $permissionModel->getAllRoles();
     <script>
         $(document).ready(function() {
             // Load navbar and sidebar
-            $("#navbar-container").load("../../components/navbar.php");
-            $("#sidebar-container").load("../../components/sidebar.php");
+            $("#navbar-container").load("../../components/navbar.php", function(response, status, xhr) {
+                if (status == "error") {
+                    console.error("Error loading navbar:", xhr.status, xhr.statusText);
+                    $("#navbar-container").html('<div class="alert alert-danger">Error loading navbar. Please refresh the page.</div>');
+                }
+            });
+
+            $("#sidebar-container").load("../../components/sidebar.php", function(response, status, xhr) {
+                if (status == "error") {
+                    console.error("Error loading sidebar:", xhr.status, xhr.statusText);
+                    $("#sidebar-container").html('<div class="alert alert-danger">Error loading sidebar. Please refresh the page.</div>');
+                }
+            });
 
             // Toggle password visibility
             $('#togglePassword').on('click', function() {
@@ -263,6 +276,7 @@ $roles = $permissionModel->getAllRoles();
                         }
                     },
                     error: function(xhr, status, error) {
+                        console.error("AJAX Error:", xhr.responseText);
                         Swal.fire({
                             icon: 'error',
                             title: 'هەڵە',

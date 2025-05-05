@@ -1,7 +1,7 @@
 <?php
 // Navbar Component for ASHKAN system
-require_once '../includes/auth.php';
-require_once '../config/database.php';
+require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../config/database.php';
 
 // Connect to database
 $db = new Database();

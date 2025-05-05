@@ -1,6 +1,6 @@
 <?php
 // Include the navbar logic file that contains all the PHP code
-require_once '../includes/navbar_logic.php';
+require_once __DIR__ . '/../includes/navbar_logic.php';
 ?>
 <link rel="stylesheet" href="../../css/shared/navbar.css">
 <nav class="navbar" style="border-radius: 50px; margin: 8px; margin-top:10px; height: 80px;">
