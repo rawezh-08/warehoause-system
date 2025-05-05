@@ -96,11 +96,9 @@ $permissionsByGroup = $permissionModel->getPermissionsByGroup();
                                     <button class="btn btn-sm btn-outline-primary edit-role-btn" data-role-id="<?php echo $role['id']; ?>">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <?php if($role['id'] > 5): // Prevent deleting default roles ?>
                                     <button class="btn btn-sm btn-outline-danger delete-role-btn" data-role-id="<?php echo $role['id']; ?>">
                                         <i class="fas fa-trash"></i>
                                     </button>
-                                    <?php endif; ?>
                                 </div>
                             </div>
                             <div class="card-body">
