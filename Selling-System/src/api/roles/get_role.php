@@ -34,21 +34,6 @@ $db = $database->getConnection();
 // Create permission model
 $permissionModel = new Permission($db);
 
-// Check if user is allowed to view role information
-if (!isset($_SESSION['admin_id'])) {
-    $user_id = $_SESSION['user_id'];
-    $hasPermission = $permissionModel->userHasPermission($user_id, 'بەڕێوەبردنی ڕۆڵەکان');
-    
-    if (!$hasPermission) {
-        http_response_code(403); // Forbidden
-        echo json_encode([
-            "status" => "error", 
-            "message" => "تۆ دەسەڵاتی بینینی زانیاری ڕۆڵەکانت نیە"
-        ]);
-        exit;
-    }
-}
-
 // Check if role ID is provided
 if (isset($_GET['id']) && !empty($_GET['id'])) {
     $role_id = (int)$_GET['id'];

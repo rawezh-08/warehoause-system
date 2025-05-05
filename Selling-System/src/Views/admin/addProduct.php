@@ -1,8 +1,6 @@
 <?php
 // Include authentication check
 require_once '../../includes/auth.php';
-require_once '../../includes/check_permission.php';
-checkPermission('زیادکردنی کاڵا');
 require_once '../../process/addProduct_logic.php';
 ?>
 <!DOCTYPE html>

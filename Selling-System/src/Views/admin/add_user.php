@@ -5,7 +5,7 @@ require_once '../../includes/auth.php';
 
 // Check if the user has permission to add users
 require_once '../../includes/check_permission.php';
-checkPermission('بەڕێوەبردنی بەکارهێنەران');
+checkPermission('manage_users');
 
 // Create a database connection
 $db = new Database();

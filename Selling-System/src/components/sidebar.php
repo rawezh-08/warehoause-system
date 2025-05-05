@@ -83,8 +83,8 @@ function renderMenuLink($href, $text, $permission_code = null) {
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="productsSubmenu">
-                    <li><?php echo renderMenuLink("addProduct.php", "زیادکردنی کاڵا", "زیادکردنی کاڵا"); ?></li>
-                    <li><?php echo renderMenuLink("products.php", "لیستی کاڵاکان", "بینینی کاڵاکان"); ?></li>
+                    <li><?php echo renderMenuLink("addProduct.php", "زیادکردنی کاڵا", "manage_products"); ?></li>
+                    <li><?php echo renderMenuLink("products.php", "لیستی کاڵاکان", "view_products"); ?></li>
                 </ul>
             </li>
 
@@ -129,9 +129,9 @@ function renderMenuLink($href, $text, $permission_code = null) {
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="salesSubmenu">
-                    <li><?php echo renderMenuLink("addReceipt.php", "زیادکردنی پسوڵە", "زیادکردنی فرۆشتن"); ?></li>
-                    <li><?php echo renderMenuLink("receiptList.php", "پسووڵەکانی فرۆشتن", "بینینی فرۆشتنەکان"); ?></li>
-                    <li><?php echo renderMenuLink("purchaseList.php", "پسووڵەکانی کڕین", "بینینی کڕینەکان"); ?></li>
+                    <li><?php echo renderMenuLink("addReceipt.php", "زیادکردنی پسوڵە", "manage_receipts"); ?></li>
+                    <li><?php echo renderMenuLink("receiptList.php", "پسووڵەکانی فرۆشتن", "view_sales"); ?></li>
+                    <li><?php echo renderMenuLink("purchaseList.php", "پسووڵەکانی کڕین", "view_purchases"); ?></li>
                 </ul>
             </li>
 
@@ -161,15 +161,15 @@ function renderMenuLink($href, $text, $permission_code = null) {
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="deptsSubmenu">
-                    <li><?php echo renderMenuLink("customers.php", "کڕیارەکان", "بینینی موشتەرییەکان"); ?></li>
-                    <li><?php echo renderMenuLink("suppliers.php", "دابینکەرەکان", "بینینی دابینکەران"); ?></li>
+                    <li><?php echo renderMenuLink("customers.php", "کڕیارەکان", "manage_customers"); ?></li>
+                    <li><?php echo renderMenuLink("suppliers.php", "دابینکەرەکان", "manage_suppliers"); ?></li>
                     <li><?php echo renderMenuLink("business_partners.php", "کڕیار و دابینکەر", "view_business_partners"); ?></li>
                 </ul>
             </li>
 
             <!-- Reports -->
             <li class="menu-item">
-                <?php if (userHasPermission("بینینی ڕاپۆرتەکان")): ?>
+                <?php if (userHasPermission("view_reports")): ?>
                 <a href="report.php" class="item-link">
                     <div class="icon-cont">
                         <img src="../../assets/icons/report.svg" alt="">

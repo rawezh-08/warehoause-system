@@ -1,7 +1,5 @@
 <?php
 require_once '../../includes/auth.php';
-require_once '../../includes/check_permission.php';
-checkPermission('بینینی کاڵاکان');
 require_once '../../process/products_logic.php';
 ?>
 <!DOCTYPE html>
