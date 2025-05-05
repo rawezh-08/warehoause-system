@@ -9,8 +9,8 @@ require_once '../../includes/auth.php';
 require_once '../../models/Permission.php';
 
 // Check if user has permission to manage roles
-// require_once '../../includes/check_permission.php';
-// checkPermission('manage_roles');
+require_once '../../includes/check_permission.php';
+checkPermission('manage_roles');
 
 // Create a database connection
 $db = new Database();

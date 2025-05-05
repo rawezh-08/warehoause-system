@@ -1,12 +1,11 @@
 <?php
 require_once '../../config/database.php';
-require_once '../../includes/auth.php';
-require_once '../../models/Employee.php';
 require_once '../../models/Permission.php';
+require_once '../../includes/auth.php';
 
-// Check if user has permission to add accounts
-// require_once '../../includes/check_permission.php';
-// checkPermission('manage_accounts');
+// Check if the user has permission to add users
+require_once '../../includes/check_permission.php';
+checkPermission('manage_users');
 
 // Create a database connection
 $db = new Database();

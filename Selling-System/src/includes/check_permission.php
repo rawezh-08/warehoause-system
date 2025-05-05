@@ -16,7 +16,17 @@ require_once __DIR__ . '/../models/Permission.php';
  * @return bool True if user has permission, false otherwise
  */
 function checkPermission($permission_code, $redirect = true) {
-    // Check if user is logged in
+    // Start session if needed
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    // Check if admin is logged in (admins have all permissions)
+    if (isset($_SESSION['admin_id']) && !empty($_SESSION['admin_id'])) {
+        return true;
+    }
+    
+    // Check if regular user is logged in
     if (!isset($_SESSION['user_id'])) {
         // User not logged in, redirect to login page
         if ($redirect) {

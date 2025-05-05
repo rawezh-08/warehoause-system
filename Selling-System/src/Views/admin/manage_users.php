@@ -5,9 +5,9 @@ require_once '../../models/User.php';
 require_once '../../models/Employee.php';
 require_once '../../models/Permission.php';
 
-// Check if user has permission to manage accounts
-// require_once '../../includes/check_permission.php';
-// checkPermission('manage_accounts');
+// Check if the user has permission to manage users
+require_once '../../includes/check_permission.php';
+checkPermission('manage_users');
 
 // Create a database connection
 $db = new Database();

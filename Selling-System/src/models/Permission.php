@@ -217,10 +217,24 @@ class Permission {
      * Check if user has a specific permission
      */
     public function userHasPermission($user_id, $permission_code) {
+        // First check if user is in the admin_accounts table
+        $admin_query = "SELECT COUNT(*) as count FROM admin_accounts WHERE id = :user_id";
+        $admin_stmt = $this->conn->prepare($admin_query);
+        $admin_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+        $admin_stmt->execute();
+        
+        $admin_row = $admin_stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // If user is an admin, they have all permissions
+        if ($admin_row['count'] > 0) {
+            return true;
+        }
+        
+        // Otherwise, check permissions based on their role
         $query = "SELECT COUNT(*) as count 
                   FROM user_accounts ua
-                  JOIN role_permissions rp ON ua.role_id = rp.role_id
-                  JOIN permissions p ON rp.permission_id = p.id
+                  JOIN " . $this->table_role_permissions . " rp ON ua.role_id = rp.role_id
+                  JOIN " . $this->table_permissions . " p ON rp.permission_id = p.id
                   WHERE ua.id = :user_id AND p.code = :permission_code";
         
         $stmt = $this->conn->prepare($query);
