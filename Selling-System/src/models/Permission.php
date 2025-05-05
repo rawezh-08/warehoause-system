@@ -245,4 +245,42 @@ class Permission {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row['count'] > 0;
     }
+
+    /**
+     * Get all permission codes a user has
+     * 
+     * @param int $user_id The user ID
+     * @return array Array of permission codes
+     */
+    public function getUserPermissionCodes($user_id) {
+        // First check if user is in the admin_accounts table
+        $admin_query = "SELECT COUNT(*) as count FROM admin_accounts WHERE id = :user_id";
+        $admin_stmt = $this->conn->prepare($admin_query);
+        $admin_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+        $admin_stmt->execute();
+        
+        $admin_row = $admin_stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // If user is an admin, they have all permissions
+        if ($admin_row['count'] > 0) {
+            $query = "SELECT code FROM " . $this->table_permissions;
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            
+            return array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'code');
+        }
+        
+        // Get permission codes for regular user based on their role
+        $query = "SELECT p.code 
+                  FROM user_accounts ua
+                  JOIN " . $this->table_role_permissions . " rp ON ua.role_id = rp.role_id
+                  JOIN " . $this->table_permissions . " p ON rp.permission_id = p.id
+                  WHERE ua.id = :user_id";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        return array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'code');
+    }
 } 

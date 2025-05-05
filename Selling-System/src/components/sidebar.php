@@ -1,8 +1,64 @@
 <?php
-// You can add PHP logic here if needed
+// Include necessary files for permission checking
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../models/Permission.php';
+require_once __DIR__ . '/../includes/auth.php';
+
+// Start session if not started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Function to check if user has permission without redirecting
+function userHasPermission($permission_code) {
+    // Admin always has permission
+    if (isset($_SESSION['admin_id']) && !empty($_SESSION['admin_id'])) {
+        return true;
+    }
+    
+    // Check if user is logged in
+    if (!isset($_SESSION['user_id'])) {
+        return false;
+    }
+    
+    // Create database connection and permission model
+    $database = new Database();
+    $db = $database->getConnection();
+    $permissionModel = new Permission($db);
+    
+    // Check permission
+    return $permissionModel->userHasPermission($_SESSION['user_id'], $permission_code);
+}
+
+// Function to render menu link based on permission
+function renderMenuLink($href, $text, $permission_code = null) {
+    if ($permission_code === null || userHasPermission($permission_code)) {
+        // User has permission - render normal link
+        return '<a href="' . $href . '">' . $text . '</a>';
+    } else {
+        // User does not have permission - render locked link
+        return '<span class="locked-menu-item">' . $text . ' <i class="fas fa-lock text-secondary"></i></span>';
+    }
+}
 ?>
 <!-- Sidebar -->
 <link rel="stylesheet" href="../../css/shared/sidebar.css">
+<style>
+    .locked-menu-item {
+        color: #6c757d;
+        cursor: not-allowed;
+        display: block;
+        padding: 0.5rem 1rem;
+        opacity: 0.7;
+    }
+    .submenu li {
+        position: relative;
+    }
+    .fas.fa-lock {
+        font-size: 0.8em;
+        margin-right: 5px;
+    }
+</style>
 <div class="sidebar">
     <div class="sidebar-wrapper">
         <!-- Sidebar Header -->
@@ -27,8 +83,8 @@
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="productsSubmenu">
-                    <li><a href="addProduct.php">زیادکردنی کاڵا</a></li>
-                    <li><a href="products.php">لیستی کاڵاکان</a></li>
+                    <li><?php echo renderMenuLink("addProduct.php", "زیادکردنی کاڵا", "manage_products"); ?></li>
+                    <li><?php echo renderMenuLink("products.php", "لیستی کاڵاکان", "view_products"); ?></li>
                 </ul>
             </li>
 
@@ -42,8 +98,8 @@
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="staffSubmenu">
-                    <li><a href="addStaff.php">زیادکردنی هەژمار</a></li>
-                    <li><a href="staff.php">لیستی هەژمارەکان</a></li>
+                    <li><?php echo renderMenuLink("addStaff.php", "زیادکردنی هەژمار", "manage_employees"); ?></li>
+                    <li><?php echo renderMenuLink("staff.php", "لیستی هەژمارەکان", "view_employees"); ?></li>
                 </ul>
             </li>
 
@@ -57,9 +113,9 @@
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="usersSubmenu">
-                    <li><a href="manage_users.php">بەڕێوەبردنی بەکارهێنەران</a></li>
-                    <li><a href="manage_roles.php">بەڕێوەبردنی ڕۆڵەکان</a></li>
-                    <li><a href="add_user.php">زیادکردنی بەکارهێنەر</a></li>
+                    <li><?php echo renderMenuLink("manage_users.php", "بەڕێوەبردنی بەکارهێنەران", "manage_users"); ?></li>
+                    <li><?php echo renderMenuLink("manage_roles.php", "بەڕێوەبردنی ڕۆڵەکان", "manage_roles"); ?></li>
+                    <li><?php echo renderMenuLink("add_user.php", "زیادکردنی بەکارهێنەر", "manage_users"); ?></li>
                 </ul>
             </li>
 
@@ -73,10 +129,9 @@
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="salesSubmenu">
-                    <li><a href="addReceipt.php">زیادکردنی پسوڵە</a></li>
-
-                    <li><a href="receiptList.php">پسووڵەکانی فرۆشتن</a></li>
-                    <li><a href="purchaseList.php">پسووڵەکانی کڕین</a></li>
+                    <li><?php echo renderMenuLink("addReceipt.php", "زیادکردنی پسوڵە", "manage_receipts"); ?></li>
+                    <li><?php echo renderMenuLink("receiptList.php", "پسووڵەکانی فرۆشتن", "view_sales"); ?></li>
+                    <li><?php echo renderMenuLink("purchaseList.php", "پسووڵەکانی کڕین", "view_purchases"); ?></li>
                 </ul>
             </li>
 
@@ -90,9 +145,9 @@
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="expensesSubmenu">
-                    <li><a href="employeePayment.php">زیادکردنی خەرجی</a></li>
-                    <li><a href="expensesHistory.php">لیستی خەرجییەکان</a></li>
-                    <li><a href="cash_management.php">دەخیلە</a></li>
+                    <li><?php echo renderMenuLink("employeePayment.php", "زیادکردنی خەرجی", "manage_expenses"); ?></li>
+                    <li><?php echo renderMenuLink("expensesHistory.php", "لیستی خەرجییەکان", "view_expenses"); ?></li>
+                    <li><?php echo renderMenuLink("cash_management.php", "دەخیلە", "manage_cash"); ?></li>
                 </ul>
             </li>
 
@@ -106,20 +161,30 @@
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="deptsSubmenu">
-                    <li><a href="customers.php">کڕیارەکان</a></li>
-                    <li><a href="suppliers.php">دابینکەرەکان</a></li>
-                    <li><a href="business_partners.php">کڕیار و دابینکەر</a></li>
+                    <li><?php echo renderMenuLink("customers.php", "کڕیارەکان", "manage_customers"); ?></li>
+                    <li><?php echo renderMenuLink("suppliers.php", "دابینکەرەکان", "manage_suppliers"); ?></li>
+                    <li><?php echo renderMenuLink("business_partners.php", "کڕیار و دابینکەر", "view_business_partners"); ?></li>
                 </ul>
             </li>
 
             <!-- Reports -->
             <li class="menu-item">
+                <?php if (userHasPermission("view_reports")): ?>
                 <a href="report.php" class="item-link">
                     <div class="icon-cont">
                         <img src="../../assets/icons/report.svg" alt="">
                     </div>
                     <span>ڕاپۆرتەکان</span>
                 </a>
+                <?php else: ?>
+                <span class="item-link locked-item">
+                    <div class="icon-cont">
+                        <img src="../../assets/icons/report.svg" alt="">
+                    </div>
+                    <span>ڕاپۆرتەکان</span>
+                    <i class="fas fa-lock"></i>
+                </span>
+                <?php endif; ?>
             </li>
         </ul>
     </div>
@@ -131,10 +196,17 @@
 <!-- Add jQuery and Bootstrap JS -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
+<!-- Permissions JS -->
+<script src="../../assets/js/permissions.js"></script>
 
 <!-- Add custom JavaScript for sidebar functionality -->
 <script>
 $(document).ready(function() {
+    // Apply permissions to UI elements
+    applyPermissionsToUI();
+    
     // Handle dropdown toggles
     $('.item-link[data-toggle="collapse"]').on('click', function(e) {
         e.preventDefault();
