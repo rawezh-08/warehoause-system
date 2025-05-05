@@ -4,6 +4,35 @@ require_once '../../includes/auth.php';
 
 // Include the dashboard logic file
 require_once '../../process/dashboard_logic.php';
+
+require_once '../models/Permission.php';
+require_once '../config/database.php';
+
+session_start();
+
+$database = new Database();
+$db = $database->getConnection();
+$permissionModel = new Permission($db);
+
+$user_id = $_SESSION['user_id'] ?? null;
+$canViewDashboard = false;
+
+// Admin always has access
+if (isset($_SESSION['admin_id'])) {
+    $canViewDashboard = true;
+} elseif ($user_id) {
+    $canViewDashboard = $permissionModel->userHasPermission($user_id, 'view_dashboard');
+}
+
+if (!$canViewDashboard) {
+    // Show lock message and stop rendering the rest of the page
+    echo '<div style="text-align:center; margin-top:100px;">
+            <i class="fas fa-lock" style="font-size:60px;color:#888;"></i>
+            <h2 style="color:#888;">ڕێگەت پێ نەدراوە بۆ بینینی داشبۆرد</h2>
+            <p>تکایە پەیوەندی بکە بە بەڕێوەبەر بۆ دەسەڵات.</p>
+          </div>';
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
