@@ -139,8 +139,8 @@ $permissionsByGroup = $permissionModel->getPermissionsByGroup();
                             <input type="text" class="form-control" id="roleName" name="name" required>
                         </div>
                         <div class="mb-3">
-                            <label for="roleDescription" class="form-label">وەسفی ڕۆڵ</label>
-                            <textarea class="form-control" id="roleDescription" name="description" rows="3"></textarea>
+                            <label for="roleDescription" class="form-label">وەسف</label>
+                            <textarea class="form-control" id="roleDescription" name="description"></textarea>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">دەسەڵاتەکان</label>
@@ -188,8 +188,8 @@ $permissionsByGroup = $permissionModel->getPermissionsByGroup();
                             <input type="text" class="form-control" id="editRoleName" name="name" required>
                         </div>
                         <div class="mb-3">
-                            <label for="editRoleDescription" class="form-label">وەسفی ڕۆڵ</label>
-                            <textarea class="form-control" id="editRoleDescription" name="description" rows="3"></textarea>
+                            <label for="editRoleDescription" class="form-label">وەسف</label>
+                            <textarea class="form-control" id="editRoleDescription" name="description"></textarea>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">دەسەڵاتەکان</label>

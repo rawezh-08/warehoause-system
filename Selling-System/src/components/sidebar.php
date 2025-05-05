@@ -145,8 +145,8 @@ function renderMenuLink($href, $text, $permission_code = null) {
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="expensesSubmenu">
-                    <li><?php echo renderMenuLink("employeePayment.php", "زیادکردنی خەرجی", "add_expense"); ?></li>
-                    <li><?php echo renderMenuLink("expensesHistory.php", "لیستی خەرجییەکان", "view_expenses"); ?></li>
+                    <li><?php echo renderMenuLink("add_expense.php", "زیادکردنی خەرجی", "add_expense"); ?></li>
+                    <li><?php echo renderMenuLink("expenses_list.php", "لیستی خەرجییەکان", "view_expenses"); ?></li>
                     <li><?php echo renderMenuLink("cash_management.php", "دەخیلە", "manage_cash"); ?></li>
                 </ul>
             </li>
@@ -164,6 +164,21 @@ function renderMenuLink($href, $text, $permission_code = null) {
                     <li><?php echo renderMenuLink("customers.php", "کڕیارەکان", "view_customers"); ?></li>
                     <li><?php echo renderMenuLink("suppliers.php", "دابینکەرەکان", "view_suppliers"); ?></li>
                     <li><?php echo renderMenuLink("business_partners.php", "کڕیار و دابینکەر", "view_business_partners"); ?></li>
+                </ul>
+            </li>
+
+            <!-- Business Partners -->
+            <li class="menu-item">
+                <a href="#partnersSubmenu" class="item-link" data-toggle="collapse">
+                    <div class="icon-cont">
+                        <img src="../../assets/icons/business_partner.svg" alt="">
+                    </div>
+                    <span>هاوبەشەکان</span>
+                    <i class="fas fa-chevron-down dropdown-icon"></i>
+                </a>
+                <ul class="submenu collapse" id="partnersSubmenu">
+                    <li><?php echo renderMenuLink("business_partners.php", "لیستی هاوبەشەکان", "view_business_partners"); ?></li>
+                    <li><?php echo renderMenuLink("add_business_partner.php", "زیادکردنی هاوبەش", "add_business_partner"); ?></li>
                 </ul>
             </li>
 
