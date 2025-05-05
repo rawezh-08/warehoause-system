@@ -39,16 +39,6 @@ $data = json_decode(file_get_contents("php://input"));
 
 // Check if role ID is provided
 if (!empty($data->id)) {
-    // Prevent deleting default roles (IDs 1-5)
-    if ($data->id <= 5) {
-        http_response_code(403); // Forbidden
-        echo json_encode([
-            "status" => "error",
-            "message" => "ناتوانرێت ڕۆڵە سەرەکییەکان بسڕدرێنەوە."
-        ]);
-        exit;
-    }
-
     try {
         // Delete role
         $result = $permissionModel->deleteRole($data->id);
