@@ -106,6 +106,23 @@
                 </a>
             </li>
         </ul>
+
+        <!-- Admin section -->
+        <div class="sidebar-section">
+            <h6 class="sidebar-heading">کارگێڕی</h6>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="../admin/manage_users.php">
+                        <i class="fas fa-users"></i> بەڕێوەبردنی بەکارهێنەران
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="../admin/manage_roles.php">
+                        <i class="fas fa-user-shield"></i> بەڕێوەبردنی ڕۆڵەکان
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
 </div>
 
