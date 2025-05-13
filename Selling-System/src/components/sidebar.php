@@ -147,8 +147,8 @@ function renderMenuLink($href, $text, $permission_code = null) {
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </a>
                 <ul class="submenu collapse" id="expensesSubmenu">
-                    <li><?php echo renderMenuLink("add_expense.php", "زیادکردنی خەرجی", "add_expense"); ?></li>
-                    <li><?php echo renderMenuLink("expenses_list.php", "لیستی خەرجییەکان", "view_expenses"); ?></li>
+                    <li><?php echo renderMenuLink("addExpense.php", "زیادکردنی خەرجی", "add_expense"); ?></li>
+                    <li><?php echo renderMenuLink("expensesHistory.php", "لیستی خەرجییەکان", "view_expenses"); ?></li>
                     <li><?php echo renderMenuLink("cash_management.php", "دەخیلە", "manage_cash"); ?></li>
                 </ul>
             </li>
